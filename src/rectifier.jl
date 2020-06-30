@@ -29,7 +29,7 @@ function (r::Rectifier)(x)
         a = log(2)
         return (log(1 + exp(-abs(a*x))) + max(a*x, 0))/a
     elseif r.T=="explinearunit"
-        if x>0
+        if x<0
             return exp(x)
         else
             return x+1.0
@@ -37,7 +37,7 @@ function (r::Rectifier)(x)
     end
 end
 
-function inverse(r::Rectifier, x::Float64)
+function inverse(r::Rectifier, x)
     @assert x>=0 "Input to rectifier is negative"
     if r.T=="squared"
         error("squared rectifier is not invertible")
@@ -55,7 +55,7 @@ function inverse(r::Rectifier, x::Float64)
     end
 end
 
-function gradient(r::Rectifier, x::Float64)
+function gradient(r::Rectifier, x)
     if r.T=="squared"
         return 2*x
     elseif r.T=="exponential"
@@ -64,7 +64,7 @@ function gradient(r::Rectifier, x::Float64)
         a = log(2)
         return 1/(1 + exp(-abs(a*x)))
     elseif r.T=="explinearunit"
-        if x>0
+        if x<0
             return exp(x)
         else
             return 1.0
@@ -72,7 +72,7 @@ function gradient(r::Rectifier, x::Float64)
     end
 end
 
-function hessian(r::Rectifier, x::Float64)
+function hessian(r::Rectifier, x)
     if r.T=="squared"
         return 2.0
     elseif r.T=="exponential"
