@@ -1,5 +1,15 @@
 module AdaptiveTransportMap
 
-greet() = print("Hello World!")
+
+using LinearAlgebra, SpecialFunctions
+using Random
+using ProgressMeter
+using BenchmarkTools
+using ForwardDiff
+
+
+
+include("rectifier.jl")
+
 
 end # module
