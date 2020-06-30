@@ -1,0 +1,4 @@
+name = "AdaptiveTransportMap"
+uuid = "bdf749b0-1400-4207-80d3-e689c0e3f03d"
+authors = ["mleprovost <mathow@g.ucla.edu>"]
+version = "0.1.0"
