@@ -1,5 +1,5 @@
 
-export  PhyHermite, normalizephy, normalize, degree, PhyH, phyhermite_coeffmatrix,
+export  PhyHermite, Cphy, normalize, degree, PhyH, phyhermite_coeffmatrix,
         gradient, hessian
 
 
@@ -10,9 +10,12 @@ struct PhyHermite{m} <: Hermite
     Ppprime::ImmutablePolynomial
     scale::Bool
 end
+# Hn(x)  = (-1)ⁿ*exp(x²)dⁿ/dxⁿ exp(-x²)
+# Hn′(x) = 2n*Hn-1(x)
+# Hn″(x) = 2n*(n-1)*Hn-1(x)
 
-normalizephy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
-normalize(P::PhyHermite{m}) where {m} = normalizephy(m)
+Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
+Cphy(P::PhyHermite{m}) where {m} = Cphy(m)
 
 degree(P::PhyHermite{m}) where {m} = m
 
@@ -23,6 +26,9 @@ degree(P::PhyHermite{m}) where {m} = m
 #
 #    Output, real C(1:N+1,1:N+1), the coefficients of the Hermite
 #    polynomials.
+
+# Recurrence relation:
+# Hn+1 = 2*x*Hn - 2*n*Hn-1
 function phyhermite_coeffmatrix(m::Int64)
 
     if m < 0
@@ -75,9 +81,9 @@ function PhyHermite(m::Int64;scaled::Bool= false)
                                  scaled)
         end
     else
-        C = 1/normalizephy(m)
+        C = 1/Cphy(m)
         if m==0
-            return PhyHermite{m}(ImmutablePolynomial(1.0),
+            return PhyHermite{m}(ImmutablePolynomial(C),
                                  ImmutablePolynomial(0.0),
                                  ImmutablePolynomial(0.0),
                                  scaled)
