@@ -1,13 +1,11 @@
 
 export  PhyPolyHermite, Cphy, degree, PhyPolyH, phyhermite_coeffmatrix,
-        gradient, hessian
+        derivative, vander
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct PhyPolyHermite{m} <: PolyHermite
     P::ImmutablePolynomial
-    Pprime::ImmutablePolynomial
-    Ppprime::ImmutablePolynomial
     scale::Bool
 end
 # Hn(x)  = (-1)ⁿ*exp(x²)dⁿ/dxⁿ exp(-x²)
@@ -64,47 +62,44 @@ const PhyPolyH = phyhermite_coeffmatrix(20)
 function PhyPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
     if scaled ==false
-        if m==0
-            return PhyPolyHermite{m}(ImmutablePolynomial(1.0),
-                                 ImmutablePolynomial(0.0),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        elseif m==1
-            return PhyPolyHermite{m}(ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(2*m*view(PhyPolyH,m,1:m)),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        else
-            return PhyPolyHermite{m}(ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(2*m*view(PhyPolyH,m,1:m)),
-                                 ImmutablePolynomial(4*m*(m-1)*view(PhyPolyH,m-1,1:m-1)),
-                                 scaled)
-        end
+            return PhyPolyHermite{m}(ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)), scaled)
     else
         C = 1/Cphy(m)
-        if m==0
-            return PhyPolyHermite{m}(ImmutablePolynomial(C),
-                                 ImmutablePolynomial(0.0),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        elseif m==1
-            return PhyPolyHermite{m}(ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(C*2*m*view(PhyPolyH,m,1:m)),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        else
-            return PhyPolyHermite{m}(ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(C*2*m*view(PhyPolyH,m,1:m)),
-                                 ImmutablePolynomial(C*4*m*(m-1)*view(PhyPolyH,m-1,1:m-1)),
-                                 scaled)
-        end
+            return PhyPolyHermite{m}(ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)), scaled)
+    end
+end
 
+(P::PhyPolyHermite{m})(x) where {m} = P.P(x)
+
+const FamilyPhyHermite = map(i->PhyPolyHermite(i),0:20)
+
+# Compute the k-th derivative of a physicist Hermite polynomial
+function derivative(P::PhyPolyHermite{m}, k::Int64; scaled::Bool = false) where {m}
+    @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
+    if m>=k
+        factor = 2^k*exp(loggamma(m+1) - loggamma(m+1-k))
+        if scaled == false
+            return ImmutablePolynomial(factor*PhyPolyH[m-k+1,1:m-k+1])
+        else
+            return ImmutablePolynomial(sqrt(factor)*PhyPolyH[m-k+1,1:m-k+1])
+        end
+    else
+        return ImmutablePolynomial((0.0))
     end
 end
 
 
-(P::PhyPolyHermite{m})(x) where {m} = P.P(x)
+# For next week, the question is should we use the Family of polynomials  evaluate at the samples and just multiply by the constant
+# seems to be faster !! than recomputing the derivative
 
-gradient(P::PhyPolyHermite{m}, x) where {m} = P.Pprime(x)
+function vander(m::Int64, k::Int64, x; scaled::Bool=false)
+    N = size(x,1)
+    dV = zeros(N, m+1)
 
-hessian(P::PhyPolyHermite{m}, x) where {m} = P.Ppprime(x)
+    @inbounds for i=0:m
+
+        col .= Famil
+
+    end
+
+end
