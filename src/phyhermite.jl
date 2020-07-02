@@ -1,10 +1,10 @@
 
-export  PhyHermite, Cphy, degree, PhyH, phyhermite_coeffmatrix,
+export  PhyPolyHermite, Cphy, degree, PhyPolyH, phyhermite_coeffmatrix,
         gradient, hessian
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
-struct PhyHermite{m} <: Hermite
+struct PhyPolyHermite{m} <: Hermite
     P::ImmutablePolynomial
     Pprime::ImmutablePolynomial
     Ppprime::ImmutablePolynomial
@@ -15,9 +15,9 @@ end
 # Hn″(x) = 2n*(n-1)*Hn-1(x)
 
 Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
-Cphy(P::PhyHermite{m}) where {m} = Cphy(m)
+Cphy(P::PhyPolyHermite{m}) where {m} = Cphy(m)
 
-degree(P::PhyHermite{m}) where {m} = m
+degree(P::PhyPolyHermite{m}) where {m} = m
 
 # Adapted https://people.sc.fsu.edu/~jburkardt/m_src/hermite_polynomial/h_polynomial_coefficients.m
 
@@ -59,43 +59,43 @@ function phyhermite_coeffmatrix(m::Int64)
 end
 
 
-const PhyH = phyhermite_coeffmatrix(20)
+const PhyPolyH = phyhermite_coeffmatrix(20)
 
-function PhyHermite(m::Int64;scaled::Bool= false)
+function PhyPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
     if scaled ==false
         if m==0
-            return PhyHermite{m}(ImmutablePolynomial(1.0),
+            return PhyPolyHermite{m}(ImmutablePolynomial(1.0),
                                  ImmutablePolynomial(0.0),
                                  ImmutablePolynomial(0.0),
                                  scaled)
         elseif m==1
-            return PhyHermite{m}(ImmutablePolynomial(view(PhyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(2*m*view(PhyH,m,1:m)),
+            return PhyPolyHermite{m}(ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)),
+                                 ImmutablePolynomial(2*m*view(PhyPolyH,m,1:m)),
                                  ImmutablePolynomial(0.0),
                                  scaled)
         else
-            return PhyHermite{m}(ImmutablePolynomial(view(PhyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(2*m*view(PhyH,m,1:m)),
-                                 ImmutablePolynomial(4*m*(m-1)*view(PhyH,m-1,1:m-1)),
+            return PhyPolyHermite{m}(ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)),
+                                 ImmutablePolynomial(2*m*view(PhyPolyH,m,1:m)),
+                                 ImmutablePolynomial(4*m*(m-1)*view(PhyPolyH,m-1,1:m-1)),
                                  scaled)
         end
     else
         C = 1/Cphy(m)
         if m==0
-            return PhyHermite{m}(ImmutablePolynomial(C),
+            return PhyPolyHermite{m}(ImmutablePolynomial(C),
                                  ImmutablePolynomial(0.0),
                                  ImmutablePolynomial(0.0),
                                  scaled)
         elseif m==1
-            return PhyHermite{m}(ImmutablePolynomial(C*view(PhyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(C*2*m*view(PhyH,m,1:m)),
+            return PhyPolyHermite{m}(ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)),
+                                 ImmutablePolynomial(C*2*m*view(PhyPolyH,m,1:m)),
                                  ImmutablePolynomial(0.0),
                                  scaled)
         else
-            return PhyHermite{m}(ImmutablePolynomial(C*view(PhyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(C*2*m*view(PhyH,m,1:m)),
-                                 ImmutablePolynomial(C*4*m*(m-1)*view(PhyH,m-1,1:m-1)),
+            return PhyPolyHermite{m}(ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)),
+                                 ImmutablePolynomial(C*2*m*view(PhyPolyH,m,1:m)),
+                                 ImmutablePolynomial(C*4*m*(m-1)*view(PhyPolyH,m-1,1:m-1)),
                                  scaled)
         end
 
@@ -103,8 +103,8 @@ function PhyHermite(m::Int64;scaled::Bool= false)
 end
 
 
-(P::PhyHermite{m})(x) where {m} = P.P(x)
+(P::PhyPolyHermite{m})(x) where {m} = P.P(x)
 
-gradient(P::PhyHermite{m}, x) where {m} = P.Pprime(x)
+gradient(P::PhyPolyHermite{m}, x) where {m} = P.Pprime(x)
 
-hessian(P::PhyHermite{m}, x) where {m} = P.Ppprime(x)
+hessian(P::PhyPolyHermite{m}, x) where {m} = P.Ppprime(x)

@@ -5,24 +5,24 @@
 
 x = randn()
 
-P0 = ProHermite(0)
+P0 = ProPolyHermite(0)
 @test P0(x) == 1.0
 @test gradient(P0, x) == 0.0
 @test hessian(P0, x)  == 0.0
 
-P0 = ProHermite(0; scaled = true)
+P0 = ProPolyHermite(0; scaled = true)
 @test P0(x) == 1/sqrt(sqrt(2*π))
 @test P0(x) == 1/Cpro(0)
 @test gradient(P0, x) == 0.0
 @test hessian(P0, x)  == 0.0
 
 
-P1 = ProHermite(1)
+P1 = ProPolyHermite(1)
 @test P1(x) == x
 @test gradient(P1, x) == 1.0
 @test hessian(P1, x)  == 0.0
 
-P1 = ProHermite(1; scaled = true)
+P1 = ProPolyHermite(1; scaled = true)
 @test abs(P1(x) - x/sqrt(sqrt(2*π)*factorial(1)))<1e-10
 @test abs(gradient(P1, x) - 1.0/sqrt(sqrt(2*π)factorial(1)))<1e-10
 @test hessian(P1, x)  == 0.0
@@ -35,9 +35,9 @@ P1 = ProHermite(1; scaled = true)
 nodes, weights = gausshermite( 100000 )
 
 for i=1:15
-    Pmm1 = ProHermite(i-1)
-    Pm = ProHermite(i)
-    Pmp1 = ProHermite(i+1)
+    Pmm1 = ProPolyHermite(i-1)
+    Pm = ProPolyHermite(i)
+    Pmp1 = ProPolyHermite(i+1)
     z = -1.25
 
     @test abs(Pmp1(z) - (z*Pm(z) - Pm.Pprime(z)))<1e-8
@@ -58,15 +58,15 @@ end
 x = randn()
 
 
-@test norm([ProHermite(10).P.coeffs...] - [-945.0, 0.0, 4725.0, 0.0, -3150.0, 0.0, 630.0, 0.0, -45.0, 0.0, 1.0])<1e-10
+@test norm([ProPolyHermite(10).P.coeffs...] - [-945.0, 0.0, 4725.0, 0.0, -3150.0, 0.0, 630.0, 0.0, -45.0, 0.0, 1.0])<1e-10
 
 
-P10 = ProHermite(10)
+P10 = ProPolyHermite(10)
 
 @test abs(P10(-1.25) -  dot([-945.0, 0.0, 4725.0, 0.0, -3150.0, 0.0, 630.0, 0.0, -45.0, 0.0, 1.0], map(i->(-1.25)^i,0:10)))<1e-10
 
-@test norm([ProHermite(10).Pprime.coeffs...] - [Polynomials.derivative(ProHermite(10).P).coeffs...])<1e-10
-@test norm([ProHermite(10).Ppprime.coeffs...] - [Polynomials.derivative(Polynomials.derivative(ProHermite(10).P)).coeffs...])<1e-10
+@test norm([ProPolyHermite(10).Pprime.coeffs...] - [Polynomials.derivative(ProPolyHermite(10).P).coeffs...])<1e-10
+@test norm([ProPolyHermite(10).Ppprime.coeffs...] - [Polynomials.derivative(Polynomials.derivative(ProPolyHermite(10).P)).coeffs...])<1e-10
 
 
 
@@ -77,9 +77,8 @@ P10 = ProHermite(10)
 x = -0.5:0.1:0.5
 
 for i=1:6
-    @show i
-    Hi  = PhyHermite(i)
-    Hei = ProHermite(i)
+    Hi  = PhyPolyHermite(i)
+    Hei = ProPolyHermite(i)
     for xi in x
         @test abs(Hi(xi)-(2^(i/2)*Hei(sqrt(2)*xi)))<1e-8
         @test abs(Hei(xi)-(2^(-i/2)*Hi(xi/sqrt(2))))<1e-8
