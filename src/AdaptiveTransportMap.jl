@@ -15,9 +15,18 @@ using TransportMap
 include("rectifier.jl")
 
 # Hermite Polynomials
+include("polyhermite.jl")
+include("phypolyhermite.jl")
+include("propolyhermite.jl")
+
+
+# Hermite Functions
 include("hermite.jl")
 include("phyhermite.jl")
 include("prohermite.jl")
+
+
+
 
 # Tools to apply a linear transformation
 include("scale.jl")
