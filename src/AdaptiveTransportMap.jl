@@ -17,7 +17,7 @@ include("rectifier.jl")
 # Hermite Polynomials
 include("hermite.jl")
 include("phyhermite.jl")
-# include("prohermite.jl")
+include("prohermite.jl")
 
 # Tools to apply a linear transformation
 include("scale.jl")

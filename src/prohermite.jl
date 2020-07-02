@@ -1,12 +1,23 @@
-# Define probabilistic hermite polynomials
 
-export ProHermite, normalize, prohermite_coeffmatrix, ProH
+export  ProHermite, Cpro, degree, ProH, prohermite_coeffmatrix,
+        gradient, hessian
 
+
+# Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct ProHermite{m} <: Hermite
+    P::ImmutablePolynomial
+    Pprime::ImmutablePolynomial
+    Ppprime::ImmutablePolynomial
+    scale::Bool
 end
+# Hen(x)  = (-1)ⁿ*exp(x²/2)dⁿ/dxⁿ exp(-x²/2)
+# Hen′(x) = n*Hen-1(x)
+# Hen″(x) = n*(n-1)*Hen-1(x)
 
-# Need to modify this line
-normalize(P::ProHermite{m}) where {m} = sqrt(sqrt(2*π)*gamma(m+1))
+Cpro(m::Int64) =sqrt(sqrt(2*π) * gamma(m+1))
+Cpro(P::ProHermite{m}) where {m} = Cpro(m)
+
+degree(P::ProHermite{m}) where {m} = m
 
 # Adapted https://people.sc.fsu.edu/~jburkardt/m_src/hermite_polynomial/h_polynomial_coefficients.m
 
@@ -15,8 +26,10 @@ normalize(P::ProHermite{m}) where {m} = sqrt(sqrt(2*π)*gamma(m+1))
 #
 #    Output, real C(1:N+1,1:N+1), the coefficients of the Hermite
 #    polynomials.
-function prohermite_coeffmatrix(m::Int64)
 
+# Recurrence relation:
+# Hen+1 = x*Hen - n*Hen-1
+function prohermite_coeffmatrix(m::Int64)
 
     if m < 0
         return Float64[]
@@ -35,13 +48,12 @@ function prohermite_coeffmatrix(m::Int64)
         return coeff
     end
 
-
     for i  = 2:m
-        coeff[i+1, 1]      =      -(i - 1) * coeff[i-1, 1]
-        coeff[i+1, 2:i-1]  =                 coeff[i  , 1:i-2] -
-                                   (i - 1) * coeff[i-1, 2:i-1]
-        coeff[i+1, i]      =                 coeff[i  , i-1]
-        coeff[i+1, i+1]    =                 coeff[i  , i]
+        coeff[i+1, 1]      =  -      (i - 1) * coeff[i-1, 1]
+        coeff[i+1, 2:i-1]  =                   coeff[i  , 1:i-2] -
+                                     (i - 1) * coeff[i-1, 2:i-1]
+        coeff[i+1, i]      =                   coeff[i  , i-1]
+        coeff[i+1, i+1]    =                   coeff[i  , i]
     end
     return coeff
 end
@@ -49,5 +61,50 @@ end
 
 const ProH = prohermite_coeffmatrix(20)
 
-prohermite(m::Int64) = Polynomial(Tuple(view(ProH,m,1:m+1)))
-prohermite(m::Int64, coeff::Array{Float64,2}) = Polynomial(Tuple(coeff[m,1:m+1]))
+function ProHermite(m::Int64;scaled::Bool= false)
+    @assert m>=0 "The order of the polynomial should be >=0"
+    if scaled ==false
+        if m==0
+            return ProHermite{m}(ImmutablePolynomial(1.0),
+                                 ImmutablePolynomial(0.0),
+                                 ImmutablePolynomial(0.0),
+                                 scaled)
+        elseif m==1
+            return ProHermite{m}(ImmutablePolynomial(view(ProH,m+1,1:m+1)),
+                                 ImmutablePolynomial(m*view(ProH,m,1:m)),
+                                 ImmutablePolynomial(0.0),
+                                 scaled)
+        else
+            return ProHermite{m}(ImmutablePolynomial(view(ProH,m+1,1:m+1)),
+                                 ImmutablePolynomial(m*view(ProH,m,1:m)),
+                                 ImmutablePolynomial(m*(m-1)*view(ProH,m-1,1:m-1)),
+                                 scaled)
+        end
+    else
+        C = 1/Cpro(m)
+        if m==0
+            return ProHermite{m}(ImmutablePolynomial(C),
+                                 ImmutablePolynomial(0.0),
+                                 ImmutablePolynomial(0.0),
+                                 scaled)
+        elseif m==1
+            return ProHermite{m}(ImmutablePolynomial(C*view(ProH,m+1,1:m+1)),
+                                 ImmutablePolynomial(C*m*view(ProH,m,1:m)),
+                                 ImmutablePolynomial(0.0),
+                                 scaled)
+        else
+            return ProHermite{m}(ImmutablePolynomial(C*view(ProH,m+1,1:m+1)),
+                                 ImmutablePolynomial(C*m*view(ProH,m,1:m)),
+                                 ImmutablePolynomial(C*m*(m-1)*view(ProH,m-1,1:m-1)),
+                                 scaled)
+        end
+
+    end
+end
+
+
+(P::ProHermite{m})(x) where {m} = P.P(x)
+
+gradient(P::ProHermite{m}, x) where {m} = P.Pprime(x)
+
+hessian(P::ProHermite{m}, x) where {m} = P.Ppprime(x)

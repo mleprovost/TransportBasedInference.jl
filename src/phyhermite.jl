@@ -1,5 +1,5 @@
 
-export  PhyHermite, Cphy, normalize, degree, PhyH, phyhermite_coeffmatrix,
+export  PhyHermite, Cphy, degree, PhyH, phyhermite_coeffmatrix,
         gradient, hessian
 
 
@@ -77,7 +77,7 @@ function PhyHermite(m::Int64;scaled::Bool= false)
         else
             return PhyHermite{m}(ImmutablePolynomial(view(PhyH,m+1,1:m+1)),
                                  ImmutablePolynomial(2*m*view(PhyH,m,1:m)),
-                                 ImmutablePolynomial(2*m*(m-1)*view(PhyH,m-1,1:m-1)),
+                                 ImmutablePolynomial(4*m*(m-1)*view(PhyH,m-1,1:m-1)),
                                  scaled)
         end
     else
@@ -95,7 +95,7 @@ function PhyHermite(m::Int64;scaled::Bool= false)
         else
             return PhyHermite{m}(ImmutablePolynomial(C*view(PhyH,m+1,1:m+1)),
                                  ImmutablePolynomial(C*2*m*view(PhyH,m,1:m)),
-                                 ImmutablePolynomial(C*2*m*(m-1)*view(PhyH,m-1,1:m-1)),
+                                 ImmutablePolynomial(C*4*m*(m-1)*view(PhyH,m-1,1:m-1)),
                                  scaled)
         end
 

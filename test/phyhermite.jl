@@ -1,4 +1,4 @@
-
+using Polynomials
 
 @testset "Test physical Hermite polynomials"   begin
 
@@ -12,6 +12,7 @@ P0 = PhyHermite(0)
 
 P0 = PhyHermite(0; scaled = true)
 @test P0(x) == 1/sqrt(sqrt(π))
+@test Cphy(0) == sqrt(sqrt(π))
 @test gradient(P0, x) == 0.0
 @test hessian(P0, x)  == 0.0
 
@@ -44,7 +45,7 @@ for i=1:15
 
     @test abs(gradient(Pm, z) - 2*i*Pmm1(z))<1e-8
 
-    @test abs(hessian(Pmp1, z) - 2*(i+1)*(i)*Pmm1(z))<1e-8
+    @test abs(hessian(Pmp1, z) - 4*(i+1)*(i)*Pmm1(z))<1e-8
 
 
     # Verify normalizing constant:
@@ -63,8 +64,9 @@ end
 
 x = randn()
 
-
 @test norm([PhyHermite(10).P.coeffs...] - [-30240.0, 0.0, 302400, 0.0, -403200.0, 0.0, 161280, 0.0, -23040, 0.0, 1024])<1e-10
+@test norm([PhyHermite(10).Pprime.coeffs...] - [Polynomials.derivative(PhyHermite(10).P).coeffs...])<1e-10
+@test norm([PhyHermite(10).Ppprime.coeffs...] - [Polynomials.derivative(Polynomials.derivative(PhyHermite(10).P)).coeffs...])<1e-10
 
 
 P10 = PhyHermite(10)
@@ -84,6 +86,13 @@ for i=1:6
     @test abs(dot(weights, Pm.P.(nodes).*Pmm1.P.(nodes)))<1e-8
     @test abs(dot(weights, Pmp1.P.(nodes).*Pmm1.P.(nodes)))<1e-8
 end
+
+P12 = PhyHermite(12;  scaled=true)
+@test norm([P12.Pprime.coeffs...] - [Polynomials.derivative(P12.P).coeffs...])<1e-10
+@test norm([P12.Ppprime.coeffs...] - [Polynomials.derivative(Polynomials.derivative(P12.P)).coeffs...])<1e-10
+
+
+
 
 
 
