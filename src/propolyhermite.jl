@@ -1,14 +1,13 @@
 
 export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
-        gradient, hessian
+        FamilyProHermite, FamilyScaledProHermite,
+        derivative, vander
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct ProPolyHermite{m} <: PolyHermite
     P::ImmutablePolynomial
-    Pprime::ImmutablePolynomial
-    Ppprime::ImmutablePolynomial
-    scale::Bool
+    scaled::Bool
 end
 # Hen(x)  = (-1)ⁿ*exp(x²/2)dⁿ/dxⁿ exp(-x²/2)
 # Hen′(x) = n*Hen-1(x)
@@ -64,47 +63,58 @@ const ProPolyH = prohermite_coeffmatrix(20)
 function ProPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
     if scaled ==false
-        if m==0
-            return ProPolyHermite{m}(ImmutablePolynomial(1.0),
-                                 ImmutablePolynomial(0.0),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        elseif m==1
-            return ProPolyHermite{m}(ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(m*view(ProPolyH,m,1:m)),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        else
-            return ProPolyHermite{m}(ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(m*view(ProPolyH,m,1:m)),
-                                 ImmutablePolynomial(m*(m-1)*view(ProPolyH,m-1,1:m-1)),
-                                 scaled)
-        end
+            return ProPolyHermite{m}(ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)), scaled)
     else
         C = 1/Cpro(m)
-        if m==0
-            return ProPolyHermite{m}(ImmutablePolynomial(C),
-                                 ImmutablePolynomial(0.0),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        elseif m==1
-            return ProPolyHermite{m}(ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(C*m*view(ProPolyH,m,1:m)),
-                                 ImmutablePolynomial(0.0),
-                                 scaled)
-        else
-            return ProPolyHermite{m}(ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)),
-                                 ImmutablePolynomial(C*m*view(ProPolyH,m,1:m)),
-                                 ImmutablePolynomial(C*m*(m-1)*view(ProPolyH,m-1,1:m-1)),
-                                 scaled)
-        end
+            return ProPolyHermite{m}(ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)), scaled)
+    end
+end
 
+(P::ProPolyHermite{m})(x) where {m} = P.P(x)
+
+const FamilyProHermite = map(i->ProPolyHermite(i),0:20)
+const FamilyScaledProHermite = map(i->ProPolyHermite(i; scaled = true),0:20)
+
+
+# Compute the k-th derivative of a physicist Hermite polynomial according to
+# H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
+function derivative(P::ProPolyHermite{m}, k::Int64) where {m}
+    @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
+    if m>=k
+        factor = exp(loggamma(m+1) - loggamma(m+1-k))
+        if P.scaled == false
+            return ImmutablePolynomial(factor*ProPolyH[m-k+1,1:m-k+1])
+        else
+            C = 1/Cpro(m)
+            return ImmutablePolynomial(factor*C*ProPolyH[m-k+1,1:m-k+1])
+        end
+    else
+        return ImmutablePolynomial((0.0))
     end
 end
 
 
-(P::ProPolyHermite{m})(x) where {m} = P.P(x)
+# For next week, the question is should we use the Family of polynomials  evaluate at the samples and just multiply by the constant
+# seems to be faster !! than recomputing the derivative
 
-gradient(P::ProPolyHermite{m}, x) where {m} = P.Pprime(x)
+# H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
 
-hessian(P::ProPolyHermite{m}, x) where {m} = P.Ppprime(x)
+function vander(P::ProPolyHermite{n}, m::Int64, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {n}
+    N = size(x,1)
+    dV = zeros(N, m+1)
+
+    @inbounds for i=0:m
+        col = view(dV,:,i+1)
+
+        # Store the k-th derivative of the i-th order Hermite polynomial
+        if scaled == false
+            Pik = derivative(FamilyProHermite[i+1], k)
+            col .= Pik.(x)
+        else
+            Pik = derivative(FamilyScaledProHermite[i+1], k)
+            factor = exp(loggamma(i+1) - loggamma(i+1-k))
+            col .= Pik.(x)*(1/sqrt(factor))
+        end
+    end
+    return dV
+end

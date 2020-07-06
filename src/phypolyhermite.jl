@@ -99,7 +99,7 @@ end
 
 # H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
 
-function vander(m::Int64, k::Int64, x::Array{Float64,1}; scaled::Bool=false)
+function vander(P::PhyPolyHermite{n},m::Int64, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {n}
     N = size(x,1)
     dV = zeros(N, m+1)
 
