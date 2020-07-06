@@ -1,6 +1,6 @@
 
 export  PhyPolyHermite, Cphy, degree, PhyPolyH, phyhermite_coeffmatrix,
-        FamilyPhyHermite, FamilyScaledPhyHermite,
+        FamilyPhyPolyHermite, FamilyScaledPhyPolyHermite,
         derivative, vander
 
 
@@ -72,8 +72,8 @@ end
 
 (P::PhyPolyHermite{m})(x) where {m} = P.P(x)
 
-const FamilyPhyHermite = map(i->PhyPolyHermite(i),0:20)
-const FamilyScaledPhyHermite = map(i->PhyPolyHermite(i; scaled = true),0:20)
+const FamilyPhyPolyHermite = map(i->PhyPolyHermite(i),0:20)
+const FamilyScaledPhyPolyHermite = map(i->PhyPolyHermite(i; scaled = true),0:20)
 
 
 # Compute the k-th derivative of a physicist Hermite polynomial according to
@@ -108,10 +108,10 @@ function vander(P::PhyPolyHermite{n},m::Int64, k::Int64, x::Array{Float64,1}; sc
 
         # Store the k-th derivative of the i-th order Hermite polynomial
         if scaled == false
-            Pik = derivative(FamilyPhyHermite[i+1], k)
+            Pik = derivative(FamilyPhyPolyHermite[i+1], k)
             col .= Pik.(x)
         else
-            Pik = derivative(FamilyScaledPhyHermite[i+1], k)
+            Pik = derivative(FamilyScaledPhyPolyHermite[i+1], k)
             factor = 2^k*exp(loggamma(i+1) - loggamma(i+1-k))
             col .= Pik.(x)*(1/sqrt(factor))
         end

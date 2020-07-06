@@ -101,9 +101,9 @@ for i=1:6
     # Check derivatives
     z = 0.25
     @test abs(derivative(Pm, 0)(z) - Pm(z))<1e-7
-    @test abs(derivative(Pm, 1)(z) - 2*i*(1/Cphy(i))*FamilyPhyHermite[i](z))<1e-7
+    @test abs(derivative(Pm, 1)(z) - 2*i*(1/Cphy(i))*FamilyPhyPolyHermite[i](z))<1e-7
 
-    @test abs(derivative(Pmp1, 2)(z) - 4*(i+1)*(i)*(1/Cphy(i+1))*FamilyPhyHermite[i](z))<1e-7
+    @test abs(derivative(Pmp1, 2)(z) - 4*(i+1)*(i)*(1/Cphy(i+1))*FamilyPhyPolyHermite[i](z))<1e-7
 end
 
 P12 = PhyPolyHermite(12;  scaled=true)
@@ -126,7 +126,7 @@ end
     @test size(V)==(N, m+1)
 
     for i=0:m
-        @test norm(V[:,i+1] - (FamilyPhyHermite[i+1]).(x))<1e-8
+        @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i+1]).(x))<1e-8
     end
 
     # k = 0: check simple polynomial evaluation with scaled = true
@@ -142,7 +142,7 @@ end
     for i=0:m
         factor = 2^k*exp(loggamma(i+1) - loggamma(i+1-k))
 
-        @test norm(V[:,i+1] - (FamilyScaledPhyHermite[i+1]).(x)*sqrt(factor))<1e-8
+        @test norm(V[:,i+1] - (FamilyScaledPhyPolyHermite[i+1]).(x)*sqrt(factor))<1e-8
     end
 
     # k = 1: check first derivative
@@ -156,7 +156,7 @@ end
     @test size(V)==(N, m+1)
 
     for i=1:m
-        @test norm(V[:,i+1] - (FamilyPhyHermite[i]).(x)*2*i)<1e-8
+        @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i]).(x)*2*i)<1e-8
     end
 
     # # k = 1: check first derivative scaled = true
@@ -172,7 +172,7 @@ end
     # for i=1:m
     #     factor = 2^k*exp(loggamma(i+1) - loggamma(i+1-k))
     #
-    #     @test norm(V[:,i+1] - (FamilyPhyHermite[i]).(x)*sqrt(factor))<1e-8
+    #     @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i]).(x)*sqrt(factor))<1e-8
     # end
 
 
@@ -187,8 +187,8 @@ end
     @test size(V)==(N, m+1)
 
     for i=2:m
-        @test norm(V[:,i+1] - (FamilyPhyHermite[i-1]).(x)*2*i*2*(i-1))<1e-8
-        @test norm(V[:,i+1] - (FamilyPhyHermite[i-1]).(x)*2^k*factorial(i)/factorial(i-k))<1e-8
+        @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-1]).(x)*2*i*2*(i-1))<1e-8
+        @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-1]).(x)*2^k*factorial(i)/factorial(i-k))<1e-8
 
     end
 #
@@ -203,8 +203,8 @@ end
 #     @test size(V)==(N, m+1)
 #
 #     for i=2:m
-#         @test norm(V[:,i+1] - (FamilyPhyHermite[i-1]).(x)*2*i*2*(i-1)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
-#         @test norm(V[:,i+1] - (FamilyPhyHermite[i-1]).(x)*2^k*factorial(i)/factorial(i-k)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
+#         @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-1]).(x)*2*i*2*(i-1)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
+#         @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-1]).(x)*2^k*factorial(i)/factorial(i-k)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
 #
 #     end
 #
@@ -219,8 +219,8 @@ end
     @test size(V)==(N, m+1)
 
     for i=3:m
-        @test norm(V[:,i+1] - (FamilyPhyHermite[i-2]).(x)*2*i*2*(i-1)*2*(i-2))<1e-6
-        @test norm(V[:,i+1] - (FamilyPhyHermite[i-2]).(x)*2^k*factorial(i)/factorial(i-k))<1e-6
+        @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-2]).(x)*2*i*2*(i-1)*2*(i-2))<1e-6
+        @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-2]).(x)*2^k*factorial(i)/factorial(i-k))<1e-6
 
     end
 
@@ -236,8 +236,8 @@ end
 #     # @test size(V)==(N, m+1)
 #     #
 #     # for i=3:m
-#     #     @test norm(V[:,i+1] - (FamilyPhyHermite[i-2]).(x)*2*i*2*(i-1)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
-#     #     @test norm(V[:,i+1] - (FamilyPhyHermite[i-2]).(x)*2^k*factorial(i)/factorial(i-k)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
+#     #     @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-2]).(x)*2*i*2*(i-1)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
+#     #     @test norm(V[:,i+1] - (FamilyPhyPolyHermite[i-2]).(x)*2^k*factorial(i)/factorial(i-k)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
 #     #
 #     # end
 #

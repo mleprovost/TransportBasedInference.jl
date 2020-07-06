@@ -10,7 +10,7 @@ using ForwardDiff
 using Polynomials
 using TransportMap
 
-
+include("tools.jl")
 
 include("rectifier.jl")
 
