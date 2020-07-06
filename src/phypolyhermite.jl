@@ -1,12 +1,13 @@
 
 export  PhyPolyHermite, Cphy, degree, PhyPolyH, phyhermite_coeffmatrix,
+        FamilyPhyHermite, FamilyScaledPhyHermite,
         derivative, vander
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct PhyPolyHermite{m} <: PolyHermite
     P::ImmutablePolynomial
-    scale::Bool
+    scaled::Bool
 end
 # Hn(x)  = (-1)ⁿ*exp(x²)dⁿ/dxⁿ exp(-x²)
 # Hn′(x) = 2n*Hn-1(x)
@@ -72,16 +73,20 @@ end
 (P::PhyPolyHermite{m})(x) where {m} = P.P(x)
 
 const FamilyPhyHermite = map(i->PhyPolyHermite(i),0:20)
+const FamilyScaledPhyHermite = map(i->PhyPolyHermite(i; scaled = true),0:20)
 
-# Compute the k-th derivative of a physicist Hermite polynomial
-function derivative(P::PhyPolyHermite{m}, k::Int64; scaled::Bool = false) where {m}
+
+# Compute the k-th derivative of a physicist Hermite polynomial according to
+# H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
+function derivative(P::PhyPolyHermite{m}, k::Int64) where {m}
     @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
     if m>=k
         factor = 2^k*exp(loggamma(m+1) - loggamma(m+1-k))
-        if scaled == false
+        if P.scaled == false
             return ImmutablePolynomial(factor*PhyPolyH[m-k+1,1:m-k+1])
         else
-            return ImmutablePolynomial(sqrt(factor)*PhyPolyH[m-k+1,1:m-k+1])
+            C = 1/Cphy(m)
+            return ImmutablePolynomial(factor*C*PhyPolyH[m-k+1,1:m-k+1])
         end
     else
         return ImmutablePolynomial((0.0))
@@ -92,14 +97,24 @@ end
 # For next week, the question is should we use the Family of polynomials  evaluate at the samples and just multiply by the constant
 # seems to be faster !! than recomputing the derivative
 
-function vander(m::Int64, k::Int64, x; scaled::Bool=false)
+# H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
+
+function vander(m::Int64, k::Int64, x::Array{Float64,1}; scaled::Bool=false)
     N = size(x,1)
     dV = zeros(N, m+1)
 
     @inbounds for i=0:m
+        col = view(dV,:,i+1)
 
-        col .= Famil
-
+        # Store the k-th derivative of the i-th order Hermite polynomial
+        if scaled == false
+            Pik = derivative(FamilyPhyHermite[i+1], k)
+            col .= Pik.(x)
+        else
+            Pik = derivative(FamilyScaledPhyHermite[i+1], k)
+            factor = 2^k*exp(loggamma(i+1) - loggamma(i+1-k))
+            col .= Pik.(x)*(1/sqrt(factor))
+        end
     end
-
+    return dV
 end

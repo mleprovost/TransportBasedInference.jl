@@ -5,10 +5,11 @@ using TransportMap
 using AdaptiveTransportMap
 using ForwardDiff
 using FastGaussQuadrature
+using SpecialFunctions
 
 include("rectifier.jl")
-include("phyhermite.jl")
-include("prohermite.jl")
+include("phypolyhermite.jl")
+# include("propolyhermite.jl")
 
 
 include("scale.jl")
