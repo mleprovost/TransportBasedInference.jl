@@ -110,7 +110,7 @@ end
     k = 0
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(0), m, k, x)
+    V = vander(ProPolyHermite(m), k, x)
 
     @test size(V)==(N, m+1)
 
@@ -124,7 +124,7 @@ end
     k = 0
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(0), m, k, x; scaled = true)
+    V = vander(ProPolyHermite(m), k, x; scaled = true)
 
     @test size(V)==(N, m+1)
 
@@ -140,7 +140,7 @@ end
     k = 1
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(0), m, k, x)
+    V = vander(ProPolyHermite(m), k, x)
 
     @test size(V)==(N, m+1)
 
@@ -171,7 +171,7 @@ end
     k = 2
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(0), m, k, x)
+    V = vander(ProPolyHermite(m), k, x)
 
     @test size(V)==(N, m+1)
 
@@ -203,7 +203,7 @@ end
     k = 3
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(0), m, k, x)
+    V = vander(ProPolyHermite(m), k, x)
 
     @test size(V)==(N, m+1)
 

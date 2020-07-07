@@ -9,6 +9,7 @@ using ForwardDiff
 # using StaticUnivariatePolynomials
 using Polynomials
 using TransportMap
+using DiffResults
 
 include("tools.jl")
 

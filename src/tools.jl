@@ -2,7 +2,7 @@
 
 export fact2
 # Compute the product of the odd or even numbers up to n
-# For
+# Double factorial
 function fact2(n::Int64)
     if n == 1 || n==0
         return 1;

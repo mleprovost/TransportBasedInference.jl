@@ -99,7 +99,7 @@ end
 
 # H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
 
-function vander(P::ProPolyHermite{n}, m::Int64, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {n}
+function vander(P::ProPolyHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {m}
     N = size(x,1)
     dV = zeros(N, m+1)
 
