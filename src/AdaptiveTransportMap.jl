@@ -27,6 +27,9 @@ include("phyhermite.jl")
 include("prohermite.jl")
 
 
+# Uni and Multi Basis function
+include("basis.jl")
+include("multibasis.jl") 
 
 
 # Tools to apply a linear transformation

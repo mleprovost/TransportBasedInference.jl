@@ -1,3 +1,3 @@
-export Hermite
-
-abstract type Hermite end
+# export Hermite
+#
+# struct Hermite <:ParamFcn end

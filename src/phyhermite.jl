@@ -6,10 +6,14 @@ export PhyHermite, degree, FamilyPhyHermite, FamilyScaledPhyHermite,
 # Create a structure to hold physicist Hermite functions defined as
 # ψn(x) = Hn(x)*exp(-x^2/2)
 
-struct PhyHermite{m} <: Hermite
+struct PhyHermite{m} <: ParamFcn
     Poly::PhyPolyHermite{m}
     scaled::Bool
 end
+
+# function Base.show(io::IO, P::PhyHermite{m}) where {m}
+# println(io,string(m)*"-th order physicist Hermite function, scaled = "*string(P.scaled))
+# end
 
 PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite{m}(PhyPolyHermite(m; scaled = scaled), scaled)
 

@@ -5,10 +5,14 @@ export  PhyPolyHermite, Cphy, degree, PhyPolyH, phyhermite_coeffmatrix,
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
-struct PhyPolyHermite{m} <: PolyHermite
+struct PhyPolyHermite{m} <: ParamFcn
     P::ImmutablePolynomial
     scaled::Bool
 end
+
+# function Base.show(io::IO, P::PhyPolyHermite{m}) where {m}
+# println(io,string(m)*"-th order physicist Hermite polynomial"*string(P.P.coeffs)*", scaled = "*string(P.scaled))
+# end
 # Hn(x)  = (-1)ⁿ*exp(x²)dⁿ/dxⁿ exp(-x²)
 # Hn′(x) = 2n*Hn-1(x)
 # Hn″(x) = 2n*(n-1)*Hn-1(x)

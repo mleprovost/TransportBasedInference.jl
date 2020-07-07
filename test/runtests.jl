@@ -16,5 +16,7 @@ include("propolyhermite.jl")
 include("phyhermite.jl")
 include("prohermite.jl")
 
+include("basis.jl")
+
 
 include("scale.jl")

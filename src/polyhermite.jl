@@ -1,3 +1,5 @@
-export PolyHermite
-
-abstract type PolyHermite end
+# export PolyHermite
+#
+# struct PolyHermite <: ParamFcn
+#
+# end

@@ -5,10 +5,15 @@ export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
-struct ProPolyHermite{m} <: PolyHermite
+struct ProPolyHermite{m} <: ParamFcn
     P::ImmutablePolynomial
     scaled::Bool
 end
+
+# function Base.show(io::IO, P::PhyPolyHermite{m}) where {m}
+# println(io,string(m)*"-th order probabilistic Hermite polynomial"*string(P.P)*", scaled = "*string(P.scaled))
+# end
+
 # Hen(x)  = (-1)ⁿ*exp(x²/2)dⁿ/dxⁿ exp(-x²/2)
 # Hen′(x) = n*Hen-1(x)
 # Hen″(x) = n*(n-1)*Hen-1(x)
