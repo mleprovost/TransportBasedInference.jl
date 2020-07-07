@@ -29,7 +29,12 @@ include("prohermite.jl")
 
 # Uni and Multi Basis function
 include("basis.jl")
-include("multibasis.jl") 
+include("multibasis.jl")
+include("multifunction.jl")
+include("expandedfunction.jl")
+
+# Integrated positive function
+include("integratedfunction.jl")
 
 
 # Tools to apply a linear transformation
