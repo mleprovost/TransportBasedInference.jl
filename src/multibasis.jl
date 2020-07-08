@@ -1,21 +1,19 @@
-import Base: size, show, @propagate_inbounds
+import Base: size
 
 export MultiBasis, Element
 
+# MultiBasis holds the Nx- cartesian product of the  1D basis of functions B
+# MB = B × B× ... × B (Nx elements)
+# The basis B contains m elements
 
-struct MultiBasis{M}
-    B::Array{Basis, 1}
-    function MultiBasis(B::Array{Basis, 1})
-        M = size(B, 1)
-        return new{M}(B)
-    end
+struct MultiBasis{m, Nx}
+    B::Basis{m}
 end
 
 
-MultiBasis(B::Basis{m}, M::Int64) where {m} = MultiBasis{M}([B for i=1:M])
+MultiBasis(B::Basis{m}, Nx::Int64) where {m} = MultiBasis{m, Nx}(B)
 
-@propagate_inbounds Base.getindex(B::MultiBasis{M},i::Int) where {M} = getindex(B.B,i)
-@propagate_inbounds Base.setindex!(B::MultiBasis{M}, v::Basis{m}, i::Int) where {M, m} = setindex!(B.B,v,i)
 
-size(B::MultiBasis{M},d::Int) where {M} = size(B.B,d)
-size(B::MultiBasis{M}) where {M} = size(B.B)
+size(B::MultiBasis{m, Nx}) where {m, Nx} = (m, Nx)
+
+# MultiBasis()

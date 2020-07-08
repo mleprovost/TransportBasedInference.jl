@@ -30,6 +30,7 @@ include("prohermite.jl")
 # Uni and Multi Basis function
 include("basis.jl")
 include("multibasis.jl")
+include("storage.jl")
 include("multifunction.jl")
 include("expandedfunction.jl")
 

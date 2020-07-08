@@ -85,7 +85,7 @@ function derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
 
 end
 
-function vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {m}
+function vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     N = size(x,1)
     dV = zeros(N, m+1)
 
@@ -93,7 +93,7 @@ function vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Bool=fa
         col = view(dV,:,i+1)
 
         # Store the k-th derivative of the i-th order Hermite polynomial
-        if scaled == false
+        if P.scaled == false
             col .= derivative(FamilyPhyHermite[i+1], k, x)
         else
             col .= derivative(FamilyScaledPhyHermite[i+1], k, x)

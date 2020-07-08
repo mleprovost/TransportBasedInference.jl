@@ -10,7 +10,7 @@ struct ProHermite{m} <: ParamFcn
     Poly::ProPolyHermite{m}
     scaled::Bool
 end
-# 
+#
 # function Base.show(io::IO, P::ProHermite{m}) where {m}
 # println(io,string(m)*"-th order probabilistic Hermite function, scaled = "*string(P.scaled))
 # end
@@ -55,7 +55,7 @@ end
 
 
 
-function vander(P::ProHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {m}
+function vander(P::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     N = size(x,1)
     dV = zeros(N, m+1)
 
@@ -63,7 +63,7 @@ function vander(P::ProHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Bool=fa
         col = view(dV,:,i+1)
 
         # Store the k-th derivative of the i-th order Hermite polynomial
-        if scaled == false
+        if P.scaled == false
             col .= derivative(FamilyProHermite[i+1], k, x)
         else
             col .= derivative(FamilyScaledProHermite[i+1], k, x)

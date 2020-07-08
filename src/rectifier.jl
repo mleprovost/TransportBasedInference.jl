@@ -20,15 +20,15 @@ end
 
 Rectifier() = Rectifier("softplus")
 
-function (r::Rectifier)(x)
-    if r.T=="squared"
+function (g::Rectifier)(x)
+    if g.T=="squared"
         return x^2
-    elseif r.T=="exponential"
+    elseif g.T=="exponential"
         return exp(x)
-    elseif r.T=="softplus"
+    elseif g.T=="softplus"
         a = log(2)
         return (log(1 + exp(-abs(a*x))) + max(a*x, 0))/a
-    elseif r.T=="explinearunit"
+    elseif g.T=="explinearunit"
         if x<0
             return exp(x)
         else
@@ -37,16 +37,16 @@ function (r::Rectifier)(x)
     end
 end
 
-function inverse(r::Rectifier, x)
+function inverse(g::Rectifier, x)
     @assert x>=0 "Input to rectifier is negative"
-    if r.T=="squared"
+    if g.T=="squared"
         error("squared rectifier is not invertible")
-    elseif r.T=="exponential"
+    elseif g.T=="exponential"
         return exp(x)
-    elseif r.T=="softplus"
+    elseif g.T=="softplus"
         a = log(2)
         return min(log(exp(a*x) - 1)/a, x)
-    elseif r.T=="explinearunit"
+    elseif g.T=="explinearunit"
         if x<1
             return log(x)
         else
@@ -55,15 +55,15 @@ function inverse(r::Rectifier, x)
     end
 end
 
-function gradient(r::Rectifier, x)
-    if r.T=="squared"
+function gradient(g::Rectifier, x)
+    if g.T=="squared"
         return 2*x
-    elseif r.T=="exponential"
+    elseif g.T=="exponential"
         return exp(x)
-    elseif r.T=="softplus"
+    elseif g.T=="softplus"
         a = log(2)
         return 1/(1 + exp(-abs(a*x)))
-    elseif r.T=="explinearunit"
+    elseif g.T=="explinearunit"
         if x<0
             return exp(x)
         else
@@ -72,15 +72,15 @@ function gradient(r::Rectifier, x)
     end
 end
 
-function hessian(r::Rectifier, x)
-    if r.T=="squared"
+function hessian(g::Rectifier, x)
+    if g.T=="squared"
         return 2.0
-    elseif r.T=="exponential"
+    elseif g.T=="exponential"
         return exp(x)
-    elseif r.T=="softplus"
+    elseif g.T=="softplus"
         a = log(2)
         return a/(2 + exp(a*x) + exp(-a*x))
-    elseif r.T=="explinearunit"
+    elseif g.T=="explinearunit"
         if x<0
             return exp(x)
         else

@@ -104,7 +104,7 @@ end
 
 # H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
 
-function vander(P::ProPolyHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Bool=false) where {m}
+function vander(P::ProPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     N = size(x,1)
     dV = zeros(N, m+1)
 
@@ -112,12 +112,16 @@ function vander(P::ProPolyHermite{m}, k::Int64, x::Array{Float64,1}; scaled::Boo
         col = view(dV,:,i+1)
 
         # Store the k-th derivative of the i-th order Hermite polynomial
-        if scaled == false
+        if P.scaled == false
             Pik = derivative(FamilyProPolyHermite[i+1], k)
             col .= Pik.(x)
         else
             Pik = derivative(FamilyScaledProPolyHermite[i+1], k)
-            factor = exp(loggamma(i+1) - loggamma(i+1-k))
+            if i>=k
+                factor = exp(loggamma(i+1) - loggamma(i+1-k))
+            else
+                factor = 1.0
+            end
             col .= Pik.(x)*(1/sqrt(factor))
         end
     end

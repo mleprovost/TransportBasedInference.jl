@@ -124,7 +124,7 @@ end
     k = 0
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(m), k, x; scaled = true)
+    V = vander(ProPolyHermite(m;scaled = true), k, x)
 
     @test size(V)==(N, m+1)
 
@@ -148,21 +148,21 @@ end
         @test norm(V[:,i+1] - (FamilyProPolyHermite[i]).(x)*i)<1e-8
     end
 
-    # # k = 1: check first derivative scaled = true
-    # N = 20
-    # m = 10
-    # k = 1
-    # x = 0.2*randn(N)
-    #
-    # V = vander(m, k, x; scaled = true)
-    #
-    # @test size(V)==(N, m+1)
-    #
-    # for i=1:m
-    #     factor = 2^k*exp(loggamma(i+1) - loggamma(i+1-k))
-    #
-    #     @test norm(V[:,i+1] - (FamilyProPolyHermite[i]).(x)*sqrt(factor))<1e-8
-    # end
+    # k = 1: check first derivative scaled = true
+    N = 20
+    m = 10
+    k = 1
+    x = 0.2*randn(N)
+
+    V = vander(ProPolyHermite(m;scaled = true), k, x)
+
+    @test size(V)==(N, m+1)
+
+    for i=1:m
+        factor = exp(loggamma(i+1) - loggamma(i+1-k))
+
+        @test norm(V[:,i+1] - (FamilyProPolyHermite[i]).(x)*sqrt(factor)*1/Cpro(i))<1e-8
+    end
 
 
     # k = 2: check second derivative
@@ -171,7 +171,7 @@ end
     k = 2
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(m), k, x)
+    V = vander(ProPolyHermite(m; scaled = false), k, x)
 
     @test size(V)==(N, m+1)
 
@@ -180,30 +180,33 @@ end
         @test norm(V[:,i+1] - (FamilyProPolyHermite[i-1]).(x)*factorial(i)/factorial(i-k))<1e-8
 
     end
-#
-#     # k = 2: check second derivative scaled = true
-#     N = 20
-#     m = 10
-#     k = 2
-#     x = 0.2*randn(N)
-#
-#     V = vander(m, k, x; scaled = true)
-#
-#     @test size(V)==(N, m+1)
-#
-#     for i=2:m
-#         @test norm(V[:,i+1] - (FamilyProPolyHermite[i-1]).(x)*2*i*2*(i-1)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
-#         @test norm(V[:,i+1] - (FamilyProPolyHermite[i-1]).(x)*2^k*factorial(i)/factorial(i-k)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
-#
-#     end
-#
+
+
+    # k = 2: check second derivative scaled = true
+    N = 20
+    m = 10
+    k = 2
+    x = 0.2*randn(N)
+
+    V = vander(ProPolyHermite(m;scaled = true), k, x)
+
+    @test size(V)==(N, m+1)
+
+    for i=2:m
+        factor = exp(loggamma(i+1) - loggamma(i+1-k))
+
+        @test norm(V[:,i+1] - (FamilyProPolyHermite[i-1]).(x)*sqrt(i*(i-1))*1/Cpro(i))<1e-8
+        @test norm(V[:,i+1] - (FamilyProPolyHermite[i-1]).(x)*sqrt(factorial(i)/factorial(i-k))*1/Cpro(i))<1e-8
+
+    end
+
     # k = 3: check third derivative
     N = 20
     m = 10
     k = 3
     x = 0.2*randn(N)
 
-    V = vander(ProPolyHermite(m), k, x)
+    V = vander(ProPolyHermite(m; scaled = false), k, x)
 
     @test size(V)==(N, m+1)
 
@@ -213,26 +216,25 @@ end
 
     end
 
-#
-#     # # k = 3: check third derivative scaled = true
-#     # N = 20
-#     # m = 10
-#     # k = 2
-#     # x = 0.2*randn(N)
-#     #
-#     # V = vander(m, k, x)
-#     #
-#     # @test size(V)==(N, m+1)
-#     #
-#     # for i=3:m
-#     #     @test norm(V[:,i+1] - (FamilyProPolyHermite[i-2]).(x)*2*i*2*(i-1)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
-#     #     @test norm(V[:,i+1] - (FamilyProPolyHermite[i-2]).(x)*2^k*factorial(i)/factorial(i-k)*sqrt(2*exp(loggamma(i+2-1)-loggamma(i+2-2))))<1e-8
-#     #
-#     # end
-#
-#
-#
-#
+    # k = 3: check third derivative scaled = true
+    N = 20
+    m = 10
+    k = 3
+    x = 0.2*randn(N)
+
+    V = vander(ProPolyHermite(m;scaled = true), k, x)
+
+    @test size(V)==(N, m+1)
+
+    for i=3:m
+        factor = exp(loggamma(i+1) - loggamma(i+1-k))
+
+        @test norm(V[:,i+1] - (FamilyProPolyHermite[i-2]).(x)*sqrt(i*(i-1)*(i-2))*1/Cpro(i))<1e-8
+        @test norm(V[:,i+1] - (FamilyProPolyHermite[i-2]).(x)*sqrt(factorial(i)/factorial(i-k))*1/Cpro(i))<1e-8
+
+    end
+
+
 end
 
 
