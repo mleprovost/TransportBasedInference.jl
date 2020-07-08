@@ -36,7 +36,7 @@ function (F::MultiFunction{m, Nx})(x::Array{T,1}) where {m, Nx, T <: Real}
     out = 1.0
     for i=1:Nx
         if F.α[i]>1
-            out *= F.B[F.α[i]](x[i])
+            out *= F.B.B[F.α[i]](x[i])
         end
     end
     return out

@@ -26,8 +26,8 @@ function (f::ExpandedFunction{Nψ, m, Nx})(x::Array{T,1}) where {Nψ, m, Nx, T <
     @assert Nx==size(x,1) "Wrong dimension of the input vector"
     out = 0.0
     @inbounds for i=1:Nψ
-        if f.c[i]!= 0.0
-            out += f.c[i]*f.ψ[i](x)
+        if f.c[i] != 0.0
+            out += f.c[i]*(f.ψ[i])(x)
         end
     end
     return out
