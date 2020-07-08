@@ -50,20 +50,16 @@ function derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
 
         for nn = 0:m
             if mod(nn,2)==0
-
                 pi_erf_c += (c[nn+1]*fact2(nn-1))
-                pi_erf_c
                 for k = 1:ceil(Int64, nn/2)
-                    exp_c[nn-2*k+1+1] += (c[nn+1]*fact2(nn-1) / fact2(nn-2*k-1))
+                    exp_c[nn-2*k+1+1] += (c[nn+1]*fact2(nn-1) / fact2(nn-2*k+1))
                 end
-                exp_c
             else
                 Cst += c[nn+1] * fact2(nn-1)
-                Cst
                 for k = 0:ceil(Int64, (nn-1)/2)
                     exp_c[nn-2*k-1+1] += (c[nn+1]*fact2(nn-1) / fact2(nn-2*k-1))
                 end
-                exp_c
+
             end
         end
         # Evaluate exponential terms
@@ -71,6 +67,7 @@ function derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
         @. ev_pi_erf = sqrt(π/2)*erf(1/sqrt(2)*x)
         ev_exp = zeros(N)
         @. ev_exp = exp(-x^2/2)
+
 
         # Evaluate x^N matrix
         ntot = size(exp_c, 1)
@@ -101,22 +98,3 @@ function vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     end
     return dV
 end
-
-
-
-# # use the recurrence relation for the k derivative
-# # \psi_m^k(x) = \sum_{i=0}^{k} (k choose i) (-1)^i *
-# #  2^((k-i)/2) * \sqrt{m!/(m-k+i)!} \psi_{m-k+i}(x) He_i(x)
-# dp = zeros(N)
-# ψ  = zeros(N)
-#     for i=max(0,k-m):k
-#         Fi  = binomial(k,i) * (-1)^i * 2^(k-i)
-#         Fi *= exp(loggamma(m+1) - loggamma(m-k+i+1))
-#
-#         ψ  .= FamilyPhyHermite[m-k+i+1].(x)
-#         dp += deepcopy(ψ .* FamilyProPolyHermite[i+1].(x))
-#     end
-# if F.scaled ==true
-#     rmul!(dp, Cphy(m))
-# end
-# return dp

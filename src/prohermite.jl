@@ -42,14 +42,13 @@ function derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
         return dF
     elseif k==-1
         # Call derivative function for PhyHermite{m}
-        dF .= derivative(FamilyPhyHermite[m+1], k, 1/sqrt(2)*x)
+        dF .= derivative(FamilyPhyHermite[m+1], k, (1/sqrt(2))*x)
         rmul!(dF, 1/sqrt(2^m))
-        rmul!(dF, 1/sqrt(2)^2)
-        return dF
+        rmul!(dF, 1/sqrt(2)^k)
         if F.scaled == true
             rmul!(dF, 1/Cpro(m))
-            return dF
         end
+        return dF
     end
 end
 

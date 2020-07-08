@@ -11,7 +11,9 @@ using Polynomials
 using TransportMap
 using DiffResults
 
-include("tools.jl")
+include("tools/tools.jl")
+include("tools/clenshaw_curtis.jl")
+include("tools/adaptiveCC.jl")
 
 include("rectifier.jl")
 

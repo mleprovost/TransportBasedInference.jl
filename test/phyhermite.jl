@@ -33,7 +33,7 @@ end
     # Scaled
     x = randn(100)
     m = 5
-    dV = vander(PhyHermite(m; scaled = false), 1, x)
+    dV = vander(PhyHermite(m; scaled = true), 1, x)
 
     for i=0:5
         @test norm(dV[:,i+1] - 1/Cphy(i)*(FamilyPhyPolyHermite[i+1].(x) .* (-x) .* exp.(-x.^2/2) +
@@ -76,4 +76,27 @@ end
 end
 
 
-# Need to write test for integration
+
+@testset "Verify integration of Physicist hermite functions" begin
+    Nx = 10
+    x = randn(10)
+
+    # Unscaled
+    dV = vander(PhyHermite(8; scaled = false), -1, x)
+
+    for i=0:8
+        for j=1:Nx
+            @test abs(dV[j,i+1] - quadgk(y-> PhyHermite(i)(y), 0.0, x[j], rtol=1e-12)[1])<1e-8
+        end
+    end
+
+    # Scaled
+    dV = vander(PhyHermite(8; scaled = true), -1, x)
+
+    for i=0:8
+        for j=1:Nx
+            @test abs(dV[j,i+1] - quadgk(y-> PhyHermite(i; scaled=true)(y), 0.0, x[j], rtol=1e-12)[1])<1e-8
+        end
+    end
+
+end
