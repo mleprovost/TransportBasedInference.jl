@@ -10,10 +10,14 @@ using ForwardDiff
 using Polynomials
 using TransportMap
 using DiffResults
+using Distributions
 
 include("tools/tools.jl")
+include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
 include("tools/adaptiveCC.jl")
+# Tools to apply a linear transformation
+include("tools/scale.jl")
 
 include("rectifier.jl")
 
@@ -40,8 +44,7 @@ include("expandedfunction.jl")
 include("integratedfunction.jl")
 
 
-# Tools to apply a linear transformation
-include("scale.jl")
+
 
 
 end # module

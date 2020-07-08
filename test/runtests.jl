@@ -11,8 +11,11 @@ using QuadGK
 
 # Tools: double factorial, adaptive integration
 include("tools/tools.jl")
+include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
 include("tools/adaptiveCC.jl")
+include("tools/scale.jl")
+
 
 
 include("rectifier.jl")
@@ -23,6 +26,3 @@ include("phyhermite.jl")
 include("prohermite.jl")
 
 include("basis.jl")
-
-
-include("scale.jl")
