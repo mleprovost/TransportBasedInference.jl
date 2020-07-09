@@ -9,28 +9,32 @@ export ExpandedFunction
 # Nψ is the number of MultiFunctions used,
 # Nx is the dimension of the input vector x
 
-struct ExpandedFunction{Nψ, m, Nx}
-    ψ::Array{MultiFunction{m, Nx},1}
+struct ExpandedFunction{m, Nx}
+    B::MultiBasis{m, Nx}
+    α::Array{Array{Int64,1}}
     c::Array{Float64,1}
-    scaled::Bool
-    function ExpandedFunction(ψ::Array{MultiFunction{m, Nx},1}, c::Array{Float64,1}; scaled::Bool=true) where {m, Nx}
-            @assert size(ψ,1) == size(c,1) "The dimension of the basis functions don't
+    function ExpandedFunction(B::MultiBasis{m, Nx}, α::Array{Array{Int64,1}}, c::Array{Float64,1}) where {m, Nx}
+            @assert size(α,1) == size(c,1) "The dimension of the basis functions don't
                                             match the number of coefficients"
-            Nψ = size(ψ,1)
-        return new{Nψ, m, Nx}(ψ, c, scaled)
+            for i=1:Nx
+                @assert size(α[i],i) == m "Size of one of the multi-index αi is wrong"
+            end
+
+        return new{m, Nx}(B, α, c)
     end
 end
 
-# Naive approach of taking the full product
-function (f::ExpandedFunction{Nψ, m, Nx})(x::Array{T,1}) where {Nψ, m, Nx, T <: Real}
-    @assert Nx==size(x,1) "Wrong dimension of the input vector"
-    out = 0.0
-    @inbounds for i=1:Nψ
-        if f.c[i] != 0.0
-            out += f.c[i]*(f.ψ[i])(x)
-        end
-    end
-    return out
-end
-
-# function
+# # Naive approach of taking the full product
+# function (f::ExpandedFunction{Nψ, m, Nx})(x::Array{T,1}) where {Nψ, m, Nx, T <: Real}
+#     @assert Nx==size(x,1) "Wrong dimension of the input vector"
+#     Nα =  size(α, 1)
+#     out = 0.0
+#     @inbounds for i=1:Nα
+#         if f.c[i] != 0.0
+#             out += f.c[i]*(f.B.B[f.α[i]])(x)
+#         end
+#     end
+#     return out
+# end
+#
+# # function

@@ -43,6 +43,9 @@ include("expandedfunction.jl")
 # Integrated positive function
 include("integratedfunction.jl")
 
+# ReducedMargin
+include("margin/reducedmargin.jl")
+
 
 
 
