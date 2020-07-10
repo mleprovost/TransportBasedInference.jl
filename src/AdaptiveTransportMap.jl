@@ -45,6 +45,8 @@ include("integratedfunction.jl")
 
 # ReducedMargin
 include("margin/reducedmargin.jl")
+include("margin/totalorder.jl")
+
 
 
 

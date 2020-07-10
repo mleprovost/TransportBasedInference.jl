@@ -1,4 +1,4 @@
-export getreducedmargin#, updatereducedmargin
+export getreducedmargin, updatereducedmargin
 
 function getreducedmargin(idx::Array{Int64,2})
 
@@ -54,4 +54,57 @@ function getreducedmargin(idx::Array{Int64,2})
     keep = Bool[all(x) for x in eachslice(ok; dims = 1)]
 
     return margin[keep,:]
+end
+
+
+function updatereducedmargin(lowerset::Array{Int64,2}, reduced_margin::Array{Int64,2}, idx::Int64)
+    d = size(lowerset, 2)
+    nr = size(reduced_margin, 1)
+    @assert idx <= nr "idx is larger than dimension of the reduced_margin"
+    newidx = reduced_margin[idx:idx,:]
+#     @show lowerset
+#     @show reduced_margin
+#     @show newidx
+    lowerset = vcat(lowerset, newidx)
+#     @show lowerset
+    # Remove the idx-th line of reducedmargin
+    toremove = Bool[!(i in idx) for i=1:nr]
+    # reduced_margin = reduced_margin[1:end .!= idx,:]
+    reduced_margin = reduced_margin[toremove,:]
+
+#     @show toremove
+#     @show reduced_margin
+
+    eye =  Matrix(1*I,d,d)
+    # Update the reduced margin
+    candidate  = repeat(newidx, outer = (d,1)) + eye
+
+#     @show candidate
+    ok = falses(d)
+#     @show ok
+
+    @inbounds for i = 1:d
+#         @show i
+#         @show repeat(candidate[i,:]', outer = (d,1))
+#         @show size(repeat(candidate[i,:]', outer = (d,1)))
+        parents_of_candidate = repeat(candidate[i,:]', outer = (d,1)) - eye
+#         @show parents_of_candidate
+        tokeep = Bool[!any(x .< 0) for x in eachslice(parents_of_candidate; dims = 1)]
+#         @show tokeep
+        parents_of_candidate = parents_of_candidate[tokeep,:]
+#         @show parents_of_candidate
+
+#         @show [any(x in eachslice(lowerset; dims = 1)) for x in eachslice(parents_of_candidate; dims = 1)]
+        ok[i] = all([any(x in eachslice(lowerset; dims = 1)) for x in eachslice(parents_of_candidate; dims = 1)])
+#        @show ok
+    end
+    #
+    candidate = candidate[ok,:]
+    #
+    # # Add the candidates to the reduced margin
+    reduced_margin = vcat(reduced_margin, candidate)
+
+    reduced_margin  = sortslices(reduced_margin; dims = 1)
+    lowerset = sortslices(lowerset; dims = 1)
+    return lowerset, reduced_margin
 end

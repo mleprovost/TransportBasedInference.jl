@@ -113,11 +113,11 @@ end
     lowerset0 = deepcopy(lowerset)
 
     for idx = 1:size(reduced_margin,1)
-        @show idx
+        # @show idx
         new_lowerset, new_reduced_margin = updatereducedmargin(lowerset, reduced_margin, idx)
-        @show reduced_margin[idx,:]
-        @show new_reduced_margin
-        @show new_lowerset
+        # @show reduced_margin[idx,:]
+        # @show new_reduced_margin
+        # @show new_lowerset
         @test lowerset == lowerset0
         @test reduced_margin == reduced_margin0
 
@@ -137,13 +137,17 @@ end
     lowerset0 = deepcopy(lowerset)
 
     for idx = 1:size(reduced_margin,1)
+        # @show idx
         new_lowerset, new_reduced_margin = updatereducedmargin(lowerset, reduced_margin, idx)
+        # @show reduced_margin[idx,:]
+        # @show new_reduced_margin
+        # @show new_lowerset
         @test lowerset == lowerset0
         @test reduced_margin == reduced_margin0
 
-        @test new_lowerset[1:end-1,:] == lowerset
-        @test new_lowerset[end,:] == reduced_margin[idx,:]
+        @test all([any(x in eachslice(new_lowerset;dims = 1)) for x in eachslice(lowerset; dims = 1)])
+        @test any(reduced_margin[idx,:] in eachslice(new_lowerset; dims = 1))
 
-        @test sortslices(new_reduced_margin;dims = 1) == getreducedmargin(new_lowerset)
+        @test new_reduced_margin == getreducedmargin(new_lowerset)
     end
 end
