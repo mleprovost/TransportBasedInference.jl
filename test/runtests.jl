@@ -7,6 +7,8 @@ using ForwardDiff
 using FastGaussQuadrature
 using SpecialFunctions
 using QuadGK
+using Random
+using Distributions
 
 
 # Tools: double factorial, adaptive integration
@@ -15,6 +17,9 @@ include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
 include("tools/adaptiveCC.jl")
 include("tools/scale.jl")
+
+# Functions to manage margins
+include("margin/reducedmargin.jl")
 
 
 
