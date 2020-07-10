@@ -3,8 +3,8 @@ import Base: size, show, @propagate_inbounds
 
 # Define the concept of basis functions, where each function is indexed by an integer
 # For instance, (1, x, ψ0, ψ1,..., ψn) defines a basis where the index:
-# 1 corresponds to the constant function
-# 2 corresponds to the linear function
+# 0 corresponds to the constant function
+# 1 corresponds to the linear function
 # n+2 corresponds to the n-th order physicist Hermite function
 
 export Basis, CstPhyHermite, CstProHermite,
@@ -14,7 +14,9 @@ export Basis, CstPhyHermite, CstProHermite,
 
 struct Basis{m}
     f::Array{ParamFcn,1}
-    end
+end
+
+size(B::Basis{m}) where {m} = m
 
 
 function CstPhyHermite(m::Int64; scaled::Bool = false)
@@ -44,7 +46,7 @@ function CstLinPhyHermite(m::Int64; scaled::Bool = false)
     # f[1] = x
     f[2] = FamilyProPolyHermite[2]
     for i=0:m
-        f[3+i] = ProHermite(i; scaled = scaled)
+        f[3+i] = PhyHermite(i; scaled = scaled)
     end
     return Basis{m+3}(f)
 end
@@ -86,6 +88,28 @@ function vander(B::Basis{m}, k::Int64, x::Array{Float64,1}) where {m}
     # By definition, m is the number of basis functions
 
     @inbounds for i=1:m
+        # col = view(dV, :, i)
+
+        # Store the k-th derivative of the ith basis function
+        if typeof(B[i]) <: Union{PhyPolyHermite, ProPolyHermite}
+            Pik = derivative(B[i], k)
+            dV[:,i] .= Pik.(x)
+        elseif typeof(B[i]) <: Union{PhyHermite, ProHermite}
+            dV[:,i] .= derivative(B[i], k , x)
+        end
+    end
+    return dV
+end
+
+function vander(B::Basis{m}, max::Int64, k::Int64, x::Array{Float64,1}) where {m}
+    N = size(x,1)
+    dV = zeros(N, max+1)
+
+    @assert 0 <= max <= m "The order is bigger than m"
+
+    # By definition, m is the number of basis functions
+
+    @inbounds for i=1:max+1
         # col = view(dV, :, i)
 
         # Store the k-th derivative of the ith basis function
