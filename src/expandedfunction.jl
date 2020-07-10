@@ -1,6 +1,8 @@
 
 
-export ExpandedFunction, evaluate_basis, gradient_xk_basis, gradient_x_basis, hessian_x_basis
+export ExpandedFunction, alleval,
+       evaluate_basis, grad_xk_basis,
+       grad_x_basis, hess_x_basis
 
 # ExpandedFunction decomposes a multi-dimensional function f:Rᴹ → R onto
 # a basis of MultiFunctions ψ_α where c_α are scalar coefficients
@@ -23,21 +25,44 @@ struct ExpandedFunction{m, Nψ, Nx}
     end
 end
 
+
+# alleval computes the evaluation, graidnet of hessian of the function
+# use it for validatio since it is slower than the other array-based variants
+function alleval(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+        ψ = zeros(Ne, Nψ)
+       dψ = zeros(Ne, Nψ, Nx)
+      d2ψ = zeros(Ne, Nψ, Nx, Nx)
+   result = DiffResults.HessianResult(zeros(Nx))
+
+    for i=1:Nψ
+        fi = MultiFunction(f.B, f.idx[i,:])
+        for j=1:Ne
+            result = ForwardDiff.hessian!(result, fi, member(ens,j))
+            ψ[j,i] = DiffResults.value(result)
+            dψ[j,i,:,:] .= DiffResults.gradient(result)
+            d2ψ[j,i,:,:] .= DiffResults.hessian(result)
+        end
+    end
+    return ψ, dψ, d2ψ
+end
+
+
+
 function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     # Compute products of basis functions of the base polynomials
     # with respect to each dimension
-    ψ = ones(Nψ, Ne)
+    ψ = ones(Ne, Nψ)
     for j=1:Nx
         midxj = f.idx[:,j]
 
         maxj = maximum(midxj)
         ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        ψ .*= ψj[:, midxj .+ 1]'
+        ψ .*= ψj[:, midxj .+ 1]
     end
     return ψ
 end
 
-function gradient_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
 
     # ∂ᵏf/∂x_{grad_dim} = ψ
@@ -68,23 +93,27 @@ function gradient_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int6
 end
 
 
-function gradient_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function grad_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
     dψ = ones(Ne, Nψ, Nx)
     @inbounds for j=1:Nx
-            dψ[:,:,j] .= deepcopy(gradient_xk_basis(f, j, 1, ens))
+            dψ[:,:,j] .= deepcopy(grad_xk_basis(f, j, 1, ens))
         end
     return dψ
 end
 
-function hessian_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function hess_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
     d2ψ = ones(Ne, Nψ, Nx, Nx)
 
     @inbounds for i=1:Nx
+        d2ψ[:,:,i,i] .= deepcopy(grad_xk_basis(f, i, 2, ens))
+    end
+
+    @inbounds for i=1:Nx
                 for j=i+1:Nx
-                    d2ψ[:,:,i,j] .= deepcopy(gradient_xk_basis(f, [i;j], 1, ens))
-                    d2ψ[:,:,j,i] .= deepcopy(d2ψ[:,:,j,i])
+                    d2ψ[:,:,i,j] .= deepcopy(grad_xk_basis(f, [i;j], 1, ens))
+                    d2ψ[:,:,j,i] .= deepcopy(d2ψ[:,:,i,j])
                 end
     end
     return d2ψ

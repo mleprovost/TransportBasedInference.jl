@@ -16,8 +16,6 @@ struct Basis{m}
     f::Array{ParamFcn,1}
 end
 
-size(B::Basis{m}) where {m} = m
-
 
 function CstPhyHermite(m::Int64; scaled::Bool = false)
     f = zeros(ParamFcn, m+2)
@@ -63,8 +61,11 @@ function CstLinProHermite(m::Int64; scaled::Bool = false)
     return Basis{m+3}(f)
 end
 
+(F::Array{ParamFcn,1})(x::T) where {T <: Real} = map!(fi->fi(x), zeros(T, size(F,1)), F)
+(B::Basis{m})(x::T) where {m, T<:Real} = B.f(x)
 
-(B::Basis{m})(x::T) where {m, T<:Real} = map!(fi->fi(x), zeros(m), B.f)
+# (B::Basis{m})(x::T) where {m, T<:Real} = map!(fi->fi(x), zeros(T, m), B.f)
+
 
 
 @propagate_inbounds Base.getindex(B::Basis{m},i::Int) where {m} = getindex(B.f,i)
