@@ -30,7 +30,7 @@ function totalorder(order::Array{Int64,1})
 
     # Generate higher order multi-indices
     for i = 1:max_order
-
+        @show i
         # Initialize empty set of starting multi-indices
         midxs_new_set = zeros(Int64, 1, d)
 

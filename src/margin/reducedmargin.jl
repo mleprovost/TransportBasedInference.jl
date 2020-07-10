@@ -104,7 +104,7 @@ function updatereducedmargin(lowerset::Array{Int64,2}, reduced_margin::Array{Int
     # # Add the candidates to the reduced margin
     reduced_margin = vcat(reduced_margin, candidate)
 
-    reduced_margin  = sortslices(reduced_margin; dims = 1)
-    lowerset = sortslices(lowerset; dims = 1)
+    # reduced_margin  = sortslices(reduced_margin; dims = 1)
+    # lowerset = sortslices(lowerset; dims = 1)
     return lowerset, reduced_margin
 end

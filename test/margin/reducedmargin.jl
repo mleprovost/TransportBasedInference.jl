@@ -121,17 +121,18 @@ end
         @test lowerset == lowerset0
         @test reduced_margin == reduced_margin0
 
-        @test all([any(x in eachslice(new_lowerset;dims = 1)) for x in eachslice(lowerset; dims = 1)])
-        @test any(reduced_margin[idx,:] in eachslice(new_lowerset; dims = 1))
+        @test new_lowerset[1:end-1,:] == lowerset0
 
-        @test new_reduced_margin == getreducedmargin(new_lowerset)
+        @test new_lowerset[end,:] == reduced_margin[idx,:]
+
+        @test all([any(x in eachslice(getreducedmargin(new_lowerset);dims = 1)) for x in eachslice(new_reduced_margin; dims = 1)])
     end
 end
 
 
 @testset "Test update reduced margin d = 3" begin
 
-    lowerset = [0 0 0; 0 0 1; 0 1 0; 1 0 0; 0 0 2; 0 0 3; 1 1 0; 1 2 0; 1 1 0]
+    lowerset = [0 0 0; 0 0 1; 0 1 0; 0 2 0; 1 0 0; 0 0 2; 0 0 3; 1 1 0; 1 2 0; 1 1 0]
     reduced_margin = getreducedmargin(lowerset)
     reduced_margin0 = deepcopy(reduced_margin)
     lowerset0 = deepcopy(lowerset)
@@ -145,9 +146,10 @@ end
         @test lowerset == lowerset0
         @test reduced_margin == reduced_margin0
 
-        @test all([any(x in eachslice(new_lowerset;dims = 1)) for x in eachslice(lowerset; dims = 1)])
-        @test any(reduced_margin[idx,:] in eachslice(new_lowerset; dims = 1))
+        @test new_lowerset[1:end-1,:] == lowerset0
 
-        @test new_reduced_margin == getreducedmargin(new_lowerset)
+        @test new_lowerset[end,:] == reduced_margin[idx,:]
+
+        @test all([any(x in eachslice(getreducedmargin(new_lowerset);dims = 1)) for x in eachslice(new_reduced_margin; dims = 1)])
     end
 end
