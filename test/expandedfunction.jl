@@ -15,15 +15,15 @@
     f = ExpandedFunction(B, idx, coeff)
 
     # Truth obtained from automatic-differentiation
-    ψt, dψt, d2ψt = alleval(f, ens)
+    ψt_basis, dψt_basis, d2ψt_basis = alleval(f, ens)
 
-    ψ = evaluate_basis(f, ens)
-    dψ = grad_x_basis(f, ens)
-    d2ψ = hess_x_basis(f, ens)
+    ψ_basis = evaluate_basis(f, ens)
+    dψ_basis = grad_x_basis(f, ens)
+    d2ψ_basis = hess_x_basis(f, ens)
 
-    @test norm(ψt - ψ)<1e-8
-    @test norm(dψt - dψ)<1e-8
-    @test norm(d2ψt - d2ψ)<1e-8
+    @test norm(ψt_basis - ψ_basis)<1e-8
+    @test norm(dψt_basis - dψ_basis)<1e-8
+    @test norm(d2ψt_basis - d2ψ_basis)<1e-8
 end
 
 @testset "Test evaluation, gradient and hessian of expanded function Nx = 2" begin
@@ -42,15 +42,15 @@ end
     f = ExpandedFunction(B, idx, coeff)
 
     # Truth obtained from automatic-differentiation
-    ψt, dψt, d2ψt = alleval(f, ens)
+    ψt_basis, dψt_basis, d2ψt_basis = alleval(f, ens)
 
-    ψ = evaluate_basis(f, ens)
-    dψ = grad_x_basis(f, ens)
-    d2ψ = hess_x_basis(f, ens)
+    ψ_basis = evaluate_basis(f, ens)
+    dψ_basis = grad_x_basis(f, ens)
+    d2ψ_basis = hess_x_basis(f, ens)
 
-    @test norm(ψt - ψ)<1e-8
-    @test norm(dψt - dψ)<1e-8
-    @test norm(d2ψt - d2ψ)<1e-8
+    @test norm(ψt_basis - ψ_basis)<1e-8
+    @test norm(dψt_basis - dψ_basis)<1e-8
+    @test norm(d2ψt_basis - d2ψ_basis)<1e-8
 end
 
 @testset "Test evaluation, gradient and hessian of expanded function Nx = 2" begin
@@ -69,15 +69,18 @@ end
     f = ExpandedFunction(B, idx, coeff)
 
     # Truth obtained from automatic-differentiation
-    ψt, dψt, d2ψt = alleval(f, ens)
+    ψt_basis, dψt_basis, d2ψt_basis = alleval(f, ens)
 
-    ψ = evaluate_basis(f, ens)
-    dψ = grad_x_basis(f, ens)
-    d2ψ = hess_x_basis(f, ens)
+    ψ_basis = evaluate_basis(f, ens)
+    dψ_basis = grad_x_basis(f, ens)
+    d2ψ_basis = hess_x_basis(f, ens)
 
-    @test norm(ψt - ψ)<1e-8
-    @test norm(dψt - dψ)<1e-8
-    @test norm(d2ψt - d2ψ)<1e-8
+    @test norm(ψt_basis - ψ_basis)<1e-8
+    @test norm(dψt_basis - dψ_basis)<1e-8
+    @test norm(d2ψt_basis - d2ψ_basis)<1e-8
+
+    # Verify evaluation
+    @test norm(map(i->f(member(ens,i),1:Ne) - evaluate(f, ens))<1e-8
 end
 
 @testset "Test evaluation, gradient and hessian of expanded function Nx = 3" begin
@@ -96,15 +99,15 @@ end
     f = ExpandedFunction(B, idx, coeff)
 
     # Truth obtained from automatic-differentiation
-    ψt, dψt, d2ψt = alleval(f, ens)
+    ψt_basis, dψt_basis, d2ψt_basis = alleval(f, ens)
 
-    ψ = evaluate_basis(f, ens)
-    dψ = grad_x_basis(f, ens)
-    d2ψ = hess_x_basis(f, ens)
+    ψ_basis = evaluate_basis(f, ens)
+    dψ_basis = grad_x_basis(f, ens)
+    d2ψ_basis = hess_x_basis(f, ens)
 
-    @test norm(ψt - ψ)<1e-8
-    @test norm(dψt - dψ)<1e-8
-    @test norm(d2ψt - d2ψ)<1e-8
+    @test norm(ψt_basis - ψ_basis)<1e-8
+    @test norm(dψt_basis - dψ_basis)<1e-8
+    @test norm(d2ψt_basis - d2ψ_basis)<1e-8
 end
 
 @testset "Test evaluation, gradient and hessian of expanded function Nx = 3" begin
@@ -123,13 +126,13 @@ end
     f = ExpandedFunction(B, idx, coeff)
 
     # Truth obtained from automatic-differentiation
-    ψt, dψt, d2ψt = alleval(f, ens)
+    ψt_basis, dψt_basis, d2ψt_basis = alleval(f, ens)
 
-    ψ = evaluate_basis(f, ens)
-    dψ = grad_x_basis(f, ens)
-    d2ψ = hess_x_basis(f, ens)
+    ψ_basis = evaluate_basis(f, ens)
+    dψ_basis = grad_x_basis(f, ens)
+    d2ψ_basis = hess_x_basis(f, ens)
 
-    @test norm(ψt - ψ)<1e-8
-    @test norm(dψt - dψ)<1e-8
-    @test norm(d2ψt - d2ψ)<1e-8
+    @test norm(ψt_basis - ψ_basis)<1e-8
+    @test norm(dψt_basis - dψ_basis)<1e-8
+    @test norm(d2ψt_basis - d2ψ_basis)<1e-8
 end

@@ -11,6 +11,7 @@ using Polynomials
 using TransportMap
 using DiffResults
 using Distributions
+using TensorOperations
 
 include("tools/tools.jl")
 include("tools/normal.jl")
