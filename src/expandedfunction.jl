@@ -80,12 +80,42 @@ function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, 
     return ψ
 end
 
+function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, dims::Array{Int64,1}) where {m, Nψ, Nx, Ne}
+    # Compute products of basis functions of the base polynomials
+    # with respect to each dimension
+
+    ψ = ones(Ne, Nψ)
+    for j in dims
+        midxj = idx[:,j]
+
+        maxj = maximum(midxj)
+        ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
+        ψ .*= ψj[:, midxj .+ 1]
+    end
+    return ψ
+end
+
 function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
     # Compute products of basis functions of the base polynomials
     # with respect to each dimension
     Nψreduced = size(idx,1)
     ψ = ones(Ne, Nψreduced)
     for j=1:Nx
+        midxj = idx[:,j]
+
+        maxj = maximum(midxj)
+        ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
+        ψ .*= ψj[:, midxj .+ 1]
+    end
+    return ψ
+end
+
+function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, dims::Array{Int64,1}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+    # Compute products of basis functions of the base polynomials
+    # with respect to each dimension
+    Nψreduced = size(idx,1)
+    ψ = ones(Ne, Nψreduced)
+    for j in dims
         midxj = idx[:,j]
 
         maxj = maximum(midxj)

@@ -20,7 +20,7 @@ include("tools/scale.jl")
 
 # Functions to manage margins
 include("margin/reducedmargin.jl")
-
+include("margin/totalorder.jl")
 
 
 include("rectifier.jl")
