@@ -5,7 +5,9 @@ export ExpandedFunction, alleval,
        grad_x_basis, hess_x_basis,
        evaluate, grad_x, hess_x,
        grad_xd, hess_xd,
-       grad_coeff, hess_coeff
+       grad_coeff, hess_coeff,
+       grad_coeff_grad_xd,
+       hess_coeff_grad_xd
 
 # ExpandedFunction decomposes a multi-dimensional function f:Rᴹ → R onto
 # a basis of MultiFunctions ψ_α where c_α are scalar coefficients
@@ -260,12 +262,38 @@ end
 # Hessian with respect to the some coefficients
 function hess_coeff(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, coeff_idx::Array{Int64, 1}) where {m, Nψ, Nx, Ne}
     # Verify that all the index
-    @assert all([0 <=idx <= Nψ for idx in idx_coeff]) "idx is larger than Nψ"
-    return zeros(Ne, size(idx_coeff,1), size(idx_coeff,1))
+    Nψreduced = size(coeff_idx,1)
+    @assert all([0 <=idx <= Nψ for idx in coeff_idx]) "idx is larger than Nψ"
+    return zeros(Ne, Nψreduced, Nψreduced)
 end
 
 
 # Hessian with respect to the coefficients
 function hess_coeff(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     return zeros(Ne, Nψ, Nψ)
+end
+
+
+# Gradient with respect to the coefficients of the gradient with respect to xd
+
+function grad_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    return grad_xk_basis(f, Nx, 1, ens)
+end
+# function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+
+function grad_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne},coeff_idx::Array{Int64,1}) where {m, Nψ, Nx, Ne}
+    return grad_xk_basis(f, Nx, 1, ens, f.idx[coeff_idx,:])
+end
+
+# Hessian with respect to the coefficients of the gradient with respect to xd
+
+function hess_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    return zeros(Ne, Nψ, Nψ)
+end
+
+function hess_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne},coeff_idx::Array{Int64,1}) where {m, Nψ, Nx, Ne}
+    # Verify that all the index
+    Nψreduced = size(coeff_idx,1)
+    @assert all([0 <=idx <= Nψ for idx in coeff_idx]) "idx is larger than Nψ"
+    return zeros(Ne, Nψreduced, Nψreduced)
 end
