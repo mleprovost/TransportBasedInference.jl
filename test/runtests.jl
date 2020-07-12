@@ -34,3 +34,4 @@ include("prohermite.jl")
 # Test tools for Basis, MultiBasis, ExpandedFunction
 include("basis.jl")
 include("expandedfunction.jl")
+include("parametric.jl")

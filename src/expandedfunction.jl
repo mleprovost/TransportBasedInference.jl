@@ -185,6 +185,66 @@ function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, A
     return dkψ
 end
 
+function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, dims::Union{Int64, Array{Int64,1}}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
+
+    # ∂ᵏf/∂x_{grad_dim} = ψ
+    @assert k>=0  "The derivative order k must be >=0"
+
+    T = typeof(grad_dim)
+    if T <:Array{Int64,1}
+        @assert all(1 .<= grad_dim)
+        @assert all(grad_dim .<= Nx)
+    elseif T <: Int64
+        @assert all(1 <= grad_dim)
+        @assert all(grad_dim <= Nx)
+    end
+    Nψreduced = size(f.idx,1)
+    dkψ = ones(Ne, Nψreduced)
+    for j in dims
+        midxj = f.idx[:,j]
+        maxj = maximum(midxj)
+        if j in grad_dim # Compute the kth derivative along grad_dim
+            dkψj = vander(f.B.B, maxj, k, ens.S[j,:])
+
+        else # Simple evaluation
+            dkψj = vander(f.B.B, maxj, 0, ens.S[j,:])
+        end
+        dkψ .*= dkψj[:, midxj .+ 1]
+    end
+    return dkψ
+end
+
+function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, dims::Union{Int64, Array{Int64,1}}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
+
+    # ∂ᵏf/∂x_{grad_dim} = ψ
+    @assert k>=0  "The derivative order k must be >=0"
+
+    T = typeof(grad_dim)
+    if T <:Array{Int64,1}
+        @assert all(1 .<= grad_dim)
+        @assert all(grad_dim .<= Nx)
+    elseif T <: Int64
+        @assert all(1 <= grad_dim)
+        @assert all(grad_dim <= Nx)
+    end
+    Nψreduced = size(idx,1)
+    dkψ = ones(Ne, Nψreduced)
+    for j in dims
+        midxj = idx[:,j]
+        maxj = maximum(midxj)
+        if j in grad_dim # Compute the kth derivative along grad_dim
+            dkψj = vander(f.B.B, maxj, k, ens.S[j,:])
+
+        else # Simple evaluation
+            dkψj = vander(f.B.B, maxj, 0, ens.S[j,:])
+        end
+        dkψ .*= dkψj[:, midxj .+ 1]
+    end
+    return dkψ
+end
+
 
 function grad_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
