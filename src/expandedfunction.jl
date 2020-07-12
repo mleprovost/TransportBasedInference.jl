@@ -86,7 +86,7 @@ function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, 
 
     ψ = ones(Ne, Nψ)
     for j in dims
-        midxj = idx[:,j]
+        midxj = f.idx[:,j]
 
         maxj = maximum(midxj)
         ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
