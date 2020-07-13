@@ -199,8 +199,7 @@ function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, A
         @assert all(1 <= grad_dim)
         @assert all(grad_dim <= Nx)
     end
-    Nψreduced = size(f.idx,1)
-    dkψ = ones(Ne, Nψreduced)
+    dkψ = ones(Ne, Nψ)
     for j in dims
         midxj = f.idx[:,j]
         maxj = maximum(midxj)

@@ -11,6 +11,7 @@ using Polynomials
 using TransportMap
 using DiffResults
 using Distributions
+using QuadGK
 using TensorOperations
 
 include("tools/tools.jl")
@@ -23,10 +24,10 @@ include("tools/scale.jl")
 include("rectifier.jl")
 
 # Hermite Polynomials
-include("polyhermite.jl")
 include("phypolyhermite.jl")
 include("propolyhermite.jl")
 
+include("polyhermite.jl")
 
 # Hermite Functions
 include("hermite.jl")
@@ -48,6 +49,10 @@ include("integratedfunction.jl")
 # ReducedMargin
 include("margin/reducedmargin.jl")
 include("margin/totalorder.jl")
+
+
+# KR-rearrangement and TransportMap structure
+include("hermitekrmap.jl")
 
 
 

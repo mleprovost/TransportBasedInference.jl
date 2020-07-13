@@ -164,6 +164,18 @@ git-tree-sha1 = "f0464e499ab9973b43c20f8216d088b61fda80c6"
 uuid = "adafc99b-e345-5852-983c-f28acb93d879"
 version = "0.2.2"
 
+[[Cubature]]
+deps = ["Cubature_jll"]
+git-tree-sha1 = "c3f4b3b38abd7b5c3ccf59adab2568212e7530d3"
+uuid = "667455a9-e2ce-5579-9412-b964f529a492"
+version = "1.5.1"
+
+[[Cubature_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "152046dc3435d62d8ecab5f0dec9c21b64bb6238"
+uuid = "7bc98958-0e37-5d67-a6ac-a3a19030071a"
+version = "1.0.3+0"
+
 [[DataAPI]]
 git-tree-sha1 = "176e23402d80e7743fc26c19c681bfb11246af32"
 uuid = "9a962f9c-6df0-11e9-0e5d-c546b8b5ee8a"

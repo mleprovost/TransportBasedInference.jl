@@ -1,7 +1,11 @@
 
 
-export ProHermite, degree, FamilyProHermite, FamilyScaledProHermite,
-       derivative, vander
+export  ProHermite, degree,
+        FamilyProHermite, FamilyScaledProHermite,
+        DProPolyHermite,
+        FamilyDProPolyHermite, FamilyDScaledProPolyHermite,
+        FamilyD2ProPolyHermite, FamilyD2ScaledProPolyHermite
+        derivative, vander
 
 # Create a structure to hold physicist Hermite functions defined as
 # ψen(x) = Hen(x)*exp(-x^2/4)
@@ -24,6 +28,48 @@ degree(P::ProHermite{m}) where {m} = m
 const FamilyProHermite = map(i->ProHermite(i),0:20)
 const FamilyScaledProHermite = map(i->ProHermite(i; scaled = true),0:20)
 
+# Store Pe′_n - Pe_n * X/2 with Pe_n the n-th Probabilistic Hermite Polynomial
+
+function DProPolyHermite(m::Int64; scaled::Bool)
+    k = 1
+    factor = exp(loggamma(m+1) - loggamma(m+1-k))
+    P = ProPolyHermite(m; scaled = false)
+    Pprime = derivative(P, 1)
+    if scaled == false
+        return Pprime - ImmutablePolynomial((0.0, 0.5))*P.P
+    else
+        C = 1/Cpro(m)
+        return C*(Pprime - ImmutablePolynomial((0.0, 0.5))*P.P)
+    end
+end
+
+
+const FamilyDProPolyHermite = map(i->AbstractProHermite(DProPolyHermite(i; scaled = false), false), 0:20)
+const FamilyDScaledProPolyHermite = map(i->AbstractProHermite(DProPolyHermite(i; scaled = true), true), 0:20)
+
+
+# Store Pe″n -  Pe′n * X  + Pn * (X^2/2 - 1/2) with Pe_n the n-th Probabilistic Hermite Polynomial
+
+function D2ProPolyHermite(m::Int64; scaled::Bool)
+    k = 2
+    factor = exp(loggamma(m+1) - loggamma(m+1-k))
+    P = ProPolyHermite(m; scaled = false)
+    Pprime  = derivative(P, 1)
+    Ppprime = derivative(P, 2)
+    if scaled == false
+        return Ppprime - ImmutablePolynomial((0.0, 1.0))*Pprime +
+               P.P*ImmutablePolynomial((-0.5, 0.0, 0.25))
+    else
+        C = 1/Cpro(m)
+        return C*(Ppprime - ImmutablePolynomial((0.0, 1.0))*Pprime +
+                  P.P*ImmutablePolynomial((-0.5, 0.0, 0.25)))
+    end
+end
+
+const FamilyD2ProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = false), false), 0:20)
+const FamilyD2ScaledProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = true), true), 0:20)
+
+
 
 
 function derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
@@ -34,11 +80,25 @@ function derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
         map!(F, dF, x)
         return dF
     elseif k==1
-        map!(y->ForwardDiff.derivative(F, y), dF, x)
+        if F.scaled ==false
+            Pprime = FamilyDProPolyHermite[m+1]
+            map!(Pprime, dF, x)
+        else
+            Pprime = FamilyDScaledProPolyHermite[m+1]
+            map!(Pprime, dF, x)
+        end
+        # map!(y->ForwardDiff.derivative(F, y), dF, x)
         return dF
 
     elseif k==2
-        map!(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), dF, x)
+        if F.scaled ==false
+            Ppprime = FamilyD2ProPolyHermite[m+1]
+            map!(Ppprime, dF, x)
+        else
+            Ppprime = FamilyD2ScaledProPolyHermite[m+1]
+            map!(Ppprime, dF, x)
+        end
+        # map!(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), dF, x)
         return dF
     elseif k==-1
         # Call derivative function for PhyHermite{m}

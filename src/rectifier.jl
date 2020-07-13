@@ -1,6 +1,6 @@
 
 
-export Rectifier, inverse, gradient, hessian
+export Rectifier, inverse, grad_x, hess_x
 
 # Structure for continuous rectifier
 # x->rec(x)
@@ -20,7 +20,7 @@ end
 
 Rectifier() = Rectifier("softplus")
 
-function (g::Rectifier)(x)
+function (g::Rectifier)(x::T) where {T <: Real}
     if g.T=="squared"
         return x^2
     elseif g.T=="exponential"
@@ -37,7 +37,9 @@ function (g::Rectifier)(x)
     end
 end
 
-function inverse(g::Rectifier, x)
+(g::Rectifier)(x::Array{T,1}) where {T <: Real} = map!(g, zeros(T, size(x,1)), x)
+
+function inverse(g::Rectifier, x::T) where {T <: Real}
     @assert x>=0 "Input to rectifier is negative"
     if g.T=="squared"
         error("squared rectifier is not invertible")
@@ -55,7 +57,10 @@ function inverse(g::Rectifier, x)
     end
 end
 
-function gradient(g::Rectifier, x)
+inverse(g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> inverse(g,xi), zeros(T, size(x,1)), x)
+
+
+function grad_x(g::Rectifier, x::T) where {T <: Real}
     if g.T=="squared"
         return 2*x
     elseif g.T=="exponential"
@@ -72,7 +77,10 @@ function gradient(g::Rectifier, x)
     end
 end
 
-function hessian(g::Rectifier, x)
+grad_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> grad_x(g,xi), zeros(T, size(x,1)), x)
+
+
+function hess_x(g::Rectifier, x::T) where {T <: Real}
     if g.T=="squared"
         return 2.0
     elseif g.T=="exponential"
@@ -88,3 +96,5 @@ function hessian(g::Rectifier, x)
         end
     end
 end
+
+hess_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> hess_x(g,xi), zeros(T, size(x,1)), x)
