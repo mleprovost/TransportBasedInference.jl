@@ -53,6 +53,8 @@ include("margin/totalorder.jl")
 
 # KR-rearrangement and TransportMap structure
 include("hermitekrmap.jl")
+include("greedyfit.jl")
+
 
 
 

@@ -1,7 +1,9 @@
 
 
 export ExpandedFunction, alleval,
-       evaluate_basis, grad_xk_basis,
+       evaluate_basis,
+       repeated_evaluate_basis,
+       grad_xk_basis,
        grad_x_basis, hess_x_basis,
        evaluate, grad_x, hess_x,
        grad_xd, hess_xd,
@@ -123,6 +125,14 @@ function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, 
         ψ .*= ψj[:, midxj .+ 1]
     end
     return ψ
+end
+
+function repeated_evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{T, 1}) where {m, Nψ, Nx, T <:Real}
+    # Compute the last component
+    midxj = f.idx[:,Nx]
+    maxj = maximum(midxj)
+    ψj = vander(f.B.B, maxj, 0, x)
+    return ψj[:, midxj .+ 1]
 end
 
 function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}

@@ -7,7 +7,9 @@ export IntegratedFunction, grad_xd,
        integrate_xd,
        evaluate,
        grad_coeff_integrate_xd,
-       hess_coeff_integrate_xd
+       hess_coeff_integrate_xd,
+       grad_coeff,
+       hess_coeff
 
 
 struct IntegratedFunction{m, Nψ, Nx}
@@ -51,7 +53,7 @@ function hess_coeff_grad_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleStat
             dcdψouter[:,i,j] = dcdψ[:,i] .* dcdψ[:, j]
         end
     end
-    return hess_x(R.g, dψ) .* dcdψouter + dψ .* d2cdψ
+    return hess_x(R.g, dψ) .* dcdψouter # + dψ .* d2cdψ
 end
 
 
@@ -104,13 +106,13 @@ evaluate(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m
 function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     ψoff = evaluate_offdiagbasis(R.f, ens)
     xk = deepcopy(ens.S[Nx, :])
-    dcψ = zeros(Ne, Nψ)
+    dcdψ = zeros(Ne, Nψ)
 
     cache = zeros(Ne, Nψ)
 
     function integrand!(v::Matrix{Float64}, t::Float64)
-        dcψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
-        v .= grad_x(R.g, dcψ*R.f.f.coeff) .* dcψ
+        dcdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
+        v .= grad_x(R.g, dcdψ*R.f.f.coeff) .* dcdψ
     end
 
     return 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
@@ -139,3 +141,25 @@ function hess_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::Ensembl
 
     return 0.5*xk .* reshape(quadgk!(integrand!, cache, -1, 1)[1], (Ne, Nψ, Nψ))
 end
+
+
+
+
+function grad_coeff(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    ψoff = evaluate_offdiagbasis(R.f, ens)
+    ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))
+
+    xk = deepcopy(ens.S[Nx, :])
+    dcdψ = zeros(Ne, Nψ)
+
+    cache = zeros(Ne, Nψ)
+
+    function integrand!(v::Matrix{Float64}, t::Float64)
+        dcdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
+        v .= grad_x(R.g, dcdψ*R.f.f.coeff) .* dcdψ
+    end
+
+    return ψoff .* ψdiag + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
+end
+
+hess_coeff(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne} = hess_coeff_integrate_xd(R, ens)
