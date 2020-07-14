@@ -5,7 +5,9 @@ export IntegratedFunction, grad_xd,
        hess_coeff_grad_xd,
        repeatgrad_xk_basis,
        integrate_xd,
-       evaluate
+       evaluate,
+       grad_coeff_integrate_xd,
+       hess_coeff_integrate_xd
 
 
 struct IntegratedFunction{m, Nψ, Nx}
@@ -38,9 +40,10 @@ end
 
 # Compute ∂²_c( g(∂ₖf(x_{1:k}) ) ) = ∂²_c∂ₖf(x_{1:k}) × g′(∂ₖf(x_{1:k})) + ∂_c∂ₖf(x_{1:k}) × ∂_c∂ₖf(x_{1:k}) g″(∂ₖf(x_{1:k}))
 function hess_coeff_grad_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    # The second term can be dropped for improve performance
     dψ    = grad_xd(R.f, ens)
     dcdψ  = grad_coeff_grad_xd(R.f, ens)
-    d2cdψ = hess_coeff_grad_xd(R.f.f, ens)
+    # d2cdψ = hess_coeff_grad_xd(R.f.f, ens)
 
     dcdψouter = zeros(Ne, Nψ, Nψ)
     @inbounds for i=1:Nψ
@@ -48,7 +51,7 @@ function hess_coeff_grad_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleStat
             dcdψouter[:,i,j] = dcdψ[:,i] .* dcdψ[:, j]
         end
     end
-    return dψ .* d2cdψ + hess_x(R.g, dψ) .* dcdψouter
+    return hess_x(R.g, dψ) .* dcdψouter + dψ .* d2cdψ
 end
 
 
@@ -75,6 +78,8 @@ function repeatgrad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1
     return dkψj[:, midxj .+ 1]
 
 end
+
+
 function integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     ψoff = evaluate_offdiagbasis(R.f, ens)
     xk = deepcopy(ens.S[Nx, :])
@@ -94,6 +99,43 @@ end
 evaluate(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx ,Ne} =  map!(i -> R(member(ens,i)), zeros(Ne), 1:Ne)
 
 
-function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, x::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
 
+# Compute ∂_c int_0^{x_k} g(∂ₖf(x_{1:k-1}, t))dt
+function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    ψoff = evaluate_offdiagbasis(R.f, ens)
+    xk = deepcopy(ens.S[Nx, :])
+    dcψ = zeros(Ne, Nψ)
+
+    cache = zeros(Ne, Nψ)
+
+    function integrand!(v::Matrix{Float64}, t::Float64)
+        dcψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
+        v .= grad_x(R.g, dcψ*R.f.f.coeff) .* dcψ
+    end
+
+    return 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
+end
+
+# Compute ∂²_c int_0^{x_k} g(c^T F(t))dt = int_0^{x_k} ∂_c F(t) g′(c^T F(t)) + F(t)F(t)*g″(c^T F(t)) dt
+function hess_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+     # We drop the first term for speed improvement since it is always equal to 0
+    ψoff = evaluate_offdiagbasis(R.f, ens)
+    xk = deepcopy(ens.S[Nx, :])
+    dcdψ = zeros(Ne, Nψ)
+
+    dcdψouter = zeros(Ne, Nψ, Nψ)
+
+    cache = zeros(Ne*Nψ*Nψ)
+
+    function integrand!(v::Vector{Float64}, t::Float64)
+        dcdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
+        @inbounds for i=1:Nψ
+            for j=1:Nψ
+                dcdψouter[:,i,j] = dcdψ[:,i] .* dcdψ[:, j]
+            end
+        end
+        v .= reshape(hess_x(R.g, (dcdψ ) * R.f.f.coeff) .* dcdψouter, (Ne*Nψ*Nψ))
+    end
+
+    return 0.5*xk .* reshape(quadgk!(integrand!, cache, -1, 1)[1], (Ne, Nψ, Nψ))
 end
