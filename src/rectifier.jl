@@ -1,6 +1,6 @@
 
 
-export Rectifier, inverse, grad_x, hess_x
+export Rectifier, inverse, grad_x, hess_x, evaluate!
 
 # Structure for continuous rectifier
 # x->rec(x)
@@ -36,8 +36,11 @@ function (g::Rectifier)(x::T) where {T <: Real}
         end
     end
 end
-
+# @. g(x)#
 (g::Rectifier)(x::Array{T,1}) where {T <: Real} = map!(g, zeros(T, size(x,1)), x)
+
+evaluate!(result::Vector{T}, g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(g, result, x)
+
 
 function inverse(g::Rectifier, x::T) where {T <: Real}
     @assert x>=0 "Input to rectifier is negative"

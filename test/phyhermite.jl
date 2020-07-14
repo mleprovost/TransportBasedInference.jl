@@ -62,6 +62,7 @@ end
         E = exp.(-x.^2/2)
         F = PhyHermite(i; scaled = false)
         @test norm(dV[:,i+1] - map(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), x))<1e-8
+
         @test norm(dV[:,i+1] - (Hnpp .*E -2 .*x .* Hnp.*E + Hn .* (x.^2 .- 1.0) .* E))<1e-8
     end
 

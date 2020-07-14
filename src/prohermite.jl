@@ -23,7 +23,7 @@ ProHermite(m::Int64; scaled::Bool = false) = ProHermite{m}(ProPolyHermite(m; sca
 
 degree(P::ProHermite{m}) where {m} = m
 
-(P::ProHermite{m})(x) where {m} = P.Poly.P(x)*exp(-x^2/4)
+(P::ProHermite{m})(x::T) where {m, T <: Real} = P.Poly.P(x)*exp(-x^2/4)
 
 const FamilyProHermite = map(i->ProHermite(i),0:20)
 const FamilyScaledProHermite = map(i->ProHermite(i; scaled = true),0:20)
@@ -70,37 +70,36 @@ const FamilyD2ProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; sca
 const FamilyD2ScaledProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = true), true), 0:20)
 
 
-
-
 function derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     @assert k>-2 "anti-derivative is not implemented for k<-1"
     N = size(x,1)
-    dF = zeros(N)
     if k==0
-        map!(F, dF, x)
-        return dF
+        # map!(F, dF, x)
+        return @. F.Poly.P(x)*exp(-x^2/4)
     elseif k==1
         if F.scaled ==false
             Pprime = FamilyDProPolyHermite[m+1]
-            map!(Pprime, dF, x)
+            # map!(Pprime, dF, x)
+            return @. Pprime.P(x)*exp(-x^2/4)
         else
             Pprime = FamilyDScaledProPolyHermite[m+1]
-            map!(Pprime, dF, x)
+            # map!(Pprime, dF, x)
+            return @. Pprime.P(x)*exp(-x^2/4)
         end
         # map!(y->ForwardDiff.derivative(F, y), dF, x)
-        return dF
-
     elseif k==2
         if F.scaled ==false
             Ppprime = FamilyD2ProPolyHermite[m+1]
-            map!(Ppprime, dF, x)
+            # map!(Ppprime, dF, x)
+            return @. Ppprime.P(x)*exp(-x^2/4)
         else
             Ppprime = FamilyD2ScaledProPolyHermite[m+1]
-            map!(Ppprime, dF, x)
+            # map!(Ppprime, dF, x)
+            return @. Ppprime.P(x)*exp(-x^2/4)
         end
         # map!(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), dF, x)
-        return dF
     elseif k==-1
+        dF = zeros(N)
         # Call derivative function for PhyHermite{m}
         dF .= derivative(FamilyPhyHermite[m+1], k, (1/sqrt(2))*x)
         rmul!(dF, 1/sqrt(2^m))

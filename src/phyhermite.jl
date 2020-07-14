@@ -75,32 +75,35 @@ const FamilyD2ScaledPhyPolyHermite = map(i->AbstractPhyHermite(D2PhyPolyHermite(
 function derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     @assert k>-2 "anti-derivative is not implemented for k<-1"
     N = size(x,1)
-    dF = zeros(N)
     if k==0
-        map!(F, dF, x)
-        return dF
+         return  @. F.Poly.P(x)*exp(-x^2/2)
     elseif k==1
         if F.scaled ==false
             Pprime = FamilyDPhyPolyHermite[m+1]
-            map!(Pprime, dF, x)
+
+            # map!(Pprime, dF, x
+            return @. Pprime.P(x)*exp(-x^2/2)
         else
             Pprime = FamilyDScaledPhyPolyHermite[m+1]
-            map!(Pprime, dF, x)
+            return @. Pprime.P(x)*exp(-x^2/2)
+            # map!(Pprime, dF, x)
         end
         # map!(y->ForwardDiff.derivative(F, y), dF, x)
-        return dF
 
     elseif k==2
         if F.scaled ==false
             Ppprime = FamilyD2PhyPolyHermite[m+1]
-            map!(Ppprime, dF, x)
+            # map!(Ppprime, dF, x)
+
+            return @. Ppprime.P(x)*exp(-x^2/2)
         else
             Ppprime = FamilyD2ScaledPhyPolyHermite[m+1]
-            map!(Ppprime, dF, x)
+            # map!(Ppprime, dF, x)
+            return  @. Ppprime.P(x)*exp(-x^2/2)
         end
         # map!(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), dF, x)
-        return dF
     elseif k==-1 # Compute the anti-derivatives
+        dF = zeros(N)
         # extract monomial coefficients
         c = F.Poly.P.coeffs
         # Compute integral using monomial formula
