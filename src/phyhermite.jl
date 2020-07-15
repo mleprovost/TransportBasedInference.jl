@@ -4,8 +4,8 @@ export  PhyHermite, degree,
         FamilyPhyHermite, FamilyScaledPhyHermite,
         DPhyPolyHermite,
         FamilyDPhyPolyHermite, FamilyDScaledPhyPolyHermite,
-        FamilyD2PhyPolyHermite, FamilyD2ScaledPhyPolyHermite
-        derivative, vander
+        FamilyD2PhyPolyHermite, FamilyD2ScaledPhyPolyHermite,
+        derivative!, derivative, vander!, vander
 
 # Create a structure to hold physicist Hermite functions defined as
 # ψn(x) = Hn(x)*exp(-x^2/2)
@@ -72,38 +72,37 @@ const FamilyD2ScaledPhyPolyHermite = map(i->AbstractPhyHermite(D2PhyPolyHermite(
 
 
 
-function derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function derivative!(dF, F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     @assert k>-2 "anti-derivative is not implemented for k<-1"
+    @assert size(dF,1) == size(x,1) "Size of dF and x don't match"
     N = size(x,1)
     if k==0
-         return  @. F.Poly.P(x)*exp(-x^2/2)
+         # map!(xi -> F.Poly.P(xi)*exp(-xi^2/2), dF, x)
+         @avx @. dF = F.Poly.P(x)*exp(-x^2/2)
+         return  dF
     elseif k==1
         if F.scaled ==false
             Pprime = FamilyDPhyPolyHermite[m+1]
-
-            # map!(Pprime, dF, x
-            return @. Pprime.P(x)*exp(-x^2/2)
+            @avx @. dF = Pprime.P(x)*exp(-x^2/2)
+            return dF
         else
             Pprime = FamilyDScaledPhyPolyHermite[m+1]
-            return @. Pprime.P(x)*exp(-x^2/2)
-            # map!(Pprime, dF, x)
+            @avx @. dF = Pprime.P(x)*exp(-x^2/2)
+            return dF
         end
-        # map!(y->ForwardDiff.derivative(F, y), dF, x)
-
     elseif k==2
         if F.scaled ==false
             Ppprime = FamilyD2PhyPolyHermite[m+1]
-            # map!(Ppprime, dF, x)
-
-            return @. Ppprime.P(x)*exp(-x^2/2)
+            @avx @. dF = Ppprime.P(x)*exp(-x^2/2)
+            return dF
         else
             Ppprime = FamilyD2ScaledPhyPolyHermite[m+1]
-            # map!(Ppprime, dF, x)
-            return  @. Ppprime.P(x)*exp(-x^2/2)
+
+            @avx @. dF = Ppprime.P(x)*exp(-x^2/2)
+            return dF
         end
         # map!(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), dF, x)
     elseif k==-1 # Compute the anti-derivatives
-        dF = zeros(N)
         # extract monomial coefficients
         c = F.Poly.P.coeffs
         # Compute integral using monomial formula
@@ -142,22 +141,26 @@ function derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
         dF .= Cst .+ pi_erf_c .* ev_pi_erf - (X*exp_c) .* ev_exp
         return dF
     end
-
 end
 
-function vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
+
+function vander!(dV::Array{Float64,2}, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     N = size(x,1)
-    dV = zeros(N, m+1)
+
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
     @inbounds for i=0:m
         col = view(dV,:,i+1)
 
         # Store the k-th derivative of the i-th order Hermite polynomial
         if P.scaled == false
-            col .= derivative(FamilyPhyHermite[i+1], k, x)
+            derivative!(col, FamilyPhyHermite[i+1], k, x)
         else
-            col .= derivative(FamilyScaledPhyHermite[i+1], k, x)
+            derivative!(col, FamilyScaledPhyHermite[i+1], k, x)
         end
     end
     return dV
 end
+
+vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)

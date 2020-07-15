@@ -1,7 +1,9 @@
 
-export  PhyPolyHermite, Cphy, degree, PhyPolyH, phyhermite_coeffmatrix,
+export  PhyPolyHermite, Cphy,
+        degree, PhyPolyH,
+        phyhermite_coeffmatrix,
         FamilyPhyPolyHermite, FamilyScaledPhyPolyHermite,
-        derivative, vander
+        derivative, vander, vander!
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
@@ -103,9 +105,9 @@ end
 
 # H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
 
-function vander(P::PhyPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function vander!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     N = size(x,1)
-    dV = zeros(N, m+1)
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
     @inbounds for i=0:m
         col = view(dV,:,i+1)
@@ -126,3 +128,6 @@ function vander(P::PhyPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     end
     return dV
 end
+
+
+vander(P::PhyPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)

@@ -22,8 +22,20 @@ function IntegratedFunction(f::ParametricFunction{m, Nψ, Nx}) where {m, Nψ, Nx
 end
 
 
-function (R::IntegratedFunction{m, Nψ, Nx})(x::Array{T,1}) where {m, Nψ, Nx, T<:Real}
-    return R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+function integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+    ψoff = evaluate_offdiagbasis(R.f, ens)
+    xk = deepcopy(ens.S[Nx, :])
+    cache = zeros(Ne)
+    # ψoffdxdψ = zeros(Ne, Nψ)
+
+    function integrand!(v::Vector{Float64}, t::Float64)
+        # ψoffdxdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk)
+        # ψoffdxdψ .*= ψoff
+        # map!(R.g, v, ψoffdxdψ*R.f.f.coeff)
+        v .= R.g((repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff)*R.f.f.coeff)
+    end
+
+    return 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
 end
 
 # Compute g(∂ₖf(x_{1:k}))
@@ -81,28 +93,30 @@ function repeatgrad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1
 
 end
 
-
-function integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function evaluate(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx ,Ne}
     ψoff = evaluate_offdiagbasis(R.f, ens)
+    ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))
     xk = deepcopy(ens.S[Nx, :])
     cache = zeros(Ne)
-    # ψoffdxdψ = zeros(Ne, Nψ)
+    out = zeros(Ne)
 
     function integrand!(v::Vector{Float64}, t::Float64)
-        # ψoffdxdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk)
-        # ψoffdxdψ .*= ψoff
-        # map!(R.g, v, ψoffdxdψ*R.f.f.coeff)
         v .= R.g((repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff)*R.f.f.coeff)
     end
 
-    return 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
-end
+     out .= (ψoff .* ψdiag)*R.f.f.coeff + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
 
-evaluate(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx ,Ne} =  map!(i -> R(member(ens,i)), zeros(Ne), 1:Ne)
+     return out
+ end
+
+
+# function (R::IntegratedFunction{m, Nψ, Nx})(x::Array{T,1}) where {m, Nψ, Nx, T<:Real}
+#      = evaluate(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne})
+#
 
 
 
-# Compute ∂_c int_0^{x_k} g(∂ₖf(x_{1:k-1}, t))dt
+## Compute ∂_c int_0^{x_k} g(∂ₖf(x_{1:k-1}, t))dt
 function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
     ψoff = evaluate_offdiagbasis(R.f, ens)
     xk = deepcopy(ens.S[Nx, :])

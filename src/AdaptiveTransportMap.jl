@@ -1,6 +1,5 @@
 module AdaptiveTransportMap
 
-
 using LinearAlgebra, SpecialFunctions
 using Random
 using ProgressMeter
@@ -13,7 +12,9 @@ using DiffResults
 using Distributions
 using QuadGK
 using TensorOperations
+using LoopVectorization
 
+include("tools/product.jl")
 include("tools/tools.jl")
 include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
@@ -52,12 +53,9 @@ include("margin/totalorder.jl")
 
 
 # KR-rearrangement and TransportMap structure
-include("hermitekrmap.jl")
+include("hermitemapcomponent.jl")
+include("hermitemap.jl")
 include("greedyfit.jl")
-
-
-
-
 
 
 

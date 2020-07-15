@@ -15,7 +15,7 @@
 
 
     for i=0:5
-        @test dV[:,i+1] == FamilyScaledPhyPolyHermite[i+1].(x).*exp.(-x.^2/2)
+        @test norm(dV[:,i+1] - FamilyScaledPhyPolyHermite[i+1].(x).*exp.(-x.^2/2))<1e-8
     end
 end
 

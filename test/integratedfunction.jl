@@ -32,6 +32,18 @@ f = ExpandedFunction(B, idx, coeff)
 fp = ParametricFunction(f);
 R = IntegratedFunction(fp)
 
+# Test evaluate
+ψt = zeros(Ne)
+
+for i=1:Ne
+    x = member(ens, i)
+    ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+end
+
+ψ = evaluate(R, ens)
+
+@test norm(ψ - ψt)<1e-10
+
 
 # Test grad_xd
 gdψ =  grad_xd(R, ens)
@@ -161,7 +173,7 @@ end
 
 dcR = grad_coeff(R, ens)
 
-@test norm(dcRt - dcR)<1e-8
+@test norm(dcRt - dcR)<1e-6
 
 
 # Test hess_coeff
@@ -169,7 +181,7 @@ d2cRt = zeros(Ne, Nψ, Nψ)
 
 xi = zeros(Nx)
 
-@time for j=1:Nψ
+for j=1:Nψ
     fj = MultiFunction(R.f.f.B, f.idx[j,:])
     ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
@@ -217,7 +229,7 @@ end
     idx = [0 0 0 ;0  0 1; 0 1 0; 1 0 0;1 1 0; 0 1 1; 1 0 1; 1 1 1; 1 2 0; 2 1 0]
 
     truncidx = idx[1:2:end,:]
-    Nψ = 5
+    Nψ = 10
 
     coeff = randn(Nψ)
 
@@ -359,7 +371,7 @@ end
 
     dcR = grad_coeff(R, ens)
 
-    @test norm(dcRt - dcR)<1e-8
+    @test norm(dcRt - dcR)<1e-6
 
 
     # Test hess_coeff
@@ -367,7 +379,7 @@ end
 
     xi = zeros(Nx)
 
-    @time for j=1:Nψ
+    for j=1:Nψ
         fj = MultiFunction(R.f.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
