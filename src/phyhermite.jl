@@ -72,7 +72,7 @@ const FamilyD2ScaledPhyPolyHermite = map(i->AbstractPhyHermite(D2PhyPolyHermite(
 
 
 
-function derivative!(dF, F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function derivative!(dF, F::PhyHermite{m}, k::Int64, x) where {m}
     @assert k>-2 "anti-derivative is not implemented for k<-1"
     @assert size(dF,1) == size(x,1) "Size of dF and x don't match"
     N = size(x,1)

@@ -70,7 +70,7 @@ const FamilyD2ProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; sca
 const FamilyD2ScaledProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = true), true), 0:20)
 
 
-function derivative!(dF, F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function derivative!(dF, F::ProHermite{m}, k::Int64, x) where {m}
     @assert k>-2 "anti-derivative is not implemented for k<-1"
     @assert size(dF,1) == size(x,1) "Size of dF and x don't match"
     N = size(x,1)
@@ -114,8 +114,9 @@ end
 derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
 
 
-function vander!(dV::Array{Float64,2}, P::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function vander!(dV::Array{Float64,2}, P::ProHermite{m}, k::Int64, x) where {m}
     N = size(x,1)
+    # x is an Array{Float64,1} or a view of it
 
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 

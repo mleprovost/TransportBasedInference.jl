@@ -1,15 +1,20 @@
+using LoopVectorization: @avx
 
-
-export ExpandedFunction, alleval,
-       evaluate_basis,
-       repeated_evaluate_basis,
-       grad_xk_basis,
-       grad_x_basis, hess_x_basis,
-       evaluate, grad_x, hess_x,
-       grad_xd, hess_xd,
-       grad_coeff, hess_coeff,
-       grad_coeff_grad_xd,
-       hess_coeff_grad_xd
+export  ExpandedFunction, alleval,
+        evaluate_basis!,
+        evaluate_basis,
+        repeated_evaluate_basis,
+        grad_xk_basis!,
+        grad_xk_basis,
+        grad_x_basis!,
+        grad_x_basis,
+        hess_x_basis!,
+        hess_x_basis,
+        evaluate, grad_x, hess_x,
+        grad_xd, hess_xd,
+        grad_coeff, hess_coeff,
+        grad_coeff_grad_xd,
+        hess_coeff_grad_xd
 
 # ExpandedFunction decomposes a multi-dimensional function f:Rᴹ → R onto
 # a basis of MultiFunctions ψ_α where c_α are scalar coefficients
@@ -66,66 +71,53 @@ function alleval(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) wh
     return ψ, dψ, d2ψ
 end
 
-
-
-function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    # Compute products of basis functions of the base polynomials
-    # with respect to each dimension
-    ψ = ones(Ne, Nψ)
-    for j=1:Nx
-        midxj = f.idx[:,j]
-
-        maxj = maximum(midxj)
-        ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        ψ .*= ψj[:, midxj .+ 1]
-    end
-    return ψ
-end
-
-function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, dims::Array{Int64,1}) where {m, Nψ, Nx, Ne}
-    # Compute products of basis functions of the base polynomials
-    # with respect to each dimension
-
-    ψ = ones(Ne, Nψ)
-    for j in dims
-        midxj = f.idx[:,j]
-
-        maxj = maximum(midxj)
-        ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        ψ .*= ψj[:, midxj .+ 1]
-    end
-    return ψ
-end
-
-function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Compute products of basis functions of the base polynomials
-    # with respect to each dimension
+function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    NxX, Ne = size(X)
     Nψreduced = size(idx,1)
-    ψ = ones(Ne, Nψreduced)
-    for j=1:Nx
-        midxj = idx[:,j]
 
+    @assert NxX == Nx "Wrong dimension of the input sample X"
+    @assert size(ψ) == (Ne, Nψreduced) "Wrong dimension of the ψ"
+
+    # maxdim = maximum(f.idx)
+    # ψvander = zeros(Ne, maxdim)
+    fill!(ψ, 1.0)
+
+    @inbounds for j in dims
+        # midxj = view(f.idx,:,j)
+        midxj = idx[:,j]
         maxj = maximum(midxj)
-        ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        ψ .*= ψj[:, midxj .+ 1]
+        Xj = view(X,j,:)
+        # ψvanderj = view(ψvander,:,1:maxj+1)
+        ψj = vander(f.B.B, maxj, 0, Xj)
+
+        @avx ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
     end
     return ψ
 end
 
-function evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, dims::Array{Int64,1}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Compute products of basis functions of the base polynomials
-    # with respect to each dimension
-    Nψreduced = size(idx,1)
-    ψ = ones(Ne, Nψreduced)
-    for j in dims
-        midxj = idx[:,j]
+# In-place versions
+evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}) where {m, Nψ, Nx} =
+              evaluate_basis!(ψ, f, X, dims, f.idx)
 
-        maxj = maximum(midxj)
-        ψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        ψ .*= ψj[:, midxj .+ 1]
-    end
-    return ψ
-end
+evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+            evaluate_basis!(ψ, f, X, 1:Nx, idx)
+
+evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+            evaluate_basis!(ψ, f, X, 1:Nx, f.idx)
+
+
+# Versions with allocations
+evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+              evaluate_basis!(zeros(size(X,1),size(idx,1)), f, X, dims, idx)
+
+evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}) where {m, Nψ, Nx} =
+              evaluate_basis!(zeros(size(X,1),size(f.idx,1)), f, X, dims, f.idx)
+
+evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+            evaluate_basis!(zeros(size(X,2),size(idx,1)), f, X, 1:Nx, idx)
+
+evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+            evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, 1:Nx, f.idx)
 
 function repeated_evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{T, 1}) where {m, Nψ, Nx, T <:Real}
     # Compute the last component
@@ -135,69 +127,13 @@ function repeated_evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{T, 1}
     return ψj[:, midxj .+ 1]
 end
 
-function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function grad_xk_basis!(dkψ, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-
-    # ∂ᵏf/∂x_{grad_dim} = ψ
-    @assert k>=0  "The derivative order k must be >=0"
-
-    T = typeof(grad_dim)
-    if T <:Array{Int64,1}
-        @assert all(1 .<= grad_dim)
-        @assert all(grad_dim .<= Nx)
-    elseif T <: Int64
-        @assert all(1 <= grad_dim)
-        @assert all(grad_dim <= Nx)
-    end
-
-    dkψ = ones(Ne, Nψ)
-    for j=1:Nx
-        midxj = f.idx[:,j]
-        maxj = maximum(midxj)
-        if j in grad_dim # Compute the kth derivative along grad_dim
-            dkψj = vander(f.B.B, maxj, k, ens.S[j,:])
-
-        else # Simple evaluation
-            dkψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        end
-        dkψ .*= dkψj[:, midxj .+ 1]
-    end
-    return dkψ
-end
-
-function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-
-    # ∂ᵏf/∂x_{grad_dim} = ψ
-    @assert k>=0  "The derivative order k must be >=0"
-
-    T = typeof(grad_dim)
-    if T <:Array{Int64,1}
-        @assert all(1 .<= grad_dim)
-        @assert all(grad_dim .<= Nx)
-    elseif T <: Int64
-        @assert all(1 <= grad_dim)
-        @assert all(grad_dim <= Nx)
-    end
+    NxX, Ne = size(X)
     Nψreduced = size(idx,1)
-    dkψ = ones(Ne, Nψreduced)
-    for j=1:Nx
-        midxj = idx[:,j]
-        maxj = maximum(midxj)
-        if j in grad_dim # Compute the kth derivative along grad_dim
-            dkψj = vander(f.B.B, maxj, k, ens.S[j,:])
 
-        else # Simple evaluation
-            dkψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        end
-        dkψ .*= dkψj[:, midxj .+ 1]
-    end
-    return dkψ
-end
-
-function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, dims::Union{Int64, Array{Int64,1}}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-
+    @assert NxX == Nx "Wrong dimension of the input sample X"
+    @assert size(dkψ) == (Ne, Nψreduced) "Wrong dimension of ψ"
     # ∂ᵏf/∂x_{grad_dim} = ψ
     @assert k>=0  "The derivative order k must be >=0"
 
@@ -206,161 +142,172 @@ function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, A
         @assert all(1 .<= grad_dim)
         @assert all(grad_dim .<= Nx)
     elseif T <: Int64
-        @assert all(1 <= grad_dim)
-        @assert all(grad_dim <= Nx)
+        @assert 1 <= grad_dim <= Nx
     end
-    dkψ = ones(Ne, Nψ)
-    for j in dims
-        midxj = f.idx[:,j]
-        maxj = maximum(midxj)
-        if j in grad_dim # Compute the kth derivative along grad_dim
-            dkψj = vander(f.B.B, maxj, k, ens.S[j,:])
 
-        else # Simple evaluation
-            dkψj = vander(f.B.B, maxj, 0, ens.S[j,:])
-        end
-        dkψ .*= dkψj[:, midxj .+ 1]
-    end
-    return dkψ
-end
+    fill!(dkψ, 1.0)
 
-function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, dims::Union{Int64, Array{Int64,1}}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-
-    # ∂ᵏf/∂x_{grad_dim} = ψ
-    @assert k>=0  "The derivative order k must be >=0"
-
-    T = typeof(grad_dim)
-    if T <:Array{Int64,1}
-        @assert all(1 .<= grad_dim)
-        @assert all(grad_dim .<= Nx)
-    elseif T <: Int64
-        @assert all(1 <= grad_dim)
-        @assert all(grad_dim <= Nx)
-    end
-    Nψreduced = size(idx,1)
-    dkψ = ones(Ne, Nψreduced)
     for j in dims
         midxj = idx[:,j]
         maxj = maximum(midxj)
+        Xj = view(X,j,:)
         if j in grad_dim # Compute the kth derivative along grad_dim
-            dkψj = vander(f.B.B, maxj, k, ens.S[j,:])
+            dkψj = vander(f.B.B, maxj, k, Xj)
 
         else # Simple evaluation
-            dkψj = vander(f.B.B, maxj, 0, ens.S[j,:])
+            dkψj = vander(f.B.B, maxj, 0, Xj)
         end
         dkψ .*= dkψj[:, midxj .+ 1]
     end
     return dkψ
 end
 
+# In-place versions of grad_xk_basis!
 
-function grad_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-    dψ = ones(Ne, Nψ, Nx)
-    @inbounds for j=1:Nx
-            dψ[:,:,j] .= grad_xk_basis(f, j, 1, ens)
-        end
-    return dψ
-end
+grad_xk_basis!(dkψ, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}) where {m, Nψ, Nx} =
+              grad_xk_basis!(dkψ, f, X, k, grad_dim, dims, f.idx)
 
-function grad_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+grad_xk_basis!(dkψ, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+              grad_xk_basis!(dkψ, f, X, k, grad_dim, 1:Nx, idx)
+
+grad_xk_basis!(dkψ, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}) where {m, Nψ, Nx} =
+              grad_xk_basis!(dkψ, f, X, k, grad_dim, 1:Nx, f.idx)
+
+
+# Versions with allocations
+grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+             grad_xk_basis!(zeros(size(X,2), size(idx,1)), f, X, k, grad_dim, dims, f.idx)
+
+grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}) where {m, Nψ, Nx} =
+             grad_xk_basis!(zeros(size(X,2), size(f.idx,1)), f, X, k, grad_dim, dims, f.idx)
+
+grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+             grad_xk_basis!(zeros(size(X,2), size(idx,1)), f, X, k, grad_dim, 1:Nx, idx)
+
+grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}) where {m, Nψ, Nx} =
+             grad_xk_basis!(zeros(size(X,2), size(f.idx,1)), f, X, k, grad_dim, 1:Nx, f.idx)
+
+
+
+
+function grad_x_basis!(dψ::Array{Float64,3}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
     Nψreduced = size(idx,1)
-    dψ = ones(Ne, Nψreduced, Nx)
+    fill!(dψ, 1)
+    Ne, Nψr1, Nxψ = size(dψ)
+    @assert Nψr1 == size(idx,1) "Wrong dimension of dψ"
+
     @inbounds for j=1:Nx
-            dψ[:,:,j] .= grad_xk_basis(f, j, 1, ens, idx)
-        end
+        dψj = view(dψ,:,:,j)
+        grad_xk_basis!(dψj, f, X, 1, j, idx)
+    end
     return dψ
 end
 
-function hess_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+
+# In place version
+grad_x_basis!(dψ::Array{Float64,3}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} = grad_x_basis!(dψ, f, X, f.idx)
+
+
+# Version with allocations
+grad_x_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} = grad_x_basis!(zeros(size(X,2), size(idx,1), Nx), f, X, idx)
+
+grad_x_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} = grad_x_basis!(zeros(size(X,2), size(f.idx,1), Nx), f, X, f.idx)
+
+
+function hess_x_basis!(d2ψ::Array{Float64,4}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-    d2ψ = ones(Ne, Nψ, Nx, Nx)
+    Nψreduced = size(idx,1)
+    fill!(d2ψ, 1)
+    Ne, Nψr1, Nxψ1, Nxψ2 = size(d2ψ)
+    @assert Ne == size(X,2)
+    @assert Nxψ1 == Nxψ2 "Wrong dimension of d2ψ"
+    @assert Nψr1 == size(idx,1) "Wrong dimension of d2ψ"
+
 
     # Fill diagonal components
-    @inbounds for i=1:Nx
-        d2ψ[:,:,i,i] .= grad_xk_basis(f, i, 2, ens)
+    @inbounds for j=1:Nx
+        d2ψj = view(d2ψ,:,:,j,j)
+        grad_xk_basis!(d2ψj, f, X, 2, j, idx)
     end
 
     # Fill off-diagonal and exploit symmetry (Schwartz theorem)
     @inbounds for i=1:Nx
                 for j=i+1:Nx
-                    d2ψ[:,:,i,j] .= grad_xk_basis(f, [i;j], 1, ens)
+                    d2ψij = view(d2ψ,:,:,i,j)
+                    grad_xk_basis!(d2ψij, f, X, 1, [i;j], idx)
                     d2ψ[:,:,j,i] .= d2ψ[:,:,i,j]
                 end
     end
     return d2ψ
 end
 
-function hess_x_basis(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-    Nψreduced = size(idx,1)
-    d2ψ = ones(Ne, Nψreduced, Nx, Nx)
+# In place version
+hess_x_basis!(d2ψ::Array{Float64,4}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} = hess_x_basis!(d2ψ, f, X, f.idx)
 
-    # Fill diagonal components
-    @inbounds for i=1:Nx
-        d2ψ[:,:,i,i] .= grad_xk_basis(f, i, 2, ens, idx)
-    end
 
-    # Fill off-diagonal and exploit symmetry (Schwartz theorem)
-    @inbounds for i=1:Nx
-                for j=i+1:Nx
-                    d2ψ[:,:,i,j] .= grad_xk_basis(f, [i;j], 1, ens, idx)
-                    d2ψ[:,:,j,i] .= d2ψ[:,:,i,j]
-                end
-    end
-    return d2ψ
+# Version with allocations
+hess_x_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} = hess_x_basis!(zeros(size(X,2), size(idx,1), Nx, Nx), f, X, idx)
+
+hess_x_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} = hess_x_basis!(zeros(size(X,2), size(f.idx,1), Nx, Nx), f, X, f.idx)
+
+
+
+function evaluate!(ψ, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    ψ .= evaluate_basis(f, X)*f.coeff
+    return ψ
 end
 
+evaluate(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} = evaluate!(zeros(size(X,2)), f, X)
 
-function evaluate(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return evaluate_basis(f, ens)*f.coeff
-end
-
-function grad_x(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function grad_x(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    NxX, Ne = size(X)
+    @assert NxX == Nx "Wrong dimension of the input"
     dψ = zeros(Ne, Nx)
-    dψ_basis = grad_x_basis(f, ens)
+    dψ_basis = grad_x_basis(f, X)
     @tensor dψ[a,b] = dψ_basis[a,c,b] * f.coeff[c]
     return dψ
 end
 
-function hess_x(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function hess_x(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    NxX, Ne = size(X)
+    @assert NxX == Nx "Wrong dimension of the input"
     d2ψ = zeros(Ne, Nx, Nx)
-    d2ψ_basis = hess_x_basis(f, ens)
+    d2ψ_basis = hess_x_basis(f, X)
 
     @tensor d2ψ[a,b,c] = d2ψ_basis[a,d,b,c] * f.coeff[d]
     return d2ψ
 end
 
-function grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    dψxd = grad_xk_basis(f, Nx, 1, ens)
+function grad_xd(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    dψxd = grad_xk_basis(f, X, 1, Nx)
     return dψxd*f.coeff
 end
 
-function hess_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    d2ψxd = grad_xk_basis(f, Nx, 2, ens)
+function hess_xd(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    d2ψxd = grad_xk_basis(f, X, 2, Nx)
     return d2ψxd*f.coeff
 end
 
 
 # Derivative with respect to the some coefficients
-function grad_coeff(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, coeff_idx::Array{Int64, 1}) where {m, Nψ, Nx, Ne}
+function grad_coeff(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, coeff_idx::Array{Int64, 1}) where {m, Nψ, Nx}
     # Verify that all the index
     @assert all([0 <=idx <= Nψ for idx in coeff_idx]) "idx is larger than Nψ"
-    return evaluate_basis(f, ens, f.idx[coeff_idx,:])
+    return evaluate_basis(f, X, f.idx[coeff_idx,:])
 end
 
 
 # Derivative with respect to the coefficients
-function grad_coeff(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return evaluate_basis(f, ens)
+function grad_coeff(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    return evaluate_basis(f, X)
 end
 
 
 # Hessian with respect to the some coefficients
-function hess_coeff(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, coeff_idx::Array{Int64, 1}) where {m, Nψ, Nx, Ne}
+function hess_coeff(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, coeff_idx::Array{Int64, 1}) where {m, Nψ, Nx}
     # Verify that all the index
+    Ne = size(X,2)
     Nψreduced = size(coeff_idx,1)
     @assert all([0 <=idx <= Nψ for idx in coeff_idx]) "idx is larger than Nψ"
     return zeros(Ne, Nψreduced, Nψreduced)
@@ -368,30 +315,32 @@ end
 
 
 # Hessian with respect to the coefficients
-function hess_coeff(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return zeros(Ne, Nψ, Nψ)
+function hess_coeff(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    return zeros(size(X,2), Nψ, Nψ)
 end
 
 
 # Gradient with respect to the coefficients of the gradient with respect to xd
 
-function grad_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return grad_xk_basis(f, Nx, 1, ens)
+function grad_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    return grad_xk_basis(f, X, 1, Nx)
 end
-# function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+# function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, X::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
 
-function grad_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne},coeff_idx::Array{Int64,1}) where {m, Nψ, Nx, Ne}
-    return grad_xk_basis(f, Nx, 1, ens, f.idx[coeff_idx,:])
+function grad_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, coeff_idx::Array{Int64,1}) where {m, Nψ, Nx}
+    return grad_xk_basis(f, X, 1, Nx, f.idx[coeff_idx,:])
 end
 
 # Hessian with respect to the coefficients of the gradient with respect to xd
 
-function hess_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
+function hess_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
     return zeros(Ne, Nψ, Nψ)
 end
 
-function hess_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne},coeff_idx::Array{Int64,1}) where {m, Nψ, Nx, Ne}
+function hess_coeff_grad_xd(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, coeff_idx::Array{Int64,1}) where {m, Nψ, Nx}
     # Verify that all the index
+    Ne = size(X,2)
     Nψreduced = size(coeff_idx,1)
     @assert all([0 <=idx <= Nψ for idx in coeff_idx]) "idx is larger than Nψ"
     return zeros(Ne, Nψreduced, Nψreduced)

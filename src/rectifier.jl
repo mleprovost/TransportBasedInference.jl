@@ -1,6 +1,10 @@
 
 
-export Rectifier, inverse, grad_x, hess_x, evaluate!
+export  Rectifier,
+        inverse!, inverse,
+        grad_x!, grad_x,
+        hess_x!, hess_x,
+        evaluate!
 
 # Structure for continuous rectifier
 # x->rec(x)
@@ -60,7 +64,8 @@ function inverse(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-inverse(g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> inverse(g,xi), zeros(T, size(x,1)), x)
+inverse!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> inverse(g,xi), result, x)
+inverse(g::Rectifier, x::Array{T,1}) where {T <: Real} = inverse!(zero(x), g, x)
 
 
 function grad_x(g::Rectifier, x::T) where {T <: Real}
@@ -80,7 +85,8 @@ function grad_x(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-grad_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> grad_x(g,xi), zeros(T, size(x,1)), x)
+grad_x!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> grad_x(g,xi), result, x)
+grad_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = grad_x!(zero(x), g, xi)
 
 
 function hess_x(g::Rectifier, x::T) where {T <: Real}
@@ -100,4 +106,5 @@ function hess_x(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-hess_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> hess_x(g,xi), zeros(T, size(x,1)), x)
+hess_x!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> hess_x(g,xi), result, x)
+hess_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = hess_x!(zero(x), g, xi)

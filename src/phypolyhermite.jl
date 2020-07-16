@@ -105,7 +105,7 @@ end
 
 # H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
 
-function vander!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function vander!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, k::Int64, x) where {m}
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
