@@ -40,7 +40,7 @@ for i=1:Ne
     ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
 end
 
-ψ = evaluate(R, ens)
+ψ = evaluate(R, ens.S)
 
 @test norm(ψ - ψt)<1e-10
 
@@ -355,7 +355,7 @@ end
     ens0 = deepcopy(ens)
     ens0.S[end,:] .= zeros(Ne)
     # ∂_c f(x_{1:k-1},0)
-    dcRt += evaluate_basis(R.f.f, ens0)
+    dcRt += evaluate_basis(R.f.f, ens0.S)
     xi = zeros(Nx)
 
     for j=1:Nψ

@@ -86,7 +86,7 @@ function grad_x(g::Rectifier, x::T) where {T <: Real}
 end
 
 grad_x!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> grad_x(g,xi), result, x)
-grad_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = grad_x!(zero(x), g, xi)
+grad_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = grad_x!(zero(x), g, x)
 
 
 function hess_x(g::Rectifier, x::T) where {T <: Real}
@@ -107,4 +107,4 @@ function hess_x(g::Rectifier, x::T) where {T <: Real}
 end
 
 hess_x!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real} = map!(xi -> hess_x(g,xi), result, x)
-hess_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = hess_x!(zero(x), g, xi)
+hess_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = hess_x!(zero(x), g, x)
