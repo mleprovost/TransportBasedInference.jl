@@ -1,90 +1,203 @@
-export ParametricFunction, evaluate_offdiagbasis,
-       evaluate_diagbasis, grad_xd_diagbasis,
-       hess_xd_diagbasis,
-       evaluate, grad_xd, hess_xd,
-       grad_coeff, grad_coeff_grad_xd
+export  ParametricFunction,
+        evaluate_offdiagbasis!,
+        evaluate_offdiagbasis,
+        evaluate_diagbasis!,
+        evaluate_diagbasis,
+        grad_xd_diagbasis!,
+        grad_xd_diagbasis,
+        hess_xd_diagbasis!,
+        hess_xd_diagbasis,
+        evaluate!,
+        evaluate,
+        grad_xd!,
+        grad_xd,
+        hess_xd!,
+        hess_xd,
+        grad_coeff!,
+        grad_coeff,
+        grad_coeff_grad_xd!,
+        grad_coeff_grad_xd
 
 
 struct ParametricFunction{m, Nψ, Nx}
     f::ExpandedFunction{m, Nψ, Nx}
 end
 
+## evaluate_offdiagbasis
 
-function evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return evaluate_basis(fp.f, ens, collect(1:Nx-1))
+evaluate_offdiagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+    evaluate_basis!(ψoff, fp.f, X, 1:Nx-1, idx)
+
+evaluate_offdiagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+    evaluate_offdiagbasis!(ψoff, fp, X, fp.f.idx)
+
+evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+        evaluate_offdiagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
+
+evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+        evaluate_offdiagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X)
+
+## evaluate_diagbasis
+
+evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+    evaluate_basis!(ψoff, fp.f, X, [Nx], idx)
+
+evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+    evaluate_diagbasis!(ψoff, fp, X, fp.f.idx)
+
+evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+        evaluate_diagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
+
+evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+        evaluate_diagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X)
+
+## grad_xd_diagbasis
+
+# grad_xk_basis!(dkψ, f, X, k, grad_dim, dims, idx) where {m, Nψ, Nx}
+
+ # Evaluate derivatives of basis of x_{d}
+grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+                  grad_xk_basis!(dψxd, fp.f, X, 1, Nx, Nx, idx)
+
+grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+                  grad_xd_diagbasis(dψxd, fp, X, 1, Nx, Nx, fp.f.idx)
+
+grad_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+                 grad_xd_diagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
+
+grad_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+                 grad_xd_diagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X, fp.f.idx)
+
+
+## hess_xd_diagbasis
+
+# Evaluate second derivatives of basis of x_{d}
+hess_xd_diagbasis!(d2ψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+                  grad_xk_basis!(d2ψxd, fp.f, X, 2, Nx, Nx, idx)
+
+hess_xd_diagbasis!(d2ψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+                  hess_xd_diagbasis(d2ψxd, fp, X, 2, Nx, Nx, fp.f.idx)
+
+hess_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+                 hess_xd_diagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
+
+hess_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+                 hess_xd_diagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X, fp.f.idx)
+
+
+## evaluate!
+
+function evaluate!(ψ::Array{Float64,1}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    @assert size(ψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
+    evaluate_offdiagbasis!(ψoff, fp, X, idx)
+    evaluate_diagbasis!(ψd, fp, X, idx)
+    elementproductmatmul!(ψ, ψoff, ψd, fp.f.coeff)
+    return ψ
 end
 
-function evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    return evaluate_basis(fp.f, ens, collect(1:Nx-1), idx)
+evaluate!(ψ::Array{Float64,1}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx} =
+         evaluate!(ψ, ψoff, ψd, fp, X, fp.f.idx)
+
+function evaluate(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
+    evaluate!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), fp, X, idx)
 end
 
-function evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return evaluate_basis(fp.f, ens, [Nx])
+function evaluate(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
+    evaluate!(zeros(Ne), zeros(Ne, size(fp.f.idx,1)), zeros(Ne, size(fp.f.idx,1)), fp, X, fp.f.idx)
 end
 
-function evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    return evaluate_basis(fp.f, ens, [Nx], idx)
+## grad_xd!
+
+function grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    @assert size(dψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
+    evaluate_offdiagbasis!(ψoff, fp, X, idx)
+    grad_xd_diagbasis!(dψxd, fp, X, idx)
+    elementproductmatmul!(dψ, ψoff, dψxd, fp.f.coeff)
+    return dψ
 end
 
+grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx} =
+        grad_xd!(dψ, ψoff, dψxd, fp, X, fp.f.idx)
 
-function grad_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    # Evaluate derivatives of basis of x_{d}
-    return grad_xk_basis(fp.f, Nx, 1, Nx, ens)
+function grad_xd(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
+    grad_xd!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), fp, X, idx)
 end
 
-function grad_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Evaluate derivatives of basis of x_{d}
-    return grad_xk_basis(fp.f, Nx, 1, Nx, ens, idx)
-end
-
-function hess_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    # Evaluate 2nd derivatives of basis of x_{d}
-    return grad_xk_basis(fp.f, Nx, 2, Nx, ens)
-end
-
-function hess_xd_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    # Evaluate 2nd derivatives of basis of x_{d}
-    return grad_xk_basis(fp.f, Nx, 2, Nx, ens, idx)
-end
-
-
-function evaluate(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    return (evaluate_offdiagbasis(fp, ens) .* evaluate_diagbasis(fp, ens)) * fp.f.coeff
-end
-
-function grad_xd(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    ψ = evaluate_offdiagbasis(fp, ens)
-    dψxd = grad_xd_diagbasis(fp, ens)
-    return (ψ .* dψxd) * fp.f.coeff
-end
-
-function hess_xd(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    ψ = evaluate_offdiagbasis(fp, ens)
-    d2ψxd = hess_xd_diagbasis(fp, ens)
-    return ψ .* d2ψxd * fp.f.coeff
+function grad_xd(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
+    grad_xd!(zeros(Ne), zeros(Ne, size(fp.f.idx,1)), zeros(Ne, size(fp.f.idx,1)), fp, X, fp.f.idx)
 end
 
 
-function grad_coeff(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    ψdiag = evaluate_diagbasis(fp, ens)
-    return ψoff .* ψdiag
+## hess_xd!
+#     ψ = evaluate_offdiagbasis(fp, X)
+#     d2ψxd = hess_xd_diagbasis(fp, X)
+#     return ψ .* d2ψxd * fp.f.coeff
+
+function hess_xd!(d2ψ::Array{Float64,1}, ψoff::Array{Float64,2}, d2ψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    @assert size(d2ψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
+    evaluate_offdiagbasis!(ψoff, fp, X, idx)
+    hess_xd_diagbasis!(d2ψxd, fp, X, idx)
+    elementproductmatmul!(d2ψ, ψoff, d2ψxd, fp.f.coeff)
+    return d2ψ
 end
 
-function grad_coeff(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
-    ψoff = evaluate_offdiagbasis(fp, ens, idx)
-    ψdiag = evaluate_diagbasis(fp, ens, idx)
-    return ψoff .* ψdiag
+hess_xd!(d2ψ::Array{Float64,1}, ψoff::Array{Float64,2}, d2ψxd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx} =
+        hess_xd!(d2ψ, ψoff, d2ψxd, fp, X, fp.f.idx)
+
+function hess_xd(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
+    hess_xd!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), fp, X, idx)
 end
 
-function grad_coeff_grad_xd(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) where {m, Nψ, Nx, Ne}
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    dψxd = grad_xd_diagbasis(fp, ens)
-    return ψoff .* dψxd
+function hess_xd(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx}
+    Ne = size(X,2)
+    hess_xd!(zeros(Ne), zeros(Ne, size(fp.f.idx,1)), zeros(Ne, size(fp.f.idx,1)), fp, X, fp.f.idx)
 end
 
-function grad_coeff_grad_xd(fp::ParametricFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}, idx::Array{Int64, 2}) where {m, Nψ, Nx, Ne}
-    ψoff = evaluate_offdiagbasis(fp, ens, idx)
-    dψxd = grad_xd_diagbasis(fp, ens, idx)
-    return ψoff .* dψxd
+## grad_coeff!
+
+function grad_coeff!(dcψ::Array{Float64,2}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+    @assert size(dcψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
+    # evaluate_basis!(dcψ, fp.f, X, 1:Nx, idx)
+    evaluate_offdiagbasis!(ψoff, fp, X, idx)
+    evaluate_diagbasis!(ψd, fp, X)
+    dcψ .= ψoff .* ψd
+    return dcψ
+end
+
+grad_coeff!(dcψ::Array{Float64,2}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx} =
+         grad_coeff!(dcψ, ψoff, ψd, fp, X, fp.f.idx)
+
+function grad_coeff(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+         grad_coeff!(zeros(size(X,2), size(idx,1)), zeros(size(X,2), size(idx,1)), zeros(size(X,2), size(idx,1)), fp, X, idx)
+end
+
+function grad_coeff(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx}
+         grad_coeff!(zeros(size(X,2), size(fp.f.idx,1)), zeros(size(X,2), size(fp.f.idx,1)), zeros(size(X,2), size(fp.f.idx,1)), fp, X, fp.f.idx)
+end
+
+## grad_coeff_grad_xd!
+
+function grad_coeff_grad_xd!(dcdψxd::Array{Float64,2}, ψoff::Array{Float64,2}, dψd::Array{Float64,2},fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+    @assert size(dcdψxd,1) == size(X,2) "Wrong dimension of the output vector ψ"
+    # evaluate_basis!(dcψ, fp.f, X, 1:Nx, idx)
+    evaluate_offdiagbasis!(ψoff, fp, X, idx)
+    grad_xd_diagbasis!(dψd, fp, X, idx)
+    dcdψxd .= ψoff .* dψd
+    return dcdψxd
+end
+
+grad_coeff_grad_xd!(dcdψxd::Array{Float64,2}, ψoff::Array{Float64,2}, dψd::Array{Float64,2},fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx, Ne} =
+    grad_coeff_grad_xd!(dcdψxd, ψoff, dψd, fp, X, fp.f.idx)
+
+function grad_coeff_grad_xd(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+         grad_coeff_grad_xd!(zeros(size(X,2), size(idx,1)), zeros(size(X,2), size(idx,1)), zeros(size(X,2), size(idx,1)), fp, X, idx)
+end
+
+function grad_coeff_grad_xd(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64, 2}) where {m, Nψ, Nx}
+         grad_coeff_grad_xd!(zeros(size(X,2), size(fp.f.idx,1)), zeros(size(X,2), size(fp.f.idx,1)), zeros(size(X,2), size(fp.f.idx,1)), fp, X, fp.f.idx)
 end

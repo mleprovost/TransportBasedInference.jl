@@ -17,8 +17,8 @@
     fp = ParametricFunction(f)
 
     ## Test evaluate_offdiagbasis
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    ψofftrunc = evaluate_offdiagbasis(fp, ens, truncidx)
+    ψoff = evaluate_offdiagbasis(fp, ens.S)
+    ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
     @test ψoff[:,1:2:end] == ψofftrunc
 
@@ -36,8 +36,8 @@
 
 
     ## Test evaluate_diagbasis
-    ψdiag = evaluate_diagbasis(fp, ens)
-    ψdiagtrunc = evaluate_diagbasis(fp, ens, truncidx)
+    ψdiag = evaluate_diagbasis(fp, ens.S)
+    ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
     @test ψdiag[:,1:2:end] == ψdiagtrunc
 
@@ -55,8 +55,8 @@
     @test norm(ψdiagt - ψdiag)<1e-8
 
     ## Test grad_xd_diagbasis
-    Gψ_xd_diag = grad_xd_diagbasis(fp, ens)
-    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens, truncidx)
+    Gψ_xd_diag = grad_xd_diagbasis(fp, ens.S)
+    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens.S, truncidx)
     @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
     Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -72,8 +72,8 @@
 
     ## Test hess_xd_diagbasis
 
-    Hψ_xd_diag = hess_xd_diagbasis(fp, ens)
-    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens, truncidx)
+    Hψ_xd_diag = hess_xd_diagbasis(fp, ens.S)
+    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens.S, truncidx)
     @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
     Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -89,7 +89,7 @@
 
     ## Test function evaluation
 
-    ψ = evaluate(fp, ens)
+    ψ = evaluate(fp, ens.S)
     ψt = zeros(Ne)
 
     for i=1:Ne
@@ -99,7 +99,7 @@
 
     ## Test grad_xd
 
-    dψxd = grad_xd(fp, ens)
+    dψxd = grad_xd(fp, ens.S)
     dψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -110,7 +110,7 @@
 
     ## Test hess_xd
 
-    d2ψxd = hess_xd(fp, ens)
+    d2ψxd = hess_xd(fp, ens.S)
     d2ψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -121,16 +121,16 @@
 
     ## Test grad_coeff
 
-    dψ_coefft = evaluate_basis(fp.f, ens)
-    dψ_coeff = grad_coeff(fp, ens)
-    dψ_coeffexpanded = grad_coeff(fp.f, ens)
+    dψ_coefft = evaluate_basis(fp.f, ens.S)
+    dψ_coeff = grad_coeff(fp, ens.S)
+    dψ_coeffexpanded = grad_coeff(fp.f, ens.S)
 
     @test norm(dψ_coeff - dψ_coefft) < 1e-10
     @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
     ## Test grad_coeff_grad_xd
 
-    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens)
+    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens.S)
     dψ_coeff_xdt = zeros(Ne, Nψ)
 
     for j=1:Nψ
@@ -164,8 +164,8 @@ end
     fp = ParametricFunction(f)
 
     ## Test evaluate_offdiagbasis
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    ψofftrunc = evaluate_offdiagbasis(fp, ens, truncidx)
+    ψoff = evaluate_offdiagbasis(fp, ens.S)
+    ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
     @test ψoff[:,1:2:end] == ψofftrunc
 
@@ -183,8 +183,8 @@ end
 
 
     ## Test evaluate_diagbasis
-    ψdiag = evaluate_diagbasis(fp, ens)
-    ψdiagtrunc = evaluate_diagbasis(fp, ens, truncidx)
+    ψdiag = evaluate_diagbasis(fp, ens.S)
+    ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
     @test ψdiag[:,1:2:end] == ψdiagtrunc
 
@@ -202,8 +202,8 @@ end
     @test norm(ψdiagt - ψdiag)<1e-8
 
     ## Test grad_xd_diagbasis
-    Gψ_xd_diag = grad_xd_diagbasis(fp, ens)
-    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens, truncidx)
+    Gψ_xd_diag = grad_xd_diagbasis(fp, ens.S)
+    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens.S, truncidx)
     @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
     Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -219,8 +219,8 @@ end
 
     ## Test hess_xd_diagbasis
 
-    Hψ_xd_diag = hess_xd_diagbasis(fp, ens)
-    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens, truncidx)
+    Hψ_xd_diag = hess_xd_diagbasis(fp, ens.S)
+    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens.S, truncidx)
     @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
     Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -236,7 +236,7 @@ end
 
     ## Test function evaluation
 
-    ψ = evaluate(fp, ens)
+    ψ = evaluate(fp, ens.S)
     ψt = zeros(Ne)
 
     for i=1:Ne
@@ -246,7 +246,7 @@ end
 
     ## Test grad_xd
 
-    dψxd = grad_xd(fp, ens)
+    dψxd = grad_xd(fp, ens.S)
     dψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -257,7 +257,7 @@ end
 
     ## Test hess_xd
 
-    d2ψxd = hess_xd(fp, ens)
+    d2ψxd = hess_xd(fp, ens.S)
     d2ψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -268,16 +268,16 @@ end
 
     ## Test grad_coeff
 
-    dψ_coefft = evaluate_basis(fp.f, ens)
-    dψ_coeff = grad_coeff(fp, ens)
-    dψ_coeffexpanded = grad_coeff(fp.f, ens)
+    dψ_coefft = evaluate_basis(fp.f, ens.S)
+    dψ_coeff = grad_coeff(fp, ens.S)
+    dψ_coeffexpanded = grad_coeff(fp.f, ens.S)
 
     @test norm(dψ_coeff - dψ_coefft) < 1e-10
     @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
     ## Test grad_coeff_grad_xd
 
-    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens)
+    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens.S)
     dψ_coeff_xdt = zeros(Ne, Nψ)
 
     for j=1:Nψ
@@ -312,8 +312,8 @@ end
     fp = ParametricFunction(f)
 
     ## Test evaluate_offdiagbasis
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    ψofftrunc = evaluate_offdiagbasis(fp, ens, truncidx)
+    ψoff = evaluate_offdiagbasis(fp, ens.S)
+    ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
     @test ψoff[:,1:2:end] == ψofftrunc
 
@@ -331,8 +331,8 @@ end
 
 
     ## Test evaluate_diagbasis
-    ψdiag = evaluate_diagbasis(fp, ens)
-    ψdiagtrunc = evaluate_diagbasis(fp, ens, truncidx)
+    ψdiag = evaluate_diagbasis(fp, ens.S)
+    ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
     @test ψdiag[:,1:2:end] == ψdiagtrunc
 
@@ -350,8 +350,8 @@ end
     @test norm(ψdiagt - ψdiag)<1e-8
 
     ## Test grad_xd_diagbasis
-    Gψ_xd_diag = grad_xd_diagbasis(fp, ens)
-    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens, truncidx)
+    Gψ_xd_diag = grad_xd_diagbasis(fp, ens.S)
+    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens.S, truncidx)
     @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
     Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -367,8 +367,8 @@ end
 
     ## Test hess_xd_diagbasis
 
-    Hψ_xd_diag = hess_xd_diagbasis(fp, ens)
-    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens, truncidx)
+    Hψ_xd_diag = hess_xd_diagbasis(fp, ens.S)
+    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens.S, truncidx)
     @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
     Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -384,7 +384,7 @@ end
 
     ## Test function evaluation
 
-    ψ = evaluate(fp, ens)
+    ψ = evaluate(fp, ens.S)
     ψt = zeros(Ne)
 
     for i=1:Ne
@@ -394,7 +394,7 @@ end
 
     ## Test grad_xd
 
-    dψxd = grad_xd(fp, ens)
+    dψxd = grad_xd(fp, ens.S)
     dψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -405,7 +405,7 @@ end
 
     ## Test hess_xd
 
-    d2ψxd = hess_xd(fp, ens)
+    d2ψxd = hess_xd(fp, ens.S)
     d2ψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -416,16 +416,16 @@ end
 
     ## Test grad_coeff
 
-    dψ_coefft = evaluate_basis(fp.f, ens)
-    dψ_coeff = grad_coeff(fp, ens)
-    dψ_coeffexpanded = grad_coeff(fp.f, ens)
+    dψ_coefft = evaluate_basis(fp.f, ens.S)
+    dψ_coeff = grad_coeff(fp, ens.S)
+    dψ_coeffexpanded = grad_coeff(fp.f, ens.S)
 
     @test norm(dψ_coeff - dψ_coefft) < 1e-10
     @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
     ## Test grad_coeff_grad_xd
 
-    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens)
+    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens.S)
     dψ_coeff_xdt = zeros(Ne, Nψ)
 
     for j=1:Nψ
@@ -461,8 +461,8 @@ end
     fp = ParametricFunction(f)
 
     ## Test evaluate_offdiagbasis
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    ψofftrunc = evaluate_offdiagbasis(fp, ens, truncidx)
+    ψoff = evaluate_offdiagbasis(fp, ens.S)
+    ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
     @test ψoff[:,1:2:end] == ψofftrunc
 
@@ -480,8 +480,8 @@ end
 
 
     ## Test evaluate_diagbasis
-    ψdiag = evaluate_diagbasis(fp, ens)
-    ψdiagtrunc = evaluate_diagbasis(fp, ens, truncidx)
+    ψdiag = evaluate_diagbasis(fp, ens.S)
+    ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
     @test ψdiag[:,1:2:end] == ψdiagtrunc
 
@@ -499,8 +499,8 @@ end
     @test norm(ψdiagt - ψdiag)<1e-8
 
     ## Test grad_xd_diagbasis
-    Gψ_xd_diag = grad_xd_diagbasis(fp, ens)
-    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens, truncidx)
+    Gψ_xd_diag = grad_xd_diagbasis(fp, ens.S)
+    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens.S, truncidx)
     @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
     Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -516,8 +516,8 @@ end
 
     ## Test hess_xd_diagbasis
 
-    Hψ_xd_diag = hess_xd_diagbasis(fp, ens)
-    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens, truncidx)
+    Hψ_xd_diag = hess_xd_diagbasis(fp, ens.S)
+    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens.S, truncidx)
     @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
     Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -533,7 +533,7 @@ end
 
     ## Test function evaluation
 
-    ψ = evaluate(fp, ens)
+    ψ = evaluate(fp, ens.S)
     ψt = zeros(Ne)
 
     for i=1:Ne
@@ -543,7 +543,7 @@ end
 
     ## Test grad_xd
 
-    dψxd = grad_xd(fp, ens)
+    dψxd = grad_xd(fp, ens.S)
     dψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -554,7 +554,7 @@ end
 
     ## Test hess_xd
 
-    d2ψxd = hess_xd(fp, ens)
+    d2ψxd = hess_xd(fp, ens.S)
     d2ψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -565,16 +565,16 @@ end
 
     ## Test grad_coeff
 
-    dψ_coefft = evaluate_basis(fp.f, ens)
-    dψ_coeff = grad_coeff(fp, ens)
-    dψ_coeffexpanded = grad_coeff(fp.f, ens)
+    dψ_coefft = evaluate_basis(fp.f, ens.S)
+    dψ_coeff = grad_coeff(fp, ens.S)
+    dψ_coeffexpanded = grad_coeff(fp.f, ens.S)
 
     @test norm(dψ_coeff - dψ_coefft) < 1e-10
     @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
     ## Test grad_coeff_grad_xd
 
-    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens)
+    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens.S)
     dψ_coeff_xdt = zeros(Ne, Nψ)
 
     for j=1:Nψ
@@ -607,8 +607,8 @@ end
     fp = ParametricFunction(f)
 
     ## Test evaluate_offdiagbasis
-    ψoff = evaluate_offdiagbasis(fp, ens)
-    ψofftrunc = evaluate_offdiagbasis(fp, ens, truncidx)
+    ψoff = evaluate_offdiagbasis(fp, ens.S)
+    ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
     @test ψoff[:,1:2:end] == ψofftrunc
 
@@ -626,8 +626,8 @@ end
 
 
     ## Test evaluate_diagbasis
-    ψdiag = evaluate_diagbasis(fp, ens)
-    ψdiagtrunc = evaluate_diagbasis(fp, ens, truncidx)
+    ψdiag = evaluate_diagbasis(fp, ens.S)
+    ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
     @test ψdiag[:,1:2:end] == ψdiagtrunc
 
@@ -645,8 +645,8 @@ end
     @test norm(ψdiagt - ψdiag)<1e-8
 
     ## Test grad_xd_diagbasis
-    Gψ_xd_diag = grad_xd_diagbasis(fp, ens)
-    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens, truncidx)
+    Gψ_xd_diag = grad_xd_diagbasis(fp, ens.S)
+    Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, ens.S, truncidx)
     @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
     Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -662,8 +662,8 @@ end
 
     ## Test hess_xd_diagbasis
 
-    Hψ_xd_diag = hess_xd_diagbasis(fp, ens)
-    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens, truncidx)
+    Hψ_xd_diag = hess_xd_diagbasis(fp, ens.S)
+    Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, ens.S, truncidx)
     @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
     Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -679,7 +679,7 @@ end
 
     ## Test function evaluation
 
-    ψ = evaluate(fp, ens)
+    ψ = evaluate(fp, ens.S)
     ψt = zeros(Ne)
 
     for i=1:Ne
@@ -689,7 +689,7 @@ end
 
     ## Test grad_xd
 
-    dψxd = grad_xd(fp, ens)
+    dψxd = grad_xd(fp, ens.S)
     dψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -700,7 +700,7 @@ end
 
     ## Test hess_xd
 
-    d2ψxd = hess_xd(fp, ens)
+    d2ψxd = hess_xd(fp, ens.S)
     d2ψxdt = zeros(Ne)
 
     for i=1:Ne
@@ -711,16 +711,16 @@ end
 
     ## Test grad_coeff
 
-    dψ_coefft = evaluate_basis(fp.f, ens)
-    dψ_coeff = grad_coeff(fp, ens)
-    dψ_coeffexpanded = grad_coeff(fp.f, ens)
+    dψ_coefft = evaluate_basis(fp.f, ens.S)
+    dψ_coeff = grad_coeff(fp, ens.S)
+    dψ_coeffexpanded = grad_coeff(fp.f, ens.S)
 
     @test norm(dψ_coeff - dψ_coefft) < 1e-10
     @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
     ## Test grad_coeff_grad_xd
 
-    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens)
+    dψ_coeff_xd = grad_coeff_grad_xd(fp, ens.S)
     dψ_coeff_xdt = zeros(Ne, Nψ)
 
     for j=1:Nψ
