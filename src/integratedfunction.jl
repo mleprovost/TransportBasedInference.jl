@@ -4,8 +4,7 @@ export  IntegratedFunction,
         grad_xd,
         grad_coeff_grad_xd,
         hess_coeff_grad_xd,
-        repeatgrad_xk_basis!,
-        repeatgrad_xk_basis,
+        repeated_grad_xk_basis,
         integrate_xd,
         evaluate,
         grad_coeff_integrate_xd,
@@ -81,7 +80,7 @@ end
 # end
 #
 
-function repeatgrad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx}
+function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
     N = size(x,1)
     # ∂ᵏf/∂x_{grad_dim} = ψ
@@ -89,13 +88,11 @@ function repeatgrad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1
     grad_dim = Nx
     dims = Nx
 
-    dkψ = ones(N, Nψ)
     midxj = f.idx[:,Nx]
     maxj = maximum(midxj)
     #   Compute the kth derivative along grad_dim
     dkψj = vander(f.B.B, maxj, k, x)
     return dkψj[:, midxj .+ 1]
-
 end
 
 function evaluate(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
