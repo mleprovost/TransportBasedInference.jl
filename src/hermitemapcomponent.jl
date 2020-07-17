@@ -96,15 +96,17 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
         v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
-    quadgk!(integrand!, S.cache_integral, 0, 1; rtol = 1e-3)
+    quadgk!(integrand!, S.cache_integral, 0, 1; rtol = 1e-9)
+    @show quadgk!(integrand!, S.cache_integral, 0, 1)[2]#; rtol = 1e-3)
 
     # Multiply integral by xk (change of variable in the integration)
     for j=1:Nψ+1
         @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
     end
 
+    @show reshape(S.cache_integral[Ne+1:end],(Ne, Nψ))
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
-    @avx for i=1:Ne
+    @inbounds for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
             f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
@@ -113,7 +115,7 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
     end
 
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
-    @avx for i=1:Ne
+    @inbounds for i=1:Ne
         prelogJi = zero(Float64)
         for j=1:Nψ
             prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
@@ -125,11 +127,21 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
         J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_g[i]))
     end
 
+    @show S.ψoff.*S.ψd0+ reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+
+    @show gradlogpdf.(Normal(), S.cache_integral[1:Ne])
+
+    @show gradlogpdf.(Normal(), S.cache_integral[1:Ne]).*(S.ψoff.*S.ψd0 + reshape(S.cache_integral[Ne+1:end], (Ne, Nψ)))
+
+    reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
     @inbounds for i=1:Ne
+        # dJ = zeros(Nψ)
         for j=1:Nψ
-        dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(S.cache_integral[Ne*i+j] + S.ψoff[i,j]*S.ψd0[i,j])
+        dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
+        # dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(S.cache_integral[Nψ*i+j] + S.ψoff[i,j]*S.ψd0[i,j])
         dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
         end
+        # @show i, dJ
     end
 
 
