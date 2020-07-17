@@ -38,3 +38,7 @@ include("parametric.jl")
 
 # Test tools for integrated function
 include("integratedfunction.jl")
+
+
+# Test tools for HermiteMap component
+include("hermitemapcomponent.jl")
