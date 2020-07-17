@@ -13,6 +13,7 @@ using Distributions
 using QuadGK
 using TensorOperations
 using LoopVectorization
+using FastGaussQuadrature
 
 include("tools/product.jl")
 include("tools/tools.jl")

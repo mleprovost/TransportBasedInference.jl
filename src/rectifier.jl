@@ -75,7 +75,7 @@ function grad_x(g::Rectifier, x::T) where {T <: Real}
         return exp(x)
     elseif g.T=="softplus"
         a = log(2)
-        return 1/(1 + exp(-abs(a*x)))
+        return 1/(1 + exp(-a*x))
     elseif g.T=="explinearunit"
         if x<0
             return exp(x)

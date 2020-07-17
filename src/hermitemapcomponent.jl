@@ -1,6 +1,8 @@
 export HermiteMapk,
        log_pdf,
        negative_log_likelihood!,
+       grad_negative_log_likelihood!,
+       negative_log_likelihood_quadrature!,
        negative_log_likelihood
 
 
@@ -68,6 +70,8 @@ function negative_log_likelihood(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, 
 end
 
 
+
+
 function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
     NxX, Ne = size(X)
     @assert NxX == k "Wrong dimension of the sample X"
@@ -81,6 +85,8 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
 
     J = 0.0
     dJ = zeros(Nψ)
+
+    fill!(S.cache_integral, 0)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
@@ -96,6 +102,298 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
         v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
+    quadgk!(integrand!, S.cache_integral, 0, 1)#; order = 9, rtol = 1e-10)
+    @show quadgk!(integrand!, S.cache_integral, 0, 1)[2]#; rtol = 1e-3)
+
+    # Multiply integral by xk (change of variable in the integration)
+    for j=1:Nψ+1
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
+    end
+
+    @show S.cache_integral[1:Ne]
+    @show reshape(S.cache_integral[Ne+1:end],(Ne, Nψ))
+    # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
+    @inbounds for i=1:Ne
+        f0i = zero(Float64)
+        for j=1:Nψ
+            f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
+        end
+        S.cache_integral[i] += f0i
+    end
+
+    # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
+    @inbounds for i=1:Ne
+        prelogJi = zero(Float64)
+        for j=1:Nψ
+            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+        end
+        S.cache_g[i] = prelogJi
+    end
+
+    @inbounds for i=1:Ne
+        @show logpdf(Normal(), S.cache_integral[i])
+        @show log(Hk.I.g(S.cache_g[i]))
+        J += logpdf(Normal(), S.cache_integral[i]) #+ log(Hk.I.g(S.cache_g[i]))
+        J += log(Hk.I.g(S.cache_g[i]))
+    end
+
+    # @show S.ψoff.*S.ψd0+ reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+
+    # @show gradlogpdf.(Normal(), S.cache_integral[1:Ne])
+
+    # @show gradlogpdf.(Normal(), S.cache_integral[1:Ne]).*(S.ψoff.*S.ψd0 + reshape(S.cache_integral[Ne+1:end], (Ne, Nψ)))
+
+    reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+    @inbounds for i=1:Ne
+        # dJ = zeros(Nψ)
+        for j=1:Nψ
+        dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
+        # dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(S.cache_integral[Nψ*i+j] + S.ψoff[i,j]*S.ψd0[i,j])
+        dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
+        end
+        # @show i, dJ
+    end
+
+
+    # for i=1:Nψ
+    #     for
+    # logdψk = log.(Hk.I.g(S.dψxd .* S.ψoff *Hk.I.f.f.coeff))
+    # quad  =  (S.ψoff .* S.ψd0)*coeff + xk .* S.cache_integral
+    #  + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
+
+    J *=(-1/Ne)
+    rmul!(dJ, -1/Ne)
+
+    return J, dJ
+end
+
+function grad_negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+    NxX, Ne = size(X)
+    @assert NxX == k "Wrong dimension of the sample X"
+    @assert size(S.ψoff, 1) == Ne
+    @assert size(S.ψoff, 2) == Nψ
+
+    # Output objective, gradient
+    xk = view(X,NxX,:)#)
+
+    coeff = Hk.I.f.f.coeff
+
+    J = 0.0
+    dJ = zeros(Nψ)
+
+    fill!(S.cache_integral, 0)
+
+    # Integrate at the same time for the objective, gradient
+    function integrand!(v::Vector{Float64}, t::Float64)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        S.cache_dcψxdt .*= S.ψoff
+
+        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+
+        # # Integration for J
+        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+
+        # Integration for dcJ
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+    end
+
+    quadgk!(integrand!, S.cache_integral, 0, 1)#; order = 9, rtol = 1e-10)
+    @show quadgk!(integrand!, S.cache_integral, 0, 1)[2]#; rtol = 1e-3)
+
+    # Multiply integral by xk (change of variable in the integration)
+    for j=1:Nψ+1
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
+    end
+
+    @show S.cache_integral[Ne+1:end]
+    # @show S.cache_integral[1:Ne]
+    @show reshape(S.cache_integral[Ne+1:end],(Ne, Nψ))
+    # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
+    @inbounds for i=1:Ne
+        f0i = zero(Float64)
+        for j=1:Nψ
+            f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
+        end
+        S.cache_integral[i] += f0i
+    end
+
+    # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
+    @inbounds for i=1:Ne
+        prelogJi = zero(Float64)
+        for j=1:Nψ
+            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+        end
+        S.cache_g[i] = prelogJi
+    end
+
+    # @inbounds for i=1:Ne
+    #     @show logpdf(Normal(), S.cache_integral[i])
+    #     @show log(Hk.I.g(S.cache_g[i]))
+    #     J += logpdf(Normal(), S.cache_integral[i]) #+ log(Hk.I.g(S.cache_g[i]))
+    #     J += log(Hk.I.g(S.cache_g[i]))
+    # end
+
+    @show S.ψoff.*S.ψd0+ reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+
+    @show gradlogpdf.(Normal(), S.cache_integral[1:Ne])
+
+    @show gradlogpdf.(Normal(), S.cache_integral[1:Ne]).*(S.ψoff.*S.ψd0 + reshape(S.cache_integral[Ne+1:end], (Ne, Nψ)))
+
+    reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+    @inbounds for i=1:Ne
+        # dJ = zeros(Nψ)
+        for j=1:Nψ
+        dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
+        # dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(S.cache_integral[Nψ*i+j] + S.ψoff[i,j]*S.ψd0[i,j])
+        dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
+        end
+        # @show i, dJ
+    end
+
+
+    # for i=1:Nψ
+    #     for
+    # logdψk = log.(Hk.I.g(S.dψxd .* S.ψoff *Hk.I.f.f.coeff))
+    # quad  =  (S.ψoff .* S.ψd0)*coeff + xk .* S.cache_integral
+    #  + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
+
+    # J *=(-1/Ne)
+    rmul!(dJ, -1/Ne)
+
+    return dJ
+end
+
+function negative_log_likelihood_quadrature!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+    NxX, Ne = size(X)
+    @assert NxX == k "Wrong dimension of the sample X"
+    @assert size(S.ψoff, 1) == Ne
+    @assert size(S.ψoff, 2) == Nψ
+
+    # Output objective, gradient
+    xk = view(X,NxX,:)#)
+
+    coeff = Hk.I.f.f.coeff
+
+    J = 0.0
+    dJ = zeros(Nψ)
+
+    fill!(S.cache_integral, 0)
+
+    # Integrate at the same time for the objective, gradient
+    function integrand!(v::Vector{Float64}, t::Float64)
+        # S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        # or integrals over [-1,1]
+        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, 0.5*(1+t)*xk)
+
+        S.cache_dcψxdt .*= S.ψoff
+
+        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+
+        # Integration for J
+        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+
+        # Integration for dcJ
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+    end
+    Nnodes = 1000000
+    nodes, weights = gausslegendre( Nnodes )
+    tmp = zeros(Ne + Ne*Nψ)
+    for j=1:Nnodes
+        integrand!(tmp, nodes[j])
+        S.cache_integral .+= weights[j]*tmp
+    end
+
+
+    # quadgk!(integrand!, S.cache_integral, 0, 1; rtol = 1e-9)
+    # @show quadgk!(integrand!, S.cache_integral, 0, 1)[2]#; rtol = 1e-3)
+
+    # Multiply integral by xk (change of variable in the integration)
+    for j=1:Nψ+1
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= 0.5*xk
+    end
+
+    @show S.cache_integral[1:Ne]
+    @show reshape(S.cache_integral[Ne+1:end],(Ne, Nψ))
+    # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
+    @inbounds for i=1:Ne
+        f0i = zero(Float64)
+        for j=1:Nψ
+            f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
+        end
+        S.cache_integral[i] += f0i
+    end
+
+    # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
+    @inbounds for i=1:Ne
+        prelogJi = zero(Float64)
+        for j=1:Nψ
+            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+        end
+        S.cache_g[i] = prelogJi
+    end
+
+    @inbounds for i=1:Ne
+        J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_g[i]))
+    end
+
+    # @show S.ψoff.*S.ψd0+ reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+
+    # @show gradlogpdf.(Normal(), S.cache_integral[1:Ne])
+
+    # @show gradlogpdf.(Normal(), S.cache_integral[1:Ne]).*(S.ψoff.*S.ψd0 + reshape(S.cache_integral[Ne+1:end], (Ne, Nψ)))
+
+    reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
+    @inbounds for i=1:Ne
+        dJ = zeros(Nψ)
+        for j=1:Nψ
+        dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
+        # dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(S.cache_integral[Nψ*i+j] + S.ψoff[i,j]*S.ψd0[i,j])
+        dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
+        end
+        @show i, dJ
+    end
+
+
+    # for i=1:Nψ
+    #     for
+    # logdψk = log.(Hk.I.g(S.dψxd .* S.ψoff *Hk.I.f.f.coeff))
+    # quad  =  (S.ψoff .* S.ψd0)*coeff + xk .* S.cache_integral
+    #  + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
+
+    J *=(-1/Ne)
+    rmul!(dJ, -1/Ne)
+
+    return J, dJ
+end
+
+function negative_log_likelihood!(coeff::Array{T,1}, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k}
+    NxX, Ne = size(X)
+    @assert NxX == k "Wrong dimension of the sample X"
+    @assert size(S.ψoff, 1) == Ne
+    @assert size(S.ψoff, 2) == Nψ
+
+    # Output objective, gradient
+    xk = view(X,NxX,:)#)
+
+    # coeff = Hk.I.f.f.coeff
+
+    J = 0.0
+    dJ = zeros(Nψ)
+
+    # Integrate at the same time for the objective, gradient
+    function integrand!(v::Vector{Float64}, t::Float64)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        S.cache_dcψxdt .*= S.ψoff
+
+        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+
+        # Integration for J
+        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+
+        # Integration for dcJ
+        # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+    end
+
     quadgk!(integrand!, S.cache_integral, 0, 1; rtol = 1e-9)
     @show quadgk!(integrand!, S.cache_integral, 0, 1)[2]#; rtol = 1e-3)
 
@@ -103,6 +401,7 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
     for j=1:Nψ+1
         @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
     end
+    @show S.cache_integral[1:Ne]
 
     @show reshape(S.cache_integral[Ne+1:end],(Ne, Nψ))
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
@@ -154,5 +453,5 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
     J *=(-1/Ne)
     rmul!(dJ, -1/Ne)
 
-    return J, dJ
+    return J#, dJ
 end
