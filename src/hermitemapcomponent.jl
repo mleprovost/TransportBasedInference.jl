@@ -81,6 +81,7 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
 
     J = 0.0
     dJ = zeros(Nψ)
+
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
         S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
@@ -103,21 +104,34 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
     end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
-    # Compute ∂_{xk}g(∂_{xk}f(x_{1:k}))
     @avx for i=1:Ne
         f0i = zero(Float64)
-        prelogJi = zero(Float64)
         for j=1:Nψ
             f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
-            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
         end
         S.cache_integral[i] += f0i
-        S.cache_integral[Ne+i] += prelogJi
+    end
+
+    # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
+    @avx for i=1:Ne
+        prelogJi = zero(Float64)
+        for j=1:Nψ
+            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+        end
+        S.cache_g[i] = prelogJi
     end
 
     @inbounds for i=1:Ne
-        J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_integral[Ne+i]))
+        J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_g[i]))
     end
+
+    @inbounds for i=1:Ne
+        for j=1:Nψ
+        dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(S.cache_integral[Ne*i+j] + S.ψoff[i,j]*S.ψd0[i,j])
+        dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
+        end
+    end
+
 
     # for i=1:Nψ
     #     for
@@ -126,6 +140,7 @@ function negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ,
     #  + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
 
     J *=(-1/Ne)
+    rmul!(dJ, -1/Ne)
 
-    return J
+    return J, dJ
 end

@@ -30,7 +30,8 @@ struct Storage{m, Nψ, Nx}
     # Cache integration for J and dJ
     cache_integral::Array{Float64,1}
 
-
+    # Cache for g(∂k(f(x_{1:k})))
+    cache_g::Array{Float64,1}
 end
 
 function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
@@ -45,7 +46,8 @@ function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {
         cache_dcψxdt = zero(dψxd)
         cache_dψxd = zeros(Ne)
         cache_integral = zeros(Ne + Ne*Nψ)
+        cache_g = zeros(Ne)
 
 
-        return Storage{m, Nψ, Nx}(f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral)
+        return Storage{m, Nψ, Nx}(f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
 end

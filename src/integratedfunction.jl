@@ -104,7 +104,7 @@ function evaluate(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where 
     out = zeros(Ne)
 
     function integrand!(v::Vector{Float64}, t::Float64)
-        v .= R.g((repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff)*R.f.f.coeff)
+        v .= R.g((repeated_grad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff)*R.f.f.coeff)
     end
 
      out .= (ψoff .* ψdiag)*R.f.f.coeff + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
@@ -129,7 +129,7 @@ function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Flo
     cache = zeros(Ne, Nψ)
 
     function integrand!(v::Matrix{Float64}, t::Float64)
-        dcdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
+        dcdψ .= repeated_grad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
         v .= grad_x(R.g, dcdψ*R.f.f.coeff) .* dcdψ
     end
 
@@ -149,7 +149,7 @@ function hess_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Flo
     cache = zeros(Ne*Nψ*Nψ)
 
     function integrand!(v::Vector{Float64}, t::Float64)
-        dcdψ .= repeatgrad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
+        dcdψ .= repeated_grad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff
         @inbounds for i=1:Nψ
             for j=1:Nψ
                 dcdψouter[:,i,j] = dcdψ[:,i] .* dcdψ[:, j]
