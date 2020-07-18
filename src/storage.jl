@@ -1,4 +1,4 @@
-export Storage
+export Storage, update_storage!
 
 # Create a structure that will hold evaluation of the basis functions,
 # as well as their derivative and second derivative
@@ -50,4 +50,9 @@ function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {
 
 
         return Storage{m, Nψ, Nx}(f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
+end
+
+
+function update_storage!(S::Storage{m, Nψ, k}, X::Array{Float64,2}, newidx::Array{Int64,2}) where {m, Nψ, k}
+
 end

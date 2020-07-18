@@ -23,6 +23,9 @@ function IntegratedFunction(f::ParametricFunction{m, Nψ, Nx}) where {m, Nψ, Nx
     return IntegratedFunction{m, Nψ, Nx}(Rectifier("softplus"), f)
 end
 
+function IntegratedFunction(f::ExpandedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
+    return IntegratedFunction{m, Nψ, Nx}(Rectifier("softplus"), ParametricFunction(f))
+end
 
 function integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
     NxX, Ne = size(X)

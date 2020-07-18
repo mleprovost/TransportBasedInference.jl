@@ -1,4 +1,14 @@
 
+@testset "Verify that initial map is identity" begin
+
+  H = HermiteMapk(2, 3; α = 1e-6)
+
+  x = randn(2,1)
+  Hx = evaluate(H.I, x)
+  @test abs(Hx - x[2])<1e-10
+end
+
+
 
 @testset "Verify loss function and its gradient" begin
 
@@ -32,15 +42,26 @@
     H = HermiteMapk(R)
     S = Storage(H.I.f, ens.S);
 
-    J, dJ = negative_log_likelihood!(S,H, ens.S)
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
+    coeffopt = Optim.minimizer(res)
 
-    @test abs(J - 2.137129544927313)<1e-8
-    @test norm(dJ - [1.254209297811173; 0.752759343086777; 0.669152523388112; -0.073354929658946; 0.071051667979605])<1e-8
+    @test norm(coeffopt - [3.015753764546621;
+                          -2.929908252283099;
+                          -3.672401233483867;
+                           2.975554571687243;
+                           1.622308437415610])<1e-4
 
+    # Verify with L-2 penalty term
 
+    H = HermiteMapk(R; α = 1e-2)
+    S = Storage(H.I.f, ens.S);
 
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
+    coeffopt = Optim.minimizer(res)
 
-
-
-
+    @test norm(coeffopt - [0.550368190586868;
+                          -0.823576312038818;
+                          -0.974273115827102;
+                           1.552794230307129;
+                           0.414753530952308])<1e-4
 end
