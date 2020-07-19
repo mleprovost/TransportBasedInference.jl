@@ -16,7 +16,6 @@ function greedyfit(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::In
     # Compute initial loss on training set
     train_err = negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk))
 
-
     # Compute the reduced margin
     reduced_margin = getreducedmargin(getidx(Hk))
 
@@ -43,7 +42,23 @@ end
 
 function update_coeffs(Hkold::HermiteMapk{m, Nψ, k}, Hknew::HermiteMapk{m, Nψnew, k}) where {m, Nψ, Nψnew, k}
 
+    idx_old = getidx(Hkold)
+    idx_new = getidx(Hknew)
+
+    coeff_old = getcoeff(Hkold)
+
+    # Declare vectors for new coefficients and to track added terms
+
+    coeff_new = zeros(Nψnew)
+    coeff_added = ones(Nψnew)
+
+    # Update coefficients
+    @inbounds for i = 1:Nψ
+        coeff_new[idx_i] = coeff_old[i]
+        coeff_added[idx_i] = 0.0
+    end
 
 
-
+    # Find indices of added coefficients and corresponding multi-indices
+    idx_added = 
 end
