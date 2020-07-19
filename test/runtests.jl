@@ -10,6 +10,7 @@ using QuadGK
 using Random
 using Distributions
 
+include("storage.jl")
 
 # Tools: double factorial, adaptive integration
 include("tools/tools.jl")

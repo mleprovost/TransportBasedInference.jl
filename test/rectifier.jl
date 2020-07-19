@@ -14,6 +14,16 @@ r = Rectifier("squared")
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
 
+x = -2.5
+@test abs(r(x) - x^2)<1e-10
+
+
+# Test gradient
+@test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
+
+# Test hessian
+@test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
 end
 
 @testset "Rectifier exponential" begin
@@ -22,6 +32,16 @@ r = Rectifier("exponential")
 @test r.T == "exponential"
 
     x = 2.46
+@test abs(r(x) - exp(x))<1e-10
+
+
+# Test gradient
+@test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
+
+# Test hessian
+@test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+x = -2.46
 @test abs(r(x) - exp(x))<1e-10
 
 
@@ -46,6 +66,22 @@ r = Rectifier("softplus")
 #Test inversion
 @test abs(inverse(r,r(x))-x)<1e-10
 @test abs(r(inverse(r,x))-x)<1e-10
+
+#Test inversion with x large
+xlarge = 10.0^6
+@test abs(inverse(r,xlarge) -xlarge)<1e-10
+
+# Test gradient
+@test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
+
+# Test hessian
+@test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+
+x = -2.5
+a = log(2)
+@test abs(r(x) - (log(1 + exp(-abs(a*x))) + max(a*x, 0))/a)<1e-10
+
 
 #Test inversion with x large
 xlarge = 10.0^6

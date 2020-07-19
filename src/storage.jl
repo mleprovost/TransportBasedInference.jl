@@ -1,4 +1,4 @@
-export Storage, update_storage!
+export Storage, update_storage
 
 # Create a structure that will hold evaluation of the basis functions,
 # as well as their derivative and second derivative
@@ -53,6 +53,33 @@ function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {
 end
 
 
-function update_storage!(S::Storage{m, Nψ, k}, X::Array{Float64,2}, newidx::Array{Int64,2}) where {m, Nψ, k}
+function update_storage(S::Storage{m, Nψ, k}, X::Array{Float64,2}, addedidx::Array{Int64,2}) where {m, Nψ, k}
+    NxX, Ne = size(X)
 
+    @assert NxX == k "Wrong dimension of the sample X"
+    addednψ = size(addedidx,1)
+    newNψ = addednψ + Nψ
+
+    fnew = ParametricFunction(ExpandedFunction(S.f.f.B, vcat(S.f.f.idx, addedidx), vcat(S.f.f.coeff, zeros(addednψ))))
+
+    # Update off-diagonal component
+    addedψoff = evaluate_offdiagbasis(fnew, X, addedidx)
+
+    # Update ψd
+    addedψd = evaluate_diagbasis(fnew, X, addedidx)
+
+    # Update ψd0
+    addedψd0  = repeated_evaluate_basis(fnew.f, zeros(Ne), addedidx)
+
+    # Update dψxd
+    addedψxd = repeated_grad_xk_basis(fnew.f, X[k,:], addedidx)
+
+
+    return Storage{m, newNψ, k}(fnew, hcat(S.ψoff, addedψoff), hcat(S.ψd, addedψd),
+                                hcat(S.ψd0, addedψd0), hcat(S.dψxd, addedψxd),
+                                hcat(S.cache_dcψxdt, zeros(Ne, addednψ)),
+                                S.cache_dψxd,
+                                vcat(S.cache_integral, zeros(Ne*addednψ)),
+                                S.cache_g)
+    # @show S
 end

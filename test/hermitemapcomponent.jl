@@ -5,7 +5,7 @@
 
   x = randn(2,1)
   Hx = evaluate(H.I, x)
-  @test abs(Hx - x[2])<1e-10
+  @test abs(Hx[1] - x[2])<1e-10
 end
 
 

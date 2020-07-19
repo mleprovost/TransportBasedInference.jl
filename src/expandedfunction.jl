@@ -119,13 +119,17 @@ evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{
 evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
             evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, 1:Nx, f.idx)
 
-function repeated_evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{T, 1}) where {m, Nψ, Nx, T <:Real}
+function repeated_evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{T, 1}, idx::Array{Int64,2}) where {m, Nψ, Nx, T <:Real}
     # Compute the last component
-    midxj = f.idx[:,Nx]
+    midxj = idx[:,Nx]
     maxj = maximum(midxj)
     ψj = vander(f.B.B, maxj, 0, x)
     return ψj[:, midxj .+ 1]
 end
+
+repeated_evaluate_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{T, 1}) where {m, Nψ, Nx, T <:Real} =
+            repeated_evaluate_basis(f, x, f.idx)
+
 
 function grad_xk_basis!(dkψ, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
