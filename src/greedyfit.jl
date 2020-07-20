@@ -45,6 +45,10 @@ function update_coeffs(Hkold::HermiteMapk{m, Nψ, k}, Hknew::HermiteMapk{m, Nψn
     idx_old = getidx(Hkold)
     idx_new = getidx(Hknew)
 
+    @show idx_old
+    @show idx_new
+    @show Nψnew
+
     coeff_old = getcoeff(Hkold)
 
     # Declare vectors for new coefficients and to track added terms
@@ -54,11 +58,14 @@ function update_coeffs(Hkold::HermiteMapk{m, Nψ, k}, Hknew::HermiteMapk{m, Nψn
 
     # Update coefficients
     @inbounds for i = 1:Nψ
-        coeff_new[idx_i] = coeff_old[i]
-        coeff_added[idx_i] = 0.0
+        idx_i = Bool[idx_old[i,:] == x for x in eachslice(idx_new; dims = 1)]
+        coeff_new[idx_i] .= coeff_old[i]
+        coeff_added[idx_i] .= 0.0
     end
 
-
     # Find indices of added coefficients and corresponding multi-indices
-    idx_added = 
+    coeff_idx_added = findall(coeff_added .> 0.0)
+    idx_added = idx_new[coeff_idx_added,:]
+
+    return coeff_new, coeff_idx_added, idx_added
 end

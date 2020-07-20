@@ -1,7 +1,7 @@
 
 @testset "Verify that initial map is identity" begin
 
-  H = HermiteMapk(2, 3; α = 1e-6)
+  H = HermiteMapk(3, 2; α = 1e-6)
 
   x = randn(2,1)
   Hx = evaluate(H.I, x)
