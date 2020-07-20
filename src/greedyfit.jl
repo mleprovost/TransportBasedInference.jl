@@ -2,29 +2,70 @@ export greedyfit, update_component, update_coeffs
 
 
 
-function greedyfit(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5) where {m, Nψ, k}
+function greedyfit(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true) where {m, Nψ, k}
 
     best_valid_error = Inf
     patience = 0
 
+    Xvalid =  zero(X)
+
+    train_error = Float64[]
+    valid_error = Float64[]
+
     # Initialize map Hk to identity
-    Hk = HermiteMapk(k, m; α = 1e-6);
+    Hk = HermiteMapk(m, k; α = 1e-6);
 
     # Compute storage # Add later storage for validation S_valid
-    S = Storage(Hk, X)
+    S = Storage(Hk.I.f, X)
+    Svalid = Storage(Hk.I.f, Xvalid)
 
     # Compute initial loss on training set
-    train_err = negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk))
+    push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
+    push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
 
     # Compute the reduced margin
     reduced_margin = getreducedmargin(getidx(Hk))
 
     while ncoeff(Hk) < maxterms
+        idx_new, reduced_margin = update_component(Hk, X, reduced_margin, S)
+
+        # Update storage with the new feature
+        S = update_storage(S, X, idx_new[end:end,:])
+        Svalid = update_storage(Svalid, Xvalid, idx_new[end:end,:])
 
 
+        # Update Hk
+        Hk = HermiteMapk(IntegratedFunction(S.f); α = Hk.α)
 
+        # Optimize coefficients
+        coeff0 = getcoeff(Hk)
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.BFGS())
+        setcoeff!(Hk, Optim.minimizer(res))
 
+        # Compute new loss on the training and validation set
+        push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
+        push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
+
+        if verbose == true
+            println(string(ncoeff(Hk)-1)*" terms - Training error: "*
+            string(train_error[end])*", Validation error: "*string(valid_error[end]))
+        end
+
+        # Update patience
+        if valid_error[end] >= best_valid_error
+            patience +=1
+        else
+            best_valid_error = deepcopy(valid_error[end])
+            patience = 0
+        end
+
+        # Check if patience exceeded maximum patience
+        if patience >= maxpatience
+            break
+        end
     end
+
+    return Hk, train_error, valid_error
 end
 
 
@@ -61,7 +102,7 @@ function update_coeffs(Hkold::HermiteMapk{m, Nψ, k}, Hknew::HermiteMapk{m, Nψn
 
     idx_old = getidx(Hkold)
     idx_new = getidx(Hknew)
-    
+
     coeff_old = getcoeff(Hkold)
 
     # Declare vectors for new coefficients and to track added terms

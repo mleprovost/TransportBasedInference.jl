@@ -42,8 +42,7 @@ end
     H = HermiteMapk(R; α = 0.0)
     S = Storage(H.I.f, ens.S);
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
-    coeffopt = Optim.minimizer(res)
+Hk_old = HermiteMapk(m, Nx, [0 0; 0 1; 0 2; 1 0; 2 0], coeff; α = 1e-2);
 
     @test norm(coeffopt - [3.015753764546621;
                           -2.929908252283099;

@@ -4,6 +4,7 @@ export  HermiteMapk,
         getidx,
         negative_log_likelihood!,
         negative_log_likelihood
+        # optimize
 
 
 struct HermiteMapk{m, Nψ, k}
@@ -111,10 +112,12 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
         reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
         dJ .= zeros(Nψ)
         @inbounds for i=1:Ne
+            # dJ .= zeros(Nψ)
             for j=1:Nψ
             dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
             dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
             end
+            # @show i, dJ
         end
         rmul!(dJ, -1/Ne)
         # Add derivative of the L2 penalty term ∂_c α ||c||^2 = 2 *α c
@@ -127,12 +130,18 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
             J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)
-        return J + Hk.α*norm(coeff)^2
+        J += Hk.α*norm(coeff)^2
+        return J
     end
 end
 
 negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k} =
     (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, Hk, X)
+
+
+
+# function optimize()
+
 
 
 
@@ -173,9 +182,5 @@ function negative_log_likelihood(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, 
     end
 
     J *=(-1/Ne)
-
     return J
-
-    #  + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
-
 end

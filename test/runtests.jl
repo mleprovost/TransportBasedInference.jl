@@ -9,6 +9,7 @@ using SpecialFunctions
 using QuadGK
 using Random
 using Distributions
+using Optim
 
 include("storage.jl")
 

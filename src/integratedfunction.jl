@@ -99,9 +99,7 @@ function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float6
 end
 
 repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
-        repeated_grad_xk_basis(f, x, f.idx) 
-
-
+        repeated_grad_xk_basis(f, x, f.idx)
 
 function evaluate(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
     NxX, Ne = size(X)
