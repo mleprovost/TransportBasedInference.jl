@@ -14,6 +14,7 @@ using QuadGK
 using TensorOperations
 using LoopVectorization
 using FastGaussQuadrature
+using Optim
 
 include("tools/product.jl")
 include("tools/tools.jl")

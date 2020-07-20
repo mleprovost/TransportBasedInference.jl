@@ -17,10 +17,6 @@ struct HermiteMapk{m, Nψ, k}
     end
 end
 
-function HermiteMapk(f::ExpandedFunction{m, Nψ, k}; α::Float64 = 1e-6) where {m, Nψ, k}
-    return HermiteMapk{m, Nψ, k}(IntegratedFunction(f), α)
-end
-
 function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
@@ -28,6 +24,12 @@ function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float
 
     return HermiteMapk(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
 end
+
+function HermiteMapk(f::ExpandedFunction{m, Nψ, k}; α::Float64 = 1e-6) where {m, Nψ, k}
+    return HermiteMapk(IntegratedFunction(f); α = α)
+end
+
+
 
 function HermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
     Nψ = 1

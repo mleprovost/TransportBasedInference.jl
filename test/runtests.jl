@@ -43,3 +43,6 @@ include("integratedfunction.jl")
 
 # Test tools for HermiteMap component
 include("hermitemapcomponent.jl")
+
+# Test greedy procedure
+include("greedyfit.jl")

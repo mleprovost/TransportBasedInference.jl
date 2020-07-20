@@ -29,26 +29,39 @@ end
 
 
 function update_component(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, k}) where {m, Nψ, k}
-
-    idxnew = vcat(getidx(Hk), reduced_margin)
+    idx_old = getidx(Hk)
+    idx_new = vcat(idx_old, reduced_margin)
 
     # Define updated map
-    fnew = ExpandedFunction(Hk.I.f.f.B, idxnew, vcat(getcoeff(Hk), zeros(size(reduced_margin,1))))
-    Hknew = HermiteMapk(fnew; α = 1e-6)
+    f_new = ExpandedFunction(Hk.I.f.f.B, idx_new, vcat(getcoeff(Hk), zeros(size(reduced_margin,1))))
+    Hk_new = HermiteMapk(f_new; α = 1e-6)
 
+    # Set coefficients based on previous optimal solution
+    coeff_new, coeff_idx_added, idx_added = update_coeffs(Hk, Hk_new)
 
+    # Compute gradient after adding the new elements
+    S = update_storage(S, X, reduced_margin)
+    dJ = zero(coeff_new)
+    negative_log_likelihood!(nothing, dJ, coeff_new, S, Hk_new, X)
 
+    # Find function in the reduced margin most correlated with the residual
+    _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
+
+    opt_idx = idx_added[opt_dJ_coeff_idx,:]
+
+    # Update multi-indices and the reduced margins based on opt_idx
+    # reducedmargin_opt_coeff_idx = Bool[opt_idx == x for x in eachslice(reduced_margin; dims = 1)]
+
+    idx_new, reduced_margin = updatereducedmargin(idx_old, reduced_margin, opt_dJ_coeff_idx)
+
+    return idx_new, reduced_margin
 end
 
 function update_coeffs(Hkold::HermiteMapk{m, Nψ, k}, Hknew::HermiteMapk{m, Nψnew, k}) where {m, Nψ, Nψnew, k}
 
     idx_old = getidx(Hkold)
     idx_new = getidx(Hknew)
-
-    @show idx_old
-    @show idx_new
-    @show Nψnew
-
+    
     coeff_old = getcoeff(Hkold)
 
     # Declare vectors for new coefficients and to track added terms
