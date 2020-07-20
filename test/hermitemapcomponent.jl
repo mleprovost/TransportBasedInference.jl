@@ -39,7 +39,7 @@ end
 
     fp = ParametricFunction(f)
     R = IntegratedFunction(fp)
-    H = HermiteMapk(R)
+    H = HermiteMapk(R; α = 0.0)
     S = Storage(H.I.f, ens.S);
 
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
