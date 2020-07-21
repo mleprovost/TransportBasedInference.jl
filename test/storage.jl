@@ -14,7 +14,8 @@
               0.412907   1.01672;
               1.41332   -0.918205;
               0.766647  -1.00445]';
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
+
 
     idx = [0 0; 0 1; 1 0; 2 1; 1 2]
     truncidx = idx[1:2:end,:]

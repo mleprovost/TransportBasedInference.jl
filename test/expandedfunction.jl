@@ -9,7 +9,7 @@ using AdaptiveTransportMap: evaluate
     ens.S .= randn(Nx, Ne)
 
 
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
 
     idx = reshape([0], (1, 1))
     truncidx = idx[1:2:end,:]
@@ -110,7 +110,7 @@ end
     ens.S .= randn(Nx, Ne)
 
 
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
 
     idx = reshape([0; 1; 2; 3], (4, 1))
     truncidx = idx[1:2:end,:]
@@ -211,7 +211,7 @@ end
     ens.S .= randn(Nx, Ne)
 
 
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
 
     idx = [0 0]
     truncidx = idx[1:2:end,:]
@@ -312,7 +312,7 @@ end
     ens.S .= randn(Nx, Ne)
 
 
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
 
     idx = [0 0; 0 1; 1 0; 1 1; 1 2]
     truncidx = idx[1:2:end,:]
@@ -412,7 +412,7 @@ end
     ens = EnsembleState(Nx, Ne)
     ens.S .= randn(Nx, Ne)
 
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
 
     idx = [0 0 0; 0 0 1; 0 1 0; 0 1 1; 0 1 2; 1 0 0]
     truncidx = idx[1:2:end,:]
@@ -509,7 +509,7 @@ end
     ens = EnsembleState(Nx, Ne)
     ens.S .= randn(Nx, Ne)
 
-    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
+    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
 
     idx = [0 0 0]
     truncidx = idx[1:2:end,:]

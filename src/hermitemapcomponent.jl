@@ -23,7 +23,7 @@ end
 function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    B = MultiBasis(BasisProHermite(m--; scaled =true), k)
+    B = MultiBasis(BasisProHermite(m-1; scaled =true), k)
 
     return HermiteMapk(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
 end

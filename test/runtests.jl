@@ -11,7 +11,6 @@ using Random
 using Distributions
 using Optim
 
-include("storage.jl")
 
 # Tools: double factorial, adaptive integration
 include("tools/tools.jl")
@@ -40,6 +39,8 @@ include("parametric.jl")
 
 # Test tools for integrated function
 include("integratedfunction.jl")
+
+include("storage.jl")
 
 
 # Test tools for HermiteMap component

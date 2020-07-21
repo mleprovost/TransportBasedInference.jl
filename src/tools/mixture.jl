@@ -1,5 +1,8 @@
 
-export Mixture
+export Mixture, rand, logpdf
+
+import Base: rand
+import Distributions: logpdf
 
 
 struct Mixture{Nψ, Nx}
@@ -37,12 +40,22 @@ function Mixture(Nx::Int64)
 end
 
 
-function sample(M::Mixture{Nψ, Nx}, Ne::Int64) where {Nψ, Nx}
+function rand(M::Mixture{Nψ, Nx}, Ne::Int64) where {Nψ, Nx}
     out = zeros(Nx, Ne)
+    @inbounds for (i,di) in enumerate(M.dist)
+        out += M.w[i]*rand(di,Ne)
+    end
+    return out
+end
 
-    @inbounds for di in M.dist
 
-        out += 1.0
+function logpdf(M::Mixture{Nψ, Nx}, X::Array{Float64,2}) where {Nψ, Nx}
+    NxX, Ne = size(X)
+    @assert NxX == Nx "Dimension of the sample is wrong"
+    pdfX = zeros(Ne)
+    @inbounds for (i,di) in enumerate(M.dist)
+        pdfX += M.w[i]*pdf(di, X)
     end
 
+    return log.(pdfX)
 end
