@@ -2,6 +2,8 @@ export  HermiteMapk,
         getcoeff,
         setcoeff!,
         getidx,
+        # inverse!,
+        # inverse,
         negative_log_likelihood!,
         negative_log_likelihood
         # optimize
@@ -21,7 +23,7 @@ end
 function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    B = MultiBasis(CstProHermite(m-2; scaled =true), k)
+    B = MultiBasis(BasisProHermite(m--; scaled =true), k)
 
     return HermiteMapk(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
 end
@@ -36,7 +38,7 @@ function HermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
     Nψ = 1
 
     # m is the dimension of the basis
-    B = MultiBasis(CstProHermite(m-2; scaled =true), k)
+    B = MultiBasis(BasisProHermite(m-1; scaled =true), k)
     idx = zeros(Int64, Nψ,k)
     coeff = zeros(Nψ)
 
@@ -56,7 +58,31 @@ end
 getidx(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Hk.I.f.f.idx
 
 
+## Evaluate
+function evaluate!(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+    @assert k==size(X,1) "Wrong dimension of the sample"
+    @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
+    return evaluate!(out, Hk.I, X)
+end
 
+evaluate(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
+    evaluate!(zeros(size(X,2)), Hk, X)
+
+
+## Invert transport map
+
+# function inverse!(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+#     @assert k==size(X,1) "Wrong dimension of the sample"
+#     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
+#     return inverse!(out, Hk.I, X)
+# end
+#
+# inverse(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
+#         inverse!(zeros(size(X,2)), Hk, X)
+
+
+
+## Compute Negative log likelihood and its gradient
 function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k}
     NxX, Ne = size(X)
     @assert NxX == k "Wrong dimension of the sample X"
@@ -137,6 +163,7 @@ end
 
 negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k} =
     (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, Hk, X)
+
 
 
 

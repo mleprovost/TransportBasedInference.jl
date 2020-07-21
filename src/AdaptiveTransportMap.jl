@@ -15,6 +15,7 @@ using TensorOperations
 using LoopVectorization
 using FastGaussQuadrature
 using Optim
+using LinearMaps
 
 include("tools/product.jl")
 include("tools/tools.jl")
@@ -22,9 +23,13 @@ include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
 include("tools/adaptiveCC.jl")
 # Tools to apply a linear transformation
-include("tools/scale.jl")
+include("tools/transform.jl")
+# Tools for mixture of Gaussian distributions
+include("tools/mixture.jl")
 
 include("rectifier.jl")
+
+
 
 # Hermite Polynomials
 include("phypolyhermite.jl")
@@ -56,6 +61,7 @@ include("margin/totalorder.jl")
 
 # KR-rearrangement and TransportMap structure
 include("hermitemapcomponent.jl")
+include("linhermitemapcomponent.jl")
 include("hermitemap.jl")
 include("greedyfit.jl")
 

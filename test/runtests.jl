@@ -18,7 +18,7 @@ include("tools/tools.jl")
 include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
 include("tools/adaptiveCC.jl")
-include("tools/scale.jl")
+include("tools/transform.jl")
 
 # Functions to manage margins
 include("margin/reducedmargin.jl")

@@ -7,7 +7,8 @@ import Base: size, show, @propagate_inbounds
 # 1 corresponds to the linear function
 # n+2 corresponds to the n-th order physicist Hermite function
 
-export Basis, CstPhyHermite, CstProHermite,
+export Basis, BasisPhyHermite, BasisProHermite,
+       CstPhyHermite, CstProHermite,
        CstLinPhyHermite, CstLinProHermite,
        vander!,
        vander
@@ -20,6 +21,21 @@ struct Basis{m}
     end
 end
 
+function BasisPhyHermite(m::Int64; scaled::Bool = false)
+    f = zeros(PhyHermite, m+1)
+    for i=0:m
+        f[i] = PhyHermite(i; scaled = scaled)
+    end
+    return Basis(f)
+end
+
+function BasisProHermite(m::Int64; scaled::Bool = false)
+    f = zeros(ProHermite, m+1)
+    for i=0:m
+        f[1+i] = ProHermite(i; scaled = scaled)
+    end
+    return Basis(f)
+end
 
 function CstPhyHermite(m::Int64; scaled::Bool = false)
     f = zeros(ParamFcn, m+2)
