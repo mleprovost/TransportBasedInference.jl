@@ -1,10 +1,13 @@
-export functionalf!, functionalg!, functionalfg!
 
-function functionalf!(F, xk, cacheF, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
+export   functionalf!,
+         functionalg!,
+         inverse!
+
+function functionalf!(F, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
     function integrand!(v::Vector{Float64}, t::Float64)
         # repeated_grad_xk_basis(cacheF, R.f.f,  t*xk)
-        cacheF .= repeated_grad_xk_basis(R.f.f,  t*xk)
-        @avx @. v = (cacheF .* ψoff) *ˡ R.f.f.coeff
+        cache .= repeated_grad_xk_basis(R.f.f,  t*xk)
+        @avx @. v = (cache .* ψoff) *ˡ R.f.f.coeff
         evaluate!(v, R.g, v)
         # v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
     end
@@ -15,8 +18,8 @@ function functionalf!(F, xk, cacheF, ψoff, output::Array{Float64,1}, R::Integra
     nothing
 end
 
-functionalf!(cacheF, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx} =
-    (F, xk) -> functionalf!(F, xk, cacheF, ψoff, output, R)
+functionalf!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx} =
+    (F, xk) -> functionalf!(F, xk, cache, ψoff, output, R)
 
 function functionalg!(J, xk, cache, cacheJ, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
     cache .= repeated_grad_xk_basis(R.f.f,  xk)
@@ -33,21 +36,51 @@ functionalg!(cache, cacheJ, ψoff, output::Array{Float64,1}, R::IntegratedFuncti
     (J, xk) -> functionalg!(J, xk, cache, cacheJ, ψoff, output, R)
 
 
-function functionalfg!(F, J, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
+# The state is modified in-place
+function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction{m, Nψ, Nx}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
+    NxX, Ne = size(X)
+    @assert NxX == Nx "Wrong dimension of the sample X"
 
-    if !(F == nothing)
-        function integrand!(v::Vector{Float64}, t::Float64)
-            v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
+    cache  = zeros(Ne, Nψ)
+    cacheJ = zeros(Ne)
+
+    # Remove f(x_{1:k-1},0) from the output F
+    @avx for i=1:Ne
+        f0i = zero(Float64)
+        for j=1:Nψ
+            f0i += (S.ψd0[i,j] * S.ψoff[i,j])*R.f.f.coeff[j]
         end
-        F .= xk .* quadgk!(integrand!, cache, 0, 1)[1]
-        F .-= output
+        F[i] -= f0i
     end
 
-    if !(J == nothing)
-        J .= Diagonal(R.g((repeated_grad_xk_basis(R.f.f,  xk) .* ψoff)*R.f.f.coeff))
-    end
+    df_inverse = OnceDifferentiable(functionalf!(cache, S.ψoff, F, R),
+                                    functionalg!(cache, cacheJ, S.ψoff, F, R),
+                                    cacheJ, cacheJ, Diagonal(cacheJ))
+
+    # Start minimization from the prior value
+    result = nlsolve(df_inverse, X[end,:]; method = :newton);
+
+    # Check convergence
+    @assert converged(result) "Optmization hasn't converged"
+
+    X[end,:] .= result.zero
 end
 
-
-functionalfg!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx} =
-    (F, J, xk) -> functionalfg!(F, J, xk, cache, ψoff, output, R)
+# function functionalfg!(F, J, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
+#
+#     if !(F == nothing)
+#         function integrand!(v::Vector{Float64}, t::Float64)
+#             v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
+#         end
+#         F .= xk .* quadgk!(integrand!, cache, 0, 1)[1]
+#         F .-= output
+#     end
+#
+#     if !(J == nothing)
+#         J .= Diagonal(R.g((repeated_grad_xk_basis(R.f.f,  xk) .* ψoff)*R.f.f.coeff))
+#     end
+# end
+#
+#
+# functionalfg!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx} =
+#     (F, J, xk) -> functionalfg!(F, J, xk, cache, ψoff, output, R)

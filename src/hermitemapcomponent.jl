@@ -97,15 +97,20 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
         S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
-        S.cache_dcψxdt .*= S.ψoff
 
-        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+        @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
+        # S.cache_dcψxdt .*= S.ψoff
+        #
+        # mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
-        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+        evaluate!(v[1:Ne], Hk.I.g, S.cache_dψxd)
+        # v[1:Ne] .= Hk.I.g(S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+        grad_x!( S.cache_dψxd, Hk.I.g, S.cache_dψxd)
+        # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(S.cache_dψxd .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
     quadgk!(integrand!, S.cache_integral, 0, 1; rtol = 1e-3)#; order = 9, rtol = 1e-10)
