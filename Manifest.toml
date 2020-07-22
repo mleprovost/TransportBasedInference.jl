@@ -92,6 +92,11 @@ git-tree-sha1 = "3d247bd2260259f86853e52584169ddeca648ebc"
 uuid = "052768ef-5323-5732-b1bb-66c8b64840ba"
 version = "0.1.0"
 
+[[Cassette]]
+git-tree-sha1 = "ff6f5109371926beb67ec3101be17d2c211e497d"
+uuid = "7057c7e9-c182-5462-911a-8362d720325c"
+version = "0.3.3"
+
 [[ChainRulesCore]]
 deps = ["MuladdMacro"]
 git-tree-sha1 = "87e289253a5fc690c4860a41bbd427e16576f716"
@@ -909,6 +914,12 @@ deps = ["Adapt", "ArrayInterface", "Compat", "DataStructures", "FiniteDiff", "Fo
 git-tree-sha1 = "93666e93899d995ec37abddde4811f533e49c074"
 uuid = "47a9eef4-7e08-11e9-0b38-333d64bd3804"
 version = "1.9.1"
+
+[[SparsityDetection]]
+deps = ["Cassette", "LinearAlgebra", "SparseArrays", "SpecialFunctions"]
+git-tree-sha1 = "2224dcfb3a66f9f37f6bef9c29af4061e6c63255"
+uuid = "684fba80-ace3-11e9-3d08-3bc7ed6f96df"
+version = "0.3.3"
 
 [[SpecialFunctions]]
 deps = ["OpenSpecFun_jll"]
