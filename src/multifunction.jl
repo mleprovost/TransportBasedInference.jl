@@ -35,10 +35,8 @@ function (F::MultiFunction{m, Nx})(x::Array{T,1}) where {m, Nx, T <: Real}
 
     # @assert Nx == size(x,1) "Wrong dimension of input vector x"
     out = 1.0
-    for i=1:Nx
-        if F.α[i]>0
-            out *= F.B.B[F.α[i]+1](x[i])
-        end
+    @inbounds for i=1:Nx
+        out *= F.B.B[F.α[i]+1](x[i])
     end
     return out
 end

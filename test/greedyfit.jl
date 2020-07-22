@@ -20,9 +20,9 @@
     setcoeff!(Hk_old, [1.5])
     reduced_margin = getreducedmargin(getidx(Hk_old))
     @show reduced_margin
-    idx_new = vcat(getidx(Hk), reduced_margin)
+    idx_new = vcat(getidx(Hk_old), reduced_margin)
 
-    Hk_new = HermiteMapk(m, Nx, idx_new, vcat(getcoeff(Hk), zeros(2)));
+    Hk_new = HermiteMapk(m, Nx, idx_new, vcat(getcoeff(Hk_old), zeros(2)));
 
     coeff_new, coeff_idx_added, idx_added = update_coeffs(Hk_old, Hk_new)
 
@@ -96,39 +96,42 @@ end
 
     S = Storage(Hk_old.I.f, X)
 
+    dJ_old = zeros(1)
+    J_old = 0.0
+    J_old = negative_log_likelihood!(J_old, dJ_old, getcoeff(Hk_old), S, Hk_old, X)
+
+    @test abs(J_old - 1.317277788545110)<1e-10
+
+    @test norm(dJ_old - [0.129253288410937])<1e-10
+
+
     # setcoeff!(Hk_old, [1.5])
     reduced_margin0 = getreducedmargin(getidx(Hk_old))
-    idx_old0 = getidx(Hk)
-    idx_new0 = vcat(idx_old, reduced_margin0)
+    idx_old0 = getidx(Hk_old)
+    idx_new0 = vcat(idx_old0, reduced_margin0)
 
     # Define updated map
-    f_new = ExpandedFunction(Hk_old.I.f.f.B, idx_new0, vcat(getcoeff(Hk), zeros(size(reduced_margin0,1))))
+    f_new = ExpandedFunction(Hk_old.I.f.f.B, idx_new0, vcat(getcoeff(Hk_old), zeros(size(reduced_margin0,1))))
     Hk_new = HermiteMapk(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(Hk_old, X, reduced_margin0, S)
 
-    dJ = zeros(3)
+    dJ_new = zeros(3)
+    J_new = 0.0
     S = update_storage(S, X, reduced_margin0)
-    negative_log_likelihood!(nothing, dJ, getcoeff(Hk_new), S, Hk_new, X)
+    J_new = negative_log_likelihood!(J_new, dJ_new, getcoeff(Hk_new), S, Hk_new, X)
 
-    # dJt =  [ -1.6651836742291564;
-    #          -0.9194410618771688;
-    #          -0.9009267357141437;
-    #          -0.11952335389279932;
-    #          -0.4727973085063471;
-    #          -0.49686342659213534;
-    #           0.3388316230967308;
-    #          -0.0835027246673459;
-    #          -0.2811305337405587;
-    #           0.27158719056266994]
-    #
-    # @test norm(dJ-dJt)<1e-8
 
-    @test findmax(abs.(dJ[2:3]))[2] == 2-1
+    @test abs(J_new -    1.317277788545110)<1e-8
 
-    @test idx_new[2,:] == reduced_margin0[1,:]
+    @test norm(dJ_new - [0.129253288410937;   0.011631877279516; -0.081088443036101])<1e-8
 
-    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[2]
-    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[1]
+
+    @test findmax(abs.(dJ_new[2:3]))[2] == 3-1
+
+    @test idx_new0[3,:] == reduced_margin0[2,:]
+
+    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[2]
+    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[1]
 end
 
 
@@ -147,7 +150,7 @@ end
               1.41332   -0.918205;
               0.766647  -1.00445]';
     X = ens.S
-    # Initialize map with zero coefficients
+
     idx = [0 0; 0 1; 1 0; 0 2; 2 0; 1 1]
 
     coeff = [ -0.9905841755746164;
@@ -161,6 +164,23 @@ end
 
     S = Storage(Hk_old.I.f, X)
 
+    dJ_old = zeros(6)
+    J_old = 0.0
+    J_old = negative_log_likelihood!(J_old, dJ_old, getcoeff(Hk_old), S, Hk_old, X)
+
+    @test abs(J_old - 1.639729324892425)<1e-5
+
+    dJt_old  = [0.078019218557750;
+               0.034817260498187;
+              -0.181070374255429;
+              -0.084058665820870;
+              -0.073995221010768;
+               0.051631902496933]
+
+    @test norm(dJ_old - dJt_old)<1e-5
+
+
+
     reduced_margin0 = getreducedmargin(getidx(Hk_old))
     idx_old0 = getidx(Hk_old)
     idx_new0 = vcat(idx_old0, reduced_margin0)
@@ -168,28 +188,33 @@ end
     # Define updated map
     f_new = ExpandedFunction(Hk_old.I.f.f.B, idx_new0, vcat(getcoeff(Hk_old), zeros(size(reduced_margin0,1))))
     Hk_new = HermiteMapk(f_new; α = 1e-6)
-
     idx_new, reduced_margin = update_component(Hk_old, X, reduced_margin0, S)
 
-    dJ = zeros(10)
+    dJ_new = zeros(10)
+    J_new = 0.0
     S = update_storage(S, X, reduced_margin0)
-    negative_log_likelihood!(nothing, dJ, getcoeff(Hk_new), S, Hk_new, X)
+    J_new = negative_log_likelihood!(J_new, dJ_new, getcoeff(Hk_new), S, Hk_new, X)
 
-    dJt =  [ -1.665183674229149;
-             -0.919441061877149;
-             -0.900926735714139;
-             -0.119523353892749;
-             -0.472797308506346;
-             -0.496863426592123;
-              0.338831623096620;
-             -0.083502724667314;
-             -0.281130533740555;
-              0.271587190562667]
+     Jt_new  = 1.639729324892425
+    dJt_new  = [ 0.078019218557750;
+                 0.034817260498187;
+                -0.181070374255429;
+                -0.084058665820870;
+                -0.073995221010768;
+                 0.051631902496933;
+                -0.084059299875320;
+                 0.134756912666511;
+                 0.000251818300919;
+                 0.048468510410649]
 
-    @test norm(dJ-dJt)<1e-8
+    @test abs(J_new -    Jt_new)<1e-5
+    @test norm(dJ_new - dJt_new)<1e-5
 
-    @test idx_new[7,:] == reduced_margin0[1,:]
 
-    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[2]
-    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[1]
+    @test findmax(abs.(dJ_new[7:10]))[2] == 8-6
+
+    @test idx_new0[8,:] == reduced_margin0[2,:]
+
+    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[2]
+    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[1]
 end

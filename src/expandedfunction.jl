@@ -42,7 +42,7 @@ end
 # This code is not optimized for speed
 function (f::ExpandedFunction{m, Nψ, Nx})(x::Array{T,1}) where {m, Nψ, Nx, T<:Real}
     out = 0.0
-    for i=1:Nψ
+    @inbounds for i=1:Nψ
         fi = MultiFunction(f.B, f.idx[i,:])
         out += f.coeff[i]*fi(x)
     end

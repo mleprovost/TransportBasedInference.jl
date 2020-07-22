@@ -16,6 +16,9 @@ using LoopVectorization
 using FastGaussQuadrature
 using Optim
 using LinearMaps
+using Roots
+using NLsolve
+using SparseArrays
 
 include("tools/product.jl")
 include("tools/tools.jl")
@@ -53,6 +56,8 @@ include("storage.jl")
 
 # Integrated positive function
 include("integratedfunction.jl")
+# Tools for fast inversion
+include("inverse.jl")
 
 # ReducedMargin
 include("margin/reducedmargin.jl")

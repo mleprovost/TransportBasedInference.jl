@@ -14,6 +14,7 @@ end
 
     Nx = 2
     Ne = 8
+    m = 5
     ens = EnsembleState(Nx, Ne)
 
     ens.S .=  [0.267333   1.43021;
@@ -42,7 +43,7 @@ end
     H = HermiteMapk(R; α = 0.0)
     S = Storage(H.I.f, ens.S);
 
-Hk_old = HermiteMapk(m, Nx, [0 0; 0 1; 0 2; 1 0; 2 0], coeff; α = 1e-2);
+   Hk_old = HermiteMapk(m, Nx, [0 0; 0 1; 0 2; 1 0; 2 0], coeff; α = 1e-2);
 
     @test norm(coeffopt - [3.015753764546621;
                           -2.929908252283099;

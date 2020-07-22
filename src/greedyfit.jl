@@ -22,29 +22,49 @@ function greedyfit(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::In
     # Compute initial loss on training set
     push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
     push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
-
+    @show train_error[1]
     # Compute the reduced margin
     reduced_margin = getreducedmargin(getidx(Hk))
+    @show reduced_margin
+    count = 0
+    round = 0
 
     while ncoeff(Hk) < maxterms
-        idx_new, reduced_margin = update_component(Hk, X, reduced_margin, S)
+        count += 1
+        if ncoeff(Hk) == 1 && round ==0
+            idx_new, reduced_margin = update_component(Hk, X, reduced_margin, S)
+            # Optimize coefficients
+            coeff0 = getcoeff(Hk)
+            @show coeff0
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.BFGS())
+            @show Optim.minimizer(res)
+            setcoeff!(Hk, Optim.minimizer(res))
+            @show getcoeff(Hk)
+            round += 1
+        else
+            idx_new, reduced_margin = update_component(Hk, X, reduced_margin, S)
+            @show count
+            @show idx_new
+            @show reduced_margin
+            # Update storage with the new feature
+            S = update_storage(S, X, idx_new[end:end,:])
+            Svalid = update_storage(Svalid, Xvalid, idx_new[end:end,:])
+            @show S.f
 
-        # Update storage with the new feature
-        S = update_storage(S, X, idx_new[end:end,:])
-        Svalid = update_storage(Svalid, Xvalid, idx_new[end:end,:])
+            # Update Hk
+            Hk = HermiteMapk(IntegratedFunction(S.f); α = Hk.α)
 
-
-        # Update Hk
-        Hk = HermiteMapk(IntegratedFunction(S.f); α = Hk.α)
-
-        # Optimize coefficients
-        coeff0 = getcoeff(Hk)
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.BFGS())
-        setcoeff!(Hk, Optim.minimizer(res))
-
-        # Compute new loss on the training and validation set
-        push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
-        push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
+            # Optimize coefficients
+            coeff0 = getcoeff(Hk)
+            @show coeff0
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.BFGS())
+            @show Optim.minimizer(res)
+            setcoeff!(Hk, Optim.minimizer(res))
+            @show getcoeff(Hk)
+        end
+            # Compute new loss on the training and validation set
+            push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
+            push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
 
         if verbose == true
             println(string(ncoeff(Hk)-1)*" terms - Training error: "*

@@ -8,8 +8,6 @@ export  IntegratedFunction,
         integrate_xd,
         evaluate!,
         evaluate,
-        # inverse!,
-        # inverse,
         grad_coeff_integrate_xd,
         hess_coeff_integrate_xd,
         grad_coeff,
@@ -126,31 +124,6 @@ function evaluate!(out::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}, X::
 
 evaluate(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
         evaluate!(zeros(size(X,2)), R, X)
-
-## Inverse
-
-
-# function inverse!(out::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}, Xdm1::Array{Float64,2}) where {m, Nψ, Nx}
-#     NxX, Ne = size(X)
-#     ψoff = evaluate_offdiagbasis(R.f, X)
-#     ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))
-#     xk = deepcopy(X[Nx, :])
-#     cache = zeros(Ne)
-#
-#     @assert size(out,1) == Ne
-#
-#     function integrand!(v::Vector{Float64}, t::Float64)
-#         v .= inverse(R.g, (repeated_grad_xk_basis(R.f.f,  0.5*(t+1)*xk) .* ψoff)*R.f.f.coeff)
-#     end
-#
-#      out .= (ψoff .* ψdiag)*R.f.f.coeff + 0.5*xk .* quadgk!(integrand!, cache, -1, 1)[1]
-#
-#      return out
-#  end
-#
-#
-# inverse(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
-#         inverse!(zeros(size(X,2)), R, X)
 
 
 ## Compute ∂_c int_0^{x_k} g(∂ₖf(x_{1:k-1}, t))dt
