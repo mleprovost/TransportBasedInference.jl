@@ -25,7 +25,7 @@ end
               0.412907   1.01672;
               1.41332   -0.918205;
               0.766647  -1.00445]';
-    B = MultiBasis(BasisProHermite(3; scaled =true), Nx)
+    B = MultiBasis(CstProHermite(3; scaled =true), Nx)
 
     idx = [0 0; 0 1; 1 0; 2 1; 1 2]
     truncidx = idx[1:2:end,:]
@@ -43,9 +43,10 @@ end
     H = HermiteMapk(R; α = 0.0)
     S = Storage(H.I.f, ens.S);
 
-   Hk_old = HermiteMapk(m, Nx, [0 0; 0 1; 0 2; 1 0; 2 0], coeff; α = 1e-2);
+   res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
+   coeff_opt = Optim.minimizer(res)
 
-    @test norm(coeffopt - [3.015753764546621;
+    @test norm(coeff_opt - [3.015753764546621;
                           -2.929908252283099;
                           -3.672401233483867;
                            2.975554571687243;
@@ -53,15 +54,15 @@ end
 
     # Verify with L-2 penalty term
 
-    H = HermiteMapk(R; α = 1e-2)
+    H = HermiteMapk(R; α = 0.1)
     S = Storage(H.I.f, ens.S);
 
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
-    coeffopt = Optim.minimizer(res)
+    coeff_opt = Optim.minimizer(res)
 
-    @test norm(coeffopt - [0.550368190586868;
-                          -0.823576312038818;
-                          -0.974273115827102;
-                           1.552794230307129;
-                           0.414753530952308])<1e-4
+    @test norm(coeff_opt - [ -0.11411931034615422;
+                             -0.21942146397348522;
+                             -0.17368042128948974;
+                              0.37348086659548607;
+                              0.02434745831060741])<1e-4
 end

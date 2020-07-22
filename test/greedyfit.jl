@@ -102,7 +102,7 @@ end
 
     @test abs(J_old - 1.317277788545110)<1e-10
 
-    @test norm(dJ_old - [0.129253288410937])<1e-10
+    @test norm(dJ_old - [0.339034875000000])<1e-10
 
 
     # setcoeff!(Hk_old, [1.5])
@@ -115,6 +115,7 @@ end
     Hk_new = HermiteMapk(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(Hk_old, X, reduced_margin0, S)
 
+    @show getidx(Hk_new)
     dJ_new = zeros(3)
     J_new = 0.0
     S = update_storage(S, X, reduced_margin0)
@@ -123,17 +124,16 @@ end
 
     @test abs(J_new -    1.317277788545110)<1e-8
 
-    @test norm(dJ_new - [0.129253288410937;   0.011631877279516; -0.081088443036101])<1e-8
+    @test norm(dJ_new - [0.339034875000000;   0.228966410748600;   0.192950409869679])<1e-8
 
 
-    @test findmax(abs.(dJ_new[2:3]))[2] == 3-1
+    @test findmax(abs.(dJ_new[2:3]))[2] == 2-1
 
     @test idx_new0[3,:] == reduced_margin0[2,:]
 
-    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[2]
-    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[1]
+    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[2]
+    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[1]
 end
-
 
 @testset "Test update_component II" begin
     Nx = 2
@@ -168,14 +168,14 @@ end
     J_old = 0.0
     J_old = negative_log_likelihood!(J_old, dJ_old, getcoeff(Hk_old), S, Hk_old, X)
 
-    @test abs(J_old - 1.639729324892425)<1e-5
+    @test abs(J_old - 3.066735373495125)<1e-5
 
-    dJt_old  = [0.078019218557750;
-               0.034817260498187;
-              -0.181070374255429;
-              -0.084058665820870;
-              -0.073995221010768;
-               0.051631902496933]
+    dJt_old  = [-1.665181693060798;
+                -0.919442416275569;
+                -0.900922248322526;
+                -0.119522662066802;
+                -0.472794468187974;
+                -0.496862354324658]
 
     @test norm(dJ_old - dJt_old)<1e-5
 
@@ -190,31 +190,59 @@ end
     Hk_new = HermiteMapk(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(Hk_old, X, reduced_margin0, S)
 
+    @show getidx(Hk_new)
+    @show getcoeff(Hk_new)
     dJ_new = zeros(10)
     J_new = 0.0
     S = update_storage(S, X, reduced_margin0)
     J_new = negative_log_likelihood!(J_new, dJ_new, getcoeff(Hk_new), S, Hk_new, X)
 
-     Jt_new  = 1.639729324892425
-    dJt_new  = [ 0.078019218557750;
-                 0.034817260498187;
-                -0.181070374255429;
-                -0.084058665820870;
-                -0.073995221010768;
-                 0.051631902496933;
-                -0.084059299875320;
-                 0.134756912666511;
-                 0.000251818300919;
-                 0.048468510410649]
+     Jt_new  = 3.066735373495125
+    dJt_new  = [-1.665181693060798;
+                -0.919442416275569;
+                -0.900922248322526;
+                -0.119522662066802;
+                -0.472794468187974;
+                -0.496862354324658;
+                 0.338831623096620;
+                -0.083502724667314;
+                -0.281130533740555;
+                 0.271587190562667]
 
     @test abs(J_new -    Jt_new)<1e-5
     @test norm(dJ_new - dJt_new)<1e-5
 
 
-    @test findmax(abs.(dJ_new[7:10]))[2] == 8-6
+    @test findmax(abs.(dJ_new[7:10]))[2] == 7-6
 
     @test idx_new0[8,:] == reduced_margin0[2,:]
 
-    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[2]
-    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 2)[1]
+    @test reduced_margin == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[2]
+    @test idx_new == updatereducedmargin(getidx(Hk_old), reduced_margin0, 1)[1]
+end
+
+@testset "Test greedy optimization" begin
+
+Nx = 2
+m = 10
+Ne = 10^3
+X = randn(2, Ne).^2 + 0.1*randn(2, Ne)
+L = LinearTransform(X)
+transform!(L, X)
+
+X_train = X[:,1:800]
+X_valid = X[:,801:1000]
+
+
+Hk_new, train_error, valid_error = greedyfit(m, Nx, X_train, X_valid, 10; verbose = true);
+
+Hk_test = deepcopy(Hk_new)
+setcoeff!(Hk_test, zero(getcoeff(Hk_new)));
+
+S_test = Storage(Hk_test.I.f, X_train)
+coeff_test = getcoeff(Hk_test)
+
+res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S_test, Hk_test, X_train)), coeff_test, Optim.BFGS())
+
+@test norm(getcoeff(Hk_new)-Optim.minimizer(res))<1e-8
 end

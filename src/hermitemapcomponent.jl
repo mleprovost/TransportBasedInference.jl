@@ -1,4 +1,5 @@
 export  HermiteMapk,
+        ncoeff,
         getcoeff,
         setcoeff!,
         getidx,
@@ -23,7 +24,7 @@ end
 function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    B = MultiBasis(BasisProHermite(m-1; scaled =true), k)
+    B = MultiBasis(CstProHermite(m-2; scaled =true), k)
 
     return HermiteMapk(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
 end
@@ -38,7 +39,7 @@ function HermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
     Nψ = 1
 
     # m is the dimension of the basis
-    B = MultiBasis(BasisProHermite(m-1; scaled =true), k)
+    B = MultiBasis(CstProHermite(m-2; scaled =true), k)
     idx = zeros(Int64, Nψ,k)
     coeff = zeros(Nψ)
 
@@ -69,20 +70,13 @@ evaluate(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2})
     evaluate!(zeros(size(X,2)), Hk, X)
 
 
-## Invert transport map
-
-# function inverse!(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
-#     @assert k==size(X,1) "Wrong dimension of the sample"
-#     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
-#     return inverse!(out, Hk.I, X)
-# end
-#
-# inverse(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
-#         inverse!(zeros(size(X,2)), Hk, X)
+## optimize
 
 
 
-## Compute Negative log likelihood and its gradient
+
+## negative_log_likelihood
+
 function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k}
     NxX, Ne = size(X)
     @assert NxX == k "Wrong dimension of the sample X"
@@ -98,22 +92,18 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
     function integrand!(v::Vector{Float64}, t::Float64)
         S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
 
-        @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
-        # S.cache_dcψxdt .*= S.ψoff
-        #
-        # mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+        # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
+        S.cache_dcψxdt .*= S.ψoff
+        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
-        evaluate!(v[1:Ne], Hk.I.g, S.cache_dψxd)
-        # v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
 
         # Integration for dcJ
-        grad_x!( S.cache_dψxd, Hk.I.g, S.cache_dψxd)
-        # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(S.cache_dψxd .* S.cache_dcψxdt , (Ne*Nψ))
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
-    quadgk!(integrand!, S.cache_integral, 0, 1; rtol = 1e-3)#; order = 9, rtol = 1e-10)
+    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
     @inbounds for j=1:Nψ+1
@@ -168,13 +158,6 @@ end
 
 negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k} =
     (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, Hk, X)
-
-
-
-
-# function optimize()
-
-
 
 
 function negative_log_likelihood(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}

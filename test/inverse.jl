@@ -11,7 +11,7 @@
 
     coeff = randn(Nψ)
 
-    B = MultiBasis(BasisProHermite(6; scaled =true), Nx)
+    B = MultiBasis(CstProHermite(6; scaled =true), Nx)
     f = ParametricFunction(ExpandedFunction(B, idx, coeff))
     R = IntegratedFunction(f)
 
