@@ -34,7 +34,7 @@ struct Storage{m, Nψ, Nx}
     cache_g::Array{Float64,1}
 end
 
-function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}; hess::Bool = false) where {m, Nψ, Nx}
         NxX, Ne = size(X)
         @assert NxX == Nx
         ψoff = evaluate_offdiagbasis(f, X)
@@ -42,11 +42,19 @@ function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {
         ψd0  = repeated_evaluate_basis(f.f, zeros(Ne))
         dψxd = repeated_grad_xk_basis(f.f, X[Nx,:])
 
-        # Cache variable
-        cache_dcψxdt = zero(dψxd)
-        cache_dψxd = zeros(Ne)
-        cache_integral = zeros(Ne + Ne*Nψ)
-        cache_g = zeros(Ne)
+        if hess == false
+            # Cache variable
+            cache_dcψxdt = zero(dψxd)
+            cache_dψxd = zeros(Ne)
+            cache_integral = zeros(Ne + Ne*Nψ)
+            cache_g = zeros(Ne)
+        else
+            # Cache variable
+            cache_dcψxdt = zero(dψxd)
+            cache_dψxd = zeros(Ne)
+            cache_integral = zeros(Ne + Ne*Nψ + Ne*Nψ*Nψ)
+            cache_g = zeros(Ne)
+        end
 
 
         return Storage{m, Nψ, Nx}(f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
