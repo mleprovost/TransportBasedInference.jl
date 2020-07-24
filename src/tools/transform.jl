@@ -1,6 +1,9 @@
 export   LinearTransform,
          transform!,
-         transform
+         transform,
+         itransform!,
+         itransform
+
 
 
 struct LinearTransform{Nx, Ne}
@@ -83,3 +86,5 @@ function transform!(L::LinearTransform{Nx, Ne}, X::Array{Float64,2}) where {Nx, 
     end
     return X
 end
+
+transform(X::Array{Float64,2}) = transform!(LinearTransform(X), zero(X), X)

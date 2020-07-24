@@ -66,3 +66,14 @@ end
                               0.37348086659548607;
                               0.02434745831060741])<1e-4
 end
+
+# Code for optimization with Hessian
+# X = randn(Nx, Ne) .* randn(Nx, Ne)
+# S = Storage(H.I.f, X; hess = true);
+#
+# J = 0.0
+# dJ = zeros(Nψ)
+# d2J = zeros(Nψ, Nψ)
+# hess_negative_log_likelihood!(J, dJ, d2J, coeff, S, H, X)
+#
+# res = Optim.optimize(Optim.only_fgh!(hess_negative_log_likelihood!($S, $H, $X)), $coeff, Optim.NewtonTrustRegion())

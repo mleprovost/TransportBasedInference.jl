@@ -30,34 +30,34 @@ include("tools/transform.jl")
 # Tools for mixture of Gaussian distributions
 include("tools/mixture.jl")
 
-include("rectifier.jl")
+include("mapcomponent/rectifier.jl")
 
 
 
 # Hermite Polynomials
-include("phypolyhermite.jl")
-include("propolyhermite.jl")
-
-include("polyhermite.jl")
+include("hermitefunction/phypolyhermite.jl")
+include("hermitefunction/propolyhermite.jl")
+include("hermitefunction/polyhermite.jl")
 
 # Hermite Functions
-include("hermite.jl")
-include("phyhermite.jl")
-include("prohermite.jl")
+include("hermitefunction/hermite.jl")
+include("hermitefunction/phyhermite.jl")
+include("hermitefunction/prohermite.jl")
 
 
 # Uni and Multi Basis function
-include("basis.jl")
-include("multibasis.jl")
-include("multifunction.jl")
-include("expandedfunction.jl")
-include("parametric.jl")
-include("storage.jl")
+include("mapcomponent/basis.jl")
+include("mapcomponent/multibasis.jl")
+include("mapcomponent/multifunction.jl")
+include("mapcomponent/expandedfunction.jl")
+include("mapcomponent/parametric.jl")
+include("mapcomponent/storage.jl")
 
 # Integrated positive function
-include("integratedfunction.jl")
+include("mapcomponent/integratedfunction.jl")
+
 # Tools for fast inversion
-include("inverse.jl")
+include("mapcomponent/inverse.jl")
 
 # ReducedMargin
 include("margin/reducedmargin.jl")
@@ -65,10 +65,11 @@ include("margin/totalorder.jl")
 
 
 # KR-rearrangement and TransportMap structure
-include("hermitemapcomponent.jl")
-include("linhermitemapcomponent.jl")
-include("hermitemap.jl")
-include("greedyfit.jl")
+include("mapcomponent/precond.jl")
+include("mapcomponent/hermitemapcomponent.jl")
+include("mapcomponent/linhermitemapcomponent.jl")
+include("mapcomponent/hermitemap.jl")
+include("mapcomponent/greedyfit.jl")
 
 
 
