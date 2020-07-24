@@ -4,13 +4,11 @@ export   LinearTransform,
          itransform!,
          itransform
 
-
-
 struct LinearTransform{Nx, Ne}
     # Flag for using diagonal or dense transformation
     μ::Array{Float64,1}
 
-    L::LinearMap
+    L::Union{Diagonal, LowerTriangular}
 
     diag::Bool
 end
@@ -21,70 +19,56 @@ function LinearTransform(X::Array{Float64,2}; diag::Bool=true)
 
     if diag == true || Nx == 1
         σ = std(X; dims = 2)[:,1]
-        L = LinearMap(Diagonal(1 ./σ))
+        L = Diagonal(σ)
         diag = true
 
     else #create a dense transformation from the Cholesky factor
         @assert Nx>1 "Only works for Nx>1, otherwise use first method"
-        L = LinearMap(inv(cholesky(cov(X')).L))
+        L = cholesky(cov(X')).L
     end
 
     return LinearTransform{Nx, Ne}(μ, L, diag)
 end
 
 
-function transform!(L::LinearTransform{Nx, Ne}, Xout::Array{Float64,1}, Xin::Array{Float64,1}) where {Nx, Ne}
+function transform!(L::LinearTransform{Nx, Ne}, Xout::Array{Float64,2}, Xin::Array{Float64,2}) where {Nx, Ne}
     @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"
     @assert size(Xin,1) == Nx "Input dimension is incorrect"
 
     copy!(Xout, Xin)
     Xout .-= L.μ
-    if L.diag == true
-        mul!(Xout, L.L, Xout)
-    else
-        mul!(Xout, L.L.lmap, Xout)
-    end
-    return Xout
+
+    ldiv!(Xout, L.L, Xout)
+    # return Xout
 end
 
 
 
-function transform!(L::LinearTransform{Nx, Ne}, X::Array{Float64,1}) where {Nx, Ne}
+function transform!(L::LinearTransform{Nx, Ne}, X::Array{Float64,2}) where {Nx, Ne}
     @assert size(X,1) == Nx "Input dimension is incorrect"
-
     X .-= L.μ
-    if L.diag == true
-        mul!(X, L.L, X)
-    else
-        mul!(X, L.L.lmap, X)
-    end
+    ldiv!(X, L.L, X)
     return X
 end
 
-function transform!(L::LinearTransform{Nx, Ne}, Xout::Array{Float64,2}, Xin::Array{Float64,2}) where {Nx, Ne}
+function itransform!(L::LinearTransform{Nx, Ne}, Xout::Array{Float64,2}, Xin::Array{Float64,2}) where {Nx, Ne}
     @assert size(Xout) == size(Xin) "Input and output dimensions don't match"
     @assert size(Xin) == (Nx, Ne) "Input dimension is incorrect"
 
     copy!(Xout, Xin)
-    Xout .-= L.μ
-    if L.diag == true
-        mul!(Xout, L.L, Xout)
-    else
-        mul!(Xout, L.L.lmap, Xout)
-    end
+    mul!(Xout, L.L, Xout)
+    Xout .+= L.μ
+
     return Xout
 end
 
-function transform!(L::LinearTransform{Nx, Ne}, X::Array{Float64,2}) where {Nx, Ne}
+function itransform!(L::LinearTransform{Nx, Ne}, X::Array{Float64,2}) where {Nx, Ne}
     @assert size(X) == (Nx, Ne) "Input dimension is incorrect"
 
-    X .-= L.μ
-    if L.diag == true
-        mul!(X, L.L, X)
-    else
-        mul!(X, L.L.lmap, X)
-    end
+    mul!(X, L.L, X)
+    X .+= L.μ
+
     return X
 end
 
-transform(X::Array{Float64,2}) = transform!(LinearTransform(X), zero(X), X)
+itransform(X::Array{Float64,2}) = itransform!(LinearTransform(X), zero(X), X)

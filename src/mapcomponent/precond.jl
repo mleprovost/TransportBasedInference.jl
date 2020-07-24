@@ -1,4 +1,4 @@
-import LInearAlgebra: ldiv!, dot
+import LinearAlgebra: ldiv!, dot
 
 export Preconditioner
 
