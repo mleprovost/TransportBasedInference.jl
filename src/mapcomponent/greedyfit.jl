@@ -59,8 +59,14 @@ function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, Xvalid::Array{Float6
 
         # Optimize coefficients
         coeff0 = getcoeff(Hk)
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.LBFGS())
+        precond = zeros(ncoeff(Hk), ncoeff(Hk))
+        precond!(precond, coeff0, S, Hk, X)
+
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0,
+              Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+
         setcoeff!(Hk, Optim.minimizer(res))
+
         # Compute new loss on the training and validation set
         push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
         push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))

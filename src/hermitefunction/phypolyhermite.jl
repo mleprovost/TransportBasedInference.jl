@@ -8,7 +8,7 @@ export  PhyPolyHermite, Cphy,
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct PhyPolyHermite{m} <: ParamFcn
-    P::ImmutablePolynomial
+    P::ImmutablePolynomial{Float64}
     scaled::Bool
 end
 

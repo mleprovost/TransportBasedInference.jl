@@ -16,7 +16,6 @@ using LoopVectorization
 using FastGaussQuadrature
 using Optim
 using LinearMaps
-using Roots
 using NLsolve
 using SparseArrays
 

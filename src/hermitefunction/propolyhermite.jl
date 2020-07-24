@@ -6,7 +6,7 @@ export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct ProPolyHermite{m} <: ParamFcn
-    P::ImmutablePolynomial
+    P::ImmutablePolynomial{Float64}
     scaled::Bool
 end
 
