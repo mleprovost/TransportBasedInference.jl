@@ -19,6 +19,9 @@ struct HermiteMapk{m, Nψ, k}
     I::IntegratedFunction{m, Nψ, k}
     # Regularization parameter
     α::Float64
+    function HermiteMapk(I::IntegratedFunction{m, Nψ, k}; α::Float64=1e-6) where {m, Nψ, k}
+        new{m, Nψ, k}(I, α)
+    end
 end
 
 function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
@@ -26,11 +29,11 @@ function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
     B = MultiBasis(CstProHermite(m-2; scaled =true), k)
 
-    return HermiteMapk{m, Nψ, k}(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
+    return HermiteMapk(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
 end
 
 function HermiteMapk(f::ExpandedFunction{m, Nψ, k}; α::Float64 = 1e-6) where {m, Nψ, k}
-    return HermiteMapk{m, Nψ, k}(IntegratedFunction(f), α)
+    return HermiteMapk(IntegratedFunction(f); α = α)
 end
 
 
@@ -44,7 +47,7 @@ function HermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
 
     f = ExpandedFunction(B, idx, coeff)
     I = IntegratedFunction(f)
-    return HermiteMapk{m, Nψ, k}(I, α)
+    return HermiteMapk(I; α = α)
 end
 
 ncoeff(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Nψ

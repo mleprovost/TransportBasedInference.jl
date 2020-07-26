@@ -5,7 +5,10 @@ export  PhyHermite, degree,
         DPhyPolyHermite,
         FamilyDPhyPolyHermite, FamilyDScaledPhyPolyHermite,
         FamilyD2PhyPolyHermite, FamilyD2ScaledPhyPolyHermite,
-        derivative!, derivative, vander!, vander
+        derivative!, derivative,
+        evaluate!, evaluate,
+        vander!, vander
+
 
 # Create a structure to hold physicist Hermite functions defined as
 # ψn(x) = Hn(x)*exp(-x^2/2)
@@ -145,22 +148,116 @@ end
 
 derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
 
-function vander!(dV::Array{Float64,2}, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
-    N = size(x,1)
 
+function evaluate!(dV::Array{Float64,2}, P::PhyHermite{m}, x) where {m}
+    N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
-    @inbounds for i=0:m
-        col = view(dV,:,i+1)
+    # H_0(x) = 1, H_1(x) = 2*x
+    col0 = view(dV,:,1)
+    @avx @. col0 = exp(-0.5*x^2)
 
-        # Store the k-th derivative of the i-th order Hermite polynomial
-        if P.scaled == false
-            derivative!(col, FamilyPhyHermite[i+1], k, x)
-        else
-            derivative!(col, FamilyScaledPhyHermite[i+1], k, x)
+    if P.scaled
+        rmul!(col0, 1/Cphy(0))
+    end
+    if m == 0
+        return dV
+    end
+
+    if P.scaled
+        rmul!(col0, Cphy(0))
+    end
+
+    col = view(dV,:,2)
+    @avx @. col = 2.0*x*col0
+
+    if P.scaled
+        rmul!(col0, 1/Cphy(0))
+        rmul!(col , 1/Cphy(1))
+    end
+
+    if m == 1
+        return dV
+    end
+
+    if P.scaled
+        @inbounds for i=2:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+            @avx @. colp1 = 2.0*(Cphy(i-1)* x * col - Cphy(i-2)*(i-1)*colm1)
+            # dV[:,i+1] = 2.0*Cphy(i-1)*x .* dV[:,i] - 2.0*Cphy(i-2)*i*dV[:,i-1]
+            rmul!(colp1, 1/Cphy(i))
+        end
+    else
+        @inbounds for i=2:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+            @avx @. colp1 = 2.0*(x * col - (i-1)*colm1)
         end
     end
     return dV
+end
+
+evaluate(P::PhyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+
+
+function vander!(dV::Array{Float64,2}, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+
+    if k==0
+        evaluate!(dV, P, x)
+        return dV
+    elseif k==1
+        # ψ′_n(x) = Q_n(x) exp(-x^2/2)
+        # Q_0(x) = -x
+        # Q_1(x) = -2x^2 - 2
+        evaluate!(dV, P, x)
+        if m==0
+            col0 = view(dV,:,1)
+            @avx @. col0 *= -x
+            return dV
+        end
+
+        col0 = view(dV,:,1)
+        col1 = view(dV,:,2)
+
+        N = size(x,1)
+        ψn = zeros(N)
+        ψnp1 = zeros(N)
+
+        copy!(ψn, col0)
+        copy!(ψnp1, col1)
+
+        @avx @. col0 *= -x
+
+        if P.scaled == true
+            @avx @. col1 = 2.0*Cphy(0)/Cphy(1)*(1.0 - x^2) * ψn
+        else
+            @avx @. col1 = 2.0*(1.0 - x^2) * ψn
+        end
+
+        @inbounds for i=2:m
+            copy!(ψn, ψnp1)
+            colp1 = view(dV,:,i+1)
+            copy!(ψnp1, colp1)
+            if P.scaled == true
+                @avx @. colp1 = (1/Cphy(i))*(2*(i)*Cphy(i-1)*ψn - x * Cphy(i)*ψnp1)
+            else
+                @avx @. colp1 = (2*(i)*ψn - x * ψnp1)
+            end
+        end
+
+        return dV
+    elseif k==2
+        # Use the relation ψn″(x)  + (2*n + 1 -x^2) ψn(x) = 0
+        evaluate!(dV, P, x)
+        @inbounds for i=0:m
+            col = view(dV,:,i+1)
+            @avx @. col *= (-2.0*i - 1.0 + x^2)
+        end
+        return dV
+    end
 end
 
 vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)

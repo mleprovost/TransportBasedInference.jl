@@ -5,7 +5,9 @@ export  ProHermite, degree,
         DProPolyHermite,
         FamilyDProPolyHermite, FamilyDScaledProPolyHermite,
         FamilyD2ProPolyHermite, FamilyD2ScaledProPolyHermite
-        derivative!, derivative, vander!, vander
+        derivative!, derivative,
+        evaluate!, evaluate,
+        vander!, vander
 
 # Create a structure to hold physicist Hermite functions defined as
 # ψen(x) = Hen(x)*exp(-x^2/4)
@@ -114,24 +116,84 @@ end
 derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
 
 
-function vander!(dV::Array{Float64,2}, P::ProHermite{m}, k::Int64, x) where {m}
+function evaluate!(dV::Array{Float64,2}, P::ProHermite{m}, x) where {m}
     N = size(x,1)
-    # x is an Array{Float64,1} or a view of it
-
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
-    @inbounds for i=0:m
-        col = view(dV,:,i+1)
+    # H_0(x) = 1, H_1(x) = x
+    col0 = view(dV,:,1)
+    @avx @. col0 = exp(-0.25*x^2)
 
-        # Store the k-th derivative of the i-th order Hermite polynomial
-        if P.scaled == false
-            derivative!(col, FamilyProHermite[i+1], k, x)
-        else
-            derivative!(col, FamilyScaledProHermite[i+1], k, x)
+    if P.scaled
+        rmul!(col0, 1/Cpro(0))
+    end
+    if m == 0
+        return dV
+    end
+
+    if P.scaled
+        rmul!(col0, Cpro(0))
+    end
+
+    col = view(dV,:,2)
+    @avx @. col = x*col0
+
+    if P.scaled
+        rmul!(col0, 1/Cpro(0))
+        rmul!(col, 1/Cpro(1))
+    end
+
+    if m == 1
+        return dV
+    end
+
+    if P.scaled
+        @inbounds for i=2:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+            @avx @. colp1 = (Cpro(i-1)* x * col - Cpro(i-2)*(i-1)*colm1)
+            # dV[:,i+1] = Cpro(i-1)*x .* dV[:,i] - Cpro(i-2)*i*dV[:,i-1]
+            rmul!(colp1, 1/Cpro(i))
+        end
+    else
+        @inbounds for i=2:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+            @avx @. colp1 = (x * col - (i-1)*colm1)
         end
     end
     return dV
 end
 
+evaluate(P::ProHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+
+
+
+# Use ψe^{(k)}_n(x) = 1/√(2^n)*ψ^{k}_n(x/√2)
+function vander!(dV::Array{Float64,2}, P::ProHermite{m}, k::Int64, x) where {m}
+    if k==0
+        evaluate!(dV, P, x)
+        return dV
+    else
+        # x is an Array{Float64,1} or a view of it
+        C = 1/√(2.0)
+        vander!(dV, FamilyPhyHermite[m+1], k, C*x)
+
+        if P.scaled==true
+            @inbounds for i=0:m
+                col = view(dV,:,i+1)
+                @avx @. col *= 1.0/(Cpro(i)*√(2.0^i)*√(2.0)^k)
+            end
+        else
+            @inbounds for i=0:m
+                col = view(dV,:,i+1)
+                @avx @. col *= 1.0/(√(2.0^i)*√(2.0)^k)
+            end
+        end
+        return dV
+    end
+end
 
 vander(P::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)

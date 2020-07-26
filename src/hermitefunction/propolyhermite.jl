@@ -1,8 +1,9 @@
 
 export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
         FamilyProPolyHermite, FamilyScaledProPolyHermite,
-        derivative, vander!, vander
-
+        derivative,
+        evaluate!, evaluate,
+        vander!, vander
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
 struct ProPolyHermite{m} <: ParamFcn
@@ -98,34 +99,159 @@ function derivative(P::ProPolyHermite{m}, k::Int64) where {m}
     end
 end
 
+function evaluate!(dV::Array{Float64,2}, P::ProPolyHermite{m}, x) where {m}
+    N = size(x,1)
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
+
+    # H_0(x) = 1, H_1(x) = x
+    col = view(dV,:,1)
+    @avx @. col = 1.0
+
+    if P.scaled
+        rmul!(col, 1/Cpro(0))
+    end
+    if m == 0
+        return dV
+    end
+
+    col = view(dV,:,2)
+    @avx @. col = x
+
+    if P.scaled
+        rmul!(col, 1/Cpro(1))
+    end
+
+    if m == 1
+        return dV
+    end
+
+    if P.scaled
+        @inbounds for i=2:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+            @avx @. colp1 = Cpro(i-1)* x * col - Cpro(i-2)*(i-1)*colm1
+            # dV[:,i+1] = 2.0*Cphy(i-1)*x .* dV[:,i] - 2.0*Cphy(i-2)*i*dV[:,i-1]
+            rmul!(colp1, 1/Cpro(i))
+        end
+    else
+        @inbounds for i=2:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+            @avx @. colp1 = x * col - (i-1)*colm1
+        end
+    end
+    return dV
+end
+
+evaluate(P::ProPolyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+
+
 
 # For next week, the question is should we use the Family of polynomials  evaluate at the samples and just multiply by the constant
 # seems to be faster !! than recomputing the derivative
 
-# H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
+# He_{n}^(k)(x) =  n!/(n-k)! H_{n-k}(x)
 
 function vander!(dV::Array{Float64,2}, P::ProPolyHermite{m}, k::Int64, x) where {m}
-    N = size(x,1)
-    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
-    @inbounds for i=0:m
-        col = view(dV,:,i+1)
+    if k==0
+        evaluate!(dV, P, x)
+    # Derivative
+    elseif k==1
+        # Use recurrence relation H′_{n+1} = (1 + 1/n)*(x*H′_{n} - n*H′_{n-1})
+        N = size(x,1)
+        @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
-        # Store the k-th derivative of the i-th order Hermite polynomial
-        if P.scaled == false
-            Pik = derivative(FamilyProPolyHermite[i+1], k)
-            col .= Pik.(x)
-        else
-            Pik = derivative(FamilyScaledProPolyHermite[i+1], k)
-            if i>=k
-                factor = exp(loggamma(i+1) - loggamma(i+1-k))
-            else
-                factor = 1.0
-            end
-            col .= Pik.(x)*(1/sqrt(factor))
+        col = view(dV,:,1)
+        @avx @. col = 0.0
+        if m==0
+            return dV
         end
+
+        col = view(dV,:,2)
+        @avx @. col = 1.0
+
+        if m==1
+            return dV
+        end
+
+        col = view(dV,:,3)
+        @avx @. col = 2.0*x
+
+        if m==2
+            return dV
+        end
+
+        @inbounds for i=3:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+
+            @avx @. colp1 = (1.0 + 1.0/(i-1.0))*(x * col - (i-1.0) * colm1)
+        end
+
+        if P.scaled
+            @inbounds for i=1:m
+                colp1 = view(dV,:,i+1)
+                factor = exp(loggamma(i+1) - loggamma(i+1-k))
+                rmul!(colp1, 1/(Cpro(i)*sqrt(factor)))
+            end
+
+        end
+        return dV
+    # Second Derivative
+    elseif k==2
+        # Use recurrence relation He″_{n+1} = (n+1)/(n-1)*(x*He″_{n} - 2*n*He″_{n-1})
+        N = size(x,1)
+        @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
+
+        col = view(dV,:,1)
+        @avx @. col = 0.0
+        if m==0
+            return dV
+        end
+
+        col = view(dV,:,2)
+        @avx @. col = 0.0
+
+        if m==1
+            return dV
+        end
+
+        col = view(dV,:,3)
+        @avx @. col = 2.0
+
+        if m==2
+            return dV
+        end
+
+        col = view(dV,:,4)
+        @avx @. col = 6.0 * x
+
+        if m==3
+            return dV
+        end
+
+        @inbounds for i=4:m
+            colp1 = view(dV,:,i+1)
+            col   = view(dV,:,i)
+            colm1 = view(dV,:,i-1)
+
+            @avx @. colp1 = ((i)/(i-2.0))*(x * col - (i-1.0) * colm1)
+        end
+
+        if P.scaled
+            @inbounds for i=1:m
+                colp1 = view(dV,:,i+1)
+                factor = exp(loggamma(i+1.0) - loggamma(i+1.0-k))
+                @avx rmul!(colp1, 1/(Cpro(i)*sqrt(factor)))
+            end
+
+        end
+        return dV
     end
-    return dV
 end
 
 
