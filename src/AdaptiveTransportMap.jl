@@ -15,9 +15,11 @@ using TensorOperations
 using LoopVectorization
 using FastGaussQuadrature
 using Optim
-using LinearMaps
+# using LinearMaps
 using NLsolve
-using SparseArrays
+# using SparseArrays
+using MLDataUtils
+using MLBase
 
 include("tools/product.jl")
 include("tools/tools.jl")
@@ -69,6 +71,7 @@ include("mapcomponent/hermitemapcomponent.jl")
 include("mapcomponent/linhermitemapcomponent.jl")
 include("mapcomponent/hermitemap.jl")
 include("mapcomponent/greedyfit.jl")
+include("mapcomponent/optimize.jl")
 
 
 

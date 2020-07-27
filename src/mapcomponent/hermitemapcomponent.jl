@@ -10,8 +10,7 @@ export  HermiteMapk,
         precond!,
         diagprecond!,
         hess_negative_log_likelihood!,
-        hess_negative_log_likelihood
-        # optimize
+        hess_negative_log_likelihoodA
 
 
 struct HermiteMapk{m, Nψ, k}
@@ -70,12 +69,6 @@ end
 
 evaluate(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
     evaluate!(zeros(size(X,2)), Hk, X)
-
-
-## optimize
-
-
-
 
 ## negative_log_likelihood
 

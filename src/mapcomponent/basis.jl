@@ -86,30 +86,24 @@ function Base.show(io::IO, B::Basis{m}) where {m}
     end
 end
 
+
+# Speciai
 function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}
     N = size(x,1)
     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
-    @inbounds for i=1:maxi+1
-        col = view(dV,:,i)
 
-        if i==1
-            if k==0
-                fill!(col, 1.0)
-            else
-                fill!(col , 0.0)
-            end
-        else
-            if typeof(B.f[i]) <: Union{PhyHermite, ProHermite}
-                # Store the k-th derivative of the i-th order Hermite polynomial
-                derivative!(col, B.f[i], k, x)
-            elseif typeof(B[i]) <: Union{PhyPolyHermite, ProPolyHermite} && degree(B[i])>0
-                    Pik = derivative(B.f[i], k)
-                #     # In practice the first component of the basis will be constant,
-                #     # so this is very cheap to construct the derivative vector
-                    @. col = Pik(x)
-            end
-        end
+    col0 = view(dV,:,1)
+    if k==0
+         fill!(col0, 1.0)
+    else
+         fill!(col0, 0.0)
     end
+    if maxi == 0
+        return dV
+    end
+    dVshift = view(dV,:,2:maxi+1)
+    vander!(dVshift, B.f[maxi+1], k, x)
+     # .= vander(B.f[maxi+1], k, x)
     return dV
 end
 
@@ -117,3 +111,37 @@ vander!(dV, B::Basis{m}, k::Int64, x) where {m} = vander!(dV, B, m-1, k, x)
 
 vander(B::Basis{m}, maxi::Int64, k::Int64, x) where {m} = vander!(zeros(size(x,1),maxi+1), B, maxi, k, x)
 vander(B::Basis{m}, k::Int64, x) where {m} = vander!(zeros(size(x,1),m), B, k, x)
+
+
+# function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}
+#     N = size(x,1)
+#     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
+#
+#     col0 = view(dV,:,1)
+#      if k==0
+#          fill!(col0, 0.0)
+#      else
+#          fill!(col0, )
+#     @inbounds for i=1:maxi+1
+#         col = view(dV,:,i)
+#
+#         if i==1
+#             if k==0
+#                 fill!(col, 1.0)
+#             else
+#                 fill!(col , 0.0)
+#             end
+#         else
+#             if typeof(B.f[i]) <: Union{PhyHermite, ProHermite}
+#                 # Store the k-th derivative of the i-th order Hermite polynomial
+#                 derivative!(col, B.f[i], k, x)
+#             elseif typeof(B[i]) <: Union{PhyPolyHermite, ProPolyHermite} && degree(B[i])>0
+#                     Pik = derivative(B.f[i], k)
+#                 #     # In practice the first component of the basis will be constant,
+#                 #     # so this is very cheap to construct the derivative vector
+#                     @. col = Pik(x)
+#             end
+#         end
+#     end
+#     return dV
+# end

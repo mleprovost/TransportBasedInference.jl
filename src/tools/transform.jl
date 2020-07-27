@@ -51,6 +51,9 @@ function transform!(L::LinearTransform{Nx, Ne}, X::Array{Float64,2}) where {Nx, 
     return X
 end
 
+
+transform(X::Array{Float64,2}; diag::Bool = true) where {Nx, Ne} = transform!(LinearTransform(X; diag = diag), zero(X), X)
+
 function itransform!(L::LinearTransform{Nx, Ne}, Xout::Array{Float64,2}, Xin::Array{Float64,2}) where {Nx, Ne}
     @assert size(Xout) == size(Xin) "Input and output dimensions don't match"
     @assert size(Xin) == (Nx, Ne) "Input dimension is incorrect"

@@ -7,8 +7,6 @@ function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, Xvalid::Array{Float6
     best_valid_error = Inf
     patience = 0
 
-    # Xvalid =  zero(X)
-
     train_error = Float64[]
     valid_error = Float64[]
 
@@ -90,9 +88,90 @@ function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, Xvalid::Array{Float6
         end
     end
 
-    return Hk, train_error, valid_error
+    return Hk, (train_error, valid_error)
 end
 
+function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
+
+    best_valid_error = Inf
+    patience = 0
+
+    train_error = Float64[]
+
+    # Initialize map Hk to identity
+    Hk = HermiteMapk(m, k; α = 1e-6);
+
+    # Compute storage # Add later storage for validation S_valid
+    S = Storage(Hk.I.f, X)
+
+    # Compute initial loss on training set
+    push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
+
+    if verbose == true
+        println(string(ncoeff(Hk))*" terms - Training error: "*string(train_error[end]))
+    end
+
+    # # Optimize constant
+    # coeff0 = getcoeff(Hk)
+    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.BFGS())
+    #
+    # setcoeff!(Hk, Optim.minimizer(res))
+    #
+    # # Compute initial loss on training set
+    # push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
+    # push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
+    #
+    # if verbose == true
+    #     println(string(ncoeff(Hk))*" terms - Training error: "*
+    #     string(train_error[end])*", Validation error: "*string(valid_error[end]))
+    # end
+
+
+    # Compute the reduced margin
+    reduced_margin = getreducedmargin(getidx(Hk))
+
+    while ncoeff(Hk) <= maxterms-1
+        idx_new, reduced_margin = update_component(Hk, X, reduced_margin, S)
+
+        # Update storage with the new feature
+        S = update_storage(S, X, idx_new[end:end,:])
+
+        # Update Hk
+        Hk = HermiteMapk(IntegratedFunction(S.f); α = Hk.α)
+
+        # Optimize coefficients
+        coeff0 = getcoeff(Hk)
+        precond = zeros(ncoeff(Hk), ncoeff(Hk))
+        precond!(precond, coeff0, S, Hk, X)
+
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0,
+              Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+
+        setcoeff!(Hk, Optim.minimizer(res))
+
+        # Compute new loss on the training and validation set
+        push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
+
+        if verbose == true
+            println(string(ncoeff(Hk))*" terms - Training error: "*string(train_error[end]))
+        end
+
+        # Update patience
+        # if valid_error[end] >= best_valid_error
+        #     patience +=1
+        # else
+        #     best_valid_error = deepcopy(valid_error[end])
+        #     patience = 0
+        # end
+
+        # Check if patience exceeded maximum patience
+        if patience >= maxpatience
+            break
+        end
+    end
+
+    return Hk, train_error
+end
 
 function update_component(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, k}) where {m, Nψ, k}
     idx_old = getidx(Hk)

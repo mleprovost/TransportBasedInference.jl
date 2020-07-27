@@ -149,7 +149,7 @@ end
 derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
 
 
-function evaluate!(dV::Array{Float64,2}, P::PhyHermite{m}, x) where {m}
+function evaluate!(dV, P::PhyHermite{m}, x) where {m}
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
@@ -203,7 +203,7 @@ end
 evaluate(P::PhyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
 
 
-function vander!(dV::Array{Float64,2}, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function vander!(dV, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
 
     if k==0
         evaluate!(dV, P, x)

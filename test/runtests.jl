@@ -10,6 +10,7 @@ using QuadGK
 using Random
 using Distributions
 using Optim
+using NLsolve
 
 
 # Tools: double factorial, adaptive integration
@@ -23,25 +24,28 @@ include("tools/transform.jl")
 include("margin/reducedmargin.jl")
 include("margin/totalorder.jl")
 
-include("rectifier.jl")
-include("phypolyhermite.jl")
-include("propolyhermite.jl")
+include("hermitefunction/rectifier.jl")
+include("hermitefunction/phypolyhermite.jl")
+include("hermitefunction/propolyhermite.jl")
 
-include("phyhermite.jl")
-include("prohermite.jl")
+include("hermitefunction/phyhermite.jl")
+include("hermitefunction/prohermite.jl")
 
 # Test tools for Basis, MultiBasis, ExpandedFunction
-include("basis.jl")
-include("expandedfunction.jl")
-include("parametric.jl")
+include("mapcomponent/basis.jl")
+include("mapcomponent/expandedfunction.jl")
+include("mapcomponent/parametric.jl")
 
 # Test tools for integrated function
-include("integratedfunction.jl")
-include("storage.jl")
-include("inverse.jl")
+include("mapcomponent/integratedfunction.jl")
+include("mapcomponent/storage.jl")
+include("mapcomponent/inverse.jl")
 
 # Test tools for HermiteMap component
-include("hermitemapcomponent.jl")
+include("mapcomponent/hermitemapcomponent.jl")
 
 # Test greedy procedure
-include("greedyfit.jl")
+include("mapcomponent/greedyfit.jl")
+
+# Test optimization of HermiteMap component
+include("mapcomponent/optimize.jl")

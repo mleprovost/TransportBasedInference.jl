@@ -81,6 +81,7 @@ function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, 
     # maxdim = maximum(f.idx)
     # ψvander = zeros(Ne, maxdim)
     fill!(ψ, 1.0)
+    # ψtmp = zero(ψ)
 
     @inbounds for j in dims
         # midxj = view(f.idx,:,j)
@@ -88,6 +89,8 @@ function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, 
         maxj = maximum(midxj)
         Xj = view(X,j,:)
         # ψvanderj = view(ψvander,:,1:maxj+1)
+        # ψj = view(ψtmp,:,1:maxj+1)
+        # vander!(, f.B.B, maxj, 0, Xj)
         ψj = vander(f.B.B, maxj, 0, Xj)
 
         @avx ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#

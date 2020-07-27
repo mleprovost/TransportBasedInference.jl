@@ -99,7 +99,7 @@ function derivative(P::ProPolyHermite{m}, k::Int64) where {m}
     end
 end
 
-function evaluate!(dV::Array{Float64,2}, P::ProPolyHermite{m}, x) where {m}
+function evaluate!(dV, P::ProPolyHermite{m}, x) where {m}
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
@@ -154,7 +154,7 @@ evaluate(P::ProPolyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(
 
 # He_{n}^(k)(x) =  n!/(n-k)! H_{n-k}(x)
 
-function vander!(dV::Array{Float64,2}, P::ProPolyHermite{m}, k::Int64, x) where {m}
+function vander!(dV, P::ProPolyHermite{m}, k::Int64, x) where {m}
 
     if k==0
         evaluate!(dV, P, x)

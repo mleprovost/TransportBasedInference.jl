@@ -179,14 +179,14 @@ end
     Ne = 20
     x = randn(Ne)
     #Test all the basis
-    Btab = [CstPhyHermite(5; scaled = false);
-            CstPhyHermite(5; scaled = true);
-            CstProHermite(5; scaled = false);
-            CstPhyHermite(5; scaled = true);
-            CstLinPhyHermite(5; scaled = false);
-            CstLinPhyHermite(5; scaled = true);
-            CstLinProHermite(5; scaled = false);
-            CstLinProHermite(5; scaled = true)]
+    Btab = [CstProHermite(5; scaled = false);
+            CstProHermite(5; scaled = true)];
+            # CstPhyHermite(5; scaled = false);
+            # CstPhyHermite(5; scaled = true);
+            # CstLinPhyHermite(5; scaled = false);
+            # CstLinPhyHermite(5; scaled = true);
+            # CstLinProHermite(5; scaled = false);
+            # CstLinProHermite(5; scaled = true)]
             # Test evaluation, derivative and second derivative
     ktab = [0; 1; 2]
 
