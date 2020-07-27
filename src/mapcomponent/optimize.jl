@@ -37,11 +37,10 @@ function optimize(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Uni
             Hk, error = greedyfit(m, k, X[:,idx_train], X[:,idx_valid], max_iter; verbose  = verbose)
 
             # error[2] contains the histroy of the validation error
-            copy!(valid_error[:,i], error[2])
+            valid_error[:,i] .= deepcopy(error[2])
         end
-
         # Find optimal numbers of terms
-        mean_valid_error = mean(valid_error, dims  = 1)
+        mean_valid_error = mean(valid_error, dims  = 2)[:,1]
 
         _, opt_nterms = findmin(mean_valid_error)
 
@@ -49,7 +48,7 @@ function optimize(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Uni
         Hk, error = greedyfit(m, k, X, opt_nterms; verbose  = verbose)
 
     elseif maxterms ∈ ("split", "Split")
-        nvalid = floor(0.2*size(X,2))
+        nvalid = ceil(Int64, floor(0.2*size(X,2)))
         X_train = X[:,nvalid+1:end]
         X_valid = X[:,1:nvalid]
 

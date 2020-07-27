@@ -10,7 +10,7 @@ export  HermiteMapk,
         precond!,
         diagprecond!,
         hess_negative_log_likelihood!,
-        hess_negative_log_likelihoodA
+        hess_negative_log_likelihoodmA
 
 
 struct HermiteMapk{m, Nψ, k}
