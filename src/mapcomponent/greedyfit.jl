@@ -1,8 +1,9 @@
 export greedyfit, update_component, update_coeffs
 
 
+# function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
 
-function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
+function greedyfit(m::Int64, k::Int64, X, Xvalid, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
 
     best_valid_error = Inf
     patience = 0
@@ -91,7 +92,10 @@ function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, Xvalid::Array{Float6
     return Hk, (train_error, valid_error)
 end
 
-function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
+
+# function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
+
+function greedyfit(m::Int64, k::Int64, X, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, k}
 
     best_valid_error = Inf
     patience = 0
@@ -113,17 +117,17 @@ function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, maxterms::Int64; max
 
     # # Optimize constant
     # coeff0 = getcoeff(Hk)
-    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0, Optim.BFGS())
+    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk, X)), coeff0,
+    #       Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
     #
     # setcoeff!(Hk, Optim.minimizer(res))
     #
     # # Compute initial loss on training set
     # push!(train_error, negative_log_likelihood!(S, Hk, X)(0.0, nothing, getcoeff(Hk)))
-    # push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
+    # # push!(valid_error, negative_log_likelihood!(Svalid, Hk, Xvalid)(0.0, nothing, getcoeff(Hk)))
     #
     # if verbose == true
-    #     println(string(ncoeff(Hk))*" terms - Training error: "*
-    #     string(train_error[end])*", Validation error: "*string(valid_error[end]))
+    #     println(string(ncoeff(Hk))*" terms - Training error: "*string(train_error[end]))
     # end
 
 
@@ -173,7 +177,9 @@ function greedyfit(m::Int64, k::Int64, X::Array{Float64,2}, maxterms::Int64; max
     return Hk, train_error
 end
 
-function update_component(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, k}) where {m, Nψ, k}
+# function update_component(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, k}) where {m, Nψ, k}
+
+function update_component(Hk::HermiteMapk{m, Nψ, k}, X, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, k}) where {m, Nψ, k}
     idx_old = getidx(Hk)
     idx_new = vcat(idx_old, reduced_margin)
 

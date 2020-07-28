@@ -115,7 +115,6 @@ end
     Hk_new = HermiteMapk(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(Hk_old, X, reduced_margin0, S)
 
-    @show getidx(Hk_new)
     dJ_new = zeros(3)
     J_new = 0.0
     S = update_storage(S, X, reduced_margin0)
@@ -190,8 +189,6 @@ end
     Hk_new = HermiteMapk(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(Hk_old, X, reduced_margin0, S)
 
-    @show getidx(Hk_new)
-    @show getcoeff(Hk_new)
     dJ_new = zeros(10)
     J_new = 0.0
     S = update_storage(S, X, reduced_margin0)
@@ -234,7 +231,9 @@ X_train = X[:,1:800]
 X_valid = X[:,801:1000]
 
 
-Hk_new, train_error, valid_error = greedyfit(m, Nx, X_train, X_valid, 10; verbose = true);
+Hk_new, error = greedyfit(m, Nx, X_train, X_valid, 10; verbose = false);
+
+train_error, valid_error = error
 
 Hk_test = deepcopy(Hk_new)
 setcoeff!(Hk_test, zero(getcoeff(Hk_new)));
@@ -244,5 +243,8 @@ coeff_test = getcoeff(Hk_test)
 
 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S_test, Hk_test, X_train)), coeff_test, Optim.BFGS())
 
-@test norm(getcoeff(Hk_new)-Optim.minimizer(res))<1e-8
+@test norm(getcoeff(Hk_new)-Optim.minimizer(res))<1e-7
+
+@test norm(train_error[end] - res.minimum)<1e-7
+
 end

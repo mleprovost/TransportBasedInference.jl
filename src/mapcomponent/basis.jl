@@ -87,7 +87,7 @@ function Base.show(io::IO, B::Basis{m}) where {m}
 end
 
 
-# Speciai
+# Specialize method
 function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}
     N = size(x,1)
     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"

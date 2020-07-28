@@ -67,6 +67,55 @@ end
                               0.02434745831060741])<1e-4
 end
 
+
+@testset "Verify evaluation of HermiteMapComponent" begin
+
+  Nx = 2
+  Ne = 500
+  ens = EnsembleState(Nx, Ne)
+
+  ens.S .= randn(Nx, Ne)
+
+  # ens.S .=  [0.267333   1.43021;
+  #           0.364979   0.607224;
+  #          -1.23693    0.249277;
+  #          -2.0526     0.915629;
+  #          -0.182465   0.415874;
+  #           0.412907   1.01672;
+  #           1.41332   -0.918205;
+  #           0.766647  -1.00445]';
+  B = MultiBasis(CstProHermite(6; scaled =true), Nx)
+
+  idx = [0 0; 0 1; 1 0; 1 1; 1 2]
+  truncidx = idx[1:2:end,:]
+  Nψ = 5
+
+  coeff = randn(Nψ)
+
+  # coeff =   [0.6285037650645056;
+  #  -0.4744029092496623;
+  #   1.1405280011620331;
+  #  -0.7217760771894809;
+  #   0.11855056306742319]
+  f = ExpandedFunction(B, idx, coeff)
+  fp = ParametricFunction(f);
+  R = IntegratedFunction(fp)
+
+  Hk = HermiteMapk(R)
+
+  # Test evaluate
+  ψt = zeros(Ne)
+
+  for i=1:Ne
+      x = member(ens, i)
+      ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+  end
+
+  ψ = evaluate(Hk, ens.S)
+
+  @test norm(ψ - ψt)<1e-10
+end
+
 # Code for optimization with Hessian
 # X = randn(Nx, Ne) .* randn(Nx, Ne)
 # S = Storage(H.I.f, X; hess = true);

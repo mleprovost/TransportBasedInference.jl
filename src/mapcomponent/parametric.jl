@@ -24,31 +24,33 @@ struct ParametricFunction{m, Nψ, Nx}
 end
 
 ## evaluate_offdiagbasis
-
-evaluate_offdiagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+# X::Array{Float64,2}
+evaluate_offdiagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X, idx::Array{Int64,2}) where {m, Nψ, Nx} =
     evaluate_basis!(ψoff, fp.f, X, 1:Nx-1, idx)
 
-evaluate_offdiagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+evaluate_offdiagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx} =
     evaluate_offdiagbasis!(ψoff, fp, X, fp.f.idx)
 
-evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, X, idx::Array{Int64,2}) where {m, Nψ, Nx} =
         evaluate_offdiagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
 
-evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+evaluate_offdiagbasis(fp::ParametricFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx} =
         evaluate_offdiagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X)
 
 ## evaluate_diagbasis
 
-evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+# evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+
+evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X, idx::Array{Int64,2}) where {m, Nψ, Nx} =
     evaluate_basis!(ψoff, fp.f, X, [Nx], idx)
 
-evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+evaluate_diagbasis!(ψoff, fp::ParametricFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx} =
     evaluate_diagbasis!(ψoff, fp, X, fp.f.idx)
 
-evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X, idx::Array{Int64,2}) where {m, Nψ, Nx} =
         evaluate_diagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
 
-evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+evaluate_diagbasis(fp::ParametricFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx} =
         evaluate_diagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X)
 
 ## grad_xd_diagbasis

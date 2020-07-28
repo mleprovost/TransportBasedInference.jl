@@ -57,9 +57,6 @@ include("mapcomponent/storage.jl")
 # Integrated positive function
 include("mapcomponent/integratedfunction.jl")
 
-# Tools for fast inversion
-include("mapcomponent/inverse.jl")
-
 # ReducedMargin
 include("margin/reducedmargin.jl")
 include("margin/totalorder.jl")
@@ -69,9 +66,13 @@ include("margin/totalorder.jl")
 include("mapcomponent/precond.jl")
 include("mapcomponent/hermitemapcomponent.jl")
 include("mapcomponent/linhermitemapcomponent.jl")
-include("mapcomponent/hermitemap.jl")
+# Tools for fast inversion
+include("mapcomponent/inverse.jl")
+# Tools for greedyfit and optimization 
 include("mapcomponent/greedyfit.jl")
 include("mapcomponent/optimize.jl")
+
+include("mapcomponent/hermitemap.jl")
 
 
 

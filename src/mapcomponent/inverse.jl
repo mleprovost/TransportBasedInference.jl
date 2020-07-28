@@ -63,6 +63,21 @@ function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction{m, Nψ, Nx}, S::
     X[end,:] .= result.zero
 end
 
+
+inverse!(X::Array{Float64,2}, F, Hk::HermiteMapk{m, Nψ, Nx}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx} =
+    inverse!(X, F, Hk.I, S)
+
+
+function inverse!(X::Array{Float64,2}, F, Lk::LinHermiteMapk{m, Nψ, Nx}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
+    # Pay attention that S is computed in the renormalized space for improve performance !!!
+    transform!(Lk.L, X)
+    inverse!(X, F, Lk.H, S)
+    itransform!(Lk.L, X)
+end
+
+
+
+
 # function functionalfg!(F, J, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
 #
 #     if !(F == nothing)

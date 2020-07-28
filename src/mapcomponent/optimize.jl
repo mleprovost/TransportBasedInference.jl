@@ -2,7 +2,7 @@
 export optimize
 
 
-function optimize(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String}; verbose::Bool = false) where {m, Nψ, k}
+function optimize(Hk::HermiteMapk{m, Nψ, k}, X, maxterms::Union{Nothing, Int64, String}; verbose::Bool = false) where {m, Nψ, k}
 
     if typeof(maxterms) <: Nothing
         S = Storage(Hk.I.f, X)
@@ -64,4 +64,16 @@ function optimize(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Uni
         error("Argument max_terms is not recognized")
     end
     return Hk, error
+end
+
+
+function optimize(Lk::LinHermiteMapk{m, Nψ, k}, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String}; verbose::Bool = false) where {m, Nψ, k}
+
+    transform!(Lk.L, X)
+    Hk = Lk.H
+    Hk_opt, error = optimize(Hk, X, maxterms; verbose = verbose)
+
+    itransform!(Lk.L, X)
+
+    return LinHermiteMapk(Lk.L, Hk_opt), error
 end

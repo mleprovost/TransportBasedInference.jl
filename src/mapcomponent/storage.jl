@@ -34,7 +34,9 @@ struct Storage{m, Nψ, Nx}
     cache_g::Array{Float64,1}
 end
 
-function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}; hess::Bool = false) where {m, Nψ, Nx}
+# function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}; hess::Bool = false) where {m, Nψ, Nx}
+
+function Storage(f::ParametricFunction{m, Nψ, Nx}, X; hess::Bool = false) where {m, Nψ, Nx}
         NxX, Ne = size(X)
         @assert NxX == Nx
         ψoff = evaluate_offdiagbasis(f, X)
@@ -60,8 +62,9 @@ function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}; hess::B
         return Storage{m, Nψ, Nx}(f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
 end
 
+# function update_storage(S::Storage{m, Nψ, k}, X::Array{Float64,2}, addedidx::Array{Int64,2}) where {m, Nψ, k}
 
-function update_storage(S::Storage{m, Nψ, k}, X::Array{Float64,2}, addedidx::Array{Int64,2}) where {m, Nψ, k}
+function update_storage(S::Storage{m, Nψ, k}, X, addedidx::Array{Int64,2}) where {m, Nψ, k}
     NxX, Ne = size(X)
 
     @assert NxX == k "Wrong dimension of the sample X"

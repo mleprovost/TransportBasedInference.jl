@@ -12,14 +12,21 @@ export  LinHermiteMapk,
 
 struct LinHermiteMapk{m, Nψ, k}
     # Linear transformation
-    L::LinearTransform
+    L::LinearTransform{k}
+
 
     # IntegratedFunction
     H::HermiteMapk{m, Nψ, k}
 
-    function LinHermiteMapk(L::LinearTransform{Nx, Ne}, H::HermiteMapk{m, Nψ, k}) where {m, Nψ, k, Nx, Ne}
-        return new{m, Nψ, k}(L, H)
+    function LinHermiteMapk(L::LinearTransform{k}, Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k}
+        return new{m, Nψ, k}(L, Hk)
     end
+end
+
+function LinHermiteMapk(X::Array{Float64,2}, Hk::HermiteMapk{m, Nψ, k}; diag::Bool=true) where {m, Nψ, k, Nx}
+    @assert size(X,1)==k "Wrong dimension of the input"
+    L = LinearTransform(X; diag = diag)
+    return LinHermiteMapk(L, Hk)
 end
 
 
@@ -34,13 +41,15 @@ end
 getidx(Lk::LinHermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Lk.H.I.f.f.idx
 
 
-function evaluate!(out::Array{Float64,1}, Lk::LinHermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+function evaluate!(out, Lk::LinHermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
     @assert k==size(X,1) "Wrong dimension of the sample"
     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
-    Xout = zero(X)
-    transform!(Lk.L, Xout, X)
-    return evaluate!(out, Hk.I, Xout)
+
+    transform!(Lk.L, X)
+    evaluate!(out, Lk.H.I, X)
+    itransform!(Lk.L, X)
+    return out
 end
 
-evaluate(out::Array{Float64,1}, Lk::LinHermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
+evaluate(Lk::LinHermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
     evaluate!(zeros(size(X,2)), Lk, X)

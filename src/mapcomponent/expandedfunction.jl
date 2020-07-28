@@ -71,7 +71,9 @@ function alleval(f::ExpandedFunction{m, Nψ, Nx}, ens::EnsembleState{Nx, Ne}) wh
     return ψ, dψ, d2ψ
 end
 
-function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+# function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+
+function evaluate_basis!(ψ, f::ExpandedFunction{m, Nψ, Nx}, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
     NxX, Ne = size(X)
     Nψreduced = size(idx,1)
 
@@ -81,31 +83,35 @@ function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, 
     # maxdim = maximum(f.idx)
     # ψvander = zeros(Ne, maxdim)
     fill!(ψ, 1.0)
-    # ψtmp = zero(ψ)
+    ψtmp = zero(ψ)
 
     @inbounds for j in dims
-        # midxj = view(f.idx,:,j)
-        midxj = idx[:,j]
+        midxj = view(idx,:,j)
         maxj = maximum(midxj)
         Xj = view(X,j,:)
-        # ψvanderj = view(ψvander,:,1:maxj+1)
-        # ψj = view(ψtmp,:,1:maxj+1)
-        # vander!(, f.B.B, maxj, 0, Xj)
-        ψj = vander(f.B.B, maxj, 0, Xj)
+        ψj = ψtmp[:,1:maxj+1]
 
-        @avx ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
+        vander!(ψj, f.B.B, maxj, 0, Xj)
+
+        @avx for l = 1:Nψreduced
+            for k=1:Ne
+                ψ[k,l] *= ψj[k, midxj[l] + 1]
+            end
+        end
+
+        # @avx  ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
     end
     return ψ
 end
 
 # In-place versions
-evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}) where {m, Nψ, Nx} =
+evaluate_basis!(ψ, f::ExpandedFunction{m, Nψ, Nx}, X, dims::Union{Array{Int64,1},UnitRange{Int64}}) where {m, Nψ, Nx} =
               evaluate_basis!(ψ, f, X, dims, f.idx)
 
-evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+evaluate_basis!(ψ, f::ExpandedFunction{m, Nψ, Nx}, X, idx::Array{Int64,2}) where {m, Nψ, Nx} =
             evaluate_basis!(ψ, f, X, 1:Nx, idx)
 
-evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
+evaluate_basis!(ψ, f::ExpandedFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx} =
             evaluate_basis!(ψ, f, X, 1:Nx, f.idx)
 
 

@@ -83,8 +83,9 @@ end
 #      return quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
 # end
 #
+# function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}, idx::Array{Int64,2}) where {m, Nψ, Nx}
 
-function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}, idx::Array{Int64,2}) where {m, Nψ, Nx}
+function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x, idx::Array{Int64,2}) where {m, Nψ, Nx}
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
     N = size(x,1)
     # ∂ᵏf/∂x_{grad_dim} = ψ
@@ -99,10 +100,13 @@ function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float6
     return dkψj[:, midxj .+ 1]
 end
 
-repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
+# repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
+repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x) where {m, Nψ, Nx} =
         repeated_grad_xk_basis(f, x, f.idx)
 
-function evaluate!(out::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+# function evaluate!(out::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+
+function evaluate!(out, R::IntegratedFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx}
     NxX, Ne = size(X)
     ψoff = evaluate_offdiagbasis(R.f, X)
     ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))

@@ -20,7 +20,7 @@
     ψoff = evaluate_offdiagbasis(fp, ens.S)
     ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
-    @test ψoff[:,1:2:end] == ψofftrunc
+    @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
     ψofft = zeros(Ne, Nψ)
 
@@ -39,7 +39,7 @@
     ψdiag = evaluate_diagbasis(fp, ens.S)
     ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
-    @test ψdiag[:,1:2:end] == ψdiagtrunc
+    @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
 
     ψdiagt = zeros(Ne, Nψ)
@@ -315,7 +315,7 @@ end
     ψoff = evaluate_offdiagbasis(fp, ens.S)
     ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
-    @test ψoff[:,1:2:end] == ψofftrunc
+    @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
     ψofft = zeros(Ne, Nψ)
 
@@ -334,7 +334,7 @@ end
     ψdiag = evaluate_diagbasis(fp, ens.S)
     ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
-    @test ψdiag[:,1:2:end] == ψdiagtrunc
+    @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
 
     ψdiagt = zeros(Ne, Nψ)
@@ -464,7 +464,7 @@ end
     ψoff = evaluate_offdiagbasis(fp, ens.S)
     ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
-    @test ψoff[:,1:2:end] == ψofftrunc
+    @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
     ψofft = zeros(Ne, Nψ)
 
@@ -483,7 +483,7 @@ end
     ψdiag = evaluate_diagbasis(fp, ens.S)
     ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
-    @test ψdiag[:,1:2:end] == ψdiagtrunc
+    @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
 
     ψdiagt = zeros(Ne, Nψ)
@@ -610,7 +610,7 @@ end
     ψoff = evaluate_offdiagbasis(fp, ens.S)
     ψofftrunc = evaluate_offdiagbasis(fp, ens.S, truncidx)
 
-    @test ψoff[:,1:2:end] == ψofftrunc
+    @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
     ψofft = zeros(Ne, Nψ)
 
@@ -629,7 +629,7 @@ end
     ψdiag = evaluate_diagbasis(fp, ens.S)
     ψdiagtrunc = evaluate_diagbasis(fp, ens.S, truncidx)
 
-    @test ψdiag[:,1:2:end] == ψdiagtrunc
+    @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
 
     ψdiagt = zeros(Ne, Nψ)

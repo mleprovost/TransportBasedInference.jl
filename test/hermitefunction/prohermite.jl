@@ -87,26 +87,26 @@ end
 end
 
 
-@testset "Verify integration of Probabilistic hermite functions" begin
-    Nx = 10
-    x = randn(10)
-
-    # Unscaled
-    dV = vander(ProHermite(8; scaled = false), -1, x)
-
-    for i=0:8
-        for j=1:Nx
-            @test abs(dV[j,i+1] - quadgk(y-> ProHermite(i)(y), 0.0, x[j], rtol=1e-12)[1])<1e-8
-        end
-    end
-
-    # Scaled
-    dV = vander(ProHermite(8; scaled = true), -1, x)
-
-    for i=0:8
-        for j=1:Nx
-            @test abs(dV[j,i+1] - quadgk(y-> ProHermite(i; scaled=true)(y), 0.0, x[j], rtol=1e-12)[1])<1e-8
-        end
-    end
-
-end
+# @testset "Verify integration of Probabilistic hermite functions" begin
+#     Nx = 10
+#     x = randn(10)
+#
+#     # Unscaled
+#     dV = vander(ProHermite(8; scaled = false), -1, x)
+#
+#     for i=0:8
+#         for j=1:Nx
+#             @test abs(dV[j,i+1] - quadgk(y-> ProHermite(i)(y), 0.0, x[j], rtol=1e-12)[1])<1e-8
+#         end
+#     end
+#
+#     # Scaled
+#     dV = vander(ProHermite(8; scaled = true), -1, x)
+#
+#     for i=0:8
+#         for j=1:Nx
+#             @test abs(dV[j,i+1] - quadgk(y-> ProHermite(i; scaled=true)(y), 0.0, x[j], rtol=1e-12)[1])<1e-8
+#         end
+#     end
+#
+# end

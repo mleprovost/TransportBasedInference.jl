@@ -1,10 +1,11 @@
 export  HermiteMapk,
+        EmptyHermiteMapk,
         ncoeff,
         getcoeff,
         setcoeff!,
         getidx,
-        # inverse!,
-        # inverse,
+        evaluate!,
+        evaluate,
         negative_log_likelihood!,
         negative_log_likelihood,
         precond!,
@@ -49,6 +50,21 @@ function HermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
     return HermiteMapk(I; α = α)
 end
 
+# function EmptyHermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
+#
+#
+#     # m is the dimension of the basis
+#     B = MultiBasis(CstProHermite(m-2; scaled =true), k)
+#     idx = zeros(Int64, Nψ,k)
+#     coeff = zeros(Nψ)
+#
+#     f = ExpandedFunction(B, idx, coeff)
+#     I = IntegratedFunction(f)
+#     return HermiteMapk(I; α = α)
+# end
+
+
+
 ncoeff(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Nψ
 getcoeff(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Hk.I.f.f.coeff
 
@@ -61,25 +77,27 @@ getidx(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Hk.I.f.f.idx
 
 
 ## Evaluate
-function evaluate!(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+function evaluate!(out, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
     @assert k==size(X,1) "Wrong dimension of the sample"
     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
     return evaluate!(out, Hk.I, X)
 end
 
-evaluate(out::Array{Float64,1}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
+evaluate(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
     evaluate!(zeros(size(X,2)), Hk, X)
 
 ## negative_log_likelihood
 
-function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+# function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+
+function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
     NxX, Ne = size(X)
     @assert NxX == k "Wrong dimension of the sample X"
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xk = deepcopy(X[NxX,:])#)
+    xk = view(X,NxX,:)
 
     fill!(S.cache_integral, 0)
 
@@ -101,8 +119,10 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
-    @inbounds for j=1:Nψ+1
-        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
+    @avx for j=1:Nψ+1
+        for i=1:Ne
+            S.cache_integral[(j-1)*Ne+i] *= xk[i]
+        end
     end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
@@ -151,18 +171,18 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
     end
 end
 
-negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
+negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k} =
     (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, Hk, X)
 
 
-function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
     NxX, Ne = size(X)
     @assert NxX == k "Wrong dimension of the sample X"
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xk = deepcopy(X[NxX,:])#)
+    xk = view(X,NxX,:)#)
 
     fill!(S.cache_integral, 0)
 
@@ -184,8 +204,10 @@ function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
-    @inbounds for j=1:Nψ+1
-        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
+    @avx for j=1:Nψ+1
+        for i=1:Ne
+            S.cache_integral[(j-1)*Ne+i] *= xk[i]
+        end
     end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
@@ -233,7 +255,7 @@ function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X
     return P
 end
 
-precond!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k} =
+precond!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {T <: Real, m, Nψ, k} =
     (P, coeff) -> precond!(P, coeff, S, Hk, X)
 
 function diagprecond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
