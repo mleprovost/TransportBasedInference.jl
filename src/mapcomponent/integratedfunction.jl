@@ -15,22 +15,26 @@ export  IntegratedFunction,
         evalgrad_coeff!
 
 
-struct IntegratedFunction{m, Nψ, Nx}
+struct IntegratedFunction
+    m::Int64
+    Nψ::Int64
+    Nx::Int64
     g::Rectifier
-    f::ParametricFunction{m, Nψ, Nx}
+    f::ParametricFunction
 end
 
-function IntegratedFunction(f::ParametricFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
-    return IntegratedFunction{m, Nψ, Nx}(Rectifier("softplus"), f)
+function IntegratedFunction(f::ParametricFunction)
+    return IntegratedFunction(f.f.m, f.f.Nψ, f.f.Nx, Rectifier("softplus"), f)
 end
 
-function IntegratedFunction(f::ExpandedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
-    return IntegratedFunction{m, Nψ, Nx}(Rectifier("softplus"), ParametricFunction(f))
+function IntegratedFunction(f::ExpandedFunction)
+    return IntegratedFunction(f.m, f.Nψ, f.Nx, Rectifier("softplus"), ParametricFunction(f))
 end
 
-function integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function integrate_xd(R::IntegratedFunction, X::Array{Float64,2})
     NxX, Ne = size(X)
     ψoff = evaluate_offdiagbasis(R.f, X)
+    Nx = R.Nx
     xk = deepcopy(X[Nx, :])
     cache = zeros(Ne)
     # ψoffdxdψ = zeros(Ne, Nψ)
@@ -46,22 +50,23 @@ function integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) wh
 end
 
 # Compute g(∂ₖf(x_{1:k}))
-function grad_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function grad_xd(R::IntegratedFunction, X::Array{Float64,2})
     dψ = grad_xd(R.f, X)
     gdψ = R.g.(dψ)
     return gdψ
 end
 
 # Compute ∂_c( g(∂ₖf(x_{1:k}) ) ) = ∂_c∂ₖf(x_{1:k}) × g′(∂ₖf(x_{1:k}))
-function grad_coeff_grad_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function grad_coeff_grad_xd(R::IntegratedFunction, X::Array{Float64,2})
     dψ = grad_xd(R.f, X)
     dcdψ = grad_coeff_grad_xd(R.f, X)
     return grad_x(R.g, dψ) .* dcdψ
 end
 
 # Compute ∂²_c( g(∂ₖf(x_{1:k}) ) ) = ∂²_c∂ₖf(x_{1:k}) × g′(∂ₖf(x_{1:k})) + ∂_c∂ₖf(x_{1:k}) × ∂_c∂ₖf(x_{1:k}) g″(∂ₖf(x_{1:k}))
-function hess_coeff_grad_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function hess_coeff_grad_xd(R::IntegratedFunction, X::Array{Float64,2})
     # The second term can be dropped for improve performance
+    Nψ = R.Nψ
     NxX, Ne = size(X)
     dψ    = grad_xd(R.f, X)
     dcdψ  = grad_coeff_grad_xd(R.f, X)
@@ -85,9 +90,10 @@ end
 #
 # function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}, idx::Array{Int64,2}) where {m, Nψ, Nx}
 
-function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x, idx::Array{Int64,2}) where {m, Nψ, Nx}
+function repeated_grad_xk_basis(f::ExpandedFunction, x, idx::Array{Int64,2})
     # Compute the k=th order deriviative of an expanded function along the direction grad_dim
     N = size(x,1)
+    Nx = f.Nx
     # ∂ᵏf/∂x_{grad_dim} = ψ
     k = 1
     grad_dim = Nx
@@ -101,13 +107,14 @@ function repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x, idx::Array{I
 end
 
 # repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
-repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x) where {m, Nψ, Nx} =
-        repeated_grad_xk_basis(f, x, f.idx)
+repeated_grad_xk_basis(f::ExpandedFunction, x) = repeated_grad_xk_basis(f, x, f.idx)
 
 # function evaluate!(out::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
 
-function evaluate!(out, R::IntegratedFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx}
+function evaluate!(out, R::IntegratedFunction, X)
     NxX, Ne = size(X)
+    Nx = R.Nx
+    @assert NxX == Nx "Wrong dimension of the sample X"
     ψoff = evaluate_offdiagbasis(R.f, X)
     ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))
     xk = deepcopy(X[Nx, :])
@@ -126,14 +133,16 @@ function evaluate!(out, R::IntegratedFunction{m, Nψ, Nx}, X) where {m, Nψ, Nx}
 
 
 
-evaluate(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} =
-        evaluate!(zeros(size(X,2)), R, X)
+evaluate(R::IntegratedFunction, X::Array{Float64,2}) = evaluate!(zeros(size(X,2)), R, X)
 
 
 ## Compute ∂_c int_0^{x_k} g(∂ₖf(x_{1:k-1}, t))dt
-function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function grad_coeff_integrate_xd(R::IntegratedFunction, X::Array{Float64,2})
     ψoff = evaluate_offdiagbasis(R.f, X)
+    Nx = R.Nx
+    Nψ = R.Nψ
     NxX, Ne = size(X)
+    @assert NxX == Nx "Wrong dimension of the sample X"
     xk = deepcopy(X[Nx, :])
     dcdψ = zeros(Ne, Nψ)
 
@@ -148,9 +157,12 @@ function grad_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Flo
 end
 
 # Compute ∂²_c int_0^{x_k} g(c^T F(t))dt = int_0^{x_k} ∂_c F(t) g′(c^T F(t)) + F(t)F(t)*g″(c^T F(t)) dt
-function hess_coeff_integrate_xd(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function hess_coeff_integrate_xd(R::IntegratedFunction, X::Array{Float64,2})
      # We drop the first term for speed improvement since it is always equal to 0
+    Nx = R.Nx
+    Nψ = R.Nψ
     NxX, Ne = size(X)
+    @assert NxX == Nx "Wrong dimension of the sample X"
     ψoff = evaluate_offdiagbasis(R.f, X)
     xk = deepcopy(X[Nx, :])
     dcdψ = zeros(Ne, Nψ)
@@ -175,8 +187,12 @@ end
 
 
 
-function grad_coeff(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
+function grad_coeff(R::IntegratedFunction, X::Array{Float64,2})
+    Nx = R.Nx
+    Nψ = R.Nψ
     NxX, Ne = size(X)
+    @assert NxX == Nx "Wrong dimension of the sample X"
+
     ψoff = evaluate_offdiagbasis(R.f, X)
     ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))
 
@@ -193,4 +209,4 @@ function grad_coeff(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) wher
     return ψoff .* ψdiag + xk .* quadgk!(integrand!, cache, 0.0, 1.0)[1]
 end
 
-hess_coeff(R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx} = hess_coeff_integrate_xd(R, X)
+hess_coeff(R::IntegratedFunction, X::Array{Float64,2}) = hess_coeff_integrate_xd(R, X)

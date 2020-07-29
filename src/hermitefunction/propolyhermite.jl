@@ -6,7 +6,8 @@ export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
         vander!, vander
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
-struct ProPolyHermite{m} <: ParamFcn
+struct ProPolyHermite <: ParamFcn
+    m::Int64
     P::ImmutablePolynomial{Float64}
     scaled::Bool
 end
@@ -20,9 +21,9 @@ end
 # Hen″(x) = n*(n-1)*Hen-1(x)
 
 Cpro(m::Int64) =sqrt(sqrt(2*π) * gamma(m+1))
-Cpro(P::ProPolyHermite{m}) where {m} = Cpro(m)
+Cpro(P::ProPolyHermite) = Cpro(P.m)
 
-degree(P::ProPolyHermite{m}) where {m} = m
+degree(P::ProPolyHermite) = P.m
 
 # Adapted https://people.sc.fsu.edu/~jburkardt/m_src/hermite_polynomial/h_polynomial_coefficients.m
 
@@ -69,14 +70,14 @@ const ProPolyH = prohermite_coeffmatrix(20)
 function ProPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
     if scaled ==false
-            return ProPolyHermite{m}(ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)), scaled)
+            return ProPolyHermite(m, ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)), scaled)
     else
         C = 1/Cpro(m)
-            return ProPolyHermite{m}(ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)), scaled)
+            return ProPolyHermite(m, ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)), scaled)
     end
 end
 
-(P::ProPolyHermite{m})(x) where {m} = P.P(x)
+(P::ProPolyHermite)(x) = P.P(x)
 
 const FamilyProPolyHermite = map(i->ProPolyHermite(i),0:20)
 const FamilyScaledProPolyHermite = map(i->ProPolyHermite(i; scaled = true),0:20)
@@ -84,7 +85,8 @@ const FamilyScaledProPolyHermite = map(i->ProPolyHermite(i; scaled = true),0:20)
 
 # Compute the k-th derivative of a physicist Hermite polynomial according to
 # H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
-function derivative(P::ProPolyHermite{m}, k::Int64) where {m}
+function derivative(P::ProPolyHermite, k::Int64)
+    m = P.m
     @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
     if m>=k
         factor = exp(loggamma(m+1) - loggamma(m+1-k))
@@ -99,7 +101,8 @@ function derivative(P::ProPolyHermite{m}, k::Int64) where {m}
     end
 end
 
-function evaluate!(dV, P::ProPolyHermite{m}, x) where {m}
+function evaluate!(dV, P::ProPolyHermite, x)
+    m = P.m
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
@@ -145,7 +148,7 @@ function evaluate!(dV, P::ProPolyHermite{m}, x) where {m}
     return dV
 end
 
-evaluate(P::ProPolyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+evaluate(P::ProPolyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
 
@@ -154,7 +157,8 @@ evaluate(P::ProPolyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(
 
 # He_{n}^(k)(x) =  n!/(n-k)! H_{n-k}(x)
 
-function vander!(dV, P::ProPolyHermite{m}, k::Int64, x) where {m}
+function vander!(dV, P::ProPolyHermite, k::Int64, x)
+    m = P.m
 
     if k==0
         evaluate!(dV, P, x)
@@ -255,4 +259,4 @@ function vander!(dV, P::ProPolyHermite{m}, k::Int64, x) where {m}
 end
 
 
-vander(P::ProPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)
+vander(P::ProPolyHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

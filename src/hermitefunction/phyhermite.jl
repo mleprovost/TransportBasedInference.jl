@@ -13,8 +13,9 @@ export  PhyHermite, degree,
 # Create a structure to hold physicist Hermite functions defined as
 # ψn(x) = Hn(x)*exp(-x^2/2)
 
-struct PhyHermite{m} <: ParamFcn
-    Poly::PhyPolyHermite{m}
+struct PhyHermite<: ParamFcn
+    m::Int64
+    Poly::PhyPolyHermite
     scaled::Bool
 end
 
@@ -22,11 +23,11 @@ end
 # println(io,string(m)*"-th order physicist Hermite function, scaled = "*string(P.scaled))
 # end
 
-PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite{m}(PhyPolyHermite(m; scaled = scaled), scaled)
+PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite(m, PhyPolyHermite(m; scaled = scaled), scaled)
 
-degree(P::PhyHermite{m}) where {m} = m
+degree(P::PhyHermite) = P.m
 
-(P::PhyHermite{m})(x) where {m} = P.Poly.P(x)*exp(-x^2/2)
+(P::PhyHermite)(x) = P.Poly.P(x)*exp(-x^2/2)
 
 const FamilyPhyHermite = map(i->PhyHermite(i),0:20)
 const FamilyScaledPhyHermite = map(i->PhyHermite(i; scaled = true),0:20)
@@ -75,7 +76,8 @@ const FamilyD2ScaledPhyPolyHermite = map(i->AbstractPhyHermite(D2PhyPolyHermite(
 
 
 
-function derivative!(dF, F::PhyHermite{m}, k::Int64, x) where {m}
+function derivative!(dF, F::PhyHermite, k::Int64, x)
+    m = F.m
     @assert k>-2 "anti-derivative is not implemented for k<-1"
     @assert size(dF,1) == size(x,1) "Size of dF and x don't match"
     N = size(x,1)
@@ -146,10 +148,11 @@ function derivative!(dF, F::PhyHermite{m}, k::Int64, x) where {m}
     end
 end
 
-derivative(F::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
+derivative(F::PhyHermite, k::Int64, x::Array{Float64,1}) = derivative!(zero(x), F, k, x)
 
 
-function evaluate!(dV, P::PhyHermite{m}, x) where {m}
+function evaluate!(dV, P::PhyHermite, x)
+    m = P.m
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
@@ -200,10 +203,11 @@ function evaluate!(dV, P::PhyHermite{m}, x) where {m}
     return dV
 end
 
-evaluate(P::PhyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+evaluate(P::PhyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
-function vander!(dV, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
+function vander!(dV, P::PhyHermite, k::Int64, x::Array{Float64,1})
+    m = P.m
 
     if k==0
         evaluate!(dV, P, x)
@@ -260,4 +264,4 @@ function vander!(dV, P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m}
     end
 end
 
-vander(P::PhyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)
+vander(P::PhyHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

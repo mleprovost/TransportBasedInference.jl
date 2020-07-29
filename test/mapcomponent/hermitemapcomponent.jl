@@ -1,7 +1,7 @@
 
 @testset "Verify that initial map is identity" begin
 
-  H = HermiteMapk(3, 2; α = 1e-6)
+  H = MapComponent(3, 2; α = 1e-6)
 
   x = randn(2,1)
   Hx = evaluate(H.I, x)
@@ -40,7 +40,7 @@ end
 
     fp = ParametricFunction(f)
     R = IntegratedFunction(fp)
-    H = HermiteMapk(R; α = 0.0)
+    H = MapComponent(R; α = 0.0)
     S = Storage(H.I.f, ens.S);
 
    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
@@ -54,7 +54,7 @@ end
 
     # Verify with L-2 penalty term
 
-    H = HermiteMapk(R; α = 0.1)
+    H = MapComponent(R; α = 0.1)
     S = Storage(H.I.f, ens.S);
 
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
@@ -101,7 +101,7 @@ end
   fp = ParametricFunction(f);
   R = IntegratedFunction(fp)
 
-  Hk = HermiteMapk(R)
+  C = MapComponent(R)
 
   # Test evaluate
   ψt = zeros(Ne)
@@ -111,7 +111,7 @@ end
       ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
   end
 
-  ψ = evaluate(Hk, ens.S)
+  ψ = evaluate(C, ens.S)
 
   @test norm(ψ - ψt)<1e-10
 end

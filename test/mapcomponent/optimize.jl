@@ -1,4 +1,4 @@
-
+using AdaptiveTransportMap: ncoeff
 
 @testset "Test optimization max_terms = nothing" begin
     Nx = 2
@@ -17,21 +17,21 @@
               0.2691388018878241;
              -2.9879004455954723];
 
-    Hk = HermiteMapk(m, Nx, idx, coeff);
-    Hk0 = deepcopy(Hk)
+    C = MapComponent(m, Nx, idx, coeff);
+    C0 = deepcopy(C)
 
-    Hk_new, error_new = AdaptiveTransportMap.optimize(Hk, X, nothing; verbose = false);
+    C_new, error_new = AdaptiveTransportMap.optimize(C, X, nothing; verbose = false);
 
 
-    S = Storage(Hk0.I.f, X)
-    coeff0 = getcoeff(Hk0)
-    precond = zeros(ncoeff(Hk0), ncoeff(Hk0))
-    precond!(precond, coeff0, S, Hk0, X)
+    S = Storage(C0.I.f, X)
+    coeff0 = getcoeff(C0)
+    precond = zeros(ncoeff(C0), ncoeff(C0))
+    precond!(precond, coeff0, S, C0, X)
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk0, X)), coeff0,
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C0, X)), coeff0,
           Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
-    @test norm(getcoeff(Hk_new) - res.minimizer) <1e-6
+    @test norm(getcoeff(C_new) - res.minimizer) <1e-6
 
     error = res.minimum
 
@@ -48,27 +48,27 @@ end
     L = LinearTransform(X; diag = true)
     transform!(L, X);
 
-    Hk = HermiteMapk(m, Nx);
+    C = MapComponent(m, Nx);
 
-    Hk_new, error_new = AdaptiveTransportMap.optimize(Hk, X, 4; verbose = false);
+    C_new, error_new = AdaptiveTransportMap.optimize(C, X, 4; verbose = false);
 
-    idx0 = getidx(Hk_new)
+    idx0 = getidx(C_new)
 
-    Hk0 = HermiteMapk(m, Nx, idx0, zeros(size(idx0,1)));
+    C0 = MapComponent(m, Nx, idx0, zeros(size(idx0,1)));
 
-    S = Storage(Hk0.I.f, X)
-    coeff0 = getcoeff(Hk0)
-    precond = zeros(ncoeff(Hk0), ncoeff(Hk0))
-    precond!(precond, coeff0, S, Hk0, X)
+    S = Storage(C0.I.f, X)
+    coeff0 = getcoeff(C0)
+    precond = zeros(ncoeff(C0), ncoeff(C0))
+    precond!(precond, coeff0, S, C0, X)
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, Hk0, X)), coeff0,
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C0, X)), coeff0,
           Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
-    @test norm(getcoeff(Hk_new) - res.minimizer) <1e-6
+    @test norm(getcoeff(C_new) - res.minimizer) <5e-5
 
     error = res.minimum
 
-    @test abs(error_new[end] - error) < 1e-8
+    @test abs(error_new[end] - error) < 5e-5
 end
 
 
@@ -83,7 +83,7 @@ end
     L = LinearTransform(X; diag = true)
     transform!(L, X)
 
-    Hk = HermiteMapk(m, Nx)
+    C = MapComponent(m, Nx)
 
     n_folds = 5
     folds = kfolds(1:size(X,2), k = n_folds)
@@ -97,7 +97,7 @@ end
         @test size(idx_valid,1) == 40
         @test size(idx_train,1) == 160
         @test size(idx_train,1) < size(X,2)
-        Hk, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; verbose  = false)
+        C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; verbose  = false)
 
         # error[2] contains the histroy of the validation error
         valid_error[:,i] .= deepcopy(error[2])
@@ -112,13 +112,13 @@ end
     @test value == mean_valid_error[opt_nterms]
 
     # Run greedy fit up to opt_nterms on all the data
-    Hk_opt, error_opt = greedyfit(m, Nx, X, opt_nterms; verbose  = false)
+    C_opt, error_opt = greedyfit(m, Nx, X, opt_nterms; verbose  = false)
 
-    @test size(getcoeff(Hk_opt),1) == opt_nterms
+    @test size(getcoeff(C_opt),1) == opt_nterms
 
-    Hk_new, error_new = AdaptiveTransportMap.optimize(Hk, X, "kfold")
+    C_new, error_new = AdaptiveTransportMap.optimize(C, X, "kfold")
 
-    @test norm(getcoeff(Hk_opt) - getcoeff(Hk_new))<1e-5
+    @test norm(getcoeff(C_opt) - getcoeff(C_new))<1e-5
     @test norm(error_opt - error_new)<1e-5
 
 end
@@ -135,7 +135,7 @@ end
     L = LinearTransform(X; diag = true)
     transform!(L, X)
 
-    Hk = HermiteMapk(m, Nx)
+    C = MapComponent(m, Nx)
 
     nvalid = ceil(Int64, floor(0.2*size(X,2)))
     X_train = X[:,nvalid+1:end]
@@ -151,14 +151,14 @@ end
     # Run greedy approximation
     max_iter = ceil(Int64, sqrt(size(X,2)))
 
-    Hk_opt, error_opt = greedyfit(m, Nx, X_train, X_valid, max_iter;
+    C_opt, error_opt = greedyfit(m, Nx, X_train, X_valid, max_iter;
                                    maxpatience = maxpatience, verbose  = false)
 
-    Hk_new, error_new = AdaptiveTransportMap.optimize(Hk, X, "split")
+    C_new, error_new = AdaptiveTransportMap.optimize(C, X, "split")
 
-    @test norm(getcoeff(Hk_opt) - getcoeff(Hk_new))<1e-8
+    @test norm(getcoeff(C_opt) - getcoeff(C_new))<1e-8
     @test norm(error_opt[1] - error_new[1])<1e-8
     @test norm(error_opt[2] - error_new[2])<1e-8
 
-    @test size(getcoeff(Hk_new),1) == max_iter
+    @test size(getcoeff(C_new),1) == max_iter
 end

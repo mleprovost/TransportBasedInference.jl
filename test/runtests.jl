@@ -3,6 +3,7 @@ using Test
 using LinearAlgebra, Statistics
 using TransportMap
 using AdaptiveTransportMap
+using AdaptiveTransportMap: evaluate
 using ForwardDiff
 using FastGaussQuadrature
 using SpecialFunctions
@@ -11,9 +12,10 @@ using Random
 using Distributions
 using Optim
 using NLsolve
+using MLDataUtils
+using MLBase
 
-#
-# # Tools: double factorial, adaptive integration
+# Tools: double factorial, adaptive integration
 # include("tools/tools.jl")
 # include("tools/normal.jl")
 # include("tools/clenshaw_curtis.jl")
@@ -29,26 +31,26 @@ using NLsolve
 #
 # include("hermitefunction/phyhermite.jl")
 # include("hermitefunction/prohermite.jl")
-
-# Test tools for Basis, MultiBasis, ExpandedFunction
+#
+# # Test tools for Basis, MultiBasis, ExpandedFunction
 # include("mapcomponent/rectifier.jl")
 # include("mapcomponent/basis.jl")
-include("mapcomponent/expandedfunction.jl")
-include("mapcomponent/parametric.jl")
-
-# Test tools for integrated function
-include("mapcomponent/integratedfunction.jl")
-include("mapcomponent/storage.jl")
-
-# Test tools for HermiteMap component
-include("mapcomponent/hermitemapcomponent.jl")
-include("mapcomponent/linhermitemapcomponent.jl")
+# include("mapcomponent/expandedfunction.jl")
+# include("mapcomponent/parametric.jl")
+#
+# # Test tools for integrated function
+# include("mapcomponent/integratedfunction.jl")
+# include("mapcomponent/storage.jl")
+#
+# # Test tools for HermiteMap component
+# include("mapcomponent/hermitemapcomponent.jl")
+# include("mapcomponent/linhermitemapcomponent.jl")
 
 # Test greedy procedure
-include("mapcomponent/greedyfit.jl")
+# include("mapcomponent/greedyfit.jl")
 
 # Test optimization of HermiteMap component
-include("mapcomponent/optimize.jl")
+# include("mapcomponent/optimize.jl")
 include("mapcomponent/inverse.jl")
 
 include("mapcomponent/hermitemap.jl")

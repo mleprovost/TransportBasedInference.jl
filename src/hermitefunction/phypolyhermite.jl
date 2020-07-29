@@ -9,7 +9,8 @@ export  PhyPolyHermite, Cphy,
 
 
 # Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
-struct PhyPolyHermite{m} <: ParamFcn
+struct PhyPolyHermite <: ParamFcn
+    m::Int64
     P::ImmutablePolynomial{Float64}
     scaled::Bool
 end
@@ -22,9 +23,9 @@ end
 # Hn″(x) = 2n*(n-1)*Hn-1(x)
 
 Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
-Cphy(P::PhyPolyHermite{m}) where {m} = Cphy(m)
+Cphy(P::PhyPolyHermite) = Cphy(P.m)
 
-degree(P::PhyPolyHermite{m}) where {m} = m
+degree(P::PhyPolyHermite) = P.m
 
 # Adapted https://people.sc.fsu.edu/~jburkardt/m_src/hermite_polynomial/h_polynomial_coefficients.m
 
@@ -71,14 +72,14 @@ const PhyPolyH = phyhermite_coeffmatrix(20)
 function PhyPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
     if scaled ==false
-            return PhyPolyHermite{m}(ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)), scaled)
+            return PhyPolyHermite(m, ImmutablePolynomial(view(PhyPolyH,m+1,1:m+1)), scaled)
     else
         C = 1/Cphy(m)
-            return PhyPolyHermite{m}(ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)), scaled)
+            return PhyPolyHermite(m, ImmutablePolynomial(C*view(PhyPolyH,m+1,1:m+1)), scaled)
     end
 end
 
-(P::PhyPolyHermite{m})(x) where {m} = P.P(x)
+(P::PhyPolyHermite)(x) = P.P(x)
 
 const FamilyPhyPolyHermite = map(i->PhyPolyHermite(i),0:20)
 const FamilyScaledPhyPolyHermite = map(i->PhyPolyHermite(i; scaled = true),0:20)
@@ -86,7 +87,8 @@ const FamilyScaledPhyPolyHermite = map(i->PhyPolyHermite(i; scaled = true),0:20)
 
 # Compute the k-th derivative of a physicist Hermite polynomial according to
 # H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
-function derivative(P::PhyPolyHermite{m}, k::Int64) where {m}
+function derivative(P::PhyPolyHermite, k::Int64)
+    m = P.m
     @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
     if m>=k
         factor = 2^k*exp(loggamma(m+1) - loggamma(m+1-k))
@@ -101,7 +103,8 @@ function derivative(P::PhyPolyHermite{m}, k::Int64) where {m}
     end
 end
 
-function evaluate!(dV, P::PhyPolyHermite{m}, x) where {m}
+function evaluate!(dV, P::PhyPolyHermite, x)
+    m = P.m
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
@@ -147,7 +150,7 @@ function evaluate!(dV, P::PhyPolyHermite{m}, x) where {m}
     return dV
 end
 
-evaluate(P::PhyPolyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+evaluate(P::PhyPolyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
 
@@ -158,7 +161,8 @@ evaluate(P::PhyPolyHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(
 
 # vander!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, k=0, x) where {m} = evaluate!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, x)
 
-function vander!(dV, P::PhyPolyHermite{m}, k::Int64, x) where {m}
+function vander!(dV, P::PhyPolyHermite, k::Int64, x)
+    m = P.m
 
     if k==0
         evaluate!(dV, P, x)
@@ -259,4 +263,4 @@ function vander!(dV, P::PhyPolyHermite{m}, k::Int64, x) where {m}
 end
 
 
-vander(P::PhyPolyHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)
+vander(P::PhyPolyHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

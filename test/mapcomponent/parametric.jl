@@ -1,3 +1,5 @@
+using AdaptiveTransportMap: evaluate
+
 @testset "Test tools for parametric function Nx = 1 " begin
 
     Nx = 1

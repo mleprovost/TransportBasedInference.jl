@@ -1,41 +1,43 @@
 export MultiFunction, first
 
-# MultiFunction is a type to hold an elementary function F: R^{Nx} → R
+# MultiFunction is a type to hold an elementary function F: R^{k} → R
 # that can be decomposed as the product of univariate basis,
 # where each basis is finite and contains constant and/or linear
 # and Hermite functions
-# F(x_1, x_2, ..., x_Nx) = f_1(x_1) × f_2(x_2) × ... × f_M(x_Nx)
+# F(x_1, x_2, ..., x_k) = f_1(x_1) × f_2(x_2) × ... × f_M(x_k)
 
 
-struct MultiFunction{m, Nx}
-    B::MultiBasis{m, Nx}
+struct MultiFunction
+    m::Int64
+    Nx::Int64
+    B::MultiBasis
     α::Array{Int64,1}
-    function MultiFunction(B::MultiBasis{m, Nx}, α::Array{Int64,1}; check::Bool=true) where {m, Nx}
-        if check==true
-            @assert Nx == size(α,1) "Dimension of the space doesn't match the size of α"
-            for i=1:Nx
-                @assert α[i]<=m "multi index α can't be greater than the size of the univariate basis "
-            end
+    function MultiFunction(B::MultiBasis, α::Array{Int64,1})
+        m = B.B.m
+        Nx = B.Nx
+        @assert Nx == size(α,1) "Dimension of the space doesn't match the size of α"
+        for i=1:Nx
+            @assert α[i]<=m "multi index α can't be greater than the size of the univariate basis "
         end
-        return new{m, Nx}(B, α)
+        return new(m, Nx, B, α)
     end
 end
 
 
-function MultiFunction(B::MultiBasis{m, Nx}) where {m, Nx}
-    return MultiFunction{m, Nx}(B, ones(Int64, Nx))
+function MultiFunction(B::MultiBasis)
+    return MultiFunction(B.B.m, B.Nx, B, ones(Int64, B.Nx))
 end
 
-function MultiFunction(B::Basis{m}, Nx::Int64; scaled::Bool = true) where {m}
-    return MultiFunction{m, Nx}(MultiBasis(B, Nx), ones(Int64, Nx))
+function MultiFunction(B::Basis, Nx::Int64; scaled::Bool = true)
+    return MultiFunction(B.B.m, Nx, MultiBasis(k, B), ones(Int64, Nx))
 end
 
 
-function (F::MultiFunction{m, Nx})(x::Array{T,1}) where {m, Nx, T <: Real}
+function (F::MultiFunction)(x::Array{T,1}) where {T <: Real}
 
     # @assert Nx == size(x,1) "Wrong dimension of input vector x"
     out = 1.0
-    @inbounds for i=1:Nx
+    @inbounds for i=1:F.Nx
         # Skip the constant evaluation F.α[i] = 0
         if F.α[i]>0
             out *= F.B.B[F.α[i]+1](x[i])

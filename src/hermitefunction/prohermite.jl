@@ -12,8 +12,9 @@ export  ProHermite, degree,
 # Create a structure to hold physicist Hermite functions defined as
 # ψen(x) = Hen(x)*exp(-x^2/4)
 
-struct ProHermite{m} <: ParamFcn
-    Poly::ProPolyHermite{m}
+struct ProHermite <: ParamFcn
+    m::Int64
+    Poly::ProPolyHermite
     scaled::Bool
 end
 #
@@ -21,11 +22,11 @@ end
 # println(io,string(m)*"-th order probabilistic Hermite function, scaled = "*string(P.scaled))
 # end
 
-ProHermite(m::Int64; scaled::Bool = false) = ProHermite{m}(ProPolyHermite(m; scaled = scaled), scaled)
+ProHermite(m::Int64; scaled::Bool = false) = ProHermite(m, ProPolyHermite(m; scaled = scaled), scaled)
 
-degree(P::ProHermite{m}) where {m} = m
+degree(P::ProHermite) = P.m
 
-(P::ProHermite{m})(x::T) where {m, T <: Real} = P.Poly.P(x)*exp(-x^2/4)
+(P::ProHermite)(x) = P.Poly.P(x)*exp(-x^2/4)
 
 const FamilyProHermite = map(i->ProHermite(i),0:20)
 const FamilyScaledProHermite = map(i->ProHermite(i; scaled = true),0:20)
@@ -72,7 +73,8 @@ const FamilyD2ProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; sca
 const FamilyD2ScaledProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = true), true), 0:20)
 
 
-function derivative!(dF, F::ProHermite{m}, k::Int64, x) where {m}
+function derivative!(dF, F::ProHermite, k::Int64, x)
+    m = F.m
     @assert k>-2 "anti-derivative is not implemented for k<-1"
     @assert size(dF,1) == size(x,1) "Size of dF and x don't match"
     N = size(x,1)
@@ -113,10 +115,11 @@ function derivative!(dF, F::ProHermite{m}, k::Int64, x) where {m}
     end
 end
 
-derivative(F::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = derivative!(zero(x), F, k, x)
+derivative(F::ProHermite, k::Int64, x::Array{Float64,1}) = derivative!(zero(x), F, k, x)
 
 
-function evaluate!(dV, P::ProHermite{m}, x) where {m}
+function evaluate!(dV, P::ProHermite, x)
+    m = P.m
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
@@ -167,12 +170,13 @@ function evaluate!(dV, P::ProHermite{m}, x) where {m}
     return dV
 end
 
-evaluate(P::ProHermite{m}, x::Array{Float64,1}) where {m} = evaluate!(zeros(size(x,1), m+1), P, x)
+evaluate(P::ProHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
 
 # Use ψe^{(k)}_n(x) = 1/√(2^n)*ψ^{k}_n(x/√2)
-function vander!(dV, P::ProHermite{m}, k::Int64, x) where {m}
+function vander!(dV, P::ProHermite, k::Int64, x)
+    m = P.m
     if k==0
         evaluate!(dV, P, x)
         return dV
@@ -196,4 +200,4 @@ function vander!(dV, P::ProHermite{m}, k::Int64, x) where {m}
     end
 end
 
-vander(P::ProHermite{m}, k::Int64, x::Array{Float64,1}) where {m} = vander!(zeros(size(x,1), m+1), P, k, x)
+vander(P::ProHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

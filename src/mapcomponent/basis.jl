@@ -13,10 +13,12 @@ export Basis, CstPhyHermite, CstProHermite,
        vander
 
 
-struct Basis{m}
+struct Basis
+    m::Int64
+
     f::Array{ParamFcn,1}
     function Basis(f::Array{ParamFcn,1})
-        return new{size(f,1)}(f)
+        return new(size(f,1), f)
     end
 end
 
@@ -66,29 +68,29 @@ function CstLinProHermite(m::Int64; scaled::Bool = false)
 end
 
 (F::Array{ParamFcn,1})(x::T) where {T <: Real} = map!(fi->fi(x), zeros(T, size(F,1)), F)
-(B::Basis{m})(x::T) where {m, T<:Real} = B.f(x)
+(B::Basis)(x::T) where {T<:Real} = B.f(x)
 
 # (B::Basis{m})(x::T) where {m, T<:Real} = map!(fi->fi(x), zeros(T, m), B.f)
 
 # @propagate_inbounds Base.getindex(F::Array{T,1}, i::Int) where {T<:ParamFcn} = getindex(F,i)
 # @propagate_inbounds Base.setindex!(F::Array{T,1}, v::ParamFcn, i::Int) where {T<:ParamFcn} = setindex!(F,v,i)
 
-@propagate_inbounds Base.getindex(B::Basis{m}, i::Int) where {m} = getindex(B.f,i)
-@propagate_inbounds Base.setindex!(B::Basis{m}, v::ParamFcn, i::Int) where {m} = setindex!(B.f,v,i)
+@propagate_inbounds Base.getindex(B::Basis, i::Int) = getindex(B.f,i)
+@propagate_inbounds Base.setindex!(B::Basis, v::ParamFcn, i::Int) = setindex!(B.f,v,i)
 
-Base.size(B::Basis{m},d::Int) where {m} = size(B.f,d)
-Base.size(B::Basis{m}) where {m} = size(B.f)
+Base.size(B::Basis,d::Int) = size(B.f,d)
+Base.size(B::Basis) = size(B.f)
 
-function Base.show(io::IO, B::Basis{m}) where {m}
+function Base.show(io::IO, B::Basis)
     println(io,"Basis of "*string(m)*" functions:")
-    for i=1:m
+    for i=1:B.m
         println(io, B[i])
     end
 end
 
 
 # Specialize method
-function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}
+function vander!(dV, B::Basis, maxi::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
 
@@ -107,10 +109,10 @@ function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}
     return dV
 end
 
-vander!(dV, B::Basis{m}, k::Int64, x) where {m} = vander!(dV, B, m-1, k, x)
+vander!(dV, B::Basis, k::Int64, x) = vander!(dV, B, B.m-1, k, x)
 
-vander(B::Basis{m}, maxi::Int64, k::Int64, x) where {m} = vander!(zeros(size(x,1),maxi+1), B, maxi, k, x)
-vander(B::Basis{m}, k::Int64, x) where {m} = vander!(zeros(size(x,1),m), B, k, x)
+vander(B::Basis, maxi::Int64, k::Int64, x) = vander!(zeros(size(x,1),maxi+1), B, maxi, k, x)
+vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 
 
 # function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}

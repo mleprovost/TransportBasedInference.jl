@@ -31,7 +31,7 @@
     fp = ParametricFunction(f)
     R = IntegratedFunction(fp)
 
-    H = HermiteMapk(R; α = 1e-2)
+    H = MapComponent(R; α = 1e-2)
 
 
     S = Storage(H.I.f, ens.S);

@@ -4,10 +4,14 @@ export Storage, update_storage
 # as well as their derivative and second derivative
 
 
-struct Storage{m, Nψ, Nx}
+struct Storage
+
+    m::Int64
+    Nψ::Int64
+    Nx::Int64
 
     # Parametric function
-    f::ParametricFunction{m, Nψ, Nx}
+    f::ParametricFunction
 
     # Off-diagonal basis evaluation
     ψoff::Array{Float64,2}
@@ -36,7 +40,10 @@ end
 
 # function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}; hess::Bool = false) where {m, Nψ, Nx}
 
-function Storage(f::ParametricFunction{m, Nψ, Nx}, X; hess::Bool = false) where {m, Nψ, Nx}
+function Storage(f::ParametricFunction, X; hess::Bool = false)
+        m = f.f.m
+        Nψ = f.f.Nψ
+        Nx = f.f.Nx
         NxX, Ne = size(X)
         @assert NxX == Nx
         ψoff = evaluate_offdiagbasis(f, X)
@@ -59,15 +66,16 @@ function Storage(f::ParametricFunction{m, Nψ, Nx}, X; hess::Bool = false) where
         end
 
 
-        return Storage{m, Nψ, Nx}(f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
+        return Storage(m, Nψ, Nx, f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
 end
 
 # function update_storage(S::Storage{m, Nψ, k}, X::Array{Float64,2}, addedidx::Array{Int64,2}) where {m, Nψ, k}
 
-function update_storage(S::Storage{m, Nψ, k}, X, addedidx::Array{Int64,2}) where {m, Nψ, k}
+function update_storage(S::Storage, X, addedidx::Array{Int64,2})
     NxX, Ne = size(X)
+    Nψ = S.Nψ
 
-    @assert NxX == k "Wrong dimension of the sample X"
+    @assert NxX == S.Nx "Wrong dimension of the sample X"
     addednψ = size(addedidx,1)
     newNψ = addednψ + Nψ
 
@@ -83,14 +91,13 @@ function update_storage(S::Storage{m, Nψ, k}, X, addedidx::Array{Int64,2}) wher
     addedψd0  = repeated_evaluate_basis(fnew.f, zeros(Ne), addedidx)
 
     # Update dψxd
-    addedψxd = repeated_grad_xk_basis(fnew.f, X[k,:], addedidx)
+    addedψxd = repeated_grad_xk_basis(fnew.f, X[S.Nx,:], addedidx)
 
 
-    return Storage{m, newNψ, k}(fnew, hcat(S.ψoff, addedψoff), hcat(S.ψd, addedψd),
+    return Storage(S.m, newNψ, S.Nx, fnew, hcat(S.ψoff, addedψoff), hcat(S.ψd, addedψd),
                                 hcat(S.ψd0, addedψd0), hcat(S.dψxd, addedψxd),
                                 hcat(S.cache_dcψxdt, zeros(Ne, addednψ)),
                                 S.cache_dψxd,
                                 vcat(S.cache_integral, zeros(Ne*addednψ)),
                                 S.cache_g)
-    # @show S
 end

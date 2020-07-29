@@ -3,7 +3,7 @@ export   functionalf!,
          functionalg!,
          inverse!
 
-function functionalf!(F, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
+function functionalf!(F, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction)
     function integrand!(v::Vector{Float64}, t::Float64)
         # repeated_grad_xk_basis(cacheF, R.f.f,  t*xk)
         cache .= repeated_grad_xk_basis(R.f.f,  t*xk)
@@ -18,10 +18,10 @@ function functionalf!(F, xk, cache, ψoff, output::Array{Float64,1}, R::Integrat
     nothing
 end
 
-functionalf!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx} =
+functionalf!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction) =
     (F, xk) -> functionalf!(F, xk, cache, ψoff, output, R)
 
-function functionalg!(J, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx}
+function functionalg!(J, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction)
     cache .= repeated_grad_xk_basis(R.f.f,  xk)
     @avx @. J.diag = (cache .* ψoff) *ˡ R.f.f.coeff
     evaluate!(J.diag, R.g, J.diag)
@@ -29,14 +29,15 @@ function functionalg!(J, xk, cache, ψoff, output::Array{Float64,1}, R::Integrat
 end
 
 
-functionalg!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}) where {m, Nψ, Nx} =
+functionalg!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction) =
     (J, xk) -> functionalg!(J, xk, cache, ψoff, output, R)
 
 
 # The state is modified in-place
-function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction{m, Nψ, Nx}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
+function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction, S::Storage)
+    Nψ = R.Nψ
     NxX, Ne = size(X)
-    @assert NxX == Nx "Wrong dimension of the sample X"
+    @assert NxX == R.Nx "Wrong dimension of the sample X"
 
     cache  = zeros(Ne, Nψ)
     f0 = zeros(Ne)
@@ -64,15 +65,14 @@ function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction{m, Nψ, Nx}, S::
 end
 
 
-inverse!(X::Array{Float64,2}, F, Hk::HermiteMapk{m, Nψ, Nx}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx} =
-    inverse!(X, F, Hk.I, S)
+inverse!(X::Array{Float64,2}, F, C::MapComponent, S::Storage) = inverse!(X, F, C.I, S)
 
 
-function inverse!(X::Array{Float64,2}, F, Lk::LinHermiteMapk{m, Nψ, Nx}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
+function inverse!(X::Array{Float64,2}, F, L::LinMapComponent, S::Storage)
     # Pay attention that S is computed in the renormalized space for improve performance !!!
-    transform!(Lk.L, X)
-    inverse!(X, F, Lk.H, S)
-    itransform!(Lk.L, X)
+    transform!(L.L, X)
+    inverse!(X, F, L.C, S)
+    itransform!(L.L, X)
 end
 
 

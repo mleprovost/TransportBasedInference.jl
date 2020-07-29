@@ -6,14 +6,9 @@ export MultiBasis, Element
 # MB = B × B× ... × B (Nx elements)
 # The basis B contains m elements
 
-struct MultiBasis{m, Nx}
-    B::Basis{m}
+struct MultiBasis
+    B::Basis
+    Nx::Int64
 end
 
-
-MultiBasis(B::Basis{m}, Nx::Int64) where {m} = MultiBasis{m, Nx}(B)
-
-
-size(B::MultiBasis{m, Nx}) where {m, Nx} = (m, Nx)
-
-# MultiBasis()
+size(B::MultiBasis) = (B.B.m, B.Nx)

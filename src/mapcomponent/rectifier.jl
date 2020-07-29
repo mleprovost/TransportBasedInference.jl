@@ -50,18 +50,19 @@ function (g::Rectifier)(x::T) where {T <: Real}
     end
 end
 
-function evaluate!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real}
+function evaluate!(result, g::Rectifier, x)
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
-        map!(square, result, x)
+        vmap!(square, result, x)
         return result
     elseif g.T=="exponential"
-        map!(exp, result, x)
+        vmap!(exp, result, x)
         return result
     elseif g.T=="softplus"
-        map!(softplus, result, x)
+        vmap!(softplus, result, x)
         return result
     elseif g.T=="explinearunit"
-        map!(explinearunit, result, x)
+        vmap!(explinearunit, result, x)
         return result
     end
 end
@@ -84,21 +85,22 @@ end
 
 function inverse!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real}
     @assert all(x .> 0) "Input to rectifier is negative"
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
         error("squared rectifier is not invertible")
     elseif g.T=="exponential"
-        map!(log, result, x)
+        vmap!(log, result, x)
         return result
     elseif g.T=="softplus"
-        map!(invsoftplus, result, x)
+        vmap!(invsoftplus, result, x)
         return result
     elseif g.T=="explinearunit"
-        map!(invexplinearunit, result, x)
+        vmap!(invexplinearunit, result, x)
         return result
     end
 end
 
-inverse(g::Rectifier, x::Array{T,1}) where {T <: Real} = inverse!(zero(x), g, x)
+inverse(g::Rectifier, x)  = inverse!(zero(x), g, x)
 
 
 function grad_x(g::Rectifier, x::T) where {T <: Real}
@@ -113,18 +115,19 @@ function grad_x(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-function grad_x!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real}
+function grad_x!(result, g::Rectifier, x)
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
-        map!(dsquare, result, x)
+        vmap!(dsquare, result, x)
         return result
     elseif g.T=="exponential"
-        map!(exp, result, x)
+        vmap!(exp, result, x)
         return result
     elseif g.T=="softplus"
-        map!(dsoftplus, result, x)
+        vmap!(dsoftplus, result, x)
         return result
     elseif g.T=="explinearunit"
-        map!(dexplinearunit, result, x)
+        vmap!(dexplinearunit, result, x)
         return result
     end
 end
@@ -144,18 +147,19 @@ function hess_x(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-function hess_x!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real}
+function hess_x!(result, g::Rectifier, x)
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
-        map!(d2square, result, x)
+        vmap!(d2square, result, x)
         return result
     elseif g.T=="exponential"
-        map!(exp, result, x)
+        vmap!(exp, result, x)
         return result
     elseif g.T=="softplus"
-        map!(d2softplus, result, x)
+        vmap!(d2softplus, result, x)
         return result
     elseif g.T=="explinearunit"
-        map!(d2explinearunit, result, x)
+        vmap!(d2explinearunit, result, x)
         return result
     end
 end

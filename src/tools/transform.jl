@@ -4,7 +4,9 @@ export   LinearTransform,
          itransform!,
          itransform
 
-struct LinearTransform{Nx}
+struct LinearTransform
+    Nx::Int64
+
     # Flag for using diagonal or dense transformation
     μ::Array{Float64,1}
 
@@ -27,13 +29,13 @@ function LinearTransform(X::Array{Float64,2}; diag::Bool=true)
         L = cholesky(cov(X')).L
     end
 
-    return LinearTransform{Nx}(μ, L, diag)
+    return LinearTransform(Nx, μ, L, diag)
 end
 
 
-function transform!(L::LinearTransform{Nx}, Xout::Array{Float64,2}, Xin::Array{Float64,2}) where {Nx}
+function transform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
     @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"
-    @assert size(Xin,1) == Nx "Input dimension is incorrect"
+    @assert size(Xin,1) == L.Nx "Input dimension is incorrect"
 
     copy!(Xout, Xin)
     Xout .-= L.μ
@@ -44,19 +46,19 @@ end
 
 
 
-function transform!(L::LinearTransform{Nx}, X::Array{Float64,2}) where {Nx}
-    @assert size(X,1) == Nx "Input dimension is incorrect"
+function transform!(L::LinearTransform, X::Array{Float64,2})
+    @assert size(X,1) == L.Nx "Input dimension is incorrect"
     X .-= L.μ
     ldiv!(X, L.L, X)
     return X
 end
 
 
-transform(X::Array{Float64,2}; diag::Bool = true) where {Nx, Ne} = transform!(LinearTransform(X; diag = diag), zero(X), X)
+transform(X::Array{Float64,2}; diag::Bool = true) = transform!(LinearTransform(X; diag = diag), zero(X), X)
 
-function itransform!(L::LinearTransform{Nx}, Xout::Array{Float64,2}, Xin::Array{Float64,2}) where {Nx}
+function itransform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
     @assert size(Xout) == size(Xin) "Input and output dimensions don't match"
-    @assert size(Xin,1) == Nx "Input dimension is incorrect"
+    @assert size(Xin,1) == L.Nx "Input dimension is incorrect"
 
     copy!(Xout, Xin)
     mul!(Xout, L.L, Xout)
@@ -65,8 +67,8 @@ function itransform!(L::LinearTransform{Nx}, Xout::Array{Float64,2}, Xin::Array{
     return Xout
 end
 
-function itransform!(L::LinearTransform{Nx}, X::Array{Float64,2}) where {Nx}
-    @assert size(X,1) == Nx "Input dimension is incorrect"
+function itransform!(L::LinearTransform, X::Array{Float64,2})
+    @assert size(X,1) == L.Nx "Input dimension is incorrect"
 
     mul!(X, L.L, X)
     X .+= L.μ

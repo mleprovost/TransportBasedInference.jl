@@ -1,4 +1,4 @@
-
+using AdaptiveTransportMap: evaluate
 
 @testset "Test inverse function" begin
 
@@ -45,11 +45,11 @@ end
 
     coeff = randn(Nψ)
 
-    Hk = HermiteMapk(20, Nx, idx, coeff)
+    C = MapComponent(20, Nx, idx, coeff)
 
     X = randn(Nx, Ne) .* randn(Nx, Ne)
 
-    F = evaluate(Hk.I, X)
+    F = evaluate(C.I, X)
 
     Xmodified = deepcopy(X)
 
@@ -57,9 +57,9 @@ end
 
     @test norm(Xmodified[end,:]-X[end,:])>1e-6
 
-    S = Storage(Hk.I.f, Xmodified)
+    S = Storage(C.I.f, Xmodified)
 
-    inverse!(Xmodified, F, Hk, S)
+    inverse!(Xmodified, F, C, S)
 
     @test norm(Xmodified[end,:] - X[end,:])<1e-8
 
@@ -77,28 +77,28 @@ end
 
     coeff = randn(Nψ)
 
-    Hk = HermiteMapk(20, Nx, idx, coeff)
+    C = MapComponent(20, Nx, idx, coeff)
     X = randn(Nx, Ne) .* randn(Nx, Ne)
 
     X0 = deepcopy(X)
     Xmodified = deepcopy(X)
 
-    Lk = LinHermiteMapk(X, Hk)
-    F = evaluate(Lk, X)
+    L = LinMapComponent(X, C)
+    F = evaluate(L, X)
 
     @test norm(X -X0)<1e-8
 
     Xmodified[end,:] .+= cos.(2*π*randn(Ne)) .* exp.(-randn(Ne).^2/2)
 
-    Lkmodified = LinHermiteMapk(Xmodified, Hk)
+    Lmodified = LinMapComponent(Xmodified, C)
 
     @test norm(Xmodified[end,:]-X[end,:])>1e-6
 
-    transform!(Lkmodified.L, Xmodified)
-    S = Storage(Lkmodified.H.I.f, Xmodified);
-    itransform!(Lkmodified.L, Xmodified)
+    transform!(Lmodified.L, Xmodified)
+    S = Storage(Lmodified.H.I.f, Xmodified);
+    itransform!(Lmodified.L, Xmodified)
 
-    inverse!(Xmodified, F, Lk, S)
+    inverse!(Xmodified, F, L, S)
 
     @test norm(Xmodified[end,:] - X[end,:])<1e-8
 

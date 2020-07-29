@@ -1,5 +1,5 @@
-export  HermiteMapk,
-        EmptyHermiteMapk,
+export  MapComponent,
+        EmptyMapComponent,
         ncoeff,
         getcoeff,
         setcoeff!,
@@ -7,122 +7,133 @@ export  HermiteMapk,
         evaluate!,
         evaluate,
         negative_log_likelihood!,
-        negative_log_likelihood,
         precond!,
         diagprecond!,
-        hess_negative_log_likelihood!,
-        hess_negative_log_likelihoodmA
+        hess_negative_log_likelihood!
 
 
-struct HermiteMapk{m, Nψ, k}
+struct MapComponent
+    m::Int64
+    Nψ::Int64
+    Nx::Int64
     # IntegratedFunction
-    I::IntegratedFunction{m, Nψ, k}
+    I::IntegratedFunction
     # Regularization parameter
     α::Float64
-    function HermiteMapk(I::IntegratedFunction{m, Nψ, k}; α::Float64=1e-6) where {m, Nψ, k}
-        new{m, Nψ, k}(I, α)
-    end
 end
 
-function HermiteMapk(m::Int64, k::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
+function MapComponent(I::IntegratedFunction; α::Float64=1e-6)
+    return MapComponent(I.m, I.Nψ, I.Nx, I, α)
+end
+
+function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    B = MultiBasis(CstProHermite(m-2; scaled =true), k)
+    B = MultiBasis(CstProHermite(m-2; scaled =true), Nx)
 
-    return HermiteMapk(IntegratedFunction(ExpandedFunction(B, idx, coeff)); α = α)
+    return MapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
 end
 
-function HermiteMapk(f::ExpandedFunction{m, Nψ, k}; α::Float64 = 1e-6) where {m, Nψ, k}
-    return HermiteMapk(IntegratedFunction(f); α = α)
+function MapComponent(f::ExpandedFunction; α::Float64 = 1e-6)
+    return MapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
 
-function HermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
+function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     Nψ = 1
 
     # m is the dimension of the basis
-    B = MultiBasis(CstProHermite(m-2; scaled =true), k)
-    idx = zeros(Int64, Nψ,k)
+    B = MultiBasis(CstProHermite(m-2; scaled =true), Nx)
+    idx = zeros(Int64, Nψ, Nx)
     coeff = zeros(Nψ)
 
     f = ExpandedFunction(B, idx, coeff)
     I = IntegratedFunction(f)
-    return HermiteMapk(I; α = α)
+    return MapComponent(I; α = α)
 end
 
-# function EmptyHermiteMapk(m::Int64, k::Int64; α::Float64 = 1e-6)
+# function EmptyMapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
 #
 #
 #     # m is the dimension of the basis
-#     B = MultiBasis(CstProHermite(m-2; scaled =true), k)
-#     idx = zeros(Int64, Nψ,k)
+#     B = MultiBasis(CstProHermite(m-2; scaled =true), Nx)
+#     idx = zeros(Int64, Nψ,Nx)
 #     coeff = zeros(Nψ)
 #
 #     f = ExpandedFunction(B, idx, coeff)
 #     I = IntegratedFunction(f)
-#     return HermiteMapk(I; α = α)
+#     return MapComponent(I; α = α)
 # end
 
 
 
-ncoeff(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Nψ
-getcoeff(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Hk.I.f.f.coeff
+ncoeff(C::MapComponent) = C.Nψ
+getcoeff(C::MapComponent)= C.I.f.f.coeff
 
-function setcoeff!(Hk::HermiteMapk{m, Nψ, k}, coeff::Array{Float64,1}) where {m, Nψ, k}
-        @assert size(coeff,1) == Nψ "Wrong dimension of coeff"
-        Hk.I.f.f.coeff .= coeff
+function setcoeff!(C::MapComponent, coeff::Array{Float64,1})
+        @assert size(coeff,1) == C.Nψ "Wrong dimension of coeff"
+        C.I.f.f.coeff .= coeff
 end
 
-getidx(Hk::HermiteMapk{m, Nψ, k}) where {m, Nψ, k} = Hk.I.f.f.idx
+getidx(C::MapComponent) = C.I.f.f.idx
 
 
 ## Evaluate
-function evaluate!(out, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
-    @assert k==size(X,1) "Wrong dimension of the sample"
+function evaluate!(out, C::MapComponent, X)
+    @assert C.Nx==size(X,1) "Wrong dimension of the sample"
     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
-    return evaluate!(out, Hk.I, X)
+    return evaluate!(out, C.I, X)
 end
 
-evaluate(Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k} =
-    evaluate!(zeros(size(X,2)), Hk, X)
+evaluate(C::MapComponent, X::Array{Float64,2}) =
+    evaluate!(zeros(size(X,2)), C, X)
 
 ## negative_log_likelihood
 
-# function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+# function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, C::MapComponent{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
 
-function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
+function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
     NxX, Ne = size(X)
-    @assert NxX == k "Wrong dimension of the sample X"
+    m = C.m
+    Nx = C.Nx
+    Nψ = C.Nψ
+    @assert NxX == Nx "Wrong dimension of the sample X"
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xk = view(X,NxX,:)
+    xlast = view(X,NxX,:)
 
     fill!(S.cache_integral, 0)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         S.cache_dcψxdt .*= S.ψoff
         mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
-        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+        vJ = view(v,1:Ne)
+        evaluate!(vJ, C.I.g, S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
-    @avx for j=1:Nψ+1
-        for i=1:Ne
-            S.cache_integral[(j-1)*Ne+i] *= xk[i]
-        end
+    # @avx for j=1:Nψ+1
+    #     for i=1:Ne
+    #         S.cache_integral[(j-1)*Ne+i] *= xk[i]
+    #     end
+    # end
+
+    # Multiply integral by xlast (change of variable in the integration)
+    @inbounds for j=1:Nψ+1
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
     end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
@@ -151,64 +162,70 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, Hk::Hermi
             # dJ .= zeros(Nψ)
             for j=1:Nψ
             dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
-            dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
+            dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
             end
             # @show i, dJ
         end
         rmul!(dJ, -1/Ne)
         # Add derivative of the L2 penalty term ∂_c α ||c||^2 = 2 *α c
-        dJ .+= 2*Hk.α*coeff
+        dJ .+= 2*C.α*coeff
     end
 
     if J != nothing
         J = 0.0
         @inbounds for i=1:Ne
-            J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_g[i]))
+            J += logpdf(Normal(), S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)
-        J += Hk.α*norm(coeff)^2
+        J += C.α*norm(coeff)^2
         return J
     end
 end
 
-negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k} =
-    (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, Hk, X)
+negative_log_likelihood!(S::Storage, C::MapComponent, X) =
+    (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, C, X)
 
 
-function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {m, Nψ, k}
+function precond!(P, coeff, S::Storage, C::MapComponent, X)
+    Nψ = C.Nψ
     NxX, Ne = size(X)
-    @assert NxX == k "Wrong dimension of the sample X"
+    @assert NxX == C.Nx "Wrong dimension of the sample X"
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xk = view(X,NxX,:)#)
+    xlast = view(X,NxX,:)#)
 
     fill!(S.cache_integral, 0)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         S.cache_dcψxdt .*= S.ψoff
         mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
-        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+        vJ = view(v,1:Ne)
+        evaluate!(vJ, C.I.g, S.cache_dψxd)
+        # v[1:Ne] .= C.I.g(S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
-    @avx for j=1:Nψ+1
-        for i=1:Ne
-            S.cache_integral[(j-1)*Ne+i] *= xk[i]
-        end
+    @inbounds for j=1:Nψ+1
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
     end
+    # @avx for j=1:Nψ+1
+    #     for i=1:Ne
+    #         S.cache_integral[(j-1)*Ne+i] *= xk[i]
+    #     end
+    # end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
     @avx for i=1:Ne
@@ -240,8 +257,8 @@ function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X
             # P[i,j] +=  reshape2_cacheintegral[l,i,j]*S.cache_integral[l]
             P[i,j] +=  (reshape_cacheintegral[l,i] + S.ψoff[l,i]*S.ψd0[l,i]) * (reshape_cacheintegral[l,j] + S.ψoff[l,j]*S.ψd0[l,j])
             P[i,j] -=  ( (S.ψoff[l,i]*S.dψxd[l,i]) * (S.ψoff[l,j]*S.dψxd[l,j])*(
-                            hess_x(Hk.I.g, S.cache_g[l]) * Hk.I.g(S.cache_g[l]) -
-                            grad_x(Hk.I.g, S.cache_g[l])^2))/Hk.I.g(S.cache_g[l])^2
+                            hess_x(C.I.g, S.cache_g[l]) * C.I.g(S.cache_g[l]) -
+                            grad_x(C.I.g, S.cache_g[l])^2))/C.I.g(S.cache_g[l])^2
 
             P[j,i] = P[i,j]
             end
@@ -250,45 +267,48 @@ function precond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X
     rmul!(P, 1/Ne)
     # Add derivative of the L2 penalty term ∂^2_c α ||c||^2 = 2 *α *I
     @inbounds for i=1:Nψ
-        P[i,i] += 2*Hk.α*I
+        P[i,i] += 2*C.α*I
     end
     return P
 end
 
-precond!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X) where {T <: Real, m, Nψ, k} =
-    (P, coeff) -> precond!(P, coeff, S, Hk, X)
+precond!(S::Storage, C::MapComponent, X) = (P, coeff) -> precond!(P, coeff, S, C, X)
 
-function diagprecond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2})
+    Nψ = C.Nψ
+    Nx = C.Nx
     NxX, Ne = size(X)
-    @assert NxX == k "Wrong dimension of the sample X"
+    @assert NxX == Nx "Wrong dimension of the sample X"
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xk = deepcopy(X[NxX,:])#)
+    xlast = view(X, Nx,:)#)
 
     fill!(S.cache_integral, 0)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         S.cache_dcψxdt .*= S.ψoff
         mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
-        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+        vJ = view(v,1:Ne)
+        evaluate!(vJ, C.I.g, S.cache_dψxd)
+        # v[1:Ne] .= C.I.g(S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
     @inbounds for j=1:Nψ+1
-        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
     end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
@@ -320,30 +340,32 @@ function diagprecond!(P, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k
             # P[i,j] +=  reshape2_cacheintegral[l,i,j]*S.cache_integral[l]
             P[i] +=  (reshape_cacheintegral[l,i] + S.ψoff[l,i]*S.ψd0[l,i])^2# * (reshape_cacheintegral[l,j] + S.ψoff[l,j]*S.ψd0[l,j])
             P[i] -=  ( (S.ψoff[l,i]*S.dψxd[l,i])^2*(
-                            hess_x(Hk.I.g, S.cache_g[l]) * Hk.I.g(S.cache_g[l]) -
-                            grad_x(Hk.I.g, S.cache_g[l])^2))/Hk.I.g(S.cache_g[l])^2
+                            hess_x(C.I.g, S.cache_g[l]) * C.I.g(S.cache_g[l]) -
+                            grad_x(C.I.g, S.cache_g[l])^2))/C.I.g(S.cache_g[l])^2
         end
     end
     rmul!(P, 1/Ne)
     # Add derivative of the L2 penalty term ∂^2_c α ||c||^2 = 2 *α *I
     @inbounds for i=1:Nψ
-        P[i] += 2*Hk.α
+        P[i] += 2*C.α
     end
     return P
 end
 
-diagprecond!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k} =
-    (P, coeff) -> diagprecond!(P, coeff, S, Hk, X)
+diagprecond!(S::Storage, C::MapComponent, X::Array{Float64,2}) = (P, coeff) -> diagprecond!(P, coeff, S, C, X)
 
 
-function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k}
+function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComponent, X::Array{Float64,2})
+    Nψ = C.Nψ
+    Nx = C.Nx
+
     NxX, Ne = size(X)
-    @assert NxX == k "Wrong dimension of the sample X"
+    @assert NxX == Nx "Wrong dimension of the sample X"
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xk = deepcopy(X[NxX,:])#)
+    xlast = view(X, NxX, :)#)
 
     fill!(S.cache_integral, 0)
 
@@ -351,7 +373,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k},
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(Hk.I.f.f, t*xk)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         S.cache_dcψxdt .*= S.ψoff
@@ -364,21 +386,23 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k},
         end
 
         # Integration for J
-        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
+        vJ = view(v,1:Ne)
+        evaluate!(vJ, C.I.g, S.cache_dψxd)
+        # v[1:Ne] .= C.I.g(S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
 
         # Integration for d2cJ
-        v[Ne + Ne*Nψ + 1: Ne + Ne*Nψ + Ne*Nψ*Nψ] .= reshape(hess_x(Hk.I.g, S.cache_dψxd) .* dcdψouter, (Ne*Nψ*Nψ))
+        v[Ne + Ne*Nψ + 1: Ne + Ne*Nψ + Ne*Nψ*Nψ] .= reshape(hess_x(C.I.g, S.cache_dψxd) .* dcdψouter, (Ne*Nψ*Nψ))
 
     end
 
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
-    # Multiply integral by xk (change of variable in the integration)
+    # Multiply integral by xlast (change of variable in the integration)
     @inbounds for j=1:1 + Nψ# + Nψ*Nψ
-        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xk
+        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
     end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
@@ -408,13 +432,13 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k},
             # dJ .= zeros(Nψ)
             for j=1:Nψ
             dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
-            dJ[j] += grad_x(Hk.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/Hk.I.g(S.cache_g[i])
+            dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
             end
             # @show i, dJ
         end
         rmul!(dJ, -1/Ne)
         # Add derivative of the L2 penalty term ∂_c α ||c||^2 = 2 *α c
-        dJ .+= 2*Hk.α*coeff
+        dJ .+= 2*C.α*coeff
     end
 
     if d2J != nothing
@@ -430,8 +454,8 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k},
                 d2J[i,j] +=  reshape2_cacheintegral[l,i,j]*S.cache_integral[l]
                 d2J[i,j] +=  (reshape_cacheintegral[l,i] + S.ψoff[l,i]*S.ψd0[l,i]) * (reshape_cacheintegral[l,j] + S.ψoff[l,j]*S.ψd0[l,j])
                 d2J[i,j] -=  ( (S.ψoff[l,i]*S.dψxd[l,i]) * (S.ψoff[l,j]*S.dψxd[l,j])*(
-                                hess_x(Hk.I.g, S.cache_g[l]) * Hk.I.g(S.cache_g[l]) -
-                                grad_x(Hk.I.g, S.cache_g[l])^2))/Hk.I.g(S.cache_g[l])^2
+                                hess_x(C.I.g, S.cache_g[l]) * C.I.g(S.cache_g[l]) -
+                                grad_x(C.I.g, S.cache_g[l])^2))/C.I.g(S.cache_g[l])^2
 
                 d2J[j,i] = d2J[i,j]
                 end
@@ -440,7 +464,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k},
         rmul!(d2J, 1/Ne)
         # Add derivative of the L2 penalty term ∂^2_c α ||c||^2 = 2 *α *I
         @inbounds for i=1:Nψ
-            d2J[i,i] += 2*Hk.α*I
+            d2J[i,i] += 2*C.α*I
         end
         # d2J = Symmetric(d2J)
         # return d2J
@@ -449,56 +473,15 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage{m, Nψ, k},
     if J != nothing
         J = 0.0
         @inbounds for i=1:Ne
-            J += logpdf(Normal(), S.cache_integral[i]) + log(Hk.I.g(S.cache_g[i]))
+            J += logpdf(Normal(), S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)
-        J += Hk.α*norm(coeff)^2
+        J += C.α*norm(coeff)^2
         return J
     end
     # return J, dJ, d2J
 end
 
 
-hess_negative_log_likelihood!(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {T <: Real, m, Nψ, k} =
-    (J, dJ, d2J, coeff) -> hess_negative_log_likelihood!(J, dJ, d2J, coeff, S, Hk, X)
-
-
-function negative_log_likelihood(S::Storage{m, Nψ, k}, Hk::HermiteMapk{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
-    NxX, Ne = size(X)
-    @assert NxX == k "Wrong dimension of the sample X"
-    @assert size(S.ψoff, 1) == Ne
-    @assert size(S.ψoff, 2) == Nψ
-
-    # Output objective, gradient
-    xk = deepcopy(X[NxX,:])#)
-
-    coeff = Hk.I.f.f.coeff
-
-
-    dcdψ = zeros(Ne, Nψ)
-    dψxd = zeros(Ne)
-    J = 0.0
-    dJ = zeros(Nψ)
-    # Integrate at the same time for the objective, gradient
-    function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt.= repeated_grad_xk_basis(Hk.I.f.f,  0.5*(t+1)*xk) .* S.ψoff
-
-        mul!(S.cache_dψxd, S.cache_dcψxdt, Hk.I.f.f.coeff)
-
-        # Integration for J
-        v[1:Ne] .= Hk.I.g(S.cache_dψxd)
-        # vobj =
-
-        # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(Hk.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
-    end
-    S.cache_integral .= quadgk!(integrand!, S.cache_integral, -1, 1; rtol = 1e-3)[1]
-    logdψk = log.(Hk.I.g(repeated_grad_xk_basis(Hk.I.f.f, xk) .* S.ψoff *Hk.I.f.f.coeff))
-    quad  =  (S.ψoff .* S.ψd0)*Hk.I.f.f.coeff + 0.5*xk .* S.cache_integral[1:Ne]
-    for i=1:Ne
-        J += logpdf.(Normal(), quad[i]) +  logdψk[i]
-    end
-
-    J *=(-1/Ne)
-    return J
-end
+hess_negative_log_likelihood!(S::Storage, C::MapComponent, X::Array{Float64,2}) =
+    (J, dJ, d2J, coeff) -> hess_negative_log_likelihood!(J, dJ, d2J, coeff, S, C, X)
