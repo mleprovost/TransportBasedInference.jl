@@ -17,15 +17,15 @@ function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, α::Float64 
         Nx = size(X,1)
         Nψ = 1
         coeff = zeros(Nψ)
-        H = MapComponent[]
+        C = MapComponent[]
         idx = zeros(Int, Nψ, Nx)
         @inbounds for i=1:Nx
                 MultiB = MultiBasis(B, i)
                 vidx = idx[:,1:i]
-                push!(H, MapComponent(IntegratedFunction(ExpandedFunction(MultiB, vidx, coeff))))
+                push!(C, MapComponent(IntegratedFunction(ExpandedFunction(MultiB, vidx, coeff))))
         end
 
-        return HermiteMap(m, Nx, L, H)
+        return HermiteMap(m, Nx, L, C)
 end
 
 

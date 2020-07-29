@@ -241,7 +241,7 @@ setcoeff!(C_test, zero(getcoeff(C_new)));
 S_test = Storage(C_test.I.f, X_train)
 coeff_test = getcoeff(C_test)
 
-res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S_test, C_test, X_train)), coeff_test, Optim.BFGS())
+res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S_test, C_test, X_train)), coeff_test, Optim.BFGS())
 
 @test norm(getcoeff(C_new)-Optim.minimizer(res))<5e-5
 

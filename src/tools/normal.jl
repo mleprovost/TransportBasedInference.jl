@@ -7,6 +7,6 @@ export log_pdf, gradlog_pdf, hesslog_pdf
 # logpdf(Normal(1.0, 2.0),randn(10))
 
 # Define only for the standard Normal distribution
-log_pdf(x) = -0.5*x^2
+log_pdf(x) = -0.5*(log(2*π) + x^2)
 gradlog_pdf(x) = -x
 hesslog_pdf(x) = -1.0

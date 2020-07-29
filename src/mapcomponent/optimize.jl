@@ -1,4 +1,3 @@
-
 export optimize
 
 
@@ -15,7 +14,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; v
         precond = zeros(ncoeff(C), ncoeff(C))
         precond!(precond, coeff0, S, C, X)
 
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C, X)), coeff0,
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
               Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
         setcoeff!(C, Optim.minimizer(res))

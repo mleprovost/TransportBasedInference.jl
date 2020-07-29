@@ -95,7 +95,7 @@ end
     @test norm(Xmodified[end,:]-X[end,:])>1e-6
 
     transform!(Lmodified.L, Xmodified)
-    S = Storage(Lmodified.H.I.f, Xmodified);
+    S = Storage(Lmodified.C.I.f, Xmodified);
     itransform!(Lmodified.L, Xmodified)
 
     inverse!(Xmodified, F, L, S)

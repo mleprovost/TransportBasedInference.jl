@@ -63,12 +63,12 @@ include("margin/totalorder.jl")
 
 
 # KR-rearrangement and TransportMap structure
-include("mapcomponent/precond.jl")
 include("mapcomponent/hermitemapcomponent.jl")
 include("mapcomponent/linhermitemapcomponent.jl")
 # Tools for fast inversion
 include("mapcomponent/inverse.jl")
-# Tools for greedyfit and optimization 
+# Tools for greedyfit and optimization
+include("mapcomponent/precond.jl")
 include("mapcomponent/greedyfit.jl")
 include("mapcomponent/optimize.jl")
 

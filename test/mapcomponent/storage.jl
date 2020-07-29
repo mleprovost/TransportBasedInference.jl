@@ -15,7 +15,6 @@
               0.766647  -1.00445]';
     B = MultiBasis(CstProHermite(6; scaled =true), Nx)
 
-    @show "hello"
     idx = [0 0; 0 1; 1 0; 1 1; 1 2]
     truncidx = idx[1:2:end,:]
     Nψ = 5

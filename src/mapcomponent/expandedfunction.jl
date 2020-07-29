@@ -84,10 +84,14 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     @assert NxX == f.Nx "Wrong dimension of the input sample X"
     @assert size(ψ) == (Ne, Nψreduced) "Wrong dimension of the ψ"
 
-    # maxdim = maximum(f.idx)
+    maxdim = maximum(idx)
     # ψvander = zeros(Ne, maxdim)
     fill!(ψ, 1.0)
-    ψtmp = zero(ψ)
+    if maxdim+1<= Nψreduced
+        ψtmp = zero(ψ)
+    else
+        ψtmp = zeros(Ne, maxdim+1)
+    end
 
     # The maximal size of ψtmp assumes that the set of index is downward closed
     # such that Nψreduced is always smaller of equal to maxj+1

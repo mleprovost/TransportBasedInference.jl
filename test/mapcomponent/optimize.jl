@@ -28,7 +28,7 @@ using AdaptiveTransportMap: ncoeff
     precond = zeros(ncoeff(C0), ncoeff(C0))
     precond!(precond, coeff0, S, C0, X)
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C0, X)), coeff0,
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C0, X)), coeff0,
           Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
     @test norm(getcoeff(C_new) - res.minimizer) <1e-6
@@ -61,7 +61,7 @@ end
     precond = zeros(ncoeff(C0), ncoeff(C0))
     precond!(precond, coeff0, S, C0, X)
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C0, X)), coeff0,
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C0, X)), coeff0,
           Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
     @test norm(getcoeff(C_new) - res.minimizer) <5e-5
