@@ -7,6 +7,7 @@ export  MapComponent,
         evaluate!,
         evaluate,
         negative_log_likelihood!,
+        negative_log_likelihood,
         precond!,
         diagprecond!,
         hess_negative_log_likelihood!

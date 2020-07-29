@@ -1,4 +1,3 @@
-
 @testset "Test storage and update_storage!" begin
 
 
@@ -16,8 +15,8 @@
               0.766647  -1.00445]';
     B = MultiBasis(CstProHermite(6; scaled =true), Nx)
 
-
-    idx = [0 0; 0 1; 1 0; 2 1; 1 2]
+    @show "hello"
+    idx = [0 0; 0 1; 1 0; 1 1; 1 2]
     truncidx = idx[1:2:end,:]
     Nψ = 5
 
@@ -49,7 +48,7 @@
 
 
     # Test add new components via update_storage!
-    addedidx = [2 2; 2 3; 2 4; 3 2]
+    addedidx = [2 1; 2 2; 2 3; 3 2]
 
     S = update_storage(S, ens.S, addedidx)
 

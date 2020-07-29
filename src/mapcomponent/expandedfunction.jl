@@ -89,6 +89,8 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     fill!(ψ, 1.0)
     ψtmp = zero(ψ)
 
+    # The maximal size of ψtmp assumes that the set of index is downward closed
+    # such that Nψreduced is always smaller of equal to maxj+1
     @inbounds for j in dims
         midxj = view(idx,:,j)
         maxj = maximum(midxj)

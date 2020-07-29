@@ -4,10 +4,10 @@ export  Rectifier,
         square, dsquare, d2square,
         softplus, dsoftplus, d2softplus, invsoftplus,
         explinearunit, dexplinearunit, d2explinearunit, invexplinearunit,
-        inverse!, inverse,
-        grad_x!, grad_x,
-        hess_x!, hess_x,
-        evaluate!
+        inverse!, inverse, vinverse,
+        grad_x!, grad_x, vgrad_x,
+        hess_x!, hess_x, vhess_x,
+        evaluate!, vevaluate
 
 # Structure for continuous rectifier
 # x->rec(x)
@@ -67,7 +67,7 @@ function evaluate!(result, g::Rectifier, x)
     end
 end
 
-evaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
+vevaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
 
 function inverse(g::Rectifier, x)
     @assert x>=0 "Input to rectifier is negative"
@@ -99,7 +99,7 @@ function inverse!(result, g::Rectifier, x)
     end
 end
 
-# inverse(g::Rectifier, x)  = inverse!(zero(x), g, x)
+vinverse(g::Rectifier, x)  = inverse!(zero(x), g, x)
 
 
 function grad_x(g::Rectifier, x)
@@ -131,7 +131,7 @@ function grad_x!(result, g::Rectifier, x)
     end
 end
 
-# grad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
+vgrad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
 
 
 function hess_x(g::Rectifier, x::T) where {T <: Real}
@@ -163,4 +163,4 @@ function hess_x!(result, g::Rectifier, x)
     end
 end
 
-# hess_x(g::Rectifier, x) = hess_x!(zero(x), g, x)
+vhess_x(g::Rectifier, x) = hess_x!(zero(x), g, x)

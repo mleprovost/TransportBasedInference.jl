@@ -7,6 +7,6 @@ Nx = 10
 x = randn(Nx)
 
     for i =1:Nx
-        @test abs(hesslogpdf(N, x[i]) - (-1/N.σ^2))<1e-10
+        @test abs(hesslog_pdf(x[i]) - (-1.0))<1e-10
     end
 end

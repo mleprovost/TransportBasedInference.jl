@@ -43,7 +43,7 @@ end
     H = MapComponent(R; α = 0.0)
     S = Storage(H.I.f, ens.S);
 
-   res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
+   res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, ens.S)), coeff, Optim.BFGS())
    coeff_opt = Optim.minimizer(res)
 
     @test norm(coeff_opt - [3.015753764546621;
@@ -57,7 +57,7 @@ end
     H = MapComponent(R; α = 0.1)
     S = Storage(H.I.f, ens.S);
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, H, ens.S)), coeff, Optim.BFGS())
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, ens.S)), coeff, Optim.BFGS())
     coeff_opt = Optim.minimizer(res)
 
     @test norm(coeff_opt - [ -0.11411931034615422;

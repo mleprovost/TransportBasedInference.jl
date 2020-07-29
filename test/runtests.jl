@@ -16,30 +16,30 @@ using MLDataUtils
 using MLBase
 
 # Tools: double factorial, adaptive integration
-include("tools/tools.jl")
-include("tools/normal.jl")
-include("tools/clenshaw_curtis.jl")
-include("tools/adaptiveCC.jl")
-include("tools/transform.jl")
-
-# Functions to manage margins
-include("margin/reducedmargin.jl")
-include("margin/totalorder.jl")
-
-include("hermitefunction/phypolyhermite.jl")
-include("hermitefunction/propolyhermite.jl")
-
-include("hermitefunction/phyhermite.jl")
-include("hermitefunction/prohermite.jl")
-
-# Test tools for Basis, MultiBasis, ExpandedFunction
-include("mapcomponent/rectifier.jl")
-include("mapcomponent/basis.jl")
-include("mapcomponent/expandedfunction.jl")
-include("mapcomponent/parametric.jl")
-
-# Test tools for integrated function
-include("mapcomponent/integratedfunction.jl")
+# include("tools/tools.jl")
+# include("tools/normal.jl")
+# include("tools/clenshaw_curtis.jl")
+# include("tools/adaptiveCC.jl")
+# include("tools/transform.jl")
+#
+# # Functions to manage margins
+# include("margin/reducedmargin.jl")
+# include("margin/totalorder.jl")
+#
+# include("hermitefunction/phypolyhermite.jl")
+# include("hermitefunction/propolyhermite.jl")
+#
+# include("hermitefunction/phyhermite.jl")
+# include("hermitefunction/prohermite.jl")
+#
+# # Test tools for Basis, MultiBasis, ExpandedFunction
+# include("mapcomponent/rectifier.jl")
+# include("mapcomponent/basis.jl")
+# include("mapcomponent/expandedfunction.jl")
+# include("mapcomponent/parametric.jl")
+#
+# # Test tools for integrated function
+# include("mapcomponent/integratedfunction.jl")
 include("mapcomponent/storage.jl")
 
 # Test tools for HermiteMap component

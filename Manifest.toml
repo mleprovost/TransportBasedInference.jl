@@ -213,9 +213,9 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DiffEqBase]]
 deps = ["ArrayInterface", "ChainRulesCore", "ConsoleProgressMonitor", "DataStructures", "Distributed", "DocStringExtensions", "FunctionWrappers", "IterativeSolvers", "IteratorInterfaceExtensions", "LabelledArrays", "LinearAlgebra", "Logging", "LoggingExtras", "MuladdMacro", "Parameters", "Printf", "ProgressLogging", "RecipesBase", "RecursiveArrayTools", "RecursiveFactorization", "Requires", "Roots", "SparseArrays", "StaticArrays", "Statistics", "SuiteSparse", "TableTraits", "TerminalLoggers", "TreeViews", "ZygoteRules"]
-git-tree-sha1 = "a6bc6744a1b51f0c6467f33c7b0ed1b50607107d"
+git-tree-sha1 = "9ee99d9d293494d2cd61b47f8e87479018280134"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "6.41.1"
+version = "6.41.3"
 
 [[DiffResults]]
 deps = ["StaticArrays"]
@@ -314,9 +314,9 @@ version = "0.8.13"
 
 [[FiniteDiff]]
 deps = ["ArrayInterface", "LinearAlgebra", "Requires", "SparseArrays", "StaticArrays"]
-git-tree-sha1 = "43b397bf66d07d113cc2cc012dd2029d336c3894"
+git-tree-sha1 = "ed5d92cc9a84b9f5f9d65d3559b22d4b3b824b7e"
 uuid = "6a86dc24-6348-571c-b903-95158fe2bd41"
-version = "2.5.1"
+version = "2.5.2"
 
 [[FixedPointNumbers]]
 deps = ["Statistics"]
@@ -359,9 +359,9 @@ version = "4.0.1"
 
 [[GPUCompiler]]
 deps = ["DataStructures", "InteractiveUtils", "LLVM", "Libdl", "TimerOutputs", "UUIDs"]
-git-tree-sha1 = "2820f51d87e657ebe09144eb32973260565d3e49"
+git-tree-sha1 = "d6db068d8373bb45ac17e14744cc1d3681d0dbc7"
 uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
-version = "0.5.4"
+version = "0.5.5"
 
 [[GR]]
 deps = ["Base64", "DelimitedFiles", "HTTP", "JSON", "LinearAlgebra", "Printf", "Random", "Serialization", "Sockets", "Test", "UUIDs"]
