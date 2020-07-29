@@ -38,7 +38,7 @@ invexplinearunit(x) = x < 1.0 ? log(x) : x - 1.0
 
 Rectifier() = Rectifier("softplus")
 
-function (g::Rectifier)(x::T) where {T <: Real}
+function (g::Rectifier)(x)
     if g.T=="squared"
         return square(x)
     elseif g.T=="exponential"
@@ -67,10 +67,9 @@ function evaluate!(result, g::Rectifier, x)
     end
 end
 
-(g::Rectifier)(x::Array{T,1}) where {T <: Real} = evaluate!(zero(x), g, x)
+evaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
 
-
-function inverse(g::Rectifier, x::T) where {T <: Real}
+function inverse(g::Rectifier, x)
     @assert x>=0 "Input to rectifier is negative"
     if g.T=="squared"
         error("squared rectifier is not invertible")
@@ -83,7 +82,7 @@ function inverse(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-function inverse!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: Real}
+function inverse!(result, g::Rectifier, x)
     @assert all(x .> 0) "Input to rectifier is negative"
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
@@ -100,10 +99,10 @@ function inverse!(result::Array{T,1}, g::Rectifier, x::Array{T,1}) where {T <: R
     end
 end
 
-inverse(g::Rectifier, x)  = inverse!(zero(x), g, x)
+# inverse(g::Rectifier, x)  = inverse!(zero(x), g, x)
 
 
-function grad_x(g::Rectifier, x::T) where {T <: Real}
+function grad_x(g::Rectifier, x)
     if g.T=="squared"
         return dsquare(x)
     elseif g.T=="exponential"
@@ -132,7 +131,7 @@ function grad_x!(result, g::Rectifier, x)
     end
 end
 
-grad_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = grad_x!(zero(x), g, x)
+# grad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
 
 
 function hess_x(g::Rectifier, x::T) where {T <: Real}
@@ -164,4 +163,4 @@ function hess_x!(result, g::Rectifier, x)
     end
 end
 
-hess_x(g::Rectifier, x::Array{T,1}) where {T <: Real} = hess_x!(zero(x), g, x)
+# hess_x(g::Rectifier, x) = hess_x!(zero(x), g, x)

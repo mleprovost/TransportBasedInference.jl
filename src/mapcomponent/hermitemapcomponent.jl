@@ -104,37 +104,47 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
     # Output objective, gradient
     xlast = view(X,NxX,:)
 
-    fill!(S.cache_integral, 0)
+    fill!(S.cache_integral, 0.0)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
+        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
 
-        # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
-        S.cache_dcψxdt .*= S.ψoff
-        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+        @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
+        # S.cache_dcψxdt .*= S.ψoff
+        # mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
         vJ = view(v,1:Ne)
         evaluate!(vJ, C.I.g, S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+
+        grad_x!(S.cache_dψxd, C.I.g, S.cache_dψxd)
+
+        @avx for j=2:Nψ+1
+            for i=1:Ne
+                v[(j-1)*Ne+i] = S.cache_dψxd[i]*S.cache_dcψxdt[i,j-1]
+            end
+        end
+
+        # v[Ne+1:Ne+Ne*Nψ] .= reshape(S.cache_dψxd .* S.cache_dcψxdt , (Ne*Nψ))
+        # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
-    # Multiply integral by xk (change of variable in the integration)
-    # @avx for j=1:Nψ+1
-    #     for i=1:Ne
-    #         S.cache_integral[(j-1)*Ne+i] *= xk[i]
-    #     end
-    # end
+    # Multiply integral by xlast (change of variable in the integration)
+    @avx for j=1:Nψ+1
+        for i=1:Ne
+            S.cache_integral[(j-1)*Ne+i] *= xlast[i]
+        end
+    end
 
     # Multiply integral by xlast (change of variable in the integration)
-    @inbounds for j=1:Nψ+1
-        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
-    end
+    # @inbounds for j=1:Nψ+1
+    #     @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
+    # end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
     @avx for i=1:Ne
@@ -157,14 +167,12 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
     # Formatting to use with Optim.jl
     if dJ != nothing
         reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
-        dJ .= zeros(Nψ)
+        fill!(dJ, 0.0)
         @inbounds for i=1:Ne
-            # dJ .= zeros(Nψ)
             for j=1:Nψ
-            dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
-            dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
+            dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j]) + # dsoftplus(S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]*(1/softplus(S.cache_g[i]))
+                     grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
             end
-            # @show i, dJ
         end
         rmul!(dJ, -1/Ne)
         # Add derivative of the L2 penalty term ∂_c α ||c||^2 = 2 *α c
@@ -173,8 +181,8 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
 
     if J != nothing
         J = 0.0
-        @inbounds for i=1:Ne
-            J += logpdf(Normal(), S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
+        @avx for i=1:Ne
+            J += log_pdf(S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)
         J += C.α*norm(coeff)^2
@@ -182,8 +190,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
     end
 end
 
-negative_log_likelihood!(S::Storage, C::MapComponent, X) =
-    (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, C, X)
+negative_log_likelihood(S::Storage, C::MapComponent, X) = (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, C, X)
 
 
 function precond!(P, coeff, S::Storage, C::MapComponent, X)
@@ -200,32 +207,40 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
+        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
 
-        # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
-        S.cache_dcψxdt .*= S.ψoff
-        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+        @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
+        # S.cache_dcψxdt .*= S.ψoff
+        # mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
         # Integration for J
         vJ = view(v,1:Ne)
         evaluate!(vJ, C.I.g, S.cache_dψxd)
-        # v[1:Ne] .= C.I.g(S.cache_dψxd)
 
         # Integration for dcJ
-        v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
+
+        grad_x!(S.cache_dψxd, C.I.g, S.cache_dψxd)
+
+        # v[Ne+1:Ne+Ne*Nψ] .= reshape(S.cache_dψxd .* S.cache_dcψxdt , (Ne*Nψ))
+        @avx for j=2:Nψ+1
+            for i=1:Ne
+                v[(j-1)*Ne+i] = S.cache_dcψxdt[i,j-1]*S.cache_dψxd[i]
+            end
+        end
+        # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
     quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
-    @inbounds for j=1:Nψ+1
-        @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
-    end
-    # @avx for j=1:Nψ+1
-    #     for i=1:Ne
-    #         S.cache_integral[(j-1)*Ne+i] *= xk[i]
-    #     end
+    # @inbounds for j=1:Nψ+1
+    #     @. S.cache_integral[(j-1)*Ne+1:j*Ne] *= xlast
     # end
+    @avx for j=1:Nψ+1
+        for i=1:Ne
+            S.cache_integral[(j-1)*Ne+i] *= xlast[i]
+        end
+    end
 
     # Add f(x_{1:d-1},0) i.e. (S.ψoff .* S.ψd0)*coeff to S.cache_integral
     @avx for i=1:Ne
@@ -431,7 +446,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComp
         @inbounds for i=1:Ne
             # dJ .= zeros(Nψ)
             for j=1:Nψ
-            dJ[j] += gradlogpdf(Normal(), S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
+            dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
             dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
             end
             # @show i, dJ
@@ -473,7 +488,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComp
     if J != nothing
         J = 0.0
         @inbounds for i=1:Ne
-            J += logpdf(Normal(), S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
+            J += log_pdf(S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)
         J += C.α*norm(coeff)^2

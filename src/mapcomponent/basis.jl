@@ -82,7 +82,7 @@ Base.size(B::Basis,d::Int) = size(B.f,d)
 Base.size(B::Basis) = size(B.f)
 
 function Base.show(io::IO, B::Basis)
-    println(io,"Basis of "*string(m)*" functions:")
+    println(io,"Basis of "*string(B.m)*" functions:")
     for i=1:B.m
         println(io, B[i])
     end

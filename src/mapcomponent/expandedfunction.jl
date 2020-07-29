@@ -77,65 +77,33 @@ function alleval(f::ExpandedFunction, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
     return ψ, dψ, d2ψ
 end
 
-# function evaluate_basis!(ψ::Array{Float64,2}, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
-
-# function evaluate_basis!(ψ, f::ExpandedFunction{m, Nψ, Nx}, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) where {m, Nψ, Nx}
-#     NxX, Ne = size(X)
-#     Nψreduced = size(idx,1)
-#
-#     @assert NxX == Nx "Wrong dimension of the input sample X"
-#     @assert size(ψ) == (Ne, Nψreduced) "Wrong dimension of the ψ"
-#
-#     # maxdim = maximum(f.idx)
-#     # ψvander = zeros(Ne, maxdim)
-#     fill!(ψ, 1.0)
-#     ψtmp = zero(ψ)
-#
-#     @inbounds for j in dims
-#         midxj = view(idx,:,j)
-#         maxj = maximum(midxj)
-#         Xj = view(X,j,:)
-#         ψj = ψtmp[:,1:maxj+1]
-#
-#         vander!(ψj, f.B.B, maxj, 0, Xj)
-#
-#         @avx for l = 1:Nψreduced
-#             for k=1:Ne
-#                 ψ[k,l] *= ψj[k, midxj[l] + 1]
-#             end
-#         end
-#
-#         # @avx  ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
-#     end
-#     return ψ
-# end
 
 function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2})
-    m = f.m
-    Nψ = f.Nψ
-    Nx = f.Nx
-    NxX, Ne = size(X)
     Nψreduced = size(idx,1)
-
-    @assert NxX == Nx "Wrong dimension of the input sample X"
+    NxX, Ne = size(X)
+    @assert NxX == f.Nx "Wrong dimension of the input sample X"
     @assert size(ψ) == (Ne, Nψreduced) "Wrong dimension of the ψ"
 
     # maxdim = maximum(f.idx)
     # ψvander = zeros(Ne, maxdim)
     fill!(ψ, 1.0)
-    # ψtmp = zero(ψ)
+    ψtmp = zero(ψ)
 
     @inbounds for j in dims
-        # midxj = view(f.idx,:,j)
-        midxj = idx[:,j]
+        midxj = view(idx,:,j)
         maxj = maximum(midxj)
         Xj = view(X,j,:)
-        # ψvanderj = view(ψvander,:,1:maxj+1)
-        # ψj = view(ψtmp,:,1:maxj+1)
-        # vander!(, f.B.B, maxj, 0, Xj)
-        ψj = vander(f.B.B, maxj, 0, Xj)
+        ψj = ψtmp[:,1:maxj+1]
 
-        @avx ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
+        vander!(ψj, f.B.B, maxj, 0, Xj)
+
+        @avx for l = 1:Nψreduced
+            for k=1:Ne
+                ψ[k,l] *= ψj[k, midxj[l] + 1]
+            end
+        end
+
+        # @avx  ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
     end
     return ψ
 end

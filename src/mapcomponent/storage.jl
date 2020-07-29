@@ -28,6 +28,8 @@ struct Storage
     # Cache for ∂_c ∂_xd(f(x_{1:d-1},t)
     cache_dcψxdt::Array{Float64,2}
 
+    cache_gradxd::Array{Float64,2}
+
     # Cache for ∂_xd(f(x_{1:d-1},t)
     cache_dψxd::Array{Float64,1}
 
@@ -54,19 +56,21 @@ function Storage(f::ParametricFunction, X; hess::Bool = false)
         if hess == false
             # Cache variable
             cache_dcψxdt = zero(dψxd)
+            cache_gradxd = zeros(Ne, maximum(f.f.idx[:,end])+1)
             cache_dψxd = zeros(Ne)
             cache_integral = zeros(Ne + Ne*Nψ)
             cache_g = zeros(Ne)
         else
             # Cache variable
             cache_dcψxdt = zero(dψxd)
+            cache_gradxd = zeros(Ne, maximum(f.f.idx[:,end])+1)
             cache_dψxd = zeros(Ne)
             cache_integral = zeros(Ne + Ne*Nψ + Ne*Nψ*Nψ)
             cache_g = zeros(Ne)
         end
 
 
-        return Storage(m, Nψ, Nx, f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_dψxd, cache_integral, cache_g)
+        return Storage(m, Nψ, Nx, f, ψoff, ψd, ψd0, dψxd, cache_dcψxdt, cache_gradxd, cache_dψxd, cache_integral, cache_g)
 end
 
 # function update_storage(S::Storage{m, Nψ, k}, X::Array{Float64,2}, addedidx::Array{Int64,2}) where {m, Nψ, k}
@@ -93,10 +97,16 @@ function update_storage(S::Storage, X, addedidx::Array{Int64,2})
     # Update dψxd
     addedψxd = repeated_grad_xk_basis(fnew.f, X[S.Nx,:], addedidx)
 
+    oldmaxj = maximum(S.f.f.idx[:,end])
+    newmaxj = maximum(fnew.f.idx[:,end])
+
+    @assert newmaxj >= oldmaxj "Error in the adaptive procedure, the set is not downward closed"
+
 
     return Storage(S.m, newNψ, S.Nx, fnew, hcat(S.ψoff, addedψoff), hcat(S.ψd, addedψd),
                                 hcat(S.ψd0, addedψd0), hcat(S.dψxd, addedψxd),
                                 hcat(S.cache_dcψxdt, zeros(Ne, addednψ)),
+                                hcat(S.cache_gradxd, zeros(Ne,newmaxj-oldmaxj)),
                                 S.cache_dψxd,
                                 vcat(S.cache_integral, zeros(Ne*addednψ)),
                                 S.cache_g)

@@ -19,8 +19,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; maxpatience:
     Svalid = Storage(C.I.f, Xvalid)
 
     # Compute initial loss on training set
-    push!(train_error, negative_log_likelihood!(S, C, X)(0.0, nothing, getcoeff(C)))
-    push!(valid_error, negative_log_likelihood!(Svalid, C, Xvalid)(0.0, nothing, getcoeff(C)))
+    push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+    push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
 
     if verbose == true
         println(string(ncoeff(C))*" terms - Training error: "*
@@ -61,14 +61,14 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; maxpatience:
         precond = zeros(ncoeff(C), ncoeff(C))
         precond!(precond, coeff0, S, C, X)
 
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C, X)), coeff0,
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
               Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
         setcoeff!(C, Optim.minimizer(res))
 
-        # Compute new loss on the training and validation set
-        push!(train_error, negative_log_likelihood!(S, C, X)(0.0, nothing, getcoeff(C)))
-        push!(valid_error, negative_log_likelihood!(Svalid, C, Xvalid)(0.0, nothing, getcoeff(C)))
+        # Compute new loss on training and validation sets
+        push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+        push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
 
         if verbose == true
             println(string(ncoeff(C))*" terms - Training error: "*
@@ -109,7 +109,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 =
     S = Storage(C.I.f, X)
 
     # Compute initial loss on training set
-    push!(train_error, negative_log_likelihood!(S, C, X)(0.0, nothing, getcoeff(C)))
+    push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
 
     if verbose == true
         println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
@@ -148,13 +148,13 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 =
         precond = zeros(ncoeff(C), ncoeff(C))
         precond!(precond, coeff0, S, C, X)
 
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C, X)), coeff0,
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
               Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
         setcoeff!(C, Optim.minimizer(res))
 
         # Compute new loss on the training and validation set
-        push!(train_error, negative_log_likelihood!(S, C, X)(0.0, nothing, getcoeff(C)))
+        push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
 
         if verbose == true
             println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
