@@ -6,6 +6,8 @@ export  MapComponent,
         getidx,
         evaluate!,
         evaluate,
+        log_pdf!,
+        log_pdf,
         negative_log_likelihood!,
         negative_log_likelihood,
         hess_negative_log_likelihood!
@@ -86,6 +88,27 @@ end
 
 evaluate(C::MapComponent, X::Array{Float64,2}) =
     evaluate!(zeros(size(X,2)), C, X)
+
+
+## Compute log_pdf
+
+function log_pdf!(result, cache, C::MapComponent, X)
+    NxX, Ne = size(X)
+    @assert C.Nx == NxX "Wrong dimension of the sample"
+    @assert size(result, 1) == Ne "Wrong dimension of the sample"
+    @assert size(cache, 1) == Ne "Wrong dimension of the sample"
+
+    evaluate!(result, C, X)
+    cache .= grad_xd(C.I, X)
+
+    @avx for i=1:size(X,2)
+        result[i] = log_pdf(result[i]) + log(cache[i])
+    end
+
+    return result
+end
+
+log_pdf(C::MapComponent, X) = log_pdf!(zeros(size(X,2)), zeros(size(X,2)), C, X)
 
 ## negative_log_likelihood
 

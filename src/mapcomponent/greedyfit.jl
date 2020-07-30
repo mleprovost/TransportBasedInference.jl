@@ -160,18 +160,18 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 =
             println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
         end
 
-        # Update patience
+        # # Update patience
         # if valid_error[end] >= best_valid_error
         #     patience +=1
         # else
         #     best_valid_error = deepcopy(valid_error[end])
         #     patience = 0
         # end
-
-        # Check if patience exceeded maximum patience
-        if patience >= maxpatience
-            break
-        end
+        #
+        # # Check if patience exceeded maximum patience
+        # if patience >= maxpatience
+        #     break
+        # end
     end
 
     return C, train_error

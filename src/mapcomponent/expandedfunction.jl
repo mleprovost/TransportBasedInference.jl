@@ -148,8 +148,9 @@ end
 
 repeated_evaluate_basis(f::ExpandedFunction, x) = repeated_evaluate_basis(f, x, f.idx)
 
+# function grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2})
 
-function grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2})
+function grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2})
     m = f.m
     Nx = f.Nx
 
@@ -188,13 +189,13 @@ end
 
 # In-place versions of grad_xk_basis!
 
-grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}) =
+grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}) =
               grad_xk_basis!(dkψ, f, X, k, grad_dim, dims, f.idx)
 
-grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, idx::Array{Int64,2}) =
+grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, idx::Array{Int64,2}) =
               grad_xk_basis!(dkψ, f, X, k, grad_dim, 1:f.Nx, idx)
 
-grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}) =
+grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}) =
               grad_xk_basis!(dkψ, f, X, k, grad_dim, 1:f.Nx, f.idx)
 
 

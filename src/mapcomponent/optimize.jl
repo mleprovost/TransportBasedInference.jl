@@ -58,7 +58,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; v
         maxpatience = 20
 
         # Run greedy approximation
-        max_iter = ceil(Int64, sqrt(size(X,2)))
+        max_iter =  min(19, ceil(Int64, sqrt(size(X,2))))
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                                        maxpatience = maxpatience, verbose  = verbose)

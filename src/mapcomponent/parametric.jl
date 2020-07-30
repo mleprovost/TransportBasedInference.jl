@@ -58,16 +58,18 @@ evaluate_diagbasis(fp::ParametricFunction, X) =
 # grad_xk_basis!(dkψ, f, X, k, grad_dim, dims, idx) where {m, Nψ, Nx}
 
  # Evaluate derivatives of basis of x_{d}
-grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction, X::Array{Float64,2}, idx::Array{Int64,2}) =
+
+# grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction, X::Array{Float64,2}) =
+grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction, X, idx::Array{Int64,2}) =
                   grad_xk_basis!(dψxd, fp.f, X, 1, fp.f.Nx, fp.f.Nx, idx)
 
-grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction, X::Array{Float64,2}) =
+grad_xd_diagbasis!(dψxd::Array{Float64,2}, fp::ParametricFunction, X) =
                   grad_xd_diagbasis(dψxd, fp, X, 1, fp.f.Nx, fp.f.Nx, fp.f.idx)
 
-grad_xd_diagbasis(fp::ParametricFunction, X::Array{Float64,2}, idx::Array{Int64,2}) =
+grad_xd_diagbasis(fp::ParametricFunction, X, idx::Array{Int64,2}) =
                  grad_xd_diagbasis!(zeros(size(X,2), size(idx,1)), fp, X, idx)
 
-grad_xd_diagbasis(fp::ParametricFunction, X::Array{Float64,2}) =
+grad_xd_diagbasis(fp::ParametricFunction, X) =
                  grad_xd_diagbasis!(zeros(size(X,2), size(fp.f.idx,1)), fp, X, fp.f.idx)
 
 
@@ -112,7 +114,7 @@ end
 
 ## grad_xd!
 
-function grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, fp::ParametricFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
+function grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, fp::ParametricFunction, X, idx::Array{Int64,2})
     @assert size(dψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
     evaluate_offdiagbasis!(ψoff, fp, X, idx)
     grad_xd_diagbasis!(dψxd, fp, X, idx)
@@ -120,15 +122,16 @@ function grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{F
     return dψ
 end
 
-grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, fp::ParametricFunction, X::Array{Float64, 2}) =
+grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, fp::ParametricFunction, X) =
         grad_xd!(dψ, ψoff, dψxd, fp, X, fp.f.idx)
 
-function grad_xd(fp::ParametricFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
+# function grad_xd(fp::ParametricFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
+function grad_xd(fp::ParametricFunction, X, idx::Array{Int64,2})
     Ne = size(X,2)
     grad_xd!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), fp, X, idx)
 end
 
-function grad_xd(fp::ParametricFunction, X::Array{Float64, 2})
+function grad_xd(fp::ParametricFunction, X)
     Ne = size(X,2)
     grad_xd!(zeros(Ne), zeros(Ne, size(fp.f.idx,1)), zeros(Ne, size(fp.f.idx,1)), fp, X, fp.f.idx)
 end

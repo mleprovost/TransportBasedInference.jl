@@ -51,7 +51,7 @@ function integrate_xd(R::IntegratedFunction, X::Array{Float64,2})
 end
 
 # Compute g(∂ₖf(x_{1:k}))
-function grad_xd(R::IntegratedFunction, X::Array{Float64,2})
+function grad_xd(R::IntegratedFunction, X)
     dψ = grad_xd(R.f, X)
     evaluate!(dψ, R.g, dψ)
     # @show size(dψ)

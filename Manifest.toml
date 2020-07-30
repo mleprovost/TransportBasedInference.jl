@@ -14,9 +14,9 @@ version = "0.3.3"
 
 [[Adapt]]
 deps = ["LinearAlgebra"]
-git-tree-sha1 = "0fac443759fa829ed8066db6cf1077d888bb6573"
+git-tree-sha1 = "fd04049c7dd78cfef0b06cdc1f0f181467655712"
 uuid = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
-version = "2.0.2"
+version = "1.1.0"
 
 [[ArnoldiMethod]]
 deps = ["DelimitedFiles", "LinearAlgebra", "Random", "SparseArrays", "StaticArrays", "Test"]
@@ -64,9 +64,9 @@ uuid = "6e34b625-4abd-537c-b88f-471c36dfa7a0"
 version = "1.0.6+2"
 
 [[CEnum]]
-git-tree-sha1 = "215a9aa4a1f23fbd05b92769fdd62559488d70e9"
+git-tree-sha1 = "62847acab40e6855a9b5905ccb99c2b5cf6b3ebb"
 uuid = "fa961155-64e5-5f13-b03f-caf6b980ea82"
-version = "0.4.1"
+version = "0.2.0"
 
 [[CRlibm]]
 deps = ["Libdl"]
@@ -76,9 +76,9 @@ version = "0.8.0"
 
 [[CUDA]]
 deps = ["AbstractFFTs", "Adapt", "BinaryProvider", "CEnum", "DataStructures", "ExprTools", "GPUArrays", "GPUCompiler", "LLVM", "Libdl", "LinearAlgebra", "Logging", "MacroTools", "NNlib", "Pkg", "Printf", "Random", "Reexport", "Requires", "SparseArrays", "Statistics", "TimerOutputs"]
-git-tree-sha1 = "66dbcc0d8e9470358d57aa52dbe74f97bab31a7f"
+git-tree-sha1 = "3d247bd2260259f86853e52584169ddeca648ebc"
 uuid = "052768ef-5323-5732-b1bb-66c8b64840ba"
-version = "1.2.0"
+version = "0.1.0"
 
 [[Cassette]]
 git-tree-sha1 = "ff6f5109371926beb67ec3101be17d2c211e497d"
@@ -93,9 +93,9 @@ version = "0.7.7"
 
 [[ChainRulesCore]]
 deps = ["MuladdMacro"]
-git-tree-sha1 = "971b03f25bdf2acab79f1c51afc717f9dccf43c2"
+git-tree-sha1 = "c384e0e4fe6bfeb6bec0d41f71cc5e391cd110ba"
 uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
-version = "0.9.5"
+version = "0.8.1"
 
 [[CodeTracking]]
 deps = ["InteractiveUtils", "UUIDs"]
@@ -168,18 +168,6 @@ deps = ["Markdown", "Test"]
 git-tree-sha1 = "f0464e499ab9973b43c20f8216d088b61fda80c6"
 uuid = "adafc99b-e345-5852-983c-f28acb93d879"
 version = "0.2.2"
-
-[[Cubature]]
-deps = ["Cubature_jll"]
-git-tree-sha1 = "c3f4b3b38abd7b5c3ccf59adab2568212e7530d3"
-uuid = "667455a9-e2ce-5579-9412-b964f529a492"
-version = "1.5.1"
-
-[[Cubature_jll]]
-deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "152046dc3435d62d8ecab5f0dec9c21b64bb6238"
-uuid = "7bc98958-0e37-5d67-a6ac-a3a19030071a"
-version = "1.0.3+0"
 
 [[DataAPI]]
 git-tree-sha1 = "176e23402d80e7743fc26c19c681bfb11246af32"
@@ -353,15 +341,15 @@ uuid = "9fa8497b-333b-5362-9e8d-4d0656e87820"
 
 [[GPUArrays]]
 deps = ["AbstractFFTs", "Adapt", "LinearAlgebra", "Printf", "Random", "Serialization"]
-git-tree-sha1 = "0aaa4ff7001086e190a00180495b93b00df8bb43"
+git-tree-sha1 = "d887693eb1bd5e1fd573262a978745481895ec7d"
 uuid = "0c68f7d7-f131-5f86-a1c3-88cf8149b2d7"
-version = "4.0.1"
+version = "3.4.1"
 
 [[GPUCompiler]]
 deps = ["DataStructures", "InteractiveUtils", "LLVM", "Libdl", "TimerOutputs", "UUIDs"]
-git-tree-sha1 = "d6db068d8373bb45ac17e14744cc1d3681d0dbc7"
+git-tree-sha1 = "7ed10d9c41b7bb392f3e645233e45ecf93217130"
 uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
-version = "0.5.5"
+version = "0.3.0"
 
 [[GR]]
 deps = ["Base64", "DelimitedFiles", "HTTP", "JSON", "LinearAlgebra", "Printf", "Random", "Serialization", "Sockets", "Test", "UUIDs"]
@@ -492,9 +480,9 @@ version = "3.100.0+1"
 
 [[LLVM]]
 deps = ["CEnum", "Libdl", "Printf", "Unicode"]
-git-tree-sha1 = "a662366a5d485dee882077e8da3e1a95a86d097f"
+git-tree-sha1 = "d9c6e1efcaa6c2fcd043da812a62b3e489a109a3"
 uuid = "929cbde3-209d-540e-8aea-75f648917ca0"
-version = "2.0.0"
+version = "1.7.0"
 
 [[LRUCache]]
 git-tree-sha1 = "788ab2f8a434a63f065ad962368a8cd0f8660a21"
@@ -674,17 +662,11 @@ git-tree-sha1 = "ea172c86745810136d744fc67650d2e2de669c4f"
 uuid = "2774e3e8-f4cf-5e23-947b-6d7e65073b56"
 version = "4.4.0"
 
-[[NNPACK_jll]]
-deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "c3d1a616362645754b18e12dbba96ec311b0867f"
-uuid = "a6bfbf70-4841-5cb9-aa18-3a8ad3c413ee"
-version = "2018.6.22+0"
-
 [[NNlib]]
-deps = ["Libdl", "LinearAlgebra", "LoopVectorization", "NNPACK_jll", "Pkg", "Requires", "Statistics"]
-git-tree-sha1 = "1d8128735fdf3ab1643dd8bc9499e4b34ccb718d"
+deps = ["BinaryProvider", "Libdl", "LinearAlgebra", "Requires", "Statistics"]
+git-tree-sha1 = "d9f196d911f55aeaff11b11f681b135980783824"
 uuid = "872c559c-99b0-510c-b3b7-b6c96a88d5cd"
-version = "0.7.3"
+version = "0.6.6"
 
 [[NaNMath]]
 git-tree-sha1 = "c84c576296d0e2fbb3fc134d3e09086b3ea617cd"
