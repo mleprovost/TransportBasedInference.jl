@@ -117,13 +117,15 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 =
 
     # # Optimize constant
     # coeff0 = getcoeff(C)
-    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C, X)), coeff0,
+    # precond = zeros(ncoeff(C), ncoeff(C))
+    # precond!(precond, coeff0, S, C, X)
+    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
     #       Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
     #
     # setcoeff!(C, Optim.minimizer(res))
     #
     # # Compute initial loss on training set
-    # push!(train_error, negative_log_likelihood!(S, C, X)(0.0, nothing, getcoeff(C)))
+    # push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
     # # push!(valid_error, negative_log_likelihood!(Svalid, C, Xvalid)(0.0, nothing, getcoeff(C)))
     #
     # if verbose == true

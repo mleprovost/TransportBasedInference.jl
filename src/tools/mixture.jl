@@ -1,11 +1,12 @@
 
-export Mixture, rand, logpdf
-
-import Base: rand
-import Distributions: logpdf
+export Mixture, sample_mixture, log_pdf_mixture
 
 
-struct Mixture{Nψ, Nx}
+struct Mixture
+    # Number of Gaussian kernels
+    Nψ::Int64
+    # Dimension of the space
+    Nx::Int64
     # Array of Nψ dimensinos
     dist::Array{MvNormal,1}
 
@@ -36,12 +37,12 @@ function Mixture(Nx::Int64)
         push!(dist, MvNormal(loc[i,:], 1.0))
     end
 
-    return Mixture{Nψ, Nx}(dist, w)
+    return Mixture(Nψ, Nx, dist, w)
 end
 
 
-function rand(M::Mixture{Nψ, Nx}, Ne::Int64) where {Nψ, Nx}
-    out = zeros(Nx, Ne)
+function sample_mixture(M::Mixture, Ne::Int64)
+    out = zeros(M.Nx, Ne)
     @inbounds for (i,di) in enumerate(M.dist)
         out += M.w[i]*rand(di,Ne)
     end
@@ -49,13 +50,14 @@ function rand(M::Mixture{Nψ, Nx}, Ne::Int64) where {Nψ, Nx}
 end
 
 
-function logpdf(M::Mixture{Nψ, Nx}, X::Array{Float64,2}) where {Nψ, Nx}
+function log_pdf_mixture(M::Mixture, X::Array{Float64,2})
     NxX, Ne = size(X)
-    @assert NxX == Nx "Dimension of the sample is wrong"
-    pdfX = zeros(Ne)
+    @assert NxX == M.Nx "Dimension of the sample is wrong"
+    logpdfX = zeros(Ne)
     @inbounds for (i,di) in enumerate(M.dist)
-        pdfX += M.w[i]*pdf(di, X)
+        logpdfX += M.w[i]*pdf(di, X)
     end
+    @. logpdfX = log(logpdfX)
 
-    return log.(pdfX)
+    return logpdfX
 end

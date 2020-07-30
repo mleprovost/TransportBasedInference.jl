@@ -28,6 +28,8 @@ include("tools/clenshaw_curtis.jl")
 include("tools/adaptiveCC.jl")
 # Tools to apply a linear transformation
 include("tools/transform.jl")
+# Tools for Banana distribution
+include("tools/banana.jl")
 # Tools for mixture of Gaussian distributions
 include("tools/mixture.jl")
 
