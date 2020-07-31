@@ -3,7 +3,8 @@ export greedyfit, update_component, update_coeffs
 
 # function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
-function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
+function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant::Bool = false,
+                   maxpatience::Int64 = 10^5, verbose::Bool = true)
 
     best_valid_error = Inf
     patience = 0
@@ -27,26 +28,51 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; maxpatience:
         string(train_error[end])*", Validation error: "*string(valid_error[end]))
     end
 
-    # # Optimize constant
-    # coeff0 = getcoeff(C)
-    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood!(S, C, X)), coeff0, Optim.BFGS())
-    #
-    # setcoeff!(C, Optim.minimizer(res))
-    #
-    # # Compute initial loss on training set
-    # push!(train_error, negative_log_likelihood!(S, C, X)(0.0, nothing, getcoeff(C)))
-    # push!(valid_error, negative_log_likelihood!(Svalid, C, Xvalid)(0.0, nothing, getcoeff(C)))
-    #
-    # if verbose == true
-    #     println(string(ncoeff(C))*" terms - Training error: "*
-    #     string(train_error[end])*", Validation error: "*string(valid_error[end]))
-    # end
+    # Remove or not the constant i.e the multi-index [0 0 0], and
+    # optimize for the first non-zero index
+    if withconstant == false
+        # Compute the reduced margin
+        reduced_margin = getreducedmargin(getidx(C))
+        f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        C = MapComponent(f; α = 1e-6)
+        S = Storage(C.I.f, X)
+        coeff0 = getcoeff(C)
+        dJ = zero(coeff0)
+
+        negative_log_likelihood!(nothing, dJ, coeff0, S, C, X)
+        _, opt_dJ_coeff_idx = findmax(abs.(dJ))
+
+        opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
+
+        f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
+        C = MapComponent(f; α = 1e-6)
+        S = Storage(C.I.f, X)
+        Svalid = Storage(C.I.f, Xvalid)
+
+    end
+
+    # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
+    coeff0 = getcoeff(C)
+    precond = zeros(ncoeff(C), ncoeff(C))
+    precond!(precond, coeff0, S, C, X)
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0, Optim.BFGS())
+
+    setcoeff!(C, Optim.minimizer(res))
+
+    # Compute initial loss on training set
+    push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+    push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+
+    if verbose == true
+        println(string(ncoeff(C))*" terms - Training error: "*
+        string(train_error[end])*", Validation error: "*string(valid_error[end]))
+    end
 
 
     # Compute the reduced margin
     reduced_margin = getreducedmargin(getidx(C))
 
-    while ncoeff(C) <= maxterms-1
+    while  ncoeff(C) <= maxterms-1
         idx_new, reduced_margin = update_component(C, X, reduced_margin, S)
 
         # Update storage with the new feature
@@ -95,8 +121,9 @@ end
 
 # function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
-function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
+function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
+    @assert maxterms >=1 "maxterms should be >= 1"
     best_valid_error = Inf
     patience = 0
 
@@ -115,23 +142,40 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 =
         println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
     end
 
-    # # Optimize constant
-    # coeff0 = getcoeff(C)
-    # precond = zeros(ncoeff(C), ncoeff(C))
-    # precond!(precond, coeff0, S, C, X)
-    # res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-    #       Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
-    #
-    # setcoeff!(C, Optim.minimizer(res))
-    #
-    # # Compute initial loss on training set
-    # push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-    # # push!(valid_error, negative_log_likelihood!(Svalid, C, Xvalid)(0.0, nothing, getcoeff(C)))
-    #
-    # if verbose == true
-    #     println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
-    # end
+    # Remove or not the constant i.e the multi-index [0 0 0]
+    if withconstant == false
+        # Compute the reduced margin
+        reduced_margin = getreducedmargin(getidx(C))
+        f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        C = MapComponent(f; α = 1e-6)
+        S = Storage(C.I.f, X)
+        coeff0 = getcoeff(C)
+        dJ = zero(coeff0)
 
+        negative_log_likelihood!(nothing, dJ, coeff0, S, C, X)
+        _, opt_dJ_coeff_idx = findmax(abs.(dJ))
+
+        opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
+
+        f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
+        C = MapComponent(f; α = 1e-6)
+        S = Storage(C.I.f, X)
+    end
+
+    coeff0 = getcoeff(C)
+    precond = zeros(ncoeff(C), ncoeff(C))
+    precond!(precond, coeff0, S, C, X)
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+          Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+
+    setcoeff!(C, Optim.minimizer(res))
+
+    # Compute initial loss on training set
+    push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+
+    if verbose == true
+        println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
+    end
 
     # Compute the reduced margin
     reduced_margin = getreducedmargin(getidx(C))
@@ -161,19 +205,6 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; maxpatience::Int64 =
         if verbose == true
             println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
         end
-
-        # # Update patience
-        # if valid_error[end] >= best_valid_error
-        #     patience +=1
-        # else
-        #     best_valid_error = deepcopy(valid_error[end])
-        #     patience = 0
-        # end
-        #
-        # # Check if patience exceeded maximum patience
-        # if patience >= maxpatience
-        #     break
-        # end
     end
 
     return C, train_error
@@ -184,13 +215,14 @@ end
 function update_component(C::MapComponent, X, reduced_margin::Array{Int64,2}, S::Storage)
     m = C.m
     Nψ = C.Nψ
-
     idx_old = getidx(C)
+
     idx_new = vcat(idx_old, reduced_margin)
 
     # Define updated map
     f_new = ExpandedFunction(C.I.f.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
     C_new = MapComponent(f_new; α = 1e-6)
+
 
     # Set coefficients based on previous optimal solution
     coeff_new, coeff_idx_added, idx_added = update_coeffs(C, C_new)

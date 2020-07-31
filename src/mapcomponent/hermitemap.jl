@@ -118,8 +118,9 @@ log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = log_pdf(M, X, 1:M.Nx; 
 ## Optimization function
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
-                  verbose::Bool = false, apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
+                  withconstant::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
          Nx = M.Nx
+
          @assert size(X,1) == Nx "Error dimension of the sample"
 
          # We can apply the rescaling to all the components once
@@ -131,14 +132,16 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
          # We can skip the evaluation of the map on the observations components
          @inbounds for i=start:Nx
                  Xi = view(X,1:i,:)
-                 M.C[i], _ = optimize(M.C[i], Xi, maxterms; verbose = verbose)
+                 M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
+                                      verbose = verbose)
          end
 
          elseif typeof(P) <: Thread
          # We can skip the evaluation of the map on the observations components
          @inbounds Threads.@threads for i=start:Nx
                  Xi = view(X,1:i,:)
-                 M.C[i], _ = optimize(M.C[i], Xi, maxterms; verbose = verbose)
+                 M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
+                                      verbose = verbose)
          end
          end
 

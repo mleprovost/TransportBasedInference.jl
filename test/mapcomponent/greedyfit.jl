@@ -218,7 +218,77 @@ end
     @test idx_new == updatereducedmargin(getidx(C_old), reduced_margin0, 1)[1]
 end
 
-@testset "Test greedy optimization" begin
+@testset "Test greedy optimization on training set only " begin
+
+Nx = 2
+m = 15
+
+X = Matrix([0.267333   1.43021;
+          0.364979   0.607224;
+         -1.23693    0.249277;
+         -2.0526     0.915629;
+         -0.182465   0.415874;
+          0.412907   1.01672;
+          1.41332   -0.918205;
+          0.766647  -1.00445]')
+L = LinearTransform(X)
+# transform!(L, X)
+C_new, error = greedyfit(m, Nx, X, 6; withconstant = false, verbose = false)
+
+@test norm(error -  [1.317277788545110;
+                     1.240470006245235;
+                     1.239755181933741;
+                     1.191998917636778;
+                     0.989821300578785;
+                     0.956587763340890;
+                     0.848999846549310])<1e-4
+
+
+@test norm(getcoeff(C_new) - [ 2.758739330966050;
+                               4.992420909046952;
+                               0.691952693078807;
+                               5.179459837781270;
+                              -3.837569097976292;
+                               1.660285776681347])<1e-4
+
+@test norm(getidx(C_new) -   [0  1;
+                              0  2;
+                              0  3;
+                              0  4;
+                              1  0;
+                              2  0])<1e-10
+end
+
+@testset "Test greedy optimization on train dataset" begin
+
+Nx = 2
+m = 10
+Ne = 10^3
+X = randn(2, Ne).^2 + 0.1*randn(2, Ne)
+L = LinearTransform(X)
+transform!(L, X)
+
+
+
+C_new, error = greedyfit(m, Nx, X, 10; withconstant = true, verbose = false);
+
+train_error = error
+
+C_test = deepcopy(C_new)
+setcoeff!(C_test, zero(getcoeff(C_new)));
+
+S_test = Storage(C_test.I.f, X)
+coeff_test = getcoeff(C_test)
+
+res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S_test, C_test, X)), coeff_test, Optim.BFGS())
+
+@test norm(getcoeff(C_new)-Optim.minimizer(res))<5e-5
+
+@test norm(train_error[end] - res.minimum)<5e-5
+
+end
+
+@testset "Test greedy optimization on train/valid dataset" begin
 
 Nx = 2
 m = 10
@@ -231,7 +301,7 @@ X_train = X[:,1:800]
 X_valid = X[:,801:1000]
 
 
-C_new, error = greedyfit(m, Nx, X_train, X_valid, 10; verbose = false);
+C_new, error = greedyfit(m, Nx, X_train, X_valid, 10; withconstant = true, verbose = false);
 
 train_error, valid_error = error
 

@@ -1,9 +1,18 @@
 export getreducedmargin, updatereducedmargin
 
-function getreducedmargin(idx::Array{Int64,2})
+function getreducedmargin(midx::Array{Int64,2})
 
-    if isempty(idx)
+    if isempty(midx)
         return zeros(Int64,0,0)
+    end
+
+    n, d = size(midx)
+
+    # add [0 0 0] to copute the reduced margin
+    if !any(zeros(Int64,d) in eachslice(midx; dims = 1))
+            idx = vcat(zeros(Int64,1,d), midx)
+    else
+            idx = midx
     end
 
     n, d = size(idx)
@@ -52,6 +61,8 @@ function getreducedmargin(idx::Array{Int64,2})
     ok = reshape(ok, (cardinal, d))
 
     keep = Bool[all(x) for x in eachslice(ok; dims = 1)]
+
+
 
     return margin[keep,:]
 end

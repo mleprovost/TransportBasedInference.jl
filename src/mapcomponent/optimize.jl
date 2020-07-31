@@ -1,7 +1,8 @@
 export optimize
 
 
-function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; verbose::Bool = false)
+function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; withconstant::Bool = false,
+                  maxpatience::Int64 = 10^5, verbose::Bool = false)
 
     m = C.m
     Nx = C.Nx
@@ -22,7 +23,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; v
         error = res.minimum
 
     elseif typeof(maxterms) <: Int64
-        C, error =  greedyfit(m, Nx, X, maxterms; verbose = verbose)
+        C, error =  greedyfit(m, Nx, X, maxterms; withconstant = withconstant,
+                              maxpatience = maxpatience, verbose = verbose)
 
     elseif maxterms ∈ ("kfold", "Kfold", "Kfolds")
         # Define cross-validation splits of data
@@ -30,15 +32,16 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; v
         folds = kfolds(1:size(X,2), k = n_folds)
 
         # Run greedy approximation
-        max_iter = ceil(Int64, sqrt(size(X,2)))
+        max_iter = min(m-1, ceil(Int64, sqrt(size(X,2))))
 
-        valid_error = zeros(max_iter, n_folds)
+        valid_error = zeros(max_iter+1, n_folds)
         @inbounds for i=1:n_folds
             idx_train, idx_valid = folds[i]
+            
+            C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
+                                 withconstant = withconstant, verbose  = verbose)
 
-            C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; verbose  = verbose)
-
-            # error[2] contains the histroy of the validation error
+            # error[2] contains the history of the validation error
             valid_error[:,i] .= deepcopy(error[2])
         end
         # Find optimal numbers of terms
@@ -58,10 +61,10 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; v
         maxpatience = 20
 
         # Run greedy approximation
-        max_iter =  min(19, ceil(Int64, sqrt(size(X,2))))
+        max_iter =  min(m, ceil(Int64, sqrt(size(X,2))))
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
-                                       maxpatience = maxpatience, verbose  = verbose)
+                             withconstant = withconstant, maxpatience = maxpatience, verbose  = verbose)
     else
         error("Argument max_terms is not recognized")
     end
@@ -69,11 +72,13 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; v
 end
 
 
-function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String}; verbose::Bool = false)
+function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
+                  withconstant::Bool = false, maxpatience::Int64=20, verbose::Bool = false)
 
     transform!(L.L, X)
     C = L.C
-    C_opt, error = optimize(C, X, maxterms; verbose = verbose)
+    C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, maxpatience = maxpatience,
+                            verbose = verbose)
 
     itransform!(L.L, X)
 
