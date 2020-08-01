@@ -40,16 +40,25 @@ function transform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Float
     copy!(Xout, Xin)
     Xout .-= L.μ
 
-    ldiv!(Xout, L.L, Xout)
+    ldiv!(L.L, Xout)
     # return Xout
 end
 
-
+function transform!(L::LinearTransform, X::Array{Float64,2}, idx::Union{UnitRange{Int64}, Array{Int64,1}})
+    @assert size(X,1) == length(idx) "Input dimension is incorrect"
+    X .-= view(L.μ,idx)
+    if typeof(L.L)<:Diagonal
+        ldiv!(Diagonal(view(L.L.diag,idx)), X)
+    else
+        error("Not yet implemented")
+    end
+    return X
+end
 
 function transform!(L::LinearTransform, X::Array{Float64,2})
     @assert size(X,1) == L.Nx "Input dimension is incorrect"
     X .-= L.μ
-    ldiv!(X, L.L, X)
+    ldiv!(L.L, X)
     return X
 end
 
@@ -65,6 +74,21 @@ function itransform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Floa
     Xout .+= L.μ
 
     return Xout
+end
+
+function itransform!(L::LinearTransform, X::Array{Float64,2}, idx::Union{UnitRange{Int64}, Array{Int64,1}})
+    @assert size(X,1) == L.Nx "Input dimension is incorrect"
+
+    if typeof(L.L)<:Diagonal
+        mul!(X, Diagonal(view(L.L.diag,idx)), X)
+    else
+        error("Not yet implemented")
+    end
+
+    # mul!(X, L.L, X)
+    X .+= L.μ
+
+    return X
 end
 
 function itransform!(L::LinearTransform, X::Array{Float64,2})

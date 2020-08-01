@@ -5,8 +5,8 @@ export   functionalf!,
 
 function functionalf!(F, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction)
     function integrand!(v::Vector{Float64}, t::Float64)
-        # repeated_grad_xk_basis(cacheF, R.f.f,  t*xk)
-        cache .= repeated_grad_xk_basis(R.f.f,  t*xk)
+        repeated_grad_xk_basis!(cache, R.f.f,  t*xk)
+        # cache .= repeated_grad_xk_basis(R.f.f,  t*xk)
         @avx @. v = (cache .* ψoff) *ˡ R.f.f.coeff
         evaluate!(v, R.g, v)
         # v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
@@ -22,7 +22,8 @@ functionalf!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction) =
     (F, xk) -> functionalf!(F, xk, cache, ψoff, output, R)
 
 function functionalg!(J, xk, cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction)
-    cache .= repeated_grad_xk_basis(R.f.f,  xk)
+    # cache .= repeated_grad_xk_basis(R.f.f,  xk)
+    repeated_grad_xk_basis!(cache, R.f.f,  xk)
     @avx @. J.diag = (cache .* ψoff) *ˡ R.f.f.coeff
     evaluate!(J.diag, R.g, J.diag)
     nothing
@@ -34,6 +35,7 @@ functionalg!(cache, ψoff, output::Array{Float64,1}, R::IntegratedFunction) =
 
 
 # The state is modified in-place
+# function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction, S::Storage)
 function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction, S::Storage)
     Nψ = R.Nψ
     NxX, Ne = size(X)
@@ -74,6 +76,8 @@ function inverse!(X::Array{Float64,2}, F, L::LinMapComponent, S::Storage)
     inverse!(X, F, L.C, S)
     itransform!(L.L, X)
 end
+
+
 
 
 
