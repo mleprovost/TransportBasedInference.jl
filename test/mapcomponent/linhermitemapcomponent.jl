@@ -4,7 +4,7 @@
     Nx = 2
     Ne = 500
     X = randn(Nx, Ne)
-    B = MultiBasis(CstProHermite(6; scaled =true), Nx)
+    B = MultiBasis(CstProHermite(6), Nx)
 
     idx = [0 0; 0 1; 1 0; 1 1; 1 2]
     truncidx = idx[1:2:end,:]

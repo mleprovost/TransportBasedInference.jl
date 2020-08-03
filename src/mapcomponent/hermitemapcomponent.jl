@@ -30,7 +30,7 @@ end
 function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    B = MultiBasis(CstProHermite(m-2; scaled =true), Nx)
+    B = MultiBasis(CstProHermite(m-2), Nx)
 
     return MapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
 end
@@ -44,7 +44,7 @@ function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     Nψ = 1
 
     # m is the dimension of the basis
-    B = MultiBasis(CstProHermite(m-2; scaled =true), Nx)
+    B = MultiBasis(CstProHermite(m-2), Nx)
     idx = zeros(Int64, Nψ, Nx)
     coeff = zeros(Nψ)
 

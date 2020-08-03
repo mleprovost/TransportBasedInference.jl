@@ -1,4 +1,4 @@
-export AbstractPhyHermite, AbstractProHermite
+export AbstractPhyHermite, AbstractProHermite, CstMaxDegree
 
 struct AbstractPhyHermite <: ParamFcn
     P::ImmutablePolynomial
@@ -14,3 +14,6 @@ struct AbstractProHermite <: ParamFcn
 end
 
 (P::AbstractProHermite)(x) = P.P(x)*exp(-x^2/4)
+
+
+const CstMaxDegree = 30

@@ -89,9 +89,9 @@ end
     folds = kfolds(1:size(X,2), k = n_folds)
 
     # Run greedy approximation
-    max_iter = ceil(Int64, sqrt(size(X,2)))
+    max_iter = min(m-1,ceil(Int64, sqrt(size(X,2))))
 
-    valid_error = zeros(max_iter, n_folds)
+    valid_error = zeros(max_iter+1, n_folds)
     @inbounds for i=1:n_folds
         idx_train, idx_valid = folds[i]
         @test size(idx_valid,1) == 40
@@ -99,13 +99,13 @@ end
         @test size(idx_train,1) < size(X,2)
         C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; verbose  = false)
 
-        # error[2] contains the histroy of the validation error
+        # error[2] contains the history of the validation error
         valid_error[:,i] .= deepcopy(error[2])
     end
 
     mean_valid_error = mean(valid_error, dims  = 2)[:,1]
 
-    @test size(mean_valid_error,1) == max_iter
+    @test size(mean_valid_error,1) == max_iter+1
 
     value, opt_nterms = findmin(mean_valid_error)
 

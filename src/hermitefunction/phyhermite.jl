@@ -29,8 +29,8 @@ degree(P::PhyHermite) = P.m
 
 (P::PhyHermite)(x) = P.Poly.P(x)*exp(-x^2/2)
 
-const FamilyPhyHermite = map(i->PhyHermite(i),0:30)
-const FamilyScaledPhyHermite = map(i->PhyHermite(i; scaled = true),0:30)
+const FamilyPhyHermite = ntuple(i->PhyHermite(i-1),CstMaxDegree+1)
+const FamilyScaledPhyHermite = ntuple(i->PhyHermite(i-1; scaled = true),CstMaxDegree+1)
 
 
 # Store P′n - Pn * X with Pn the n-th Physicist Hermite Polynomial
@@ -49,8 +49,8 @@ function DPhyPolyHermite(m::Int64; scaled::Bool)
 end
 
 
-const FamilyDPhyPolyHermite = map(i->AbstractPhyHermite(DPhyPolyHermite(i; scaled = false), false), 0:30)
-const FamilyDScaledPhyPolyHermite = map(i->AbstractPhyHermite(DPhyPolyHermite(i; scaled = true), true), 0:30)
+const FamilyDPhyPolyHermite = ntuple(i->AbstractPhyHermite(DPhyPolyHermite(i-1; scaled = false), false), CstMaxDegree+1)
+const FamilyDScaledPhyPolyHermite = ntuple(i->AbstractPhyHermite(DPhyPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
 # Store P″n - 2 P′n * X  + Pn * (X^2 - 1) with Pn the n-th Physicist Hermite Polynomial
@@ -71,8 +71,8 @@ function D2PhyPolyHermite(m::Int64; scaled::Bool)
     end
 end
 
-const FamilyD2PhyPolyHermite = map(i->AbstractPhyHermite(D2PhyPolyHermite(i; scaled = false), false), 0:30)
-const FamilyD2ScaledPhyPolyHermite = map(i->AbstractPhyHermite(D2PhyPolyHermite(i; scaled = true), true), 0:30)
+const FamilyD2PhyPolyHermite = ntuple(i->AbstractPhyHermite(D2PhyPolyHermite(i-1; scaled = false), false), CstMaxDegree+1)
+const FamilyD2ScaledPhyPolyHermite = ntuple(i->AbstractPhyHermite(D2PhyPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
 

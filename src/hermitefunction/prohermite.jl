@@ -28,8 +28,8 @@ degree(P::ProHermite) = P.m
 
 (P::ProHermite)(x) = P.Poly.P(x)*exp(-x^2/4)
 
-const FamilyProHermite = map(i->ProHermite(i),0:30)
-const FamilyScaledProHermite = map(i->ProHermite(i; scaled = true),0:30)
+const FamilyProHermite = ntuple(i->ProHermite(i-1),CstMaxDegree+1)
+const FamilyScaledProHermite = ntuple(i->ProHermite(i-1; scaled = true),CstMaxDegree+1)
 
 # Store Pe′_n - Pe_n * X/2 with Pe_n the n-th Probabilistic Hermite Polynomial
 
@@ -47,8 +47,8 @@ function DProPolyHermite(m::Int64; scaled::Bool)
 end
 
 
-const FamilyDProPolyHermite = map(i->AbstractProHermite(DProPolyHermite(i; scaled = false), false), 0:30)
-const FamilyDScaledProPolyHermite = map(i->AbstractProHermite(DProPolyHermite(i; scaled = true), true), 0:30)
+const FamilyDProPolyHermite = ntuple(i->AbstractProHermite(DProPolyHermite(i-1; scaled = false), false), CstMaxDegree+1)
+const FamilyDScaledProPolyHermite = ntuple(i->AbstractProHermite(DProPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
 # Store Pe″n -  Pe′n * X  + Pn * (X^2/2 - 1/2) with Pe_n the n-th Probabilistic Hermite Polynomial
@@ -69,8 +69,8 @@ function D2ProPolyHermite(m::Int64; scaled::Bool)
     end
 end
 
-const FamilyD2ProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = false), false), 0:30)
-const FamilyD2ScaledProPolyHermite = map(i->AbstractProHermite(D2ProPolyHermite(i; scaled = true), true), 0:30)
+const FamilyD2ProPolyHermite = ntuple(i->AbstractProHermite(D2ProPolyHermite(i-1; scaled = false), false), CstMaxDegree+1)
+const FamilyD2ScaledProPolyHermite = ntuple(i->AbstractProHermite(D2ProPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
 function derivative!(dF, F::ProHermite, k::Int64, x)

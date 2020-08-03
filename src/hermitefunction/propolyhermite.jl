@@ -65,7 +65,7 @@ function prohermite_coeffmatrix(m::Int64)
 end
 
 
-const ProPolyH = prohermite_coeffmatrix(30)
+const ProPolyH = prohermite_coeffmatrix(CstMaxDegree)
 
 function ProPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
@@ -79,8 +79,8 @@ end
 
 (P::ProPolyHermite)(x) = P.P(x)
 
-const FamilyProPolyHermite = map(i->ProPolyHermite(i),0:30)
-const FamilyScaledProPolyHermite = map(i->ProPolyHermite(i; scaled = true),0:30)
+const FamilyProPolyHermite = ntuple(i->ProPolyHermite(i-1), CstMaxDegree+1)
+const FamilyScaledProPolyHermite = ntuple(i->ProPolyHermite(i-1; scaled = true), CstMaxDegree+1)
 
 
 # Compute the k-th derivative of a physicist Hermite polynomial according to

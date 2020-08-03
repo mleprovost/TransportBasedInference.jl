@@ -27,7 +27,7 @@ end
 function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, α::Float64 = 1e-6)
         L = LinearTransform(X; diag = diag)
 
-        B = CstProHermite(m-2; scaled =true)
+        B = CstProHermite(m-2)
         Nx = size(X,1)
         Nψ = 1
         coeff = zeros(Nψ)
@@ -153,39 +153,37 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
          return M
 end
 
-# F is an array than contians the evaluation of the Hermite Map for each prior star
-function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, P::Parallel = serial)
-         Nx = M.Nx
-         Ny, NeY = size(Ystar)
-         NxX, Ne = size(X)
-         @assert NxX == Nx
-         @assert NeY == Ne
-         @assert 1 <= Ny < Nx
-         @assert size(F, 2) == Ne
-         @assert size(F, 2) == Ne
+function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
-         # We can apply the rescaling to all the components once
-         if apply_rescaling == true
-                 transform!(M.L, X)
-                 transform!(M.L, Ystar)
-         end
+    Nx = M.Nx
+    NxX, Ne = size(X)
 
-         # if typeof(P) <: Serial
-         # We can skip the evaluation of the map on the observations componentd
-         @inbounds for k=Ny+1:Nx
-                 Xk = view(X,1:k,:)
-                 col = view(out,k,:)
-                 evaluate!(col, M.C[k], Xk)
-         end
-         # elseif typeof(P) <: Thread
-         #
-         #
-         # end
+    Ny, NeY = size(Ystar)
+    @assert NxX == Nx
+    @assert Ne == NeY
+    @assert 1 <= Ny < Nx
+    @assert size(F) == (Nx, Ne)
 
-         if apply_rescaling == true
-                 itransform!(M.L, X)
-                 itransform!(M.L, Ystar)
-         end
+    @view(X[1:Ny,:]) .= Ystar
 
-         return out
- end
+    # We can apply the rescaling to all the components once
+    if apply_rescaling == true
+            transform!(M.L, X)
+    end
+
+    # We can skip the evaluation of the map on the observations componentd
+    @inbounds for k=start:Nx
+            Fk = view(F,k,:)
+            Xk = view(X,1:k,:)
+            Sk = Storage(M[k].I.f, Xk)
+            inverse!(Xk, Fk, M[k], Sk)
+    end
+
+    # Clean a bit the solution with a Newton method
+
+
+
+    if apply_rescaling == true
+           itransform!(M.L, X)
+    end
+end

@@ -38,9 +38,10 @@ include("mapcomponent/rectifier.jl")
 
 
 # Hermite Polynomials
+include("hermitefunction/polyhermite.jl")
 include("hermitefunction/phypolyhermite.jl")
 include("hermitefunction/propolyhermite.jl")
-include("hermitefunction/polyhermite.jl")
+
 
 # Hermite Functions
 include("hermitefunction/hermite.jl")

@@ -11,7 +11,7 @@ using AdaptiveTransportMap: evaluate
 
     coeff = randn(Nψ)
 
-    B = MultiBasis(CstProHermite(6; scaled =true), Nx)
+    B = MultiBasis(CstProHermite(6), Nx)
     f = ParametricFunction(ExpandedFunction(B, idx, coeff))
     R = IntegratedFunction(f)
 
