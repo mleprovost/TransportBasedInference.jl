@@ -179,7 +179,13 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
             Sk = Storage(M[k].I.f, Xk)
             inverse!(Xk, Fk, M[k], Sk)
     end
+
+
+    if apply_rescaling == true
+            itransform!(M.L, X)
+    end
     # else P == thread
+    # There is a run-race problem, and the serial version is fast enough.
     #         nthread = Threads.nthreads()
     #         @time if nthread == 1
     #                 idx_folds = 1:Ne
@@ -199,8 +205,4 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
     #                 end
     #         end
     # end
-
-    if apply_rescaling == true
-           itransform!(M.L, X)
-    end
 end

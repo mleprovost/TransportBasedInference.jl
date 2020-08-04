@@ -36,6 +36,12 @@ git-tree-sha1 = "066d1e7a9eb4873660791db7f0d8c7902600b81c"
 uuid = "4fba245c-0d91-5ea0-9b3e-6abc04ee57a9"
 version = "2.11.0"
 
+[[ArrayLayouts]]
+deps = ["FillArrays", "LinearAlgebra"]
+git-tree-sha1 = "951c3fc1ff93497c88fb1dfa893f4de55d0b38e3"
+uuid = "4c555306-a7a7-4459-81d9-ec55ddd5c99a"
+version = "0.3.8"
+
 [[Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
@@ -109,6 +115,12 @@ git-tree-sha1 = "23d7324164c89638c18f6d7f90d972fa9c4fa9fb"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
 version = "0.7.7"
 
+[[ChainRules]]
+deps = ["ChainRulesCore", "LinearAlgebra", "Random", "Reexport", "Requires", "Statistics"]
+git-tree-sha1 = "f54401294c1ed68d7cc2a7ea280ec101bca722bc"
+uuid = "082447d4-558c-5d27-93f4-14fc19e9eca2"
+version = "0.7.12"
+
 [[ChainRulesCore]]
 deps = ["MuladdMacro"]
 git-tree-sha1 = "971b03f25bdf2acab79f1c51afc717f9dccf43c2"
@@ -144,6 +156,16 @@ deps = ["ColorTypes", "FixedPointNumbers", "InteractiveUtils", "Reexport"]
 git-tree-sha1 = "5639e44833cfcf78c6a73fbceb4da75611d312cd"
 uuid = "5ae59095-9a9b-59fe-a467-6f913c188581"
 version = "0.12.3"
+
+[[Combinatorics]]
+git-tree-sha1 = "08c8b6831dc00bfea825826be0bc8336fc369860"
+uuid = "861a8166-3701-5b0c-9a16-15d98fcdc6aa"
+version = "1.0.2"
+
+[[CommonSolve]]
+git-tree-sha1 = "68a0743f578349ada8bc911a5cbd5a2ef6ed6d1f"
+uuid = "38540f10-b2f7-11e9-35d8-d573e4eb0ff2"
+version = "0.2.0"
 
 [[CommonSubexpressions]]
 deps = ["MacroTools", "Test"]
@@ -186,6 +208,30 @@ deps = ["Markdown", "Test"]
 git-tree-sha1 = "f0464e499ab9973b43c20f8216d088b61fda80c6"
 uuid = "adafc99b-e345-5852-983c-f28acb93d879"
 version = "0.2.2"
+
+[[Cuba]]
+deps = ["Cuba_jll", "LinearAlgebra"]
+git-tree-sha1 = "2b928680d07cbc5e59ba3d42ffceecbbfc25faed"
+uuid = "8a292aeb-7a57-582c-b821-06e4c11590b1"
+version = "2.1.0"
+
+[[Cuba_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "7bbbbdf8c5a0a9b270a8d266f95e00738f3abcce"
+uuid = "3bed1096-5ab2-53a1-92e2-6c1cc31d0f4b"
+version = "4.2.0+1"
+
+[[Cubature]]
+deps = ["Cubature_jll"]
+git-tree-sha1 = "c3f4b3b38abd7b5c3ccf59adab2568212e7530d3"
+uuid = "667455a9-e2ce-5579-9412-b964f529a492"
+version = "1.5.1"
+
+[[Cubature_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "152046dc3435d62d8ecab5f0dec9c21b64bb6238"
+uuid = "7bc98958-0e37-5d67-a6ac-a3a19030071a"
+version = "1.0.3+0"
 
 [[DataAPI]]
 git-tree-sha1 = "176e23402d80e7743fc26c19c681bfb11246af32"
@@ -475,6 +521,12 @@ git-tree-sha1 = "585379917127918a66f0eedf950623b3d670f857"
 uuid = "27996c0f-39cd-5cc1-a27a-05f136f946b6"
 version = "1.0.3"
 
+[[HCubature]]
+deps = ["Combinatorics", "DataStructures", "LinearAlgebra", "QuadGK", "StaticArrays"]
+git-tree-sha1 = "fc4adde0a029bf69c0da3f7c25ca24b5e0e389ed"
+uuid = "19dc6840-f33b-545b-b366-655c7e3ffd49"
+version = "1.4.0"
+
 [[HDF5]]
 deps = ["Blosc", "HDF5_jll", "Libdl", "Mmap", "Random"]
 git-tree-sha1 = "8f096f0820429f7865f6ecf6857cd81028a26230"
@@ -504,6 +556,12 @@ deps = ["Base64", "Conda", "Dates", "InteractiveUtils", "JSON", "Markdown", "Mbe
 git-tree-sha1 = "ce336ee8224143d053bf053680bf9182adfd8638"
 uuid = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
 version = "1.21.2"
+
+[[IRTools]]
+deps = ["InteractiveUtils", "MacroTools", "Test"]
+git-tree-sha1 = "6875ae3cfcb9a50af80553d5cc825f406e8d13bc"
+uuid = "7869d1d1-7146-5819-86e3-90919afe41df"
+version = "0.4.0"
 
 [[IndirectArrays]]
 git-tree-sha1 = "c2a145a145dc03a7620af1444e0264ef907bd44f"
@@ -816,6 +874,12 @@ git-tree-sha1 = "916b850daad0d46b8c71f65f719c49957e9513ed"
 uuid = "78c3b35d-d492-501b-9361-3d52fe80e533"
 version = "0.7.1"
 
+[[MonteCarloIntegration]]
+deps = ["Distributions", "Random"]
+git-tree-sha1 = "949c9e22e12261a25b5b595aa8a946897841193f"
+uuid = "4886b29c-78c9-11e9-0a6e-41e1f4161f7b"
+version = "0.0.1"
+
 [[MuladdMacro]]
 git-tree-sha1 = "c6190f9a7fc5d9d5915ab29f2134421b12d24a68"
 uuid = "46d2c3a1-f734-5fdb-9937-b9b9aeba4221"
@@ -1010,6 +1074,12 @@ git-tree-sha1 = "0ab8a09d4478ebeb99a706ecbf8634a65077ccdc"
 uuid = "1fd47b50-473d-5c70-9696-f719f8f3bcdc"
 version = "2.4.0"
 
+[[Quadrature]]
+deps = ["CommonSolve", "DiffEqBase", "ForwardDiff", "HCubature", "MonteCarloIntegration", "QuadGK", "Reexport", "Requires", "ReverseDiff", "Zygote", "ZygoteRules"]
+git-tree-sha1 = "1607572a33725be6b7f40bdb4f54f46d9334ddf2"
+uuid = "67601950-bd08-11e9-3c89-fd23fb4432d2"
+version = "1.3.0"
+
 [[REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
@@ -1058,6 +1128,12 @@ deps = ["UUIDs"]
 git-tree-sha1 = "d37400976e98018ee840e0ca4f9d20baa231dc6b"
 uuid = "ae029012-a4dd-5104-9daa-d747884805df"
 version = "1.0.1"
+
+[[ReverseDiff]]
+deps = ["DiffResults", "DiffRules", "ForwardDiff", "FunctionWrappers", "LinearAlgebra", "MacroTools", "NaNMath", "Random", "SpecialFunctions", "StaticArrays", "Statistics"]
+git-tree-sha1 = "a3a2fbc8af1fc993aca48ba01484444bbeb39bf7"
+uuid = "37e2e3b7-166d-5795-8a7a-e32c996b4267"
+version = "1.4.2"
 
 [[Revise]]
 deps = ["CodeTracking", "Distributed", "FileWatching", "JuliaInterpreter", "LibGit2", "LoweredCodeUtils", "OrderedCollections", "Pkg", "REPL", "UUIDs", "Unicode"]
@@ -1462,6 +1538,12 @@ deps = ["Libdl", "Pkg"]
 git-tree-sha1 = "b25b0fb10176c42e9a5a20e1f40d570ac0288d4e"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
 version = "1.4.5+0"
+
+[[Zygote]]
+deps = ["AbstractFFTs", "ArrayLayouts", "ChainRules", "DiffRules", "Distributed", "FillArrays", "ForwardDiff", "Future", "IRTools", "InteractiveUtils", "LinearAlgebra", "LoopVectorization", "MacroTools", "NNlib", "NaNMath", "Random", "Requires", "SpecialFunctions", "Statistics", "ZygoteRules"]
+git-tree-sha1 = "0079d92995b0fbcffd5d475d49ec8ca49375c471"
+uuid = "e88e6eb3-aa80-5325-afca-941959d7151f"
+version = "0.5.4"
 
 [[ZygoteRules]]
 deps = ["MacroTools"]
