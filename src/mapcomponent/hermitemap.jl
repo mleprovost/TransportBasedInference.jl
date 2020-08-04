@@ -137,8 +137,9 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
          end
 
          elseif typeof(P) <: Thread
-         # We can skip the evaluation of the map on the observations components
-         @inbounds Threads.@threads for i=start:Nx
+         # We can skip the evaluation of the map on the observations components,
+         # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
+         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
                  Xi = view(X,1:i,:)
                  M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
                                       verbose = verbose)
@@ -170,18 +171,34 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
     if apply_rescaling == true
             transform!(M.L, X)
     end
-
-    # We can skip the evaluation of the map on the observations componentd
-    @inbounds for k=start:Nx
+    # if P == serial
+    # We can skip the evaluation of the map on the observations components
+    @inbounds for k = start:Nx
             Fk = view(F,k,:)
             Xk = view(X,1:k,:)
             Sk = Storage(M[k].I.f, Xk)
             inverse!(Xk, Fk, M[k], Sk)
     end
-
-    # Clean a bit the solution with a Newton method
-
-
+    # else P == thread
+    #         nthread = Threads.nthreads()
+    #         @time if nthread == 1
+    #                 idx_folds = 1:Ne
+    #         else
+    #                 q = div(Ne, nthread)
+    #                 r = rem(Ne, nthread)
+    #                 @assert Ne == q*nthread + r
+    #                 idx_folds = UnitRange{Int64}[i < nthread ? ((i-1)*q+1:i*q) : ((i-1)*q+1:i*q+r) for i in 1:nthread]
+    #         end
+    #
+    #         @inbounds Threads.@threads for idx in idx_folds
+    #                 for k = start:Nx
+    #                 Fk = view(F,k,idx)
+    #                 Xk = view(X,1:k,idx)
+    #                 Sk = Storage(M[k].I.f, Xk)
+    #                 inverse!(Xk, Fk, M[k], Sk)
+    #                 end
+    #         end
+    # end
 
     if apply_rescaling == true
            itransform!(M.L, X)

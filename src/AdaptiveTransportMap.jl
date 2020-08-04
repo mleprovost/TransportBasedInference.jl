@@ -19,7 +19,8 @@ using Optim
 using NLsolve
 # using SparseArrays
 using MLDataUtils
-using MLBase
+using MLDataPattern
+using ThreadPools
 
 include("tools/product.jl")
 include("tools/tools.jl")

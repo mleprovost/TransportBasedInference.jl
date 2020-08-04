@@ -1,4 +1,4 @@
-
+import AdaptiveTransportMap: optimize
 
 @testset "Test evaluation of HermiteMap" begin
 
@@ -385,4 +385,30 @@ end
     @test norm(getcoeff(M[3]) - [-0.067872411753720])<1e-4
 
 
+end
+
+
+@testset "Test inversion of the Hermite Map" begin
+
+    Nx = 100
+    Ny = 50
+    m = 20
+    Ne = 500
+    Xprior = randn(Nx, Ne).*randn(Nx, Ne)
+    Xpost = deepcopy(Xprior) .+ 0.2*randn(Nx, Ne)
+
+    M = HermiteMap(m, Xprior; diag = true)
+    Ystar = deepcopy(Xpost[1:Ny,:])# + 0.05*randn(Ny,Ne);
+
+    M = HermiteMap(m, Xprior)
+    optimize(M, Xprior, 5; withconstant = false, start = Ny+1)
+
+    F = evaluate(M, Xpost; start = Ny+1)
+    inverse!(F, M, Xprior, Ystar; start = Ny+1, P = serial)
+
+    @test norm(Xprior - Xprior_thread)<1e-8
+
+    @test norm(evaluate(M, Xprior; start = Ny+1)-evaluate(M, Xpost; start = Ny+1))/norm(evaluate(M, Xpost; start = Ny+1))<1e-8
+
+    @test norm(Xprior[Ny+1:end,:] - Xpost[Ny+1:end,:])/norm(Xpost[Ny+1:end,:])<1e-8
 end
