@@ -21,6 +21,7 @@ using NLsolve
 using MLDataUtils
 using MLDataPattern
 using ThreadPools
+using QRupdate
 
 include("tools/product.jl")
 include("tools/tools.jl")
@@ -35,7 +36,6 @@ include("tools/banana.jl")
 include("tools/mixture.jl")
 
 include("mapcomponent/rectifier.jl")
-
 
 
 # Hermite Polynomials
@@ -72,6 +72,7 @@ include("mapcomponent/linhermitemapcomponent.jl")
 # Tools for fast inversion
 include("mapcomponent/inverse.jl")
 # Tools for greedyfit and optimization
+include("mapcomponent/qraccelerated.jl")
 include("mapcomponent/precond.jl")
 include("mapcomponent/greedyfit.jl")
 include("mapcomponent/optimize.jl")
