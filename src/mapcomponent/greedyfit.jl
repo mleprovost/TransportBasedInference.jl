@@ -55,8 +55,9 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     coeff0 = getcoeff(C)
     precond = zeros(ncoeff(C), ncoeff(C))
     precond!(precond, coeff0, S, C, X)
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0, Optim.BFGS())
-
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+          Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+          
     setcoeff!(C, Optim.minimizer(res))
 
     # Compute initial loss on training set

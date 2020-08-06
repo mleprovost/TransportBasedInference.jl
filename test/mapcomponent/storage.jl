@@ -42,7 +42,7 @@
                              repeated_evaluate_basis(fp.f, zeros(Ne))) < 1e-8
     @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fp, ens.S) .*
                              repeated_grad_xk_basis(f, ens.S[end,:])) < 1e-8
-    @test norm(S.ψnorm - norm.(eachcol(evaluate_basis(fp.f, ens.S)))) < 1e-8
+    @test norm(S.ψnorm - 1/sqrt(Ne)*norm.(eachcol(evaluate_basis(fp.f, ens.S)))) < 1e-8
 
      #test cache dimension
     @test size(S.cache_dcψxdt) == (Ne, Nψ)
@@ -66,7 +66,7 @@
                              repeated_evaluate_basis(fnew.f, zeros(Ne))) < 1e-8
     @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fnew, ens.S) .*
                              repeated_grad_xk_basis(fnew.f, ens.S[end,:])) < 1e-8
-    @test norm(S.ψnorm - norm.(eachcol(evaluate_basis(fnew.f, ens.S)))) < 1e-8
+    @test norm(S.ψnorm - 1/sqrt(Ne)*norm.(eachcol(evaluate_basis(fnew.f, ens.S)))) < 1e-8
 
     newNψ = addednψ + Nψ
     #test cache dimension

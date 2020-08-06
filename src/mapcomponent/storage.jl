@@ -67,10 +67,11 @@ function Storage(f::ParametricFunction, X)#, hess::Bool = false)
         end
 
         ψnorm = zeros(Nψ)
-
         @inbounds for i=1:Nψ
             ψnorm[i] = norm(view(ψoffψd,:,i))
         end
+
+        rmul!(ψnorm, 1/sqrt(Ne))
 
         # Cache variable
         cache_dcψxdt = zero(ψoff)
@@ -127,6 +128,8 @@ function update_storage(S::Storage, X, addedidx::Array{Int64,2})
      for i=1:addedNψ
         addedψnorm[i] = norm(view(addedψoffψd,:,i))
     end
+
+    rmul!(addedψnorm, 1/sqrt(Ne))
 
     return Storage(S.m, newNψ, S.Nx, fnew, hcat(S.ψoff, addedψoff),
                                            hcat(S.ψoffψd, addedψoffψd),
