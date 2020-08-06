@@ -1,3 +1,4 @@
+
 @testset "Test storage and update_storage!" begin
 
 
@@ -34,10 +35,14 @@
 
     S = Storage(H.I.f, ens.S);
 
-    @test norm(S.ψoff - evaluate_offdiagbasis(fp, ens.S)) < 1e-8
-    @test norm(S.ψd - evaluate_diagbasis(fp, ens.S)) < 1e-8
-    @test norm(S.ψd0 - repeated_evaluate_basis(fp.f, zeros(Ne))) < 1e-8
-    @test norm(S.dψxd - repeated_grad_xk_basis(f, ens.S[end,:])) < 1e-8
+    @test norm(S.ψoff     -  evaluate_offdiagbasis(fp, ens.S)) < 1e-8
+    @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fp, ens.S) .*
+                             evaluate_diagbasis(fp, ens.S)) < 1e-8
+    @test norm(S.ψoffψd0  -  evaluate_offdiagbasis(fp, ens.S) .*
+                             repeated_evaluate_basis(fp.f, zeros(Ne))) < 1e-8
+    @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fp, ens.S) .*
+                             repeated_grad_xk_basis(f, ens.S[end,:])) < 1e-8
+    @test norm(S.ψnorm - norm.(eachcol(evaluate_basis(fp.f, ens.S)))) < 1e-8
 
      #test cache dimension
     @test size(S.cache_dcψxdt) == (Ne, Nψ)
@@ -54,10 +59,14 @@
     addednψ = size(addedidx,1)
     fnew = ParametricFunction(ExpandedFunction(fp.f.B, vcat(fp.f.idx, addedidx), vcat(fp.f.coeff, zeros(addednψ))))
 
-    @test norm(S.ψoff - evaluate_offdiagbasis(fnew, ens.S)) < 1e-8
-    @test norm(S.ψd - evaluate_diagbasis(fnew, ens.S)) < 1e-8
-    @test norm(S.ψd0 - repeated_evaluate_basis(fnew.f, zeros(Ne))) < 1e-8
-    @test norm(S.dψxd - repeated_grad_xk_basis(fnew.f, ens.S[end,:])) < 1e-8
+    @test norm(S.ψoff     -  evaluate_offdiagbasis(fnew, ens.S)) < 1e-8
+    @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fnew, ens.S) .*
+                             evaluate_diagbasis(fnew, ens.S)) < 1e-8
+    @test norm(S.ψoffψd0  -  evaluate_offdiagbasis(fnew, ens.S) .*
+                             repeated_evaluate_basis(fnew.f, zeros(Ne))) < 1e-8
+    @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fnew, ens.S) .*
+                             repeated_grad_xk_basis(fnew.f, ens.S[end,:])) < 1e-8
+    @test norm(S.ψnorm - norm.(eachcol(evaluate_basis(fnew.f, ens.S)))) < 1e-8
 
     newNψ = addednψ + Nψ
     #test cache dimension

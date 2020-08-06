@@ -55,7 +55,7 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += (S.ψd0[i,j] * S.ψoff[i,j])*R.f.f.coeff[j]
+            f0i += (S.ψoffψd0[i,j])*R.f.f.coeff[j]
         end
         F[i] -= f0i
     end

@@ -174,19 +174,21 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
+            f0i += S.ψoffψd0[i,j]*coeff[j]
         end
         S.cache_integral[i] += f0i
     end
 
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
+
     @avx for i=1:Ne
         prelogJi = zero(Float64)
         for j=1:Nψ
-            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+            prelogJi += S.ψoffdψxd[i,j]*coeff[j]
         end
         S.cache_g[i] = prelogJi
     end
+
 
     # Formatting to use with Optim.jl
     if dJ != nothing
@@ -194,8 +196,8 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
         fill!(dJ, 0.0)
         @inbounds for i=1:Ne
             for j=1:Nψ
-            dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j]) + # dsoftplus(S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]*(1/softplus(S.cache_g[i]))
-                     grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
+            dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoffψd0[i,j]) + # dsoftplus(S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]*(1/softplus(S.cache_g[i]))
+                     grad_x(C.I.g, S.cache_g[i])*S.ψoffdψxd[i,j]/C.I.g(S.cache_g[i])
             end
         end
         rmul!(dJ, -1/Ne)

@@ -69,7 +69,7 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
+            f0i += S.ψoffψd0[i,j]*coeff[j]
         end
         S.cache_integral[i] += f0i
     end
@@ -78,7 +78,7 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
     @avx for i=1:Ne
         prelogJi = zero(Float64)
         for j=1:Nψ
-            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+            prelogJi += S.ψoffdψxd[i,j]*coeff[j]
         end
         S.cache_g[i] = prelogJi
     end
@@ -93,8 +93,8 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
         for i=1:Nψ
             for j=i:Nψ
             # P[i,j] +=  reshape2_cacheintegral[l,i,j]*S.cache_integral[l]
-            P[i,j] +=  (reshape_cacheintegral[l,i] + S.ψoff[l,i]*S.ψd0[l,i]) * (reshape_cacheintegral[l,j] + S.ψoff[l,j]*S.ψd0[l,j])
-            P[i,j] -=  ( (S.ψoff[l,i]*S.dψxd[l,i]) * (S.ψoff[l,j]*S.dψxd[l,j])*(
+            P[i,j] +=  (reshape_cacheintegral[l,i] + S.ψoffψd0[l,i]) * (reshape_cacheintegral[l,j] + S.ψoffψd0[l,j])
+            P[i,j] -=  ( (S.ψoffdψxd[l,i]) * (S.ψoffdψxd[l,j])*(
                             hess_x(C.I.g, S.cache_g[l]) * C.I.g(S.cache_g[l]) -
                             grad_x(C.I.g, S.cache_g[l])^2))/C.I.g(S.cache_g[l])^2
 
@@ -155,7 +155,7 @@ function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2}
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += (S.ψoff[i,j] * S.ψd0[i,j])*coeff[j]
+            f0i += S.ψoffψd0[i,j]*coeff[j]
         end
         S.cache_integral[i] += f0i
     end
@@ -164,7 +164,7 @@ function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2}
     @avx for i=1:Ne
         prelogJi = zero(Float64)
         for j=1:Nψ
-            prelogJi += (S.ψoff[i,j] * S.dψxd[i,j])*coeff[j]
+            prelogJi += S.ψoffdψxd[i,j]*coeff[j]
         end
         S.cache_g[i] = prelogJi
     end
@@ -178,8 +178,8 @@ function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2}
         # Exploit symmetry of the Hessian
         for i=1:Nψ
             # P[i,j] +=  reshape2_cacheintegral[l,i,j]*S.cache_integral[l]
-            P[i] +=  (reshape_cacheintegral[l,i] + S.ψoff[l,i]*S.ψd0[l,i])^2# * (reshape_cacheintegral[l,j] + S.ψoff[l,j]*S.ψd0[l,j])
-            P[i] -=  ( (S.ψoff[l,i]*S.dψxd[l,i])^2*(
+            P[i] +=  (reshape_cacheintegral[l,i] + S.ψoffψd0[l,i])^2# * (reshape_cacheintegral[l,j] + S.ψoff[l,j]*S.ψd0[l,j])
+            P[i] -=  ( (S.ψoffdψxd[l,i])^2*(
                             hess_x(C.I.g, S.cache_g[l]) * C.I.g(S.cache_g[l]) -
                             grad_x(C.I.g, S.cache_g[l])^2))/C.I.g(S.cache_g[l])^2
         end

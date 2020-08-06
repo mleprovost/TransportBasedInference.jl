@@ -1,6 +1,28 @@
-export qrnegative_log_likelihood!
+export QRscaling, qrnegative_log_likelihood!
 
-function qrnegative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
+
+struct QRscaling
+    R::UpperTriangular{Float64,Array{Float64,2}}
+    Rinv::UpperTriangular{Float64,Array{Float64,2}}
+    D::Diagonal{Float64, Array{Float64,1}}
+    Dinv::Diagonal{Float64, Array{Float64,1}}
+    U::UpperTriangular{Float64,Array{Float64,2}}
+    Uinv::UpperTriangular{Float64,Array{Float64,2}}
+end
+
+function QRscaling(R, ψnorm)
+    D = Diagonal(ψnorm)
+    Dinv = inv(D)
+    R = UpperTriangular(R)
+    Rinv = inv(R)
+    U = UpperTriangular(R*D)
+    Uinv = Dinv*Rinv
+
+    return QRscaling(R, Rinv, D, Dinv, U, Uinv)
+end
+
+function qrnegative_log_likelihood!(J, dJ, c̃oeff, Uinv, S::Storage, C::MapComponent, X)
+    # In this version, c̃oeff is expressed in the rescaled space
     NxX, Ne = size(X)
     m = C.m
     Nx = C.Nx
@@ -13,7 +35,7 @@ function qrnegative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X
     xlast = view(X,NxX,:)
 
     fill!(S.cache_integral, 0.0)
-
+    # coeff = Rinv*c̃oeff ./
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
         repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
@@ -86,7 +108,7 @@ function qrnegative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X
         end
         rmul!(dJ, -1/Ne)
         # Add derivative of the L2 penalty term ∂_c α ||c||^2 = 2 *α c
-        dJ .+= 2*C.α*coeff
+        # dJ .+= 2*C.α*coeff
     end
 
     if J != nothing
@@ -95,7 +117,7 @@ function qrnegative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X
             J += log_pdf(S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)
-        J += C.α*norm(coeff)^2
+        # J += C.α*norm(coeff)^2
         return J
     end
 end
