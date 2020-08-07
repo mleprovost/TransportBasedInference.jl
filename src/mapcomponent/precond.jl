@@ -83,10 +83,8 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
         S.cache_g[i] = prelogJi
     end
 
-
     reshape_cacheintegral = reshape(S.cache_integral[Ne+1:Ne+Ne*Nψ], (Ne, Nψ))
-    # reshape2_cacheintegral = reshape(S.cache_integral[Ne + Ne*Nψ + 1: Ne + Ne*Nψ + Ne*Nψ*Nψ], (Ne, Nψ, Nψ))
-    # @show reshape2_cacheintegral
+
     fill!(P, 0.0)
     @inbounds for l=1:Ne
         # Exploit symmetry of the Hessian
