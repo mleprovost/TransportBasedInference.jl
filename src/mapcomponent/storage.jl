@@ -80,7 +80,6 @@ function Storage(f::ParametricFunction, X)#, hess::Bool = false)
         cache_integral = zeros(Ne + Ne*Nψ)
         cache_g = zeros(Ne)
 
-
         return Storage(m, Nψ, Nx, f, ψoff, ψoffψd, ψoffψd0, ψoffdψxd, ψnorm, cache_dcψxdt, cache_gradxd, cache_dψxd, cache_integral, cache_g)
 end
 

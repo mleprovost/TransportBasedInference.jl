@@ -169,3 +169,55 @@ end
     @test norm(res.minimizer - F.Uinv*r̃esprecond.minimizer)<1e-5
     @test norm(r̃es.minimizer - r̃esprecond.minimizer)<1e-5
 end
+
+
+@testset "Test updateQRscaling" begin
+
+    Nx = 3
+    Ne = 8
+    m = 20
+
+    idx = [0 0 0; 0 0 1; 0 1 0; 0 1 1; 0 1 2; 1 0 0]
+
+
+    Nψ = 6
+    coeff = [ 0.20649582065364197;
+             -0.5150990160472986;
+              2.630096893080717;
+              1.13653076177397;
+              0.6725837371023421;
+             -1.3126095306624133]
+    C = MapComponent(m, Nx, idx, coeff; α = 1e-6);
+
+    Ne = 100
+
+    A = 10.0
+    count = 0
+    # The QR decomposition is not unique!
+    while A<1e-10 && count < 50
+        count += 1
+        X = randn(Nx, Ne) .* randn(Nx, Ne) + cos.(randn(Nx, Ne)) .* exp.(-randn(Nx, Ne).^2)
+        L = LinearTransform(X)
+        transform!(L, X)
+        S = Storage(C.I.f, X)
+        F = QRscaling(S)
+        newidx = [1 1 1]
+
+        Snew = update_storage(S, X, newidx)
+        Fupdated = updateQRscaling(F, Snew)
+        Fnew = QRscaling(Snew)
+        A = norm(Fupdated.Rinv-Fnew.Rinv)
+    end
+
+
+    @test norm(Fupdated.D - Fnew.D)<1e-8
+    @test norm(Fupdated.Dinv - Fnew.Dinv)<1e-8
+
+    @test norm(Fupdated.R.data - Fnew.R.data)<1e-8
+    @test norm(Fupdated.Rinv.data - Fnew.Rinv.data)<1e-8
+
+    @test norm(Fupdated.U.data - Fnew.U.data)<1e-8
+    @test norm(Fupdated.Uinv.data - Fnew.Uinv.data)<1e-8
+
+    @test norm(Fupdated.L2Uinv - Fnew.L2Uinv)<1e-8
+end

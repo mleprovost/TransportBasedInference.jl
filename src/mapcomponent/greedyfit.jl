@@ -4,7 +4,7 @@ export greedyfit, update_component, update_coeffs
 # function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
 function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant::Bool = false,
-                   maxpatience::Int64 = 10^5, verbose::Bool = true)
+                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true)
 
     best_valid_error = Inf
     patience = 0
@@ -52,17 +52,44 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     end
 
     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
-    coeff0 = getcoeff(C)
-    precond = zeros(ncoeff(C), ncoeff(C))
-    precond!(precond, coeff0, S, C, X)
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-          Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
-          
-    setcoeff!(C, Optim.minimizer(res))
+    if withqr == false
+        coeff0 = getcoeff(C)
+        precond = zeros(ncoeff(C), ncoeff(C))
+        precond!(precond, coeff0, S, C, X)
+        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                             Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
-    # Compute initial loss on training set
-    push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-    push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+        setcoeff!(C, Optim.minimizer(res))
+
+        # Compute initial loss on training set
+        push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+        push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+    else
+        F = QRscaling(S)
+        coeff0 = getcoeff(C)
+        mul!(F.U, coeff0)
+
+        mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+        mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+
+        qrprecond = zeros(ncoeff(C), ncoeff(C))
+        qrprecond!(qrprecond, coeff0, F, S, C, X)
+
+        res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0,
+                             Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+
+        mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
+
+        # Compute initial loss on training set
+        push!(train_error, qrnegative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+        push!(valid_error, qrnegative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+
+        mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+        mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+        # setcoeff!(C, F.Uinv*Optim.minimizer(res))
+
+    end
+
 
     if verbose == true
         println(string(ncoeff(C))*" terms - Training error: "*
@@ -84,14 +111,20 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         C = MapComponent(IntegratedFunction(S.f); α = C.α)
 
         # Optimize coefficients
+        if withqr == false
         coeff0 = getcoeff(C)
         precond = zeros(ncoeff(C), ncoeff(C))
         precond!(precond, coeff0, S, C, X)
-
         res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
               Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
         setcoeff!(C, Optim.minimizer(res))
+        else
+
+
+
+
+        end
 
         # Compute new loss on training and validation sets
         push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))

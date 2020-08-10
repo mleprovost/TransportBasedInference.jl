@@ -152,11 +152,12 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
         #         v[(j-1)*Ne+i] = S.cache_dψxd[i]*S.cache_dcψxdt[i,j-1]
         #     end
         # end
+        # The reshape version is faster than unrolling
         v[Ne+1:Ne+Ne*Nψ] .= reshape(S.cache_dψxd .* S.cache_dcψxdt , (Ne*Nψ))
         # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
-    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
+    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#, order = 3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xlast (change of variable in the integration)
     # @avx for j=1:Nψ+1
