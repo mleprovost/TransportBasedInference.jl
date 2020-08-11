@@ -125,6 +125,8 @@ end
     @test size(mean_valid_error_noqr,1) == max_iter+1
 
     value_noqr, opt_nterms_noqr = findmin(mean_valid_error_noqr)
+    value_qr, opt_nterms_qr = findmin(mean_valid_error_qr)
+
 
     @test value_noqr == mean_valid_error_noqr[opt_nterms_noqr]
     @test value_qr == mean_valid_error_qr[opt_nterms_qr]

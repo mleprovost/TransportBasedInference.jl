@@ -118,26 +118,36 @@ end
 end
 
 
-@testset "Verify that Serial and Multi-threading optimization are working properly" begin
-    Nx = 50
-    Ne = 1000
+@testset "Verify that Serial and Multi-threading optimization are working properly without/with QR" begin
+    Nx = 20
+    Ne = 300
     m = 10
 
 
     X = randn(Nx, Ne) .* randn(Nx, Ne) .+ randn(Nx)
-    M = HermiteMap(m, X)
-    Mthread = HermiteMap(m,X)
+    M_noqr = HermiteMap(m, X)
+    Mthread_noqr = HermiteMap(m,X)
 
-    optimize(M, X, 10; P = serial)
-    optimize(Mthread, X, 10; P = thread)
+    M_qr = HermiteMap(m, X)
+    Mthread_qr = HermiteMap(m,X)
+
+    optimize(M_noqr, X, 10; withqr = false, P = serial)
+    optimize(Mthread_noqr, X, 10; withqr = false, P = thread)
+
+    optimize(M_qr, X, 10; withqr = true, P = serial)
+    optimize(Mthread_qr, X, 10; withqr = true, P = thread)
 
     for i=1:Nx
-        @test norm(getcoeff(M.C[i]) - getcoeff(Mthread.C[i]))<1e-8
+        @test norm(getcoeff(M_noqr.C[i]) - getcoeff(Mthread_noqr.C[i]))<1e-4
+        @test norm(getcoeff(M_noqr.C[i]) - getcoeff(M_qr.C[i]))<1e-4
+        @test norm(getcoeff(M_noqr.C[i]) - getcoeff(Mthread_qr.C[i]))<1e-4
     end
 
-    @test norm(evaluate(M, X; P = serial) - evaluate(Mthread, X; P = thread))<1e-8
-end
+    @test norm(evaluate(M_noqr, X; P = serial) - evaluate(Mthread_noqr, X; P = thread))<1e-4
+    @test norm(evaluate(M_noqr, X; P = serial) - evaluate(M_qr, X; P = thread))<1e-4
+    @test norm(evaluate(M_noqr, X; P = serial) - evaluate(Mthread_qr, X; P = thread))<1e-4
 
+end
 
 @testset "Verify log_pdf function" begin
     # For diagonal rescaling

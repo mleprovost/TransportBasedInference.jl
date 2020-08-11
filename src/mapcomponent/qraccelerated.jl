@@ -52,11 +52,11 @@ function updateQRscaling(F::QRscaling, S::Storage)
     mul!(S.ψoffψd, S.ψoffψd, D)
     # Use Schur complement to efficiently compute the inverse of the UpperDiaognal Matrix
     # https://en.wikipedia.org/wiki/Schur_complement
-    Rinv = UpperTriangular(hcat(vcat(F.Rinv.data, zeros(1, Nψ-1)), vcat(-1.0/R[Nψ,Nψ]*F.Rinv*view(R,1:Nψ-1,Nψ), -1.0/R[Nψ,Nψ])))
+    Rinv = UpperTriangular(hcat(vcat(F.Rinv.data, zeros(1, Nψ-1)), vcat(-1.0/R[Nψ,Nψ]*F.Rinv*view(R,1:Nψ-1,Nψ), 1.0/R[Nψ,Nψ])))
 
     U = UpperTriangular(hcat(vcat(F.U.data, zeros(1, Nψ-1)), S.ψnorm[Nψ]*view(R,:,Nψ)))
     # Use Schur complement to efficiently compute the inverse of the UpperDiaognal Matrix
-    Uinv = UpperTriangular(hcat(vcat(F.Uinv.data, zeros(1, Nψ-1)), vcat(-1.0/U[Nψ,Nψ]*F.Uinv*view(U,1:Nψ-1,Nψ), -1.0/U[Nψ,Nψ])))
+    Uinv = UpperTriangular(hcat(vcat(F.Uinv.data, zeros(1, Nψ-1)), vcat(-1.0/U[Nψ,Nψ]*F.Uinv*view(U,1:Nψ-1,Nψ), 1.0/U[Nψ,Nψ])))
 
     L2Uinvlower = F.Uinv'*view(Uinv, 1:Nψ-1, Nψ)
     L2Uinv = hcat(vcat(F.L2Uinv, L2Uinvlower'), vcat(L2Uinvlower, 0.0))
@@ -123,7 +123,7 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
             end
         end
         # Add derivative of the L2 penalty term ∂_c α ||U^{-1}c||^2 = 2 α U^{-1}c
-        mul!(dJ̃, F.L2Uinv, c̃oeff, 2*C.α, -1/Ne)
+        mul!(dJ̃, Symmetric(F.L2Uinv), c̃oeff, 2*C.α, -1/Ne)
     end
 
     if J̃ != nothing

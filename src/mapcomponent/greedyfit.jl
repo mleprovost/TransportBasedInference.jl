@@ -126,8 +126,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
 
         else
             coeff0 = getcoeff(C)
-            # F = updateQRscaling(F, S)
-            F = QRscaling(S)
+            F = updateQRscaling(F, S)
+            # F = QRscaling(S)
 
             mul!(coeff0, F.U, coeff0)
             qrprecond = zeros(ncoeff(C), ncoeff(C))
@@ -191,7 +191,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
-    
+
     # Compute initial loss on training set
     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
 
@@ -289,7 +289,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         else
 
             coeff0 = getcoeff(C)
-            F = QRscaling(S)
+            # F = QRscaling(S)
+            F = updateQRscaling(F, S)
             mul!(coeff0, F.U, coeff0)
             qrprecond = zeros(ncoeff(C), ncoeff(C))
             qrprecond!(qrprecond, coeff0, F, S, C, X)
