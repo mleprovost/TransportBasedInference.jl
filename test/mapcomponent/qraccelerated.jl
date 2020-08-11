@@ -1,4 +1,4 @@
-
+import AdaptiveTransportMap: ncoeff
 
 @testset "Test evaluation of negative log likelihood with QR basis" begin
 
@@ -191,33 +191,30 @@ end
 
     Ne = 100
 
-    A = 10.0
-    count = 0
-    # The QR decomposition is not unique!
-    while A<1e-10 && count < 50
-        count += 1
-        X = randn(Nx, Ne) .* randn(Nx, Ne) + cos.(randn(Nx, Ne)) .* exp.(-randn(Nx, Ne).^2)
-        L = LinearTransform(X)
-        transform!(L, X)
-        S = Storage(C.I.f, X)
-        F = QRscaling(S)
-        newidx = [1 1 1]
 
-        Snew = update_storage(S, X, newidx)
-        Fupdated = updateQRscaling(F, Snew)
-        Fnew = QRscaling(Snew)
-        A = norm(Fupdated.Rinv-Fnew.Rinv)
-    end
+    # The QR decomposition is not unique!
+
+    X = randn(Nx, Ne) .* randn(Nx, Ne) + cos.(randn(Nx, Ne)) .* exp.(-randn(Nx, Ne).^2)
+    L = LinearTransform(X)
+    transform!(L, X)
+    S = Storage(C.I.f, X)
+    F = QRscaling(S)
+    newidx = [1 1 1]
+
+    Snew = update_storage(S, X, newidx)
+    Fupdated = updateQRscaling(F, Snew)
+    Fnew = QRscaling(Snew)
+
 
 
     @test norm(Fupdated.D - Fnew.D)<1e-8
     @test norm(Fupdated.Dinv - Fnew.Dinv)<1e-8
 
-    @test norm(Fupdated.R.data - Fnew.R.data)<1e-8
-    @test norm(Fupdated.Rinv.data - Fnew.Rinv.data)<1e-8
+    @test norm(Fupdated.R.data'*Fupdated.R.data - Fnew.R.data'*Fnew.R.data)<1e-8
+    @test norm(Fupdated.Rinv.data'*Fupdated.Rinv.data - Fnew.Rinv.data'*Fnew.Rinv.data)<1e-8
 
-    @test norm(Fupdated.U.data - Fnew.U.data)<1e-8
-    @test norm(Fupdated.Uinv.data - Fnew.Uinv.data)<1e-8
+    @test norm(Fupdated.U.data'*Fupdated.U.data - Fnew.U.data'*Fnew.U.data)<1e-8
+    @test norm(Fupdated.Uinv.data'*Fupdated.Uinv.data - Fnew.Uinv.data'*Fnew.Uinv.data)<1e-8
 
     @test norm(Fupdated.L2Uinv - Fnew.L2Uinv)<1e-8
 end

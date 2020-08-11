@@ -1,7 +1,8 @@
 export optimize
 
 
-function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; withconstant::Bool = false,
+function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
+                  withconstant::Bool = false, withqr::Bool = false,
                   maxpatience::Int64 = 10^5, verbose::Bool = false)
 
     m = C.m
@@ -11,20 +12,43 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; w
         S = Storage(C.I.f, X)
 
         # Optimize coefficients
-        coeff0 = getcoeff(C)
-        precond = zeros(ncoeff(C), ncoeff(C))
-        precond!(precond, coeff0, S, C, X)
+        if withqr == false
+            coeff0 = getcoeff(C)
+            precond = zeros(ncoeff(C), ncoeff(C))
+            precond!(precond, coeff0, S, C, X)
 
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-              Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                  Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
-        setcoeff!(C, Optim.minimizer(res))
+            setcoeff!(C, Optim.minimizer(res))
+            error = res.minimum
+        else
+            F = QRscaling(S)
+            coeff0 = getcoeff(C)
+            mul!(coeff0, F.U, coeff0)
 
-        error = res.minimum
+            mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+            mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+
+            qrprecond = zeros(ncoeff(C), ncoeff(C))
+            qrprecond!(qrprecond, coeff0, F, S, C, X)
+
+            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+
+            mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
+
+            error = res.minimum
+
+            # Compute initial loss on training set
+            mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+            mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+        end
 
     elseif typeof(maxterms) <: Int64
         C, error =  greedyfit(m, Nx, X, maxterms; withconstant = withconstant,
-                              maxpatience = maxpatience, verbose = verbose)
+                              withqr = withqr, maxpatience = maxpatience,
+                              verbose = verbose)
 
     elseif maxterms ∈ ("kfold", "Kfold", "Kfolds")
         # Define cross-validation splits of data
@@ -37,9 +61,9 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; w
         valid_error = zeros(max_iter+1, n_folds)
         @inbounds for i=1:n_folds
             idx_train, idx_valid = folds[i]
-            
+
             C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
-                                 withconstant = withconstant, verbose  = verbose)
+                                 withconstant = withconstant, withqr = withqr, verbose  = verbose)
 
             # error[2] contains the history of the validation error
             valid_error[:,i] .= deepcopy(error[2])
@@ -50,7 +74,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; w
         _, opt_nterms = findmin(mean_valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms; verbose  = verbose)
+        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose)
 
     elseif maxterms ∈ ("split", "Split")
         nvalid = ceil(Int64, floor(0.2*size(X,2)))
@@ -64,7 +88,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String}; w
         max_iter =  min(m, ceil(Int64, sqrt(size(X,2))))
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
-                             withconstant = withconstant, maxpatience = maxpatience, verbose  = verbose)
+                             withconstant = withconstant, withqr = withqr,
+                             maxpatience = maxpatience, verbose  = verbose)
     else
         error("Argument max_terms is not recognized")
     end
@@ -73,11 +98,11 @@ end
 
 
 function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, maxpatience::Int64=20, verbose::Bool = false)
+                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false)
 
     transform!(L.L, X)
     C = L.C
-    C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, maxpatience = maxpatience,
+    C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
                             verbose = verbose)
 
     itransform!(L.L, X)

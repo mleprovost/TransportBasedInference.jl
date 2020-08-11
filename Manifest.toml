@@ -271,9 +271,9 @@ uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
 
 [[DiffEqBase]]
 deps = ["ArrayInterface", "ChainRulesCore", "ConsoleProgressMonitor", "DataStructures", "Distributed", "DocStringExtensions", "FunctionWrappers", "IterativeSolvers", "IteratorInterfaceExtensions", "LabelledArrays", "LinearAlgebra", "Logging", "LoggingExtras", "MuladdMacro", "Parameters", "Printf", "ProgressLogging", "RecipesBase", "RecursiveArrayTools", "RecursiveFactorization", "Requires", "Roots", "SparseArrays", "StaticArrays", "Statistics", "SuiteSparse", "TableTraits", "TerminalLoggers", "TreeViews", "ZygoteRules"]
-git-tree-sha1 = "9ee99d9d293494d2cd61b47f8e87479018280134"
+git-tree-sha1 = "36c8c104041c4c45832ce26e95922a0be0371249"
 uuid = "2b5f629d-d688-5b77-993f-72d75c75574e"
-version = "6.41.3"
+version = "6.42.0"
 
 [[DiffResults]]
 deps = ["StaticArrays"]
@@ -986,9 +986,9 @@ version = "0.12.1"
 
 [[Parsers]]
 deps = ["Dates", "Test"]
-git-tree-sha1 = "de77f098b379a59d1373752fb2ca599047140f30"
+git-tree-sha1 = "8077624b3c450b15c087944363606a6ba12f925e"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "1.0.8"
+version = "1.0.10"
 
 [[Pixman_jll]]
 deps = ["Libdl", "Pkg"]
@@ -1155,9 +1155,9 @@ version = "0.2.2+1"
 
 [[Roots]]
 deps = ["Printf"]
-git-tree-sha1 = "069e68c2173b4e4d0c37ffb3268d37f168ad719c"
+git-tree-sha1 = "1211c7c1928c1ed29cdcef65979b7a791e3b9fbe"
 uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
-version = "1.0.4"
+version = "1.0.5"
 
 [[RoundingEmulator]]
 git-tree-sha1 = "40b9edad2e5287e05bd413a38f61a8ff55b9557b"

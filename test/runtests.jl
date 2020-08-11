@@ -39,17 +39,17 @@ using MLDataUtils
 #
 # # Test tools for integrated function
 # include("mapcomponent/integratedfunction.jl")
-include("mapcomponent/storage.jl")
-
-# Test tools for HermiteMap component
-include("mapcomponent/hermitemapcomponent.jl")
-include("mapcomponent/linhermitemapcomponent.jl")
-
-# Test greedy procedure
-include("mapcomponent/greedyfit.jl")
+# include("mapcomponent/storage.jl")
+#
+# # Test tools for HermiteMap component
+# include("mapcomponent/hermitemapcomponent.jl")
+# include("mapcomponent/linhermitemapcomponent.jl")
+#
+# # Test greedy procedure
+# include("mapcomponent/greedyfit.jl")
 
 # Test optimization of HermiteMap component
-include("mapcomponent/qracceleration.jl")
+include("mapcomponent/qraccelerated.jl")
 include("mapcomponent/optimize.jl")
 
 include("mapcomponent/inverse.jl")

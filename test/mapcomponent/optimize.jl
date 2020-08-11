@@ -1,6 +1,6 @@
 using AdaptiveTransportMap: ncoeff
 
-@testset "Test optimization max_terms = nothing" begin
+@testset "Test optimization max_terms = nothing without/with QR" begin
     Nx = 2
 
     m = 20
@@ -20,7 +20,8 @@ using AdaptiveTransportMap: ncoeff
     C = MapComponent(m, Nx, idx, coeff);
     C0 = deepcopy(C)
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, nothing; verbose = false);
+    C_noqr, error_noqr = AdaptiveTransportMap.optimize(C, X, nothing; withqr = false, verbose = false);
+    C_qr, error_qr = AdaptiveTransportMap.optimize(C, X, nothing; withqr = true, verbose = false);
 
 
     S = Storage(C0.I.f, X)
@@ -31,14 +32,18 @@ using AdaptiveTransportMap: ncoeff
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C0, X)), coeff0,
           Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
-    @test norm(getcoeff(C_new) - res.minimizer) <1e-6
+    @test norm(getcoeff(C_noqr) - res.minimizer) <1e-6
+    @test norm(getcoeff(C_qr) - res.minimizer) <1e-6
 
     error = res.minimum
 
-    @test abs(error_new - error) < 1e-8
+    @test abs(error_noqr - error) < 1e-8
+    @test abs(error_qr - error) < 1e-8
+
 end
 
-@testset "Test optimization max_terms is an integer" begin
+
+@testset "Test optimization max_terms is an integer without/with QR" begin
     Nx = 2
 
     m = 20
@@ -50,9 +55,11 @@ end
 
     C = MapComponent(m, Nx);
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, 4; verbose = false);
+    C_noqr, error_noqr = AdaptiveTransportMap.optimize(C, X, 4; withqr = false, verbose = false);
+    C_qr, error_qr = AdaptiveTransportMap.optimize(C, X, 4; withqr = true, verbose = false);
 
-    idx0 = getidx(C_new)
+
+    idx0 = getidx(C_noqr)
 
     C0 = MapComponent(m, Nx, idx0, zeros(size(idx0,1)));
 
@@ -64,15 +71,18 @@ end
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C0, X)), coeff0,
           Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
 
-    @test norm(getcoeff(C_new) - res.minimizer) <5e-5
+    @test norm(getcoeff(C_noqr) - res.minimizer) <5e-5
+    @test norm(getcoeff(C_qr) - res.minimizer) <5e-5
 
     error = res.minimum
 
-    @test abs(error_new[end] - error) < 5e-5
+    @test abs(error_noqr[end] - error) < 5e-5
+    @test abs(error_qr[end] - error) < 5e-5
+
 end
 
 
-@testset "Test optimization max_terms is kfold" begin
+@testset "Test optimization max_terms is kfold without/with qr" begin
 
     Nx = 2
 
@@ -91,40 +101,54 @@ end
     # Run greedy approximation
     max_iter = min(m-1,ceil(Int64, sqrt(size(X,2))))
 
-    valid_error = zeros(max_iter+1, n_folds)
+    valid_error_noqr = zeros(max_iter+1, n_folds)
+    valid_error_qr = zeros(max_iter+1, n_folds)
+
     @inbounds for i=1:n_folds
         idx_train, idx_valid = folds[i]
         @test size(idx_valid,1) == 40
         @test size(idx_train,1) == 160
         @test size(idx_train,1) < size(X,2)
-        C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; verbose  = false)
+        C_noqr, error_noqr = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; withqr = false, verbose  = false)
+        C_qr, error_qr = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter; withqr = true, verbose  = false)
 
         # error[2] contains the history of the validation error
-        valid_error[:,i] .= deepcopy(error[2])
+        valid_error_noqr[:,i] .= deepcopy(error_noqr[2])
+        valid_error_qr[:,i] .= deepcopy(error_qr[2])
+
     end
 
-    mean_valid_error = mean(valid_error, dims  = 2)[:,1]
+    mean_valid_error_noqr = mean(valid_error_noqr, dims  = 2)[:,1]
+    mean_valid_error_qr = mean(valid_error_qr, dims  = 2)[:,1]
 
-    @test size(mean_valid_error,1) == max_iter+1
+    @test size(mean_valid_error_noqr,1) == max_iter+1
+    @test size(mean_valid_error_noqr,1) == max_iter+1
 
-    value, opt_nterms = findmin(mean_valid_error)
+    value_noqr, opt_nterms_noqr = findmin(mean_valid_error_noqr)
 
-    @test value == mean_valid_error[opt_nterms]
+    @test value_noqr == mean_valid_error_noqr[opt_nterms_noqr]
+    @test value_qr == mean_valid_error_qr[opt_nterms_qr]
 
     # Run greedy fit up to opt_nterms on all the data
-    C_opt, error_opt = greedyfit(m, Nx, X, opt_nterms; verbose  = false)
+    C_opt_noqr, error_opt_noqr = greedyfit(m, Nx, X, opt_nterms_noqr; withqr = false, verbose  = false)
+    C_opt_qr, error_opt_qr = greedyfit(m, Nx, X, opt_nterms_qr; withqr = false, verbose  = false)
 
-    @test size(getcoeff(C_opt),1) == opt_nterms
+    @test size(getcoeff(C_opt_noqr),1) == opt_nterms_noqr
+    @test size(getcoeff(C_opt_qr),1) == opt_nterms_qr
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, "kfold")
+    C_new_noqr, error_new_noqr = AdaptiveTransportMap.optimize(C, X, "kfold"; withqr = false)
+    C_new_qr, error_new_qr = AdaptiveTransportMap.optimize(C, X, "kfold"; withqr = true)
 
-    @test norm(getcoeff(C_opt) - getcoeff(C_new))<1e-5
-    @test norm(error_opt - error_new)<1e-5
+    @test norm(getcoeff(C_opt_noqr) - getcoeff(C_new_noqr))<1e-5
+    @test norm(error_opt_noqr - error_new_noqr)<1e-5
+
+    @test norm(getcoeff(C_opt_qr) - getcoeff(C_new_qr))<1e-5
+    @test norm(error_opt_qr - error_new_qr)<1e-5
 
 end
 
 
-@testset "Test optimization max_terms is split" begin
+@testset "Test optimization max_terms is split with/without QR" begin
 
     Nx = 2
 
@@ -151,14 +175,27 @@ end
     # Run greedy approximation
     max_iter = ceil(Int64, sqrt(size(X,2)))
 
-    C_opt, error_opt = greedyfit(m, Nx, X_train, X_valid, max_iter;
-                                   maxpatience = maxpatience, verbose  = false)
+    C_opt_noqr, error_opt_noqr = greedyfit(m, Nx, X_train, X_valid, max_iter;
+                                           withqr = false, maxpatience = maxpatience,
+                                           verbose  = false)
+   C_opt_qr, error_opt_qr = greedyfit(m, Nx, X_train, X_valid, max_iter;
+                                          withqr = true, maxpatience = maxpatience,
+                                          verbose  = false)
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, "split")
+    C_new_noqr, error_new_noqr = AdaptiveTransportMap.optimize(C, X, "split"; withqr = false)
 
-    @test norm(getcoeff(C_opt) - getcoeff(C_new))<1e-8
-    @test norm(error_opt[1] - error_new[1])<1e-8
-    @test norm(error_opt[2] - error_new[2])<1e-8
+    C_new_qr, error_new_qr = AdaptiveTransportMap.optimize(C, X, "split"; withqr = true)
 
-    @test size(getcoeff(C_new),1) == max_iter
+
+    @test norm(getcoeff(C_opt_noqr) - getcoeff(C_new_noqr))<1e-8
+    @test norm(error_opt_noqr[1] - error_new_noqr[1])<1e-8
+    @test norm(error_opt_noqr[2] - error_new_noqr[2])<1e-8
+
+    @test size(getcoeff(C_new_noqr),1) == max_iter
+
+    @test norm(getcoeff(C_opt_qr) - getcoeff(C_new_qr))<1e-8
+    @test norm(error_opt_qr[1] - error_new_qr[1])<1e-8
+    @test norm(error_opt_qr[2] - error_new_qr[2])<1e-8
+
+    @test size(getcoeff(C_new_qr),1) == max_iter
 end
