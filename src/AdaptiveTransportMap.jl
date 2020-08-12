@@ -23,6 +23,13 @@ using MLDataPattern
 using ThreadPools
 using QRupdate
 
+using PlotUtils
+using RecipesBase
+using ColorTypes
+using LaTeXStrings
+
+
+
 include("tools/product.jl")
 include("tools/tools.jl")
 include("tools/normal.jl")
@@ -78,7 +85,8 @@ include("mapcomponent/greedyfit.jl")
 include("mapcomponent/optimize.jl")
 
 include("mapcomponent/hermitemap.jl")
+include("mapcomponent/assimilate.jl")
 
-
+include("tools/plot_recipes.jl")
 
 end # module

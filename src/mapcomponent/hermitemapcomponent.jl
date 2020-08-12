@@ -53,21 +53,6 @@ function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     return MapComponent(I; α = α)
 end
 
-# function EmptyMapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
-#
-#
-#     # m is the dimension of the basis
-#     B = MultiBasis(CstProHermite(m-2; scaled =true), Nx)
-#     idx = zeros(Int64, Nψ,Nx)
-#     coeff = zeros(Nψ)
-#
-#     f = ExpandedFunction(B, idx, coeff)
-#     I = IntegratedFunction(f)
-#     return MapComponent(I; α = α)
-# end
-
-
-
 ncoeff(C::MapComponent) = C.Nψ
 getcoeff(C::MapComponent)= C.I.f.f.coeff
 
