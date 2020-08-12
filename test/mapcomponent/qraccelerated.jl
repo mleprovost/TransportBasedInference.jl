@@ -87,20 +87,25 @@ end
     #Verify loss function
     # Without QR normalization
     J = 0.0
-    J = negative_log_likelihood!(J, nothing, coeff, S, C, X)
+    dJ = zeros(Nψ)
+    J = negative_log_likelihood!(J, dJ, coeff, S, C, X)
 
     # In QR space
     J̃ = 0.0
+    dJ̃ = zeros(Nψ)
     c̃oeff0 = F.U*coeff0
 
-    mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
-    mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
+    # mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
+    # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
-    J̃ = qrnegative_log_likelihood!(J̃, nothing, c̃oeff0, F, S̃, C, X)
+    J̃ = qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff0, F, S̃, C, X)
 
     @test abs(J - J̃)<1e-5
+    # Chain's rule applies!
+    @test norm(F.Uinv'*dJ - dJ̃)<1e-5
 
-    # For α = 1e-2
+
+    # For α = 1.0
     C = MapComponent(m, Nx, idx, coeff; α = 1.0)
 
     S = Storage(C.I.f, X)
@@ -111,18 +116,22 @@ end
     #Verify loss function
     # Without QR normalization
     J = 0.0
-    J = negative_log_likelihood!(J, nothing, coeff, S, C, X)
+    dJ = zeros(Nψ)
+    J = negative_log_likelihood!(J, dJ, coeff, S, C, X)
 
     # In QR space
     J̃ = 0.0
+    dJ̃ = zeros(Nψ)
     c̃oeff0 = F.U*coeff0
 
-    mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
-    mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
+    # mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
+    # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
-    J̃ = qrnegative_log_likelihood!(J̃, nothing, c̃oeff0, F, S̃, C, X)
+    J̃ = qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff0, F, S̃, C, X)
 
     @test abs(J - J̃)<1e-5
+    # Chain's rule applies!
+    @test norm(F.Uinv'*dJ - dJ̃)<1e-5
 end
 
 @testset "Test optimization with QR basis and Hessian preconditioner without/with L2 penalty" begin
@@ -161,14 +170,17 @@ end
     S̃ = deepcopy(S)
     F = QRscaling(S̃)
 
+    precond = zeros(ncoeff(C), ncoeff(C))
+    precond!(precond, coeff, S, C, X)
+
 
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff, Optim.LBFGS(; m = 20))
 
     # In QR space
     c̃oeff0 = F.U*coeff0
 
-    mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
-    mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
+    # mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
+    # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
     r̃es = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0, Optim.LBFGS(; m = 20))
 
@@ -184,6 +196,11 @@ end
     @test norm(res.minimizer - F.Uinv*r̃esprecond.minimizer)<1e-5
     @test norm(r̃es.minimizer - r̃esprecond.minimizer)<1e-5
 
+    # Verify relation between the preconditioner express in the unscaled and QR spaces
+    # Hqr = U^{-T} Hunscaled U^{-1}
+    @test norm(qrprecond - F.Uinv'*precond*F.Uinv)<1e-5
+
+    @test norm(coeff - coeff0)<1e-5
 
     # For α = 1e-1
     C = MapComponent(m, Nx, idx, coeff; α = 0.1)
@@ -192,14 +209,17 @@ end
     S̃ = deepcopy(S)
     F = QRscaling(S̃)
 
+    precond = zeros(ncoeff(C), ncoeff(C))
+    precond!(precond, coeff, S, C, X)
+
 
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff, Optim.LBFGS(; m = 20))
 
     # With QR
     c̃oeff0 = F.U*coeff0
 
-    mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
-    mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
+    # mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
+    # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
     r̃es = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0, Optim.LBFGS(; m = 20))
 
@@ -215,4 +235,10 @@ end
 
     @test norm(res.minimizer - F.Uinv*r̃esprecond.minimizer)<1e-5
     @test norm(r̃es.minimizer - r̃esprecond.minimizer)<1e-5
+
+    # Verify relation between the preconditioner express in the unscaled and QR spaces
+    # Hqr = U^{-T} Hunscaled U^{-1}
+    @test norm(qrprecond - F.Uinv'*precond*F.Uinv)<1e-5
+
+    @test norm(coeff - coeff0)<1e-5
 end

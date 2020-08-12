@@ -69,9 +69,6 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         coeff0 = getcoeff(C)
         mul!(coeff0, F.U, coeff0)
 
-        mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-        mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-
         qrprecond = zeros(ncoeff(C), ncoeff(C))
         qrprecond!(qrprecond, coeff0, F, S, C, X)
 
@@ -79,10 +76,6 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
                              Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
 
         C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
-
-        # Compute initial loss on training set
-        mul!(S.ψoffψd0, S.ψoffψd0, F.U)
-        mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
 
         # The computation is the non-QR space is slightly faster,
         # even if we prefer the QR form to optimize the coefficients
@@ -133,17 +126,10 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             qrprecond = zeros(ncoeff(C), ncoeff(C))
             qrprecond!(qrprecond, coeff0, F, S, C, X)
 
-            mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-            mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-
             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                    Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
             # Reverse to the non-QR space and update in-place the coefficients
             mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
-
-            # Compute initial loss on training set
-            mul!(S.ψoffψd0, S.ψoffψd0, F.U)
-            mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
 
             # The computation is the non-QR space is slightly faster,
             # even if we prefer the QR form to optimize the coefficients
@@ -236,8 +222,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         coeff0 = getcoeff(C)
         mul!(coeff0, F.U, coeff0)
 
-        mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-        mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+        # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+        # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
 
         qrprecond = zeros(ncoeff(C), ncoeff(C))
         qrprecond!(qrprecond, coeff0, F, S, C, X)
@@ -249,8 +235,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
 
         # Compute initial loss on training set
-        mul!(S.ψoffψd0, S.ψoffψd0, F.U)
-        mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
+        # mul!(S.ψoffψd0, S.ψoffψd0, F.U)
+        # mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
 
         # The computation is the non-QR space is slightly faster,
         # even if we prefer the QR form to optimize the coefficients
@@ -292,11 +278,12 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             # F = QRscaling(S)
             F = updateQRscaling(F, S)
             mul!(coeff0, F.U, coeff0)
+
             qrprecond = zeros(ncoeff(C), ncoeff(C))
             qrprecond!(qrprecond, coeff0, F, S, C, X)
 
-            mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-            mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+            # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
 
             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                    Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
@@ -304,8 +291,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
 
             # Compute initial loss on training set
-            mul!(S.ψoffψd0, S.ψoffψd0, F.U)
-            mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
+            # mul!(S.ψoffψd0, S.ψoffψd0, F.U)
+            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
 
             # The computation is the non-QR space is slightly faster,
             # even if we prefer the QR form to optimize the coefficients

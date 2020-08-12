@@ -61,9 +61,9 @@ end
 
     inverse!(Xmodified, F, C, S)
 
-    @test norm(Xmodified[end,:] - X[end,:])<1e-8
+    @test norm(Xmodified[end,:] - X[end,:])<1e-5
 
-    @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-8
+    @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-5
 end
 
 @testset "Test inverse LinHermiteMapComponent" begin
@@ -100,7 +100,7 @@ end
 
     inverse!(Xmodified, F, L, S)
 
-    @test norm(Xmodified[end,:] - X[end,:])<1e-8
+    @test norm(Xmodified[end,:] - X[end,:])<1e-5
 
-    @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-8
+    @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-5
 end

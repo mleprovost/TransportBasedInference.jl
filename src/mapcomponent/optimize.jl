@@ -27,8 +27,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             coeff0 = getcoeff(C)
             mul!(coeff0, F.U, coeff0)
 
-            mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-            mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+            # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
 
             qrprecond = zeros(ncoeff(C), ncoeff(C))
             qrprecond!(qrprecond, coeff0, F, S, C, X)
@@ -41,8 +41,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             error = res.minimum
 
             # Compute initial loss on training set
-            mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-            mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+            # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
         end
 
     elseif typeof(maxterms) <: Int64

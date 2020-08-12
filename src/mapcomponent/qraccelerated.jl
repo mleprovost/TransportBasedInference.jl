@@ -5,8 +5,8 @@ export QRscaling, updateQRscaling,
                   gqrnegative_log_likelihood,
                   qrnegative_log_likelihood!,
                   qrnegative_log_likelihood,
-                  qrprecond!,
-                  qrprecond
+                  qrprecond!
+                  # qrprecond
 
 
 
@@ -77,6 +77,8 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
 
     # Output objective, gradient
     xlast = view(X,NxX,:)
+    # Get back to the coeff in the unscaled space
+    mul!(c̃oeff, F.Uinv, c̃oeff)
 
     fill!(S.cache_integral, 0.0)
 
@@ -86,7 +88,7 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
 
          # This computing is also reused in the computation of the gradient, no interest to skip it
         @avx @. S.cache_dcψxdt *= S.ψoff
-        mul!(S.cache_dcψxdt, S.cache_dcψxdt, F.Uinv)
+        # mul!(S.cache_dcψxdt, S.cache_dcψxdt, F.Uinv)
         mul!(S.cache_dψxd, S.cache_dcψxdt, c̃oeff)
 
         # Integration for J̃
@@ -112,6 +114,9 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
     mul!(S.cache_g, S.ψoffdψxd, c̃oeff)
 
+    # Return back to the scaled space for the coefficients
+    mul!(c̃oeff, F.U, c̃oeff)
+
     # Formatting to use with Optim.jl
     if dJ̃ != nothing
         reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
@@ -122,6 +127,8 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
                      grad_x(C.I.g, S.cache_g[i])*S.ψoffdψxd[i,j]/C.I.g(S.cache_g[i])
             end
         end
+        # Use chain rule ∂J/∂c̃ = ∂J/∂c ∂c/∂c̃ = ∂J/∂c U^{-1} = U^{-T} ∂J/∂c
+        mul!(dJ̃, F.Uinv', dJ̃)
         # Add derivative of the L2 penalty term ∂_c α ||U^{-1}c||^2 = 2 α U^{-1}c
         mul!(dJ̃, Symmetric(F.L2Uinv), c̃oeff, 2*C.α, -1/Ne)
     end
@@ -140,8 +147,10 @@ end
 
 qrnegative_log_likelihood(F::QRscaling, S::Storage, C::MapComponent, X) = (J̃, dJ̃, c̃oeff) -> qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F, S, C, X)
 
+# F.Uinv'*precond(c)*F.Uinv
 
-function qrprecond!(P, coeff, F::QRscaling, S::Storage, C::MapComponent, X)
+# qrprecond! expects c̃oeff to be expressed in the QR scpace
+function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
     Nψ = C.Nψ
     NxX, Ne = size(X)
     @assert NxX == C.Nx "Wrong dimension of the sample X"
@@ -149,7 +158,10 @@ function qrprecond!(P, coeff, F::QRscaling, S::Storage, C::MapComponent, X)
     @assert size(S.ψoff, 2) == Nψ
 
     # Output objective, gradient
-    xlast = view(X,NxX,:)#)
+    xlast = view(X,NxX,:)
+
+    # Get back to the coeff in the unscaled space
+    mul!(c̃oeff, F.Uinv, c̃oeff)
 
     fill!(S.cache_integral, 0)
 
@@ -159,8 +171,8 @@ function qrprecond!(P, coeff, F::QRscaling, S::Storage, C::MapComponent, X)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         @avx @. S.cache_dcψxdt *= S.ψoff
-        mul!(S.cache_dcψxdt, S.cache_dcψxdt, F.Uinv)
-        mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
+        # mul!(S.cache_dcψxdt, S.cache_dcψxdt, F.Uinv)
+        mul!(S.cache_dψxd, S.cache_dcψxdt, c̃oeff)
 
         # Integration for J
         vJ = view(v,1:Ne)
@@ -196,7 +208,7 @@ function qrprecond!(P, coeff, F::QRscaling, S::Storage, C::MapComponent, X)
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += S.ψoffψd0[i,j]*coeff[j]
+            f0i += S.ψoffψd0[i,j]*c̃oeff[j]
         end
         S.cache_integral[i] += f0i
     end
@@ -205,12 +217,15 @@ function qrprecond!(P, coeff, F::QRscaling, S::Storage, C::MapComponent, X)
     @avx for i=1:Ne
         prelogJi = zero(Float64)
         for j=1:Nψ
-            prelogJi += S.ψoffdψxd[i,j]*coeff[j]
+            prelogJi += S.ψoffdψxd[i,j]*c̃oeff[j]
         end
         S.cache_g[i] = prelogJi
     end
 
     reshape_cacheintegral = reshape(S.cache_integral[Ne+1:Ne+Ne*Nψ], (Ne, Nψ))
+
+    # Return back to the scaled space for the coefficients
+    mul!(c̃oeff, F.U, c̃oeff)
 
     fill!(P, 0.0)
     @inbounds for l=1:Ne
@@ -229,13 +244,13 @@ function qrprecond!(P, coeff, F::QRscaling, S::Storage, C::MapComponent, X)
     end
     rmul!(P, 1/Ne)
     # Add derivative of the L2 penalty term ∂^2_c̃ α ||Uinv c̃||^2 = ∂^2_c̃ (α c̃' Uinv' Uinv c̃) = 2*α Uinv'*Uinv
-
+    mul!(P, F.Uinv', P)
+    mul!(P, P, F.Uinv)
     P .+= 2*C.α*F.L2Uinv
-    return P
 end
 
-qrprecond!(S::Storage, C::MapComponent, X) = (P, coeff) -> precond!(P, coeff, S, C, X)
-
+# qrprecond!(S::Storage, C::MapComponent, X) = (P, c̃oeff) -> qrprecond!(P, c̃oeff, S, C, X)
+#
 
 #
 # function fqrnegative_log_likelihood!(c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
