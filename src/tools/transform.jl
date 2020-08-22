@@ -1,4 +1,5 @@
 export   LinearTransform,
+         MinMaxTransform,
          transform!,
          transform,
          itransform!,
@@ -31,7 +32,6 @@ function LinearTransform(X::Array{Float64,2}; diag::Bool=true)
 
     return LinearTransform(Nx, μ, L, diag)
 end
-
 
 function transform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
     @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"
@@ -100,4 +100,73 @@ function itransform!(L::LinearTransform, X::Array{Float64,2})
     return X
 end
 
-itransform(X::Array{Float64,2}) = itransform!(LinearTransform(X), zero(X), X)
+itransform(L::LinearTransform, X::Array{Float64,2}) = itransform!(L, zero(X), X)
+
+
+
+# Define a min-max transformation to use with the package c3
+struct MinMaxTransform
+    Nx::Int64
+
+    L::Diagonal #(maximum(X[i,:] - minimum(X[i,:]))
+
+    b::Array{Float64,1} #minimum(X[i,:])/(maximum(X[i,:] - minimum(X[i,:]))
+end
+
+
+function MinMaxTransform(X::Array{Float64,2})
+    Nx = size(X,1)
+     b = zeros(Nx)
+     L = Diagonal(zeros(Nx))
+
+     @inbounds for i=1:Nx
+         xi = view(X,i,:)
+         Mi = maximum(xi)
+         mi = minimum(xi)
+         @assert Mi>mi "Minimum and maximum are equal"
+         L.diag[i] = (Mi - mi)/2
+         b[i] = (Mi + mi)/(Mi - mi)
+     end
+    return MinMaxTransform(Nx, L, b)
+end
+
+function transform!(L::MinMaxTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
+    @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"
+    @assert size(Xin,1) == L.Nx "Input dimension is incorrect"
+
+    copy!(Xout, Xin)
+    ldiv!(L.L, Xout)
+    Xout .-= L.b
+
+
+    # return Xout
+end
+
+function transform!(L::MinMaxTransform, X::Array{Float64,2})
+    @assert size(X,1) == L.Nx "Input dimension is incorrect"
+    ldiv!(L.L, X)
+    X .-= L.b
+    return X
+end
+
+transform(L::MinMaxTransform, X::Array{Float64,2}) = transform!(L, zero(X), X)
+
+
+function itransform!(L::MinMaxTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
+    @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"
+    @assert size(Xin,1) == L.Nx "Input dimension is incorrect"
+
+    copy!(Xout, Xin)
+    Xout .+= L.b
+    mul!(Xout, L.L, Xout)
+    return Xout
+end
+
+function itransform!(L::MinMaxTransform, X::Array{Float64,2})
+    X .+= L.b
+    mul!(X, L.L, X)
+    return X
+end
+
+
+itransform(L::MinMaxTransform, X::Array{Float64,2}) = itransform!(L, zero(X), X)

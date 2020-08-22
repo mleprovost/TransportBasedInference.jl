@@ -128,7 +128,7 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
             end
         end
         # Use chain rule ∂J/∂c̃ = ∂J/∂c ∂c/∂c̃ = ∂J/∂c U^{-1} = U^{-T} ∂J/∂c
-        mul!(dJ̃, F.Uinv', dJ̃)
+        lmul!(F.Uinv', dJ̃)
         # Add derivative of the L2 penalty term ∂_c α ||U^{-1}c||^2 = 2 α U^{-1}c
         mul!(dJ̃, Symmetric(F.L2Uinv), c̃oeff, 2*C.α, -1/Ne)
     end
@@ -244,8 +244,9 @@ function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
     end
     rmul!(P, 1/Ne)
     # Add derivative of the L2 penalty term ∂^2_c̃ α ||Uinv c̃||^2 = ∂^2_c̃ (α c̃' Uinv' Uinv c̃) = 2*α Uinv'*Uinv
-    mul!(P, F.Uinv', P)
-    mul!(P, P, F.Uinv)
+    lmul!(F.Uinv', P)
+    rmul!(P, F.Uinv)
+
     P .+= 2*C.α*F.L2Uinv
 end
 
