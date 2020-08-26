@@ -12,6 +12,8 @@ export  ExpandedFunction, alleval,
         hess_x_basis,
         evaluate, grad_x, hess_x,
         grad_xd, hess_xd,
+        grad_x_grad_xd,
+        hess_x_grad_xd,
         grad_coeff, hess_coeff,
         grad_coeff_grad_xd,
         hess_coeff_grad_xd
@@ -317,6 +319,62 @@ end
 function hess_xd(f::ExpandedFunction, X::Array{Float64,2})
     d2ψxd = grad_xk_basis(f, X, 2, f.Nx)
     return d2ψxd*f.coeff
+end
+
+# Compute ∂_i ∂_k f(x_{1:k})
+
+function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+    NxX, Ne = size(X)
+    m = f.m
+    Nx = f.Nx
+    Nψ = f.Nψ
+    @assert NxX == Nx "Wrong dimension of the input"
+    dxdxkψ_basis = zeros(Ne, Nψ, Nx)
+
+    @inbounds for i=1:Nx-1
+        dxidxkψ_basis = view(dxdxkψ_basis,:,:,i)
+        grad_xk_basis!(dxidxkψ_basis, f, X, 1, [i;Nx], idx)
+    end
+
+    d2xkψ_basis = view(dxdxkψ_basis,:,:,f.Nx)
+    grad_xk_basis!(d2xkψ_basis, f, X, 2, f.Nx)
+
+    dxdxkψ = zeros(Ne, f.Nx)
+    @tensor dxdxkψ[a,b] = dxdxkψ_basis[a,c,b] * f.coeff[c]
+
+    return dxdxkψ
+end
+
+
+
+
+function hess_x_basis!(d2ψ::Array{Float64,4}, f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+    m = f.m
+    Nx = f.Nx
+    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
+    Nψreduced = size(idx,1)
+    fill!(d2ψ, 1)
+    Ne, Nψr1, Nxψ1, Nxψ2 = size(d2ψ)
+    @assert Ne == size(X,2)
+    @assert Nxψ1 == Nxψ2 "Wrong dimension of d2ψ"
+    @assert Nψr1 == size(idx,1) "Wrong dimension of d2ψ"
+
+
+    # Fill diagonal components
+    @inbounds for j=1:Nx
+        d2ψj = view(d2ψ,:,:,j,j)
+        grad_xk_basis!(d2ψj, f, X, 2, j, idx)
+    end
+
+    # Fill off-diagonal and exploit symmetry (Schwartz theorem)
+    @inbounds for i=1:Nx
+                for j=i+1:Nx
+                    d2ψij = view(d2ψ,:,:,i,j)
+                    grad_xk_basis!(d2ψij, f, X, 1, [i;j], idx)
+                    d2ψ[:,:,j,i] .= d2ψ[:,:,i,j]
+                end
+    end
+    return d2ψ
 end
 
 

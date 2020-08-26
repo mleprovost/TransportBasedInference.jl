@@ -8,6 +8,8 @@ export  MapComponent,
         evaluate,
         log_pdf!,
         log_pdf,
+        grad_x_logdet_jacobian,
+        grad_x_log_pdf!,
         negative_log_likelihood!,
         negative_log_likelihood,
         hess_negative_log_likelihood!
@@ -94,6 +96,38 @@ function log_pdf!(result, cache, C::MapComponent, X)
 end
 
 log_pdf(C::MapComponent, X) = log_pdf!(zeros(size(X,2)), zeros(size(X,2)), C, X)
+
+## Compute grad_x_logdet_jacobian
+
+function grad_x_logdet_jacobian(C::MapComponent, X)
+    NxX, Ne = size(X)
+    @assert C.Nx == NxX "Wrong dimension of the sample"
+    dxlogDJ = zeros(C.Nx)
+
+    ψoff = evaluate_offdiagbasis(C.I.f.f, X)
+
+
+
+
+
+end
+
+## Compute grad_x_log_pdf
+
+function grad_x_log_pdf!(result, cache, C::MapComponent, X)
+    NxX, Ne = size(X)
+    @assert C.Nx == NxX "Wrong dimension of the sample"
+    @assert size(result) == (NxX, X) "Wrong dimension of the result"
+
+    Cx = evaluate(C, X)
+
+    cache .= grad_xd(C.I, X)
+
+
+
+
+
+end
 
 ## negative_log_likelihood
 
