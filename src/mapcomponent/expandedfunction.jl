@@ -321,7 +321,7 @@ function hess_xd(f::ExpandedFunction, X::Array{Float64,2})
     return d2ψxd*f.coeff
 end
 
-# Compute ∂_i ∂_k f(x_{1:k})
+# Compute ∂_i (∂_k f(x_{1:k}))
 
 function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
     NxX, Ne = size(X)
@@ -330,6 +330,30 @@ function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int
     Nψ = f.Nψ
     @assert NxX == Nx "Wrong dimension of the input"
     dxdxkψ_basis = zeros(Ne, Nψ, Nx)
+
+    @inbounds for i=1:Nx-1
+        dxidxkψ_basis = view(dxdxkψ_basis,:,:,i)
+        grad_xk_basis!(dxidxkψ_basis, f, X, 1, [i;Nx], idx)
+    end
+
+    d2xkψ_basis = view(dxdxkψ_basis,:,:,f.Nx)
+    grad_xk_basis!(d2xkψ_basis, f, X, 2, f.Nx)
+
+    dxdxkψ = zeros(Ne, f.Nx)
+    @tensor dxdxkψ[a,b] = dxdxkψ_basis[a,c,b] * f.coeff[c]
+
+    return dxdxkψ
+end
+
+# Compute ∂_i ∂_j (∂_k f(x_{1:k}))
+
+function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+    NxX, Ne = size(X)
+    m = f.m
+    Nx = f.Nx
+    Nψ = f.Nψ
+    @assert NxX == Nx "Wrong dimension of the input"
+    dxidxjdxkψ_basis = zeros(Ne, Nψ, Nx, Nx)
 
     @inbounds for i=1:Nx-1
         dxidxkψ_basis = view(dxdxkψ_basis,:,:,i)

@@ -86,6 +86,43 @@ end
     end
 end
 
+@testset "Verify third derivative of Physicist hermite functions" begin
+    # Unscaled
+    x = randn(100)
+    m = 5
+    dV = vander(PhyHermite(m; scaled = false), 2, x)
+
+    for i=0:5
+        Hn = FamilyPhyPolyHermite[i+1].(x)
+        Hnp = derivative(FamilyPhyPolyHermite[i+1],1).(x)
+        Hnpp = derivative(FamilyPhyPolyHermite[i+1],2).(x)
+        E = exp.(-x.^2/2)
+        F = PhyHermite(i; scaled = false)
+        @test norm(dV[:,i+1] - map(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), x))<1e-8
+
+        @test norm(dV[:,i+1] - (Hnpp .*E -2 .*x .* Hnp.*E + Hn .* (x.^2 .- 1.0) .* E))<1e-8
+    end
+
+    # Scaled
+
+    x = randn(100)
+    m = 5
+    dV = vander(PhyHermite(m; scaled = true), 2, x)
+
+    for i=0:5
+        Hn = FamilyPhyPolyHermite[i+1].(x)
+        Hnp = derivative(FamilyPhyPolyHermite[i+1],1).(x)
+        Hnpp = derivative(FamilyPhyPolyHermite[i+1],2).(x)
+        E = exp.(-x.^2/2)
+
+        F = PhyHermite(i; scaled = true)
+        @test norm(dV[:,i+1] - map(xi->ForwardDiff.derivative(y->ForwardDiff.derivative(z->F(z), y), xi), x))<1e-8
+
+
+        @test norm(dV[:,i+1] - (1/Cphy(i))*(Hnpp .*E -2 .*x .* Hnp.*E + Hn .* (x.^2 .- 1.0) .* E))<1e-8
+    end
+end
+
 
 
 # @testset "Verify integration of Physicist hermite functions" begin
