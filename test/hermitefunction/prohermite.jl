@@ -87,6 +87,30 @@ end
 end
 
 
+@testset "Verify third derivative of Probabilistic hermite functions" begin
+    # Unscaled
+    x = randn(100)
+    m = 5
+    dV = vander(ProHermite(m; scaled = false), 3, x)
+
+    for i=0:5
+        F = ProHermite(i; scaled = false)
+        @test norm(dV[:,i+1] - map(xi->D(F, 3)(xi),x))<1e-8
+    end
+
+    # Scaled
+
+    x = randn(100)
+    m = 5
+    dV = vander(ProHermite(m; scaled = true), 3, x)
+
+    for i=0:5
+        F = ProHermite(i; scaled = true)
+        @test norm(dV[:,i+1] - map(xi->D(F, 3)(xi),x))<1e-8
+    end
+end
+
+
 # @testset "Verify integration of Probabilistic hermite functions" begin
 #     Nx = 10
 #     x = randn(10)

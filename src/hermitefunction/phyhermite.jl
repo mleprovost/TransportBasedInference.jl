@@ -264,27 +264,25 @@ function vander!(dV, P::PhyHermite, k::Int64, x::Array{Float64,1})
     elseif k==3
         # Use the relation ψn‴(x)  -2x ψn(x) + (2*n + 1 -x^2) ψn′(x) = 0
         # and ψn′(x) = 2*n ψ_{n-1}(x) - x ψ_{n}(x)
+        # So ψn‴(x) = (2n +3 -x^2)*x*ψn(x) - (2*n +1 -x^2)*2*n*ψn-1(x)
         evaluate!(dV, P, x)
         col0 = view(dV,:,1)
-
-        if m==0
-            col0 = view(dV,:,1)
-            @avx @. col0 *= (3*x -x^3)
-            return dV
-        end
-
-        col1 = view(dV,:,2)
         ψn   = zero(x)
         ψnm1 = zero(x)
         copy!(ψn, col0)
-        copy!(ψnm1, col1)
+        @avx @. col0 *= (3*x -x^3)
 
-        @inbounds for i=0:m
+        if m==0
+            return dV
+        end
+
+
+        @inbounds for i=1:m
             copy!(ψnm1, ψn)
             col = view(dV,:,i+1)
             copy!(ψn, col)
             if P.scaled ==true
-
+                col .= ((2*i+3)*x -x .^3) .* ψn -2*i*Cphy(i-1)/Cphy(i)*(2*i+1 .- x .^2) .* ψnm1
             else
                 col .= ((2*i+3)*x -x .^3) .* ψn -2*i*(2*i+1 .- x .^2) .* ψnm1
             end

@@ -30,6 +30,7 @@ using LaTeXStrings
 
 
 
+include("tools/ADtools.jl")
 include("tools/product.jl")
 include("tools/tools.jl")
 include("tools/normal.jl")
