@@ -82,6 +82,14 @@ using AdaptiveTransportMap: evaluate
         end
     end
 
+    # Verify hess_x_grad_xd
+    dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
+
+    for i=1:Ne
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
+    end
+
     # Verify grad_coeff
     dψcoeff  = grad_coeff(f, ens.S)
     dψcoefftrunc  = grad_coeff(f, ens.S, collect(1:2:size(idx,1)))
@@ -193,6 +201,14 @@ end
         end
     end
 
+    # Verify hess_x_grad_xd
+    dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
+
+    for i=1:Ne
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
+    end
+
     # Verify grad_coeff
     dψcoeff  = grad_coeff(f, ens.S)
     dψcoefftrunc  = grad_coeff(f, ens.S, collect(1:2:size(idx,1)))
@@ -301,6 +317,14 @@ end
         for j=1:Nx
             @test abs(dxdxkψ[i,j] - dxdxkψ_t[j,end])<1e-10
         end
+    end
+
+    # Verify hess_x_grad_xd
+    dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
+
+    for i=1:Ne
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
     # Verify grad_coeff
@@ -414,6 +438,14 @@ end
         end
     end
 
+    # Verify hess_x_grad_xd
+    dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
+
+    for i=1:Ne
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
+    end
+
     # Verify grad_coeff
     dψcoeff  = grad_coeff(f, ens.S)
     dψcoefftrunc  = grad_coeff(f, ens.S, collect(1:2:size(idx,1)))
@@ -453,7 +485,7 @@ end
 
     B = MultiBasis(CstProHermite(3), Nx)
 
-    idx = [0 0 0; 0 0 1; 0 1 0; 0 1 1; 0 1 2; 1 0 0]
+    idx = [0 0 0; 2 0 1; 0 1 0; 0 2 1; 0 1 2; 1 0 0; 2 2 2]
     truncidx = idx[1:2:end,:]
     coeff =  randn(size(idx,1))
 
@@ -519,6 +551,14 @@ end
         for j=1:Nx
             @test abs(dxdxkψ[i,j] - dxdxkψ_t[j,end])<1e-10
         end
+    end
+
+    # Verify hess_x_grad_xd
+    dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
+
+    for i=1:Ne
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
     # Verify grad_coeff
@@ -628,6 +668,13 @@ end
         end
     end
 
+    # Verify hess_x_grad_xd
+    dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
+
+    for i=1:Ne
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
+    end
 
     # Verify grad_coeff
     dψcoeff  = grad_coeff(f, ens.S)

@@ -6,6 +6,10 @@ export  ExpandedFunction, alleval,
         repeated_evaluate_basis,
         grad_xk_basis!,
         grad_xk_basis,
+        repeated_grad_xk_basis!,
+        repeated_grad_xk_basis,
+        repeated_hess_xk_basis!,
+        repeated_hess_xk_basis,
         grad_x_basis!,
         grad_x_basis,
         hess_x_basis!,
@@ -321,6 +325,77 @@ function hess_xd(f::ExpandedFunction, X::Array{Float64,2})
     return d2ψxd*f.coeff
 end
 
+
+
+function repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x, idx::Array{Int64,2})
+    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
+    Ne = size(x,1)
+    Nx = f.Nx
+
+    # @assert size(out,1) = (N, size(idx, 1)) "Wrong dimension of the output vector"
+    # ∂ᵏf/∂x_{grad_dim} = ψ
+    k = 1
+    grad_dim = Nx
+    dims = Nx
+
+    midxj = idx[:, Nx]
+    maxj = maximum(midxj)
+    #   Compute the kth derivative along grad_dim
+    # dkψj = zeros(Ne, maxj+1)
+    vander!(cache, f.B.B, maxj, k, x)
+    Nψreduced = size(idx, 1)
+    @avx for l = 1:Nψreduced
+        for k=1:Ne
+            out[k,l] = cache[k, midxj[l] + 1]
+        end
+    end
+
+    return out#dkψj[:, midxj .+ 1]
+end
+
+repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x) = repeated_grad_xk_basis!(out, cache, f, x, f.idx)
+
+# repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
+repeated_grad_xk_basis(f::ExpandedFunction, x, idx::Array{Int64,2}) =
+    repeated_grad_xk_basis!(zeros(size(x,1),size(idx,1)), zeros(size(x,1), maximum(idx[:,f.Nx])+1), f, x, idx)
+
+repeated_grad_xk_basis(f::ExpandedFunction, x) = repeated_grad_xk_basis(f, x, f.idx)
+
+
+function repeated_hess_xk_basis!(out, cache, f::ExpandedFunction, x, idx::Array{Int64,2})
+    # Compute the Hessian of the basis functions with respect to the last component
+    Ne = size(x,1)
+    Nx = f.Nx
+
+    # @assert size(out,1) = (N, size(idx, 1)) "Wrong dimension of the output vector"
+    # ∂ᵏf/∂x_{grad_dim} = ψ
+    k = 2
+    grad_dim = Nx
+    dims = Nx
+
+    midxj = idx[:, Nx]
+    maxj = maximum(midxj)
+    #   Compute the kth derivative along grad_dim
+    # dkψj = zeros(Ne, maxj+1)
+    vander!(cache, f.B.B, maxj, k, x)
+    Nψreduced = size(idx, 1)
+    @avx for l = 1:Nψreduced
+        for k=1:Ne
+            out[k,l] = cache[k, midxj[l] + 1]
+        end
+    end
+
+    return out#dkψj[:, midxj .+ 1]
+end
+
+repeated_hess_xk_basis!(out, cache, f::ExpandedFunction, x) = repeated_hess_xk_basis!(out, cache, f, x, f.idx)
+
+repeated_hess_xk_basis(f::ExpandedFunction, x, idx::Array{Int64,2}) =
+    repeated_hess_xk_basis!(zeros(size(x,1),size(idx,1)), zeros(size(x,1), maximum(idx[:,f.Nx])+1), f, x, idx)
+
+repeated_hess_xk_basis(f::ExpandedFunction, x) = repeated_hess_xk_basis(f, x, f.idx)
+
+
 # Compute ∂_i (∂_k f(x_{1:k}))
 
 function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
@@ -345,6 +420,9 @@ function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int
     return dxdxkψ
 end
 
+grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = grad_x_grad_xd(f, X, f.idx)
+
+
 # Compute ∂_i ∂_j (∂_k f(x_{1:k}))
 
 function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
@@ -355,20 +433,44 @@ function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int
     @assert NxX == Nx "Wrong dimension of the input"
     dxidxjdxkψ_basis = zeros(Ne, Nψ, Nx, Nx)
 
-    @inbounds for i=1:Nx-1
-        dxidxkψ_basis = view(dxdxkψ_basis,:,:,i)
-        grad_xk_basis!(dxidxkψ_basis, f, X, 1, [i;Nx], idx)
+    # Store the derivative of the basis with respect to the last component
+    dxkψ  = repeated_grad_xk_basis(f, X[Nx,:])
+    d2xkψ = repeated_hess_xk_basis(f, X[Nx,:])
+
+    @inbounds for i = 1:Nx
+        for j = i:Nx
+
+            #  Case i = j = k
+            if i==Nx && j==Nx
+                d3xkψ_basis = view(dxidxjdxkψ_basis,:,:, Nx, Nx)
+                grad_xk_basis!(d3xkψ_basis, f, X, 3, Nx)
+            elseif i==j && j!=Nx
+                d2xidxkψ = view(dxidxjdxkψ_basis,:,:,i,i)
+
+                grad_xk_basis!(d2xidxkψ, f, X, 2, i, 1:Nx-1, idx)
+
+                d2xidxkψ .*= dxkψ
+            elseif i!=Nx && j==Nx #(use symmetry as well)
+                dxid2xkψ = view(dxidxjdxkψ_basis,:,:,i,Nx)
+                grad_xk_basis!(dxid2xkψ, f, X, 1, i, 1:Nx-1, idx)
+                dxid2xkψ .*= d2xkψ
+                view(dxidxjdxkψ_basis,:,:,Nx,i) .= dxid2xkψ
+            else # the rest of the cases (use symmetry as well)
+                dxidxjdxkψ = view(dxidxjdxkψ_basis,:,:,i,j)
+                grad_xk_basis!(dxidxjdxkψ, f, X, 1, [i;j], 1:Nx-1, idx)
+                dxidxjdxkψ .*= dxkψ
+                view(dxidxjdxkψ_basis,:,:,j,i) .= dxidxjdxkψ
+            end
+        end
     end
 
-    d2xkψ_basis = view(dxdxkψ_basis,:,:,f.Nx)
-    grad_xk_basis!(d2xkψ_basis, f, X, 2, f.Nx)
+    dxidxjdxkψ = zeros(Ne, Nx, Nx)
+    @tensor dxidxjdxkψ[a,b,c] = dxidxjdxkψ_basis[a,d,b, c] * f.coeff[d]
 
-    dxdxkψ = zeros(Ne, f.Nx)
-    @tensor dxdxkψ[a,b] = dxdxkψ_basis[a,c,b] * f.coeff[c]
-
-    return dxdxkψ
+    return dxidxjdxkψ
 end
 
+hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = hess_x_grad_xd(f, X, f.idx)
 
 
 

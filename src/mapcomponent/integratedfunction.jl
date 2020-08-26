@@ -4,8 +4,6 @@ export  IntegratedFunction,
         grad_xd,
         grad_coeff_grad_xd,
         hess_coeff_grad_xd,
-        repeated_grad_xk_basis!,
-        repeated_grad_xk_basis,
         integrate_xd,
         evaluate!,
         evaluate,
@@ -105,40 +103,6 @@ end
 #     return dkψj[:, midxj .+ 1]
 # end
 
-
-function repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x, idx::Array{Int64,2})
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-    Ne = size(x,1)
-    Nx = f.Nx
-
-    # @assert size(out,1) = (N, size(idx, 1)) "Wrong dimension of the output vector"
-    # ∂ᵏf/∂x_{grad_dim} = ψ
-    k = 1
-    grad_dim = Nx
-    dims = Nx
-
-    midxj = idx[:, Nx]
-    maxj = maximum(midxj)
-    #   Compute the kth derivative along grad_dim
-    # dkψj = zeros(Ne, maxj+1)
-    vander!(cache, f.B.B, maxj, k, x)
-    Nψreduced = size(idx, 1)
-    @avx for l = 1:Nψreduced
-        for k=1:Ne
-            out[k,l] = cache[k, midxj[l] + 1]
-        end
-    end
-
-    return out#dkψj[:, midxj .+ 1]
-end
-
-repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x) = repeated_grad_xk_basis!(out, cache, f, x, f.idx)
-
-# repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
-repeated_grad_xk_basis(f::ExpandedFunction, x, idx::Array{Int64,2}) =
-    repeated_grad_xk_basis!(zeros(size(x,1),size(idx,1)), zeros(size(x,1), maximum(idx[:,f.Nx])+1), f, x, idx)
-
-repeated_grad_xk_basis(f::ExpandedFunction, x) = repeated_grad_xk_basis(f, x, f.idx)
 
 # function evaluate!(out::Array{Float64,1}, R::IntegratedFunction{m, Nψ, Nx}, X::Array{Float64,2}) where {m, Nψ, Nx}
 
