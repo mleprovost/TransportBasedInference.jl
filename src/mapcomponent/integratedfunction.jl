@@ -7,6 +7,8 @@ export  IntegratedFunction,
         integrate_xd,
         evaluate!,
         evaluate,
+        grad_x!,
+        grad_x,
         grad_coeff_integrate_xd,
         hess_coeff_integrate_xd,
         grad_coeff,
@@ -112,26 +114,103 @@ function evaluate!(out, R::IntegratedFunction, X)
     @assert NxX == Nx "Wrong dimension of the sample X"
     ψoff = evaluate_offdiagbasis(R.f, X)
     ψdiag = repeated_evaluate_basis(R.f.f, zeros(Ne))
-    xk = deepcopy(X[Nx, :])
+    xlast = view(X,NxX,:)
     cache = zeros(Ne)
 
     @assert size(out,1) == Ne
 
     function integrand!(v::Vector{Float64}, t::Float64)
-        v .= (repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff) * R.f.f.coeff
+        v .= (repeated_grad_xk_basis(R.f.f,  t*xlast) .* ψoff) * R.f.f.coeff
         evaluate!(v, R.g, v)
 
         # v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
     end
 
-     out .= (ψoff .* ψdiag)*R.f.f.coeff + xk .* quadgk!(integrand!, cache, 0.0, 1.0)[1]
+     out .= (ψoff .* ψdiag)*R.f.f.coeff + xlast .* quadgk!(integrand!, cache, 0.0, 1.0)[1]
 
      return out
  end
 
 
-
 evaluate(R::IntegratedFunction, X::Array{Float64,2}) = evaluate!(zeros(size(X,2)), R, X)
+evaluate(R::IntegratedFunction, x::Array{Float64,1}) = evaluate!(zeros(1), R, reshape(x,(size(x,1), 1)))[1]
+
+
+## Gradient of an IntegratedFunction
+
+function grad_x!(out, R::IntegratedFunction, X)
+    NxX, Ne = size(X)
+    Nx = R.Nx
+    @assert NxX == Nx "Wrong dimension of the sample"
+    @assert size(out) == (Ne, Nx) "Dimensions of the output and the samples don't match"
+
+    x0 = zeros(Ne)
+    xlast = view(X,Nx,:)
+    ψk0  = repeated_evaluate_basis(R.f.f, x0)
+    dxkψk0 = repeated_grad_xk_basis(R.f.f, x0)
+    ψoff = evaluate_offdiagbasis(R.f, X)
+    dxkψ = zero(ψk0)
+
+    # Cache for the integration
+    coeff = R.f.f.coeff
+    cache = zeros((Nx-1)*Ne)
+    cacheg = zeros(Ne)
+
+    # Compute the basis for each component
+    ψbasis = zeros(Ne, R.Nψ, Nx-1)
+    @inbounds for i=1:Nx-1
+        ψbasis_i = view(ψbasis, :, :, i)
+        ψbasis_i .= evaluate_basis(R.f.f, X, [i], R.f.f.idx)
+    end
+
+    # Compute ψ1 ⊗ ψ2 ⊗ ψi′ ⊗ … ⊗ ψk-1
+    dxψbasis = zero(ψbasis)
+    fill!(dxψbasis, 1.0)
+    @inbounds for i=1:Nx-1
+        for j=1:Nx-1
+            if i==j
+            dxψbasis[:,:,i] .*= grad_xk_basis(R.f.f, X, 1, j, j, R.f.f.idx)
+            else
+            dxψbasis[:,:,i] .*= ψbasis[:,:,j]
+            end
+        end
+    end
+
+    # This integrand computes ψ1 ⊗ … ⊗ ψi′ ⊗ … ⊗ ψk′(t) × c g′(ψ1 ⊗ … ⊗ ψk′(t)×c)
+    function integrand!(v::Vector{Float64}, t::Float64)
+    dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
+    @avx @. cacheg = (dxkψ * ψoff) *ˡ coeff
+    evaluate!(cacheg, R.g, cacheg)
+
+        @inbounds for i=1:Nx-1
+            vi = view(v, (i-1)*Ne+1:i*Ne)
+            dxψbasisi = view(dxψbasis,:,:,i)
+            @avx @. vi = ((dxψbasisi * dxkψ) *ˡ coeff) * cacheg
+        end
+    end
+    quadgk!(integrand!, cache, 0.0, 1.0; rtol = 1e-3)
+
+    # Multiply integral by xlast (change of variable in the integration)
+    @inbounds for i=1:Nx-1
+        @. cache[(i-1)*Ne+1:i*Ne] *= xlast
+    end
+
+    # Add ψ1 ⊗ … ⊗ ψi′ ⊗ … ⊗ ψk(0) × c
+    @inbounds for i=1:Nx-1
+        dxψbasisi = view(dxψbasis,:,:,i)
+        out[:,i] = (dxψbasisi .* ψk0)*coeff
+        # out[:,i] += view(cache,(i-1)*Ne+1:i*Ne)
+    end
+
+    # Fill the last column
+    # lastcol = view(out, :, Nx)
+    # @time evaluate!(lastcol, R.g, (repeated_grad_xk_basis(R.f.f,  xlast) .* ψoff)*coeff)
+
+
+    return out
+end
+
+grad_x(R::IntegratedFunction, X) = grad_x!(zeros(size(X')), R, X)
 
 
 ## Compute ∂_c int_0^{x_k} g(∂ₖf(x_{1:k-1}, t))dt

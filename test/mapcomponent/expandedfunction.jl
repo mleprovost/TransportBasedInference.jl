@@ -86,7 +86,7 @@ using AdaptiveTransportMap: evaluate
     dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
 
     for i=1:Ne
-        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[Nx], member(ens,i))
         @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
@@ -205,7 +205,7 @@ end
     dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
 
     for i=1:Ne
-        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[Nx], member(ens,i))
         @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
@@ -323,7 +323,7 @@ end
     dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
 
     for i=1:Ne
-        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[Nx], member(ens,i))
         @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
@@ -442,7 +442,7 @@ end
     dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
 
     for i=1:Ne
-        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[Nx], member(ens,i))
         @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
@@ -557,7 +557,7 @@ end
     dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
 
     for i=1:Ne
-        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[Nx], member(ens,i))
         @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 
@@ -672,7 +672,7 @@ end
     dxidxjdxkψ = hess_x_grad_xd(f, ens.S, f.idx)
 
     for i=1:Ne
-        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[3], member(ens,i))
+        dxidxjdxkψ_t = ForwardDiff.hessian(xi ->ForwardDiff.gradient(f, xi)[Nx], member(ens,i))
         @test norm(dxidxjdxkψ[i,:,:] - dxidxjdxkψ_t)<1e-10
     end
 

@@ -133,10 +133,10 @@ evaluate_basis!(ψ, f::ExpandedFunction, X) =
 
 # Versions with allocations
 evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) =
-              evaluate_basis!(zeros(size(X,1),size(idx,1)), f, X, dims, idx)
+              evaluate_basis!(zeros(size(X,2),size(idx,1)), f, X, dims, idx)
 
 evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}) =
-              evaluate_basis!(zeros(size(X,1),size(f.idx,1)), f, X, dims, f.idx)
+              evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, dims, f.idx)
 
 evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2}) =
             evaluate_basis!(zeros(size(X,2),size(idx,1)), f, X, 1:f.Nx, idx)

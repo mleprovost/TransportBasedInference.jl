@@ -76,7 +76,6 @@ end
 evaluate(C::MapComponent, X::Array{Float64,2}) =
     evaluate!(zeros(size(X,2)), C, X)
 
-
 ## Compute log_pdf
 
 function log_pdf!(result, cache, C::MapComponent, X)
@@ -107,9 +106,6 @@ function grad_x_logdet_jacobian(C::MapComponent, X)
     ψoff = evaluate_offdiagbasis(C.I.f.f, X)
 
 
-
-
-
 end
 
 ## Compute grad_x_log_pdf
@@ -122,11 +118,6 @@ function grad_x_log_pdf!(result, cache, C::MapComponent, X)
     Cx = evaluate(C, X)
 
     cache .= grad_xd(C.I, X)
-
-
-
-
-
 end
 
 ## negative_log_likelihood

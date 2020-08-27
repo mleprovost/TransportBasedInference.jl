@@ -44,6 +44,10 @@ end
 
 @test norm(ψ - ψt)<1e-10
 
+# Test grad_x
+
+# Tes
+
 
 # Test grad_xd
 gdψ =  grad_xd(R, ens.S)
