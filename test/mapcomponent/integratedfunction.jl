@@ -37,7 +37,8 @@ R = IntegratedFunction(fp)
 
 for i=1:Ne
     x = member(ens, i)
-    ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+    ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) +
+            quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
 end
 
 ψ = evaluate(R, ens.S)
@@ -45,9 +46,22 @@ end
 @test norm(ψ - ψt)<1e-10
 
 # Test grad_x
+dψ = grad_x(R, ens.S)
 
-# Tes
+function Gradient(x)
+    return ForwardDiff.gradient(y->begin
+                           y[end] = 0.0
+                           return  R.f.f(y)
+        end, x) + quadgk(t->ForwardDiff.gradient(
+                  z->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1],t))[end]),
+            x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f.f(y), x)[end]))
+end
 
+for i=1:Ne
+    xi = member(ens, i)
+    dψt = Gradient(xi)
+    @test norm(dψ[i,:] - dψt)<1e-8
+end
 
 # Test grad_xd
 gdψ =  grad_xd(R, ens.S)
@@ -245,6 +259,24 @@ end
     f = ExpandedFunction(B, idx, coeff)
     fp = ParametricFunction(f);
     R = IntegratedFunction(fp)
+
+    # Test grad_x
+    dψ = grad_x(R, ens.S)
+
+    function Gradient(x)
+        return ForwardDiff.gradient(y->begin
+                               y[end] = 0.0
+                               return  R.f.f(y)
+            end, x) + quadgk(t->ForwardDiff.gradient(
+                      z->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1],t))[end]),
+                x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f.f(y), x)[end]))
+    end
+
+    for i=1:Ne
+        xi = member(ens, i)
+        dψt = Gradient(xi)
+        @test norm(dψ[i,:] - dψt)<1e-8
+    end
 
 
     # Test grad_xd

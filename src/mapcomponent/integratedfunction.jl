@@ -204,7 +204,7 @@ function grad_x!(out, R::IntegratedFunction, X)
 
     # Fill the last column
     lastcol = view(out, :, Nx)
-    @time evaluate!(lastcol, R.g, (repeated_grad_xk_basis(R.f.f,  xlast) .* ψoff)*coeff)
+    evaluate!(lastcol, R.g, (repeated_grad_xk_basis(R.f.f,  xlast) .* ψoff)*coeff)
     return out
 end
 

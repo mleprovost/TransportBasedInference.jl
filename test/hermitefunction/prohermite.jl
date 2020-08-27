@@ -95,7 +95,7 @@ end
 
     for i=0:5
         F = ProHermite(i; scaled = false)
-        @test norm(dV[:,i+1] - map(xi->D(F, 3)(xi),x))<1e-8
+        @test norm(dV[:,i+1] - map(xi->Diff(F, 3)(xi),x))<1e-8
     end
 
     # Scaled
@@ -106,7 +106,7 @@ end
 
     for i=0:5
         F = ProHermite(i; scaled = true)
-        @test norm(dV[:,i+1] - map(xi->D(F, 3)(xi),x))<1e-8
+        @test norm(dV[:,i+1] - map(xi->Diff(F, 3)(xi),x))<1e-8
     end
 end
 
