@@ -216,6 +216,7 @@ grad_x(R::IntegratedFunction, X) = grad_x!(zeros(size(X')), R, X)
 function hess_x!(out, R::IntegratedFunction, X)
     NxX, Ne = size(X)
     Nx = R.Nx
+    Nψ = R.Nψ
     @assert NxX == Nx "Wrong dimension of the sample"
     @assert size(out) == (Ne, Nx, Nx) "Dimensions of the output and the samples don't match"
 
@@ -230,6 +231,7 @@ function hess_x!(out, R::IntegratedFunction, X)
     coeff = R.f.f.coeff
 
     # Cache for the integration
+    cacheij = zeros(ceil(Int64, (Nx-1)*(Nx-2)*Ne/2))
     cache = zeros((Nx-1)*Ne)
     cachedg  = zeros(Ne)
     cached2g = zeros(Ne)
@@ -241,47 +243,32 @@ function hess_x!(out, R::IntegratedFunction, X)
         ψbasis_i .= evaluate_basis(R.f.f, X, [i], R.f.f.idx)
     end
 
-    #
-    # # This integrand computes ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψj′⊗ … ⊗ ψk′(t) × c g′(ψ1 ⊗ … ⊗ ψk′(t)×c)
-    # function integrand!(v::Vector{Float64}, t::Float64)
-    # dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
-    # @avx @. cacheg = (dxkψ * ψoff) *ˡ coeff
-    # grad_x!(cacheg, R.g, cacheg)
-    #
-    #     @inbounds for i=1:Nx-1
-    #         vi = view(v, (i-1)*Ne+1:i*Ne)
-    #         dxψbasisi = view(dxψbasis,:,:,i)
-    #         vi .= ((dxψbasisi .* dxkψ) * coeff) .* cacheg
-    #     end
-    # end
-    # quadgk!(integrand!, cache, 0.0, 1.0; rtol = 1e-3)
-    #
-    # # Multiply integral by xlast (change of variable in the integration)
-    # @inbounds for i=1:Nx-1
-    #     @. cache[(i-1)*Ne+1:i*Ne] *= xlast
-    # end
-    #
-    # # Add ψ1 ⊗ … ⊗ ψi′ ⊗ … ⊗ ψk(0) × c
-    # @inbounds for i=1:Nx-1
-    #     dxψbasisi = view(dxψbasis,:,:,i)
-    #     view(out,:,i) .+= (dxψbasisi .* ψk0)*coeff + view(cache,(i-1)*Ne+1:i*Ne)
-    # end
-    #
-    # # Fill the last column
-    # lastcol = view(out, :, Nx)
-    # evaluate!(lastcol, R.g, (repeated_grad_xk_basis(R.f.f,  xlast) .* ψoff)*coeff)
-
     ##########################################################################################
-    # Compute ∂^2_ii R(x1:k) = ψ1 ⊗ … ⊗ ψi″⊗ … ⊗ ψk(0) c + ∫_0^x_k [ψ1 ⊗ … ⊗ ψi″ ⊗ … ⊗ ψk′(t)c
-    # g′(ψ1 ⊗ … ⊗ ψk′(t)c) +  ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c ⨂ ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c
-    # g″(ψ1 ⊗ … ⊗ ψk′(t)c) dt
+    # Compute ∂^2_ij R(x1:k) = ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψj′ ⊗ … ⊗ ψk(0) c + ∫_0^x_k [ψ1 ⊗ … ⊗ ψi′ ⊗ … ⊗ ψj′ ⊗ … ⊗ ψk′(t)c
+    # g′(ψ1 ⊗ … ⊗ ψk′(t)c) +  ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c ⨂ ψ1 ⊗ … ⊗ ψj′⊗ … ⊗ ψk′(t) c
+    # g″(ψ1 ⊗ … ⊗ ψk′(t)c) dt for i,j ∈[1,k-1] and i<j
 
-    # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψk-1
     dxψbasis = zero(ψbasis)
     d2xψbasis = zero(ψbasis)
+    dxijψbasis = zeros(Ne, Nψ, ceil(Int64, ((Nx-1)*(Nx-2))/2))
     fill!(dxψbasis, 1.0)
     fill!(d2xψbasis, 1.0)
+    fill!(dxijψbasis, 1.0)
 
+    # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψj′⊗ … ⊗ ψk-1
+    count = 0
+    @inbounds for i=1:Nx-1
+        for j=i+1:Nx-1
+            count += 1
+            dxijψbasis[:,:,count] .*= grad_xk_basis(R.f.f, X, 1, [i; j], [i; j], R.f.f.idx)
+            for k=1:Nx-1
+                if k != i && k != j
+                    dxijψbasis[:,:,count] .*= ψbasis[:,:,k]
+                end
+            end
+        end
+    end
+    # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψk-1 && ψ1 ⊗ ψ2 ⊗ ψi″⊗ … ⊗ ψk-1
     @inbounds for i=1:Nx-1
         for j=1:Nx-1
             if i==j
@@ -293,6 +280,51 @@ function hess_x!(out, R::IntegratedFunction, X)
             end
         end
     end
+
+    function integrandij!(v::Vector{Float64}, t::Float64)
+    dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
+    @avx @. cachedg = (dxkψ * ψoff) *ˡ coeff
+    hess_x!(cached2g, R.g, cachedg)
+    grad_x!(cachedg, R.g, cachedg)
+        count = 0
+        @inbounds for i=1:Nx-1
+            for j=i+1:Nx-1
+                count +=1
+                vij= view(v, (count-1)*Ne+1:count*Ne)
+                dxijψbasis_count = view(dxijψbasis,:,:,count)
+                dxψbasisi = view(dxψbasis,:,:,i)
+                dxψbasisj = view(dxψbasis,:,:,j)
+                vij .= ((dxijψbasis_count .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .* ((dxψbasisj .* dxkψ) * coeff)) .* cached2g
+            end
+        end
+    end
+
+    quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-3)
+
+    # Multiply integral by xlast (change of variable in the integration)
+    @inbounds for i=1:Nx-1
+        @. cacheij[(i-1)*Ne+1:i*Ne] *= xlast
+    end
+    count = 0
+    @inbounds for i=1:Nx-1
+        for j=i+1:Nx-1
+            count += 1
+            colij = view(out, :, i, j)
+            colji = view(out, :, j, i)
+            cacheij_count = view(cacheij, (count-1)*Ne+1:count*Ne)
+            dxijψbasis_count = view(dxijψbasis,:,:,count)
+            @avx @. colij = (dxijψbasis_count * ψk0) *ˡ coeff
+            colij .+= cacheij_count
+            colji .= colij
+        end
+    end
+
+
+
+    ##########################################################################################
+    # Compute ∂^2_ii R(x1:k) = ψ1 ⊗ … ⊗ ψi″⊗ … ⊗ ψk(0) c + ∫_0^x_k [ψ1 ⊗ … ⊗ ψi″ ⊗ … ⊗ ψk′(t)c
+    # g′(ψ1 ⊗ … ⊗ ψk′(t)c) +  ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c ⨂ ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c
+    # g″(ψ1 ⊗ … ⊗ ψk′(t)c) dt for i ∈[1,k-1]
 
     # Compute integral term
     cache = zeros((Nx-1)*Ne)
@@ -307,7 +339,7 @@ function hess_x!(out, R::IntegratedFunction, X)
             vi = view(v, (i-1)*Ne+1:i*Ne)
             dxψbasisi = view(dxψbasis,:,:,i)
             d2xψbasisi = view(d2xψbasis,:,:,i)
-            vi .= ((d2xψbasisi .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .* ((dxψbasisi .* dxkψ) * coeff)) .* cached2g
+            vi .= ((d2xψbasisi .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .^2) .* cached2g
         end
     end
 
@@ -317,8 +349,6 @@ function hess_x!(out, R::IntegratedFunction, X)
     @inbounds for i=1:Nx-1
         @. cache[(i-1)*Ne+1:i*Ne] *= xlast
     end
-
-
 
     @inbounds for i=1:Nx-1
         colii = view(out, :, i, i)
