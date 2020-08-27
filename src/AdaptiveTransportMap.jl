@@ -27,6 +27,7 @@ using PlotUtils
 using RecipesBase
 using ColorTypes
 using LaTeXStrings
+using Quadrature
 
 
 

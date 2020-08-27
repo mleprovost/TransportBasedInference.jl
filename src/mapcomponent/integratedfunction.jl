@@ -176,16 +176,17 @@ function grad_x!(out, R::IntegratedFunction, X)
         end
     end
 
+
     # This integrand computes ψ1 ⊗ … ⊗ ψi′ ⊗ … ⊗ ψk′(t) × c g′(ψ1 ⊗ … ⊗ ψk′(t)×c)
     function integrand!(v::Vector{Float64}, t::Float64)
     dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
     @avx @. cacheg = (dxkψ * ψoff) *ˡ coeff
-    evaluate!(cacheg, R.g, cacheg)
+    grad_x!(cacheg, R.g, cacheg)
 
         @inbounds for i=1:Nx-1
             vi = view(v, (i-1)*Ne+1:i*Ne)
             dxψbasisi = view(dxψbasis,:,:,i)
-            @avx @. vi = ((dxψbasisi * dxkψ) *ˡ coeff) * cacheg
+            vi .= ((dxψbasisi .* dxkψ) * coeff) .* cacheg
         end
     end
     quadgk!(integrand!, cache, 0.0, 1.0; rtol = 1e-3)
@@ -198,15 +199,12 @@ function grad_x!(out, R::IntegratedFunction, X)
     # Add ψ1 ⊗ … ⊗ ψi′ ⊗ … ⊗ ψk(0) × c
     @inbounds for i=1:Nx-1
         dxψbasisi = view(dxψbasis,:,:,i)
-        out[:,i] = (dxψbasisi .* ψk0)*coeff
-        # out[:,i] += view(cache,(i-1)*Ne+1:i*Ne)
+        view(out,:,i) .+= (dxψbasisi .* ψk0)*coeff + view(cache,(i-1)*Ne+1:i*Ne)
     end
 
     # Fill the last column
-    # lastcol = view(out, :, Nx)
-    # @time evaluate!(lastcol, R.g, (repeated_grad_xk_basis(R.f.f,  xlast) .* ψoff)*coeff)
-
-
+    lastcol = view(out, :, Nx)
+    @time evaluate!(lastcol, R.g, (repeated_grad_xk_basis(R.f.f,  xlast) .* ψoff)*coeff)
     return out
 end
 

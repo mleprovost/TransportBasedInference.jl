@@ -473,37 +473,6 @@ end
 hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = hess_x_grad_xd(f, X, f.idx)
 
 
-
-function hess_x_basis!(d2ψ::Array{Float64,4}, f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
-    m = f.m
-    Nx = f.Nx
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
-    Nψreduced = size(idx,1)
-    fill!(d2ψ, 1)
-    Ne, Nψr1, Nxψ1, Nxψ2 = size(d2ψ)
-    @assert Ne == size(X,2)
-    @assert Nxψ1 == Nxψ2 "Wrong dimension of d2ψ"
-    @assert Nψr1 == size(idx,1) "Wrong dimension of d2ψ"
-
-
-    # Fill diagonal components
-    @inbounds for j=1:Nx
-        d2ψj = view(d2ψ,:,:,j,j)
-        grad_xk_basis!(d2ψj, f, X, 2, j, idx)
-    end
-
-    # Fill off-diagonal and exploit symmetry (Schwartz theorem)
-    @inbounds for i=1:Nx
-                for j=i+1:Nx
-                    d2ψij = view(d2ψ,:,:,i,j)
-                    grad_xk_basis!(d2ψij, f, X, 1, [i;j], idx)
-                    d2ψ[:,:,j,i] .= d2ψ[:,:,i,j]
-                end
-    end
-    return d2ψ
-end
-
-
 # Derivative with respect to the some coefficients
 function grad_coeff(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64, 1})
     Nψ = f.Nψ
