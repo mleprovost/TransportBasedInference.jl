@@ -2,6 +2,10 @@ export  HermiteMap,
         evaluate!,
         evaluate,
         log_pdf,
+        grad_x_log_pdf!,
+        grad_x_log_pdf,
+        hess_x_log_pdf!,
+        hess_x_log_pdf,
         optimize
 
 import Base: @propagate_inbounds
@@ -113,6 +117,14 @@ function log_pdf(M::HermiteMap, X, component::Union{Int64, Array{Int64,1}, UnitR
 end
 
 log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = log_pdf(M, X, 1:M.Nx; apply_rescaling = apply_rescaling)
+
+## Compute grad_x_log_pdf
+
+function grad_x_log_pdf!(result, cache, M::HermiteMap, X)
+end
+
+## Compute hess_x_log_pdf
+
 
 
 ## Optimization function

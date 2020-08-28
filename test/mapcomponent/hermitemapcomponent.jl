@@ -154,7 +154,7 @@ end
                                 -7.082679248037675])<1e-8
 end
 
-@testset "Verify grad_log_pdf function Nx = 1" begin
+@testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 1" begin
 
   Nx = 1
   Ne = 100
@@ -169,7 +169,8 @@ end
 
   C = MapComponent(m, Nx, idx, coeff)
 
-  dxlogC = grad_x_log_pdf(C, X)
+  dxlogC  = grad_x_log_pdf(C, X)
+  d2xlogC = hess_x_log_pdf(C, X)
 
   function evaluatef0(x)
     y = copy(x)
@@ -193,10 +194,14 @@ end
     @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
   end
 
+  @inbounds for i=1:Ne
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+  end
+
 end
 
 
-@testset "Verify grad_log_pdf function Nx = 2" begin
+@testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 2" begin
 
   Nx = 2
   Ne = 100
@@ -212,6 +217,7 @@ end
   C = MapComponent(m, Nx, idx, coeff)
 
   dxlogC = grad_x_log_pdf(C, X)
+  d2xlogC = hess_x_log_pdf(C, X)
 
   function evaluatef0(x)
     y = copy(x)
@@ -235,10 +241,14 @@ end
     @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
   end
 
+  @inbounds for i=1:Ne
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+  end
+
 end
 
 
-@testset "Verify grad_log_pdf function Nx = 4" begin
+@testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 4" begin
 
   Nx = 4
   Ne = 100
@@ -254,6 +264,8 @@ end
   C = MapComponent(m, Nx, idx, coeff)
 
   dxlogC = grad_x_log_pdf(C, X)
+  d2xlogC = hess_x_log_pdf(C, X)
+
 
   function evaluatef0(x)
     y = copy(x)
@@ -275,6 +287,10 @@ end
 
   @inbounds for i=1:Ne
     @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+  end
+
+  @inbounds for i=1:Ne
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
   end
 
 end

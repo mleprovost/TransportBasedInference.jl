@@ -35,14 +35,14 @@ using FiniteDiff
 # include("hermitefunction/prohermite.jl")
 # # #
 # # Test tools for Basis, MultiBasis, ExpandedFunction
-include("mapcomponent/rectifier.jl")
-include("mapcomponent/basis.jl")
-include("mapcomponent/expandedfunction.jl")
-include("mapcomponent/parametric.jl")
-
-# Test tools for integrated function
-include("mapcomponent/integratedfunction.jl")
-include("mapcomponent/storage.jl")
+# include("mapcomponent/rectifier.jl")
+# include("mapcomponent/basis.jl")
+# include("mapcomponent/expandedfunction.jl")
+# include("mapcomponent/parametric.jl")
+#
+# # Test tools for integrated function
+# include("mapcomponent/integratedfunction.jl")
+# include("mapcomponent/storage.jl")
 
 # Test tools for HermiteMap component
 include("mapcomponent/hermitemapcomponent.jl")

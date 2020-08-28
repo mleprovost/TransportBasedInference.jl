@@ -133,14 +133,6 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     grad_x!(dcache, C.I, X)
     hess_x!(result, C.I, X)
 
-    # for i=1:Nx
-    #             for j=1:Nx
-    #             dcachei = view(dcache,:,i)
-    #             dcachej = view(dcache,:,j)
-    #             @avx @. result[:,i,j] = result[:,i,j] *cache + dcachei * dcachej
-    #     end
-    # end
-
     @inbounds for i=1:Nx
                 for j=i:Nx
                 dcachei = view(dcache,:,i)
@@ -149,7 +141,6 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
                 resultji = view(result,:,j,i)
                 @avx @. resultij = resultij * cache + dcachei * dcachej
                 resultji .= resultij
-                # @avx @. result[:,i,j] = result[:,i,j] *cache + dcachei * dcachej
         end
     end
 
