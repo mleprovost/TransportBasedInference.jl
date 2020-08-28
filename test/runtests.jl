@@ -30,7 +30,7 @@ using MLDataUtils
 #
 # include("hermitefunction/phyhermite.jl")
 # include("hermitefunction/prohermite.jl")
-# #
+# # #
 # # Test tools for Basis, MultiBasis, ExpandedFunction
 include("mapcomponent/rectifier.jl")
 include("mapcomponent/basis.jl")

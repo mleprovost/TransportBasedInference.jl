@@ -6,6 +6,7 @@ export  Rectifier,
         explinearunit, dexplinearunit, d2explinearunit, invexplinearunit,
         inverse!, inverse, vinverse,
         grad_x!, grad_x, vgrad_x,
+        grad_x_eval, grad_x_eval!, vgrad_x_eval,
         hess_x!, hess_x, vhess_x,
         evaluate!, vevaluate
 
@@ -114,6 +115,7 @@ function grad_x(g::Rectifier, x)
     end
 end
 
+
 function grad_x!(result, g::Rectifier, x)
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
@@ -132,6 +134,38 @@ function grad_x!(result, g::Rectifier, x)
 end
 
 vgrad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
+
+# Compute g′(x)/g(x) i.e d/dx log(g(x))
+function grad_x_eval(g::Rectifier, x::T) where {T <: Real}
+    if g.T=="squared"
+        return dsquare(x)/square(x)
+    elseif g.T=="exponential"
+        return 1.0
+    elseif g.T=="softplus"
+        return dsoftplus(x)/softplus(x)
+    elseif g.T=="explinearunit"
+        return dexplinearunit(x)/explinearunit(x)
+    end
+end
+
+function grad_x_eval!(result, g::Rectifier, x)
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
+    if g.T=="squared"
+        vmap!(xi->dsquare(xi)/square(xi), result, x)
+        return result
+    elseif g.T=="exponential"
+        vmap!(1.0, result, x)
+        return result
+    elseif g.T=="softplus"
+        vmap!(xi->dsoftplus(xi)/softplus(xi), result, x)
+        return result
+    elseif g.T=="explinearunit"
+        vmap!(xi->dexplinearunit(xi)/explinearunit(xi), result, x)
+        return result
+    end
+end
+
+vgrad_x_eval(g::Rectifier, x) = grad_x_eval!(zero(x), g, x)
 
 
 function hess_x(g::Rectifier, x::T) where {T <: Real}

@@ -11,6 +11,10 @@ r = Rectifier("squared")
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
+
+
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
 
@@ -20,6 +24,9 @@ x = -2.5
 
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
+
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
 
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
@@ -38,6 +45,9 @@ r = Rectifier("exponential")
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
+
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
 
@@ -47,6 +57,9 @@ x = -2.46
 
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
+
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
 
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
@@ -74,6 +87,9 @@ xlarge = 10.0^6
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
+
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
 
@@ -89,6 +105,9 @@ xlarge = 10.0^6
 
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
+
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
 
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
@@ -108,6 +127,9 @@ xneg = -0.5
 @test abs(ForwardDiff.derivative(y->r(y), xneg) - grad_x(r, xneg) ) < 1e-10
 @test abs(ForwardDiff.derivative(y->r(y), xneg) - exp(xneg) ) < 1e-10
 
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), xneg) - grad_x_eval(r, xneg) ) < 1e-10
+
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),xneg) - hess_x(r, xneg) ) < 1e-10
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),xneg) - exp(xneg) ) < 1e-10
@@ -123,6 +145,9 @@ x = 2.5
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 @test abs(ForwardDiff.derivative(y->r(y), x) - 1.0 ) < 1e-10
+
+# Test gradient/evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
 
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10

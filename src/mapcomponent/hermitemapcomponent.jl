@@ -8,8 +8,10 @@ export  MapComponent,
         evaluate,
         log_pdf!,
         log_pdf,
-        grad_x_logdet_jacobian,
         grad_x_log_pdf!,
+        grad_x_log_pdf,
+        hess_x_log_pdf!,
+        hess_x_log_pdf,
         negative_log_likelihood!,
         negative_log_likelihood,
         hess_negative_log_likelihood!
@@ -96,29 +98,50 @@ end
 
 log_pdf(C::MapComponent, X) = log_pdf!(zeros(size(X,2)), zeros(size(X,2)), C, X)
 
-## Compute grad_x_logdet_jacobian
-
-function grad_x_logdet_jacobian(C::MapComponent, X)
-    NxX, Ne = size(X)
-    @assert C.Nx == NxX "Wrong dimension of the sample"
-    dxlogDJ = zeros(C.Nx)
-
-    ψoff = evaluate_offdiagbasis(C.I.f.f, X)
-
-
-end
-
 ## Compute grad_x_log_pdf
 
 function grad_x_log_pdf!(result, cache, C::MapComponent, X)
     NxX, Ne = size(X)
     @assert C.Nx == NxX "Wrong dimension of the sample"
-    @assert size(result) == (NxX, X) "Wrong dimension of the result"
+    @assert size(result) == (Ne, NxX) "Wrong dimension of the result"
 
-    Cx = evaluate(C, X)
+    # Compute gradient of log η∘C(x_{1:k})
+    evaluate!(cache, C, X)
+    grad_x!(result, C.I, X)
+    @avx @. result *= cache
+    rmul!(result, -1.0)
 
-    cache .= grad_xd(C.I, X)
+    # Compute gradient of log det∇S(x)
+    cache .= grad_xd(C.I.f, X)
+    grad_x_eval!(cache, C.I.g, cache)
+    result += cache .* grad_x_grad_xd(C.I.f.f, X)
+    return result
 end
+
+grad_x_log_pdf(C::MapComponent, X) = grad_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2)), C, X)
+
+## Compute hess_x_log_pdf
+
+function hess_x_log_pdf!(result, cache, C::MapComponent, X)
+    NxX, Ne = size(X)
+    @assert C.Nx == NxX "Wrong dimension of the sample"
+    @assert size(result) == (Ne, NxX) "Wrong dimension of the result"
+
+    # Compute gradient of log η∘C(x_{1:k})
+    evaluate!(cache, C, X)
+    grad_x!(result, C.I, X)
+    @avx @. result *= cache
+    rmul!(result, -1.0)
+
+    # Compute gradient of log det∇S(x)
+    cache .= grad_xd(C.I.f, X)
+    grad_x_eval!(cache, C.I.g, cache)
+    result += cache .* grad_x_grad_xd(C.I.f.f, X)
+    return result
+end
+
+hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2)), C, X)
+
 
 ## negative_log_likelihood
 
