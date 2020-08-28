@@ -11,12 +11,14 @@ r = Rectifier("squared")
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 x = -2.5
 @test abs(r(x) - x^2)<1e-10
@@ -25,11 +27,14 @@ x = -2.5
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 end
 
@@ -45,11 +50,14 @@ r = Rectifier("exponential")
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 x = -2.46
 @test abs(r(x) - exp(x))<1e-10
@@ -58,11 +66,14 @@ x = -2.46
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 end
 
@@ -87,11 +98,14 @@ xlarge = 10.0^6
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 
 x = -2.5
@@ -106,11 +120,14 @@ xlarge = 10.0^6
 # Test gradient
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 end
 
@@ -127,12 +144,16 @@ xneg = -0.5
 @test abs(ForwardDiff.derivative(y->r(y), xneg) - grad_x(r, xneg) ) < 1e-10
 @test abs(ForwardDiff.derivative(y->r(y), xneg) - exp(xneg) ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), xneg) - grad_x_eval(r, xneg) ) < 1e-10
 
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),xneg) - hess_x(r, xneg) ) < 1e-10
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),xneg) - exp(xneg) ) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), xneg) - grad_x_logeval(r, xneg) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [xneg])[1,1] - hess_x_logeval(r, xneg) ) < 1e-10
 
 ## Test x>=0
 x = 2.5
@@ -146,11 +167,14 @@ x = 2.5
 @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
 @test abs(ForwardDiff.derivative(y->r(y), x) - 1.0 ) < 1e-10
 
-# Test gradient/evaluation
-@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_eval(r, x) ) < 1e-10
-
 # Test hessian
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
 @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - 0.0) < 1e-10
+
+# Test gradient of log evaluation
+@test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
+
+# Test hessian of log evaluation
+@test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 
 end

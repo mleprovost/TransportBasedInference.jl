@@ -240,14 +240,14 @@ end
 
 @testset "Verify grad_log_pdf function Nx = 4" begin
 
-  Nx = 2
+  Nx = 4
   Ne = 100
   X = randn(Nx, Ne)
   ens = EnsembleState(X)
   m = 10
   B = MultiBasis(CstProHermite(3), Nx)
 
-  idx = [0 0; 0 1; 1 0; 1 1; 1 2; 3 2]
+  idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 2 0 2 1; 0 0 1 2; 1 2 0 2;3 2 2 2]
 
   coeff =  randn(size(idx,1))
 

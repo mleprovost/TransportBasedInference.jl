@@ -6,7 +6,8 @@ export  Rectifier,
         explinearunit, dexplinearunit, d2explinearunit, invexplinearunit,
         inverse!, inverse, vinverse,
         grad_x!, grad_x, vgrad_x,
-        grad_x_eval, grad_x_eval!, vgrad_x_eval,
+        grad_x_logeval, grad_x_logeval!, vgrad_x_logeval,
+        hess_x_logeval, hess_x_logeval!, vhess_x_logeval,
         hess_x!, hess_x, vhess_x,
         evaluate!, vevaluate
 
@@ -136,7 +137,7 @@ end
 vgrad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
 
 # Compute g′(x)/g(x) i.e d/dx log(g(x))
-function grad_x_eval(g::Rectifier, x::T) where {T <: Real}
+function grad_x_logeval(g::Rectifier, x::T) where {T <: Real}
     if g.T=="squared"
         return dsquare(x)/square(x)
     elseif g.T=="exponential"
@@ -148,7 +149,7 @@ function grad_x_eval(g::Rectifier, x::T) where {T <: Real}
     end
 end
 
-function grad_x_eval!(result, g::Rectifier, x)
+function grad_x_logeval!(result, g::Rectifier, x)
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
         vmap!(xi->dsquare(xi)/square(xi), result, x)
@@ -165,8 +166,40 @@ function grad_x_eval!(result, g::Rectifier, x)
     end
 end
 
-vgrad_x_eval(g::Rectifier, x) = grad_x_eval!(zero(x), g, x)
+vgrad_x_logeval(g::Rectifier, x) = grad_x_logeval!(zero(x), g, x)
 
+
+# Compute (g″(x)g(x)-g′(x)^2)/g(x) i.e d^2/dx^2 log(g(x))
+function hess_x_logeval(g::Rectifier, x::T) where {T <: Real}
+    if g.T=="squared"
+        return (d2square(x)*square(x) - dsquare(x)^2)/square(x)^2
+    elseif g.T=="exponential"
+        return 0.0
+    elseif g.T=="softplus"
+        return (d2softplus(x)*softplus(x) - dsoftplus(x)^2)/softplus(x)^2
+    elseif g.T=="explinearunit"
+        return (d2explinearunit(x)*explinearunit(x) - dexplinearunit(x)^2)/explinearunit(x)^2
+    end
+end
+
+function hess_x_logeval!(result, g::Rectifier, x)
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
+    if g.T=="squared"
+        vmap!(xi->(d2square(xi)*square(xi) - dsquare(xi)^2)/square(xi)^2, result, x)
+        return result
+    elseif g.T=="exponential"
+        vmap!(0.0, result, x)
+        return result
+    elseif g.T=="softplus"
+        vmap!(xi->(d2softplus(xi)*softplus(xi) - dsoftplus(xi)^2)/softplus(xi)^2, result, x)
+        return result
+    elseif g.T=="explinearunit"
+        vmap!(xi->(d2explinearunit(xi)*explinearunit(xi) - dexplinearunit(xi)^2)/explinearunit(xi)^2, result, x)
+        return result
+    end
+end
+
+vhess_x_logeval(g::Rectifier, x) = hess_x_logeval!(zero(x), g, x)
 
 function hess_x(g::Rectifier, x::T) where {T <: Real}
     if g.T=="squared"
