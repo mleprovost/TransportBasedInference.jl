@@ -15,6 +15,7 @@ using NLsolve
 using MLDataUtils
 using Quadrature
 using Cubature
+using FiniteDiff
 
 # Tools: double factorial, adaptive integration
 # include("tools/tools.jl")

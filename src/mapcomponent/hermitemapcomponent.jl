@@ -111,9 +111,9 @@ function grad_x_log_pdf!(result, cache, C::MapComponent, X)
     @avx @. result *= cache
     rmul!(result, -1.0)
 
-    # Compute gradient of log det∇S(x)
+    # Compute gradient of log ∂k C(x_{1:k})
     cache .= grad_xd(C.I.f, X)
-    grad_x_eval!(cache, C.I.g, cache)
+    grad_x_logeval!(cache, C.I.g, cache)
     result += cache .* grad_x_grad_xd(C.I.f.f, X)
     return result
 end
@@ -122,25 +122,65 @@ grad_x_log_pdf(C::MapComponent, X) = grad_x_log_pdf!(zeros(size(X,2), size(X,1))
 
 ## Compute hess_x_log_pdf
 
-function hess_x_log_pdf!(result, cache, C::MapComponent, X)
+function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     NxX, Ne = size(X)
-    @assert C.Nx == NxX "Wrong dimension of the sample"
-    @assert size(result) == (Ne, NxX) "Wrong dimension of the result"
+    Nx = C.Nx
+    @assert Nx == NxX "Wrong dimension of the sample"
+    @assert size(result) == (Ne, NxX, NxX) "Wrong dimension of the result"
 
-    # Compute gradient of log η∘C(x_{1:k})
+    # Compute hessian of log η∘C(x_{1:k}) with η the log pdf of N(O, I_n)
     evaluate!(cache, C, X)
-    grad_x!(result, C.I, X)
-    @avx @. result *= cache
+    grad_x!(dcache, C.I, X)
+    hess_x!(result, C.I, X)
+
+    # for i=1:Nx
+    #             for j=1:Nx
+    #             dcachei = view(dcache,:,i)
+    #             dcachej = view(dcache,:,j)
+    #             @avx @. result[:,i,j] = result[:,i,j] *cache + dcachei * dcachej
+    #     end
+    # end
+
+    @inbounds for i=1:Nx
+                for j=i:Nx
+                dcachei = view(dcache,:,i)
+                dcachej = view(dcache,:,j)
+                resultij = view(result,:,i,j)
+                resultji = view(result,:,j,i)
+                @avx @. resultij = resultij * cache + dcachei * dcachej
+                resultji .= resultij
+                # @avx @. result[:,i,j] = result[:,i,j] *cache + dcachei * dcachej
+        end
+    end
+
     rmul!(result, -1.0)
 
-    # Compute gradient of log det∇S(x)
+    # Compute hessian of log ∂k C(x_{1:k})
     cache .= grad_xd(C.I.f, X)
-    grad_x_eval!(cache, C.I.g, cache)
-    result += cache .* grad_x_grad_xd(C.I.f.f, X)
+    cached2log = vhess_x_logeval(C.I.g, cache)
+    dcache .= grad_x_grad_xd(C.I.f.f, X)
+
+    @inbounds for i=1:Nx
+                for j=i:Nx
+                resultij = view(result,:,i,j)
+                resultji = view(result,:,j,i)
+                dcachei = view(dcache,:,i)
+                dcachej = view(dcache,:,j)
+                @avx @. resultij += dcachei * dcachej * cached2log
+
+                resultji .= resultij
+        end
+    end
+
+    grad_x_logeval!(cache, C.I.g, cache)
+    result .+= hess_x_grad_xd(C.I.f.f, X) .* cache
+
     return result
 end
 
-hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2)), C, X)
+hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
+                                                     zeros(size(X,2), size(X,1)),
+                                                     zeros(size(X,2)), C, X)
 
 
 ## negative_log_likelihood
