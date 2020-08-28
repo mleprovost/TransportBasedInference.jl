@@ -154,11 +154,130 @@ end
                                 -7.082679248037675])<1e-8
 end
 
-@testset "Verify grad_log_pdf function" begin
+@testset "Verify grad_log_pdf function Nx = 1" begin
 
+  Nx = 1
+  Ne = 100
+  X = randn(Nx, Ne)
+  ens = EnsembleState(X)
+  m = 10
+  B = MultiBasis(CstProHermite(3), Nx)
+
+  idx = reshape([0; 1; 2; 3], (4,1))
+
+  coeff =  randn(size(idx,1))
+
+  C = MapComponent(m, Nx, idx, coeff)
+
+  dxlogC = grad_x_log_pdf(C, X)
+
+  function evaluatef0(x)
+    y = copy(x)
+    y[end] = 0.0
+    return C.I.f.f(y)
+  end
+
+  integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f.f(y), vcat(x[1:end-1],t*x[end]))[end])
+
+  function Ct(x)
+      lb = 0.0
+      ub = 1.0
+      prob = QuadratureProblem(integrand,lb,ub,x)
+      out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
+      return out
+  end
+
+  log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
+
+  @inbounds for i=1:Ne
+    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+  end
 
 end
 
+
+@testset "Verify grad_log_pdf function Nx = 2" begin
+
+  Nx = 2
+  Ne = 100
+  X = randn(Nx, Ne)
+  ens = EnsembleState(X)
+  m = 10
+  B = MultiBasis(CstProHermite(3), Nx)
+
+  idx = [0 0; 0 1; 1 0; 1 1; 1 2; 3 2]
+
+  coeff =  randn(size(idx,1))
+
+  C = MapComponent(m, Nx, idx, coeff)
+
+  dxlogC = grad_x_log_pdf(C, X)
+
+  function evaluatef0(x)
+    y = copy(x)
+    y[end] = 0.0
+    return C.I.f.f(y)
+  end
+
+  integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f.f(y), vcat(x[1:end-1],t*x[end]))[end])
+
+  function Ct(x)
+      lb = 0.0
+      ub = 1.0
+      prob = QuadratureProblem(integrand,lb,ub,x)
+      out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
+      return out
+  end
+
+  log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
+
+  @inbounds for i=1:Ne
+    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+  end
+
+end
+
+
+@testset "Verify grad_log_pdf function Nx = 4" begin
+
+  Nx = 2
+  Ne = 100
+  X = randn(Nx, Ne)
+  ens = EnsembleState(X)
+  m = 10
+  B = MultiBasis(CstProHermite(3), Nx)
+
+  idx = [0 0; 0 1; 1 0; 1 1; 1 2; 3 2]
+
+  coeff =  randn(size(idx,1))
+
+  C = MapComponent(m, Nx, idx, coeff)
+
+  dxlogC = grad_x_log_pdf(C, X)
+
+  function evaluatef0(x)
+    y = copy(x)
+    y[end] = 0.0
+    return C.I.f.f(y)
+  end
+
+  integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f.f(y), vcat(x[1:end-1],t*x[end]))[end])
+
+  function Ct(x)
+      lb = 0.0
+      ub = 1.0
+      prob = QuadratureProblem(integrand,lb,ub,x)
+      out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
+      return out
+  end
+
+  log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
+
+  @inbounds for i=1:Ne
+    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+  end
+
+end
 # Code for optimization with Hessian
 # X = randn(Nx, Ne) .* randn(Nx, Ne)
 # S = Storage(H.I.f, X; hess = true);

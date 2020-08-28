@@ -13,6 +13,8 @@ using Distributions
 using Optim
 using NLsolve
 using MLDataUtils
+using Quadrature
+using Cubature
 
 # Tools: double factorial, adaptive integration
 # include("tools/tools.jl")
