@@ -154,6 +154,11 @@ end
                                 -7.082679248037675])<1e-8
 end
 
+@testset "Verify grad_log_pdf function" begin
+
+
+end
+
 # Code for optimization with Hessian
 # X = randn(Nx, Ne) .* randn(Nx, Ne)
 # S = Storage(H.I.f, X; hess = true);

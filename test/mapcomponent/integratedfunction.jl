@@ -2,7 +2,7 @@
 @testset "Test integrated function Nx = 2" begin
 
 Nx = 2
-Ne = 500
+Ne = 100
 ens = EnsembleState(Nx, Ne)
 
 ens.S .= randn(Nx, Ne)
@@ -61,6 +61,31 @@ for i=1:Ne
     xi = member(ens, i)
     dψt = Gradient(xi)
     @test norm(dψ[i,:] - dψt)<1e-8
+end
+
+# Test hess_x
+H = hess_x(R, ens.S)
+Ht = zeros(Nx, Nx)
+function Hessian!(H, x)
+    fill!(H, 0.0)
+
+    H[1:Nx-1,1:Nx-1] .= ForwardDiff.hessian(y->begin
+                        y[Nx] = 0.0
+                        return R.f.f(y) end, x)[1:Nx-1,1:Nx-1]
+
+    # Hessian of the integral term
+    H[1:Nx-1,1:Nx-1] .+= (quadgk(t -> ForwardDiff.hessian(
+    z-> R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1], t))[end]), x),
+            0.0, x[end], rtol = 1e-3)[1])[1:Nx-1,1:Nx-1]
+
+    # H[Nx,:] and H[:,Nx]
+    H[:, Nx] .= ForwardDiff.gradient(z->R.g(ForwardDiff.gradient(y->R.f.f(y), z)[end]), x)
+    H[Nx, :] .= H[:, Nx]
+    return H
+end
+
+@inbounds for i=1:Ne
+    @test norm(H[i,:,:] - Hessian!(Ht, member(ens,i)))<1e-8
 end
 
 # Test grad_xd
@@ -228,7 +253,7 @@ end
 @testset "Test integrated function Nx = 3" begin
 
     Nx = 3
-    Ne = 500
+    Ne = 100
     ens = EnsembleState(Nx, Ne)
 
     ens.S .= randn(Nx, Ne)
@@ -442,7 +467,7 @@ end
 @testset "Test integrated function Nx = 4" begin
 
     Nx = 4
-    Ne = 500
+    Ne = 100
     ens = EnsembleState(Nx, Ne)
 
     ens.S .= randn(Nx, Ne)
@@ -455,13 +480,13 @@ end
     #           0.412907   1.01672;
     #           1.41332   -0.918205;
     #           0.766647  -1.00445]';
-    B = MultiBasis(CstProHermite(6), Nx)
+    B = MultiBasis(CstProHermite(10), Nx)
 
     # idx = [0 0; 0 1; 1 0; 1 1; 1 2]
     idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 2 0 2 1; 0 0 1 2; 1 2 0 2;3 2 2 2]
 
     truncidx = idx[1:2:end,:]
-    Nψ = 10
+    Nψ = 7
 
     coeff = randn(Nψ)
 

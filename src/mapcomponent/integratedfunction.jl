@@ -230,17 +230,38 @@ function hess_x!(out, R::IntegratedFunction, X)
 
     coeff = R.f.f.coeff
 
-    # Cache for the integration
-    cacheij = zeros(ceil(Int64, (Nx-1)*(Nx-2)*Ne/2))
-    cache = zeros((Nx-1)*Ne)
-    cachedg  = zeros(Ne)
-    cached2g = zeros(Ne)
+    if Nx>1
 
-    # Compute the basis for each component
-    ψbasis = zeros(Ne, R.Nψ, Nx-1)
-    @inbounds for i=1:Nx-1
-        ψbasis_i = view(ψbasis, :, :, i)
-        ψbasis_i .= evaluate_basis(R.f.f, X, [i], R.f.f.idx)
+        # Cache for the integration
+        cache = zeros((Nx-1)*Ne)
+        cachedg  = zeros(Ne)
+        cached2g = zeros(Ne)
+
+        # Compute the basis for each component ψi(xi)
+        ψbasis = zeros(Ne, R.Nψ, Nx-1)
+        @inbounds for i=1:Nx-1
+            ψbasis_i = view(ψbasis, :, :, i)
+            ψbasis_i .= evaluate_basis(R.f.f, X, [i], R.f.f.idx)
+        end
+
+        dxψbasis = zero(ψbasis)
+        d2xψbasis = zero(ψbasis)
+        fill!(dxψbasis, 1.0)
+        fill!(d2xψbasis, 1.0)
+
+        # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψk-1 && ψ1 ⊗ ψ2 ⊗ ψi″⊗ … ⊗ ψk-1
+        @inbounds for i=1:Nx-1
+            for j=1:Nx-1
+                if i==j
+                dxψbasis[:,:,i] .*= grad_xk_basis(R.f.f, X, 1, j, j, R.f.f.idx)
+                d2xψbasis[:,:,i] .*= grad_xk_basis(R.f.f, X, 2, j, j, R.f.f.idx)
+
+                else
+                dxψbasis[:,:,i] .*= ψbasis[:,:,j]
+                d2xψbasis[:,:,i] .*= ψbasis[:,:,j]
+                end
+            end
+        end
     end
 
     ##########################################################################################
@@ -248,136 +269,125 @@ function hess_x!(out, R::IntegratedFunction, X)
     # g′(ψ1 ⊗ … ⊗ ψk′(t)c) +  ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c ⨂ ψ1 ⊗ … ⊗ ψj′⊗ … ⊗ ψk′(t) c
     # g″(ψ1 ⊗ … ⊗ ψk′(t)c) dt for i,j ∈[1,k-1] and i<j
 
-    dxψbasis = zero(ψbasis)
-    d2xψbasis = zero(ψbasis)
-    dxijψbasis = zeros(Ne, Nψ, ceil(Int64, ((Nx-1)*(Nx-2))/2))
-    fill!(dxψbasis, 1.0)
-    fill!(d2xψbasis, 1.0)
-    fill!(dxijψbasis, 1.0)
-
-    # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψj′⊗ … ⊗ ψk-1
-    count = 0
-    @inbounds for i=1:Nx-1
-        for j=i+1:Nx-1
-            count += 1
-            dxijψbasis[:,:,count] .*= grad_xk_basis(R.f.f, X, 1, [i; j], [i; j], R.f.f.idx)
-            for k=1:Nx-1
-                if k != i && k != j
-                    dxijψbasis[:,:,count] .*= ψbasis[:,:,k]
-                end
-            end
-        end
-    end
-    # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψk-1 && ψ1 ⊗ ψ2 ⊗ ψi″⊗ … ⊗ ψk-1
-    @inbounds for i=1:Nx-1
-        for j=1:Nx-1
-            if i==j
-            dxψbasis[:,:,i] .*= grad_xk_basis(R.f.f, X, 1, j, j, R.f.f.idx)
-            d2xψbasis[:,:,i] .*= grad_xk_basis(R.f.f, X, 2, j, j, R.f.f.idx)
-            else
-            dxψbasis[:,:,i] .*= ψbasis[:,:,j]
-            d2xψbasis[:,:,i] .*= ψbasis[:,:,j]
-            end
-        end
-    end
-
-    function integrandij!(v::Vector{Float64}, t::Float64)
-    dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
-    @avx @. cachedg = (dxkψ * ψoff) *ˡ coeff
-    hess_x!(cached2g, R.g, cachedg)
-    grad_x!(cachedg, R.g, cachedg)
+    if Nx>2
+        cacheij = zeros(ceil(Int64, (Nx-1)*(Nx-2)*Ne/2))
+        dxijψbasis = zeros(Ne, Nψ, ceil(Int64, ((Nx-1)*(Nx-2))/2))
+        fill!(dxijψbasis, 1.0)
+        # Compute ψ1 ⊗ ψ2 ⊗ ψi′⊗ … ⊗ ψj′⊗ … ⊗ ψk-1
         count = 0
         @inbounds for i=1:Nx-1
             for j=i+1:Nx-1
-                count +=1
-                vij= view(v, (count-1)*Ne+1:count*Ne)
+                count += 1
+                dxijψbasis[:,:,count] .*= grad_xk_basis(R.f.f, X, 1, [i; j], [i; j], R.f.f.idx)
+                for k=1:Nx-1
+                    if k != i && k != j
+                        dxijψbasis[:,:,count] .*= ψbasis[:,:,k]
+                    end
+                end
+            end
+        end
+
+        function integrandij!(v::Vector{Float64}, t::Float64)
+        dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
+        @avx @. cachedg = (dxkψ * ψoff) *ˡ coeff
+        hess_x!(cached2g, R.g, cachedg)
+        grad_x!(cachedg, R.g, cachedg)
+            count = 0
+            @inbounds for i=1:Nx-1
+                for j=i+1:Nx-1
+                    count +=1
+                    vij= view(v, (count-1)*Ne+1:count*Ne)
+                    dxijψbasis_count = view(dxijψbasis,:,:,count)
+                    dxψbasisi = view(dxψbasis,:,:,i)
+                    dxψbasisj = view(dxψbasis,:,:,j)
+                    vij .= ((dxijψbasis_count .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .* ((dxψbasisj .* dxkψ) * coeff)) .* cached2g
+                end
+            end
+        end
+
+        quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-3)
+
+        # Multiply integral by xlast (change of variable in the integration)
+        @inbounds for i=1:Nx-1
+            @. cacheij[(i-1)*Ne+1:i*Ne] *= xlast
+        end
+        count = 0
+        @inbounds for i=1:Nx-1
+            for j=i+1:Nx-1
+                count += 1
+                colij = view(out, :, i, j)
+                colji = view(out, :, j, i)
+                cacheij_count = view(cacheij, (count-1)*Ne+1:count*Ne)
                 dxijψbasis_count = view(dxijψbasis,:,:,count)
-                dxψbasisi = view(dxψbasis,:,:,i)
-                dxψbasisj = view(dxψbasis,:,:,j)
-                vij .= ((dxijψbasis_count .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .* ((dxψbasisj .* dxkψ) * coeff)) .* cached2g
+                @avx @. colij = (dxijψbasis_count * ψk0) *ˡ coeff
+                colij .+= cacheij_count
+                colji .= colij
             end
         end
     end
-
-    quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-3)
-
-    # Multiply integral by xlast (change of variable in the integration)
-    @inbounds for i=1:Nx-1
-        @. cacheij[(i-1)*Ne+1:i*Ne] *= xlast
-    end
-    count = 0
-    @inbounds for i=1:Nx-1
-        for j=i+1:Nx-1
-            count += 1
-            colij = view(out, :, i, j)
-            colji = view(out, :, j, i)
-            cacheij_count = view(cacheij, (count-1)*Ne+1:count*Ne)
-            dxijψbasis_count = view(dxijψbasis,:,:,count)
-            @avx @. colij = (dxijψbasis_count * ψk0) *ˡ coeff
-            colij .+= cacheij_count
-            colji .= colij
-        end
-    end
-
-
-
     ##########################################################################################
     # Compute ∂^2_ii R(x1:k) = ψ1 ⊗ … ⊗ ψi″⊗ … ⊗ ψk(0) c + ∫_0^x_k [ψ1 ⊗ … ⊗ ψi″ ⊗ … ⊗ ψk′(t)c
     # g′(ψ1 ⊗ … ⊗ ψk′(t)c) +  ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c ⨂ ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(t) c
     # g″(ψ1 ⊗ … ⊗ ψk′(t)c) dt for i ∈[1,k-1]
+    if Nx>1
+        # Compute integral term
+        cache = zeros((Nx-1)*Ne)
 
-    # Compute integral term
-    cache = zeros((Nx-1)*Ne)
+        function integrandii!(v::Vector{Float64}, t::Float64)
+        dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
+        @avx @. cachedg = (dxkψ * ψoff) *ˡ coeff
+        hess_x!(cached2g, R.g, cachedg)
+        grad_x!(cachedg, R.g, cachedg)
 
-    function integrandii!(v::Vector{Float64}, t::Float64)
-    dxkψ .= repeated_grad_xk_basis(R.f.f,  t*xlast)
-    @avx @. cachedg = (dxkψ * ψoff) *ˡ coeff
-    hess_x!(cached2g, R.g, cachedg)
-    grad_x!(cachedg, R.g, cachedg)
+            @inbounds for i=1:Nx-1
+                vi = view(v, (i-1)*Ne+1:i*Ne)
+                dxψbasisi = view(dxψbasis,:,:,i)
+                d2xψbasisi = view(d2xψbasis,:,:,i)
+                vi .= ((d2xψbasisi .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .^2) .* cached2g
+            end
+        end
+
+        quadgk!(integrandii!, cache, 0.0, 1.0; rtol = 1e-3)
+
+        # Multiply integral by xlast (change of variable in the integration)
+        @inbounds for i=1:Nx-1
+            @. cache[(i-1)*Ne+1:i*Ne] *= xlast
+        end
 
         @inbounds for i=1:Nx-1
-            vi = view(v, (i-1)*Ne+1:i*Ne)
-            dxψbasisi = view(dxψbasis,:,:,i)
+            colii = view(out, :, i, i)
+            cachei = view(cache, (i-1)*Ne+1:i*Ne)
             d2xψbasisi = view(d2xψbasis,:,:,i)
-            vi .= ((d2xψbasisi .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .^2) .* cached2g
+            @avx @. colii = (d2xψbasisi * ψk0) *ˡ coeff
+            colii .+= cachei
         end
-    end
-
-    quadgk!(integrandii!, cache, 0.0, 1.0; rtol = 1e-3)
-
-    # Multiply integral by xlast (change of variable in the integration)
-    @inbounds for i=1:Nx-1
-        @. cache[(i-1)*Ne+1:i*Ne] *= xlast
-    end
-
-    @inbounds for i=1:Nx-1
-        colii = view(out, :, i, i)
-        cachei = view(cache, (i-1)*Ne+1:i*Ne)
-        d2xψbasisi = view(d2xψbasis,:,:,i)
-        @avx @. colii = (d2xψbasisi * ψk0) *ˡ coeff
-        colii .+= cachei
     end
     #############################################################################
     # Compute ∂^2_ik R(x1:k) = ψ1 ⊗ … ⊗ ψi′⊗ … ⊗ ψk′(xk) c g′(ψ1 ⊗ … ⊗ ψk′(xk) c)
+    if Nx>1
+        dxkψk = repeated_grad_xk_basis(R.f.f,  xlast)
+        grad_x!(dgψ, R.g, (ψoff .* dxkψk)* coeff)
 
-    dxkψk = repeated_grad_xk_basis(R.f.f,  xlast)
-    grad_x!(dgψ, R.g, (ψoff .* dxkψk)* coeff)
-
-    @inbounds for i=1:Nx-1
-        colik = view(out,:,i,Nx)
-        colki = view(out,:,Nx,i)
-        dxψbasisi = view(dxψbasis,:,:,i)
-        @avx @. colik = ((dxψbasisi * dxkψk) *ˡ coeff) * dgψ
-        colki .= colik
+        @inbounds for i=1:Nx-1
+            colik = view(out,:,i,Nx)
+            colki = view(out,:,Nx,i)
+            dxψbasisi = view(dxψbasis,:,:,i)
+            @avx @. colik = ((dxψbasisi * dxkψk) *ˡ coeff) * dgψ
+            colki .= colik
+        end
     end
     #############################################################################
     # Compute ∂^2_k R^k(x1:k) = ψ1 ⊗ … ⊗ ψk″(xk) c g′(ψ1 ⊗ … ⊗ ψk′(xk) c)
 
     d2xkψk = grad_xk_basis(R.f.f, X, 2, Nx, Nx, R.f.f.idx)
     colkk = view(out, :, Nx, Nx)
-    # grad_x!(colkk, R.g, (ψoff .* dxkψk)* coeff)
-    @avx @. colkk = ((ψoff * d2xkψk) *ˡ coeff) * dgψ
-    # colkk .*= ((ψoff .* d2xkψk) * coeff) #.* grad_x(R.g, (ψoff .* dxkψk)* coeff)
+    if Nx>1
+        @avx @. colkk = ((ψoff * d2xkψk) *ˡ coeff) * dgψ
+    else
+        dxkψk = repeated_grad_xk_basis(R.f.f,  xlast)
+        grad_x!(dgψ, R.g, (dxkψk)* coeff)
+        @avx @. colkk = (d2xkψk *ˡ coeff) * dgψ
+    end
     return out
 end
 
