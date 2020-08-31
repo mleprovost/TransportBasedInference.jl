@@ -574,7 +574,7 @@ function hess_x!(out, R::IntegratedFunction, X)
             end
         end
 
-        quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-5)
+        quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-3 )
 
         # Multiply integral by xlast (change of variable in the integration)
         @inbounds for i=1:length(dimoff)
@@ -616,7 +616,7 @@ function hess_x!(out, R::IntegratedFunction, X)
             end
         end
 
-        quadgk!(integrandii!, cache, 0.0, 1.0; rtol = 1e-5)
+        quadgk!(integrandii!, cache, 0.0, 1.0; rtol = 1e-3)
 
         # Multiply integral by xlast (change of variable in the integration)
         @inbounds for i=1:length(dimoff)

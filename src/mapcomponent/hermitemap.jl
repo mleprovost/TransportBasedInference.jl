@@ -177,7 +177,7 @@ function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X
                 # cache_hessi = view(cache_hess,:,1:i,1:i)
                 # hess_x_log_pdf!(cache_hessi, cache_gradi, cache, M.C[i], Xi)
                 # @avx @. resulti += cache_hessi
-                resulti .+= hess_x_log_pdf(M.C[i], Xi)
+                resulti .+= hess_x_log_pdf!(M.C[i], Xi)
         end
 
         if apply_rescaling == true

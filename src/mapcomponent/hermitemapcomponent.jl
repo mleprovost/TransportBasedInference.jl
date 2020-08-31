@@ -134,14 +134,15 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     evaluate!(cache, C, X)
     grad_x!(dcache, C.I, X)
     hess_x!(result, C.I, X)
-    # nonid_idx =
 
-    @inbounds for i=1:Nx
-                for j=i:Nx
-                dcachei = view(dcache,:,i)
-                dcachej = view(dcache,:,j)
-                resultij = view(result,:,i,j)
-                resultji = view(result,:,j,i)
+    dim = active_dim(C)
+
+    @inbounds for i=1:length(dim)
+                for j=i:length(dim)
+                dcachei = view(dcache,:,dim[i])
+                dcachej = view(dcache,:,dim[j])
+                resultij = view(result,:,dim[i],dim[j])
+                resultji = view(result,:,dim[j], dim[i])
                 @avx @. resultij = resultij * cache + dcachei * dcachej
                 resultji .= resultij
         end
@@ -154,12 +155,12 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     cached2log = vhess_x_logeval(C.I.g, cache)
     dcache .= grad_x_grad_xd(C.I.f.f, X)
 
-    @inbounds for i=1:Nx
-                for j=i:Nx
-                resultij = view(result,:,i,j)
-                resultji = view(result,:,j,i)
-                dcachei = view(dcache,:,i)
-                dcachej = view(dcache,:,j)
+    @inbounds for i=1:length(dim)
+                for j=i:length(dim)
+                dcachei = view(dcache,:,dim[i])
+                dcachej = view(dcache,:,dim[j])
+                resultij = view(result,:,dim[i],dim[j])
+                resultji = view(result,:,dim[j], dim[i])
                 @avx @. resultij += dcachei * dcachej * cached2log
 
                 resultji .= resultij
@@ -171,6 +172,15 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
 
     return result
 end
+#
+# function hess_x_log_pdf(C::MapComponent, X)
+#     NxX, Ne = size(X)
+#     Nx = C.Nx
+#     dim = active_dim(C)
+#     result = spzeros(Ne, Nx, Nx)
+#     = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
+#                                                      zeros(size(X,2), size(X,1)),
+#                                                      zeros(size(X,2)), C, X)
 
 hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
                                                      zeros(size(X,2), size(X,1)),
