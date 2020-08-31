@@ -41,12 +41,12 @@ include("mapcomponent/expandedfunction.jl")
 include("mapcomponent/parametric.jl")
 
 # Test tools for integrated function
-# include("mapcomponent/integratedfunction.jl")
-# include("mapcomponent/storage.jl")
+include("mapcomponent/integratedfunction.jl")
+include("mapcomponent/storage.jl")
 
 # Test tools for HermiteMap component
-# include("mapcomponent/hermitemapcomponent.jl")
-# include("mapcomponent/linhermitemapcomponent.jl")
+include("mapcomponent/hermitemapcomponent.jl")
+include("mapcomponent/linhermitemapcomponent.jl")
 
 # Test greedy procedure
 # include("mapcomponent/greedyfit.jl")
