@@ -132,6 +132,7 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     evaluate!(cache, C, X)
     grad_x!(dcache, C.I, X)
     hess_x!(result, C.I, X)
+    nonid_idx =
 
     @inbounds for i=1:Nx
                 for j=i:Nx

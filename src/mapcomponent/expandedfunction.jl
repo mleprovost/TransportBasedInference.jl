@@ -132,16 +132,16 @@ evaluate_basis!(ψ, f::ExpandedFunction, X) =
 
 
 # Versions with allocations
-evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) =
+evaluate_basis(f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) =
               evaluate_basis!(zeros(size(X,2),size(idx,1)), f, X, dims, idx)
 
-evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}, dims::Union{Array{Int64,1},UnitRange{Int64}}) =
+evaluate_basis(f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}) =
               evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, dims, f.idx)
 
-evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2}) =
+evaluate_basis(f::ExpandedFunction, X, idx::Array{Int64,2}) =
             evaluate_basis!(zeros(size(X,2),size(idx,1)), f, X, 1:f.Nx, idx)
 
-evaluate_basis(f::ExpandedFunction, X::Array{Float64,2}) =
+evaluate_basis(f::ExpandedFunction, X) =
             evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, 1:f.Nx, f.idx)
 
 function repeated_evaluate_basis(f::ExpandedFunction, x, idx::Array{Int64,2})
@@ -206,22 +206,22 @@ grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Ar
 
 
 # Versions with allocations
-grad_xk_basis(f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2}) =
+grad_xk_basis(f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2}) =
              grad_xk_basis!(zeros(size(X,2), size(idx,1)), f, X, k, grad_dim, dims, f.idx)
 
-grad_xk_basis(f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}) =
+grad_xk_basis(f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}) =
              grad_xk_basis!(zeros(size(X,2), size(f.idx,1)), f, X, k, grad_dim, dims, f.idx)
 
-grad_xk_basis(f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, idx::Array{Int64,2}) =
+grad_xk_basis(f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, idx::Array{Int64,2}) =
              grad_xk_basis!(zeros(size(X,2), size(idx,1)), f, X, k, grad_dim, 1:f.Nx, idx)
 
-grad_xk_basis(f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}) =
+grad_xk_basis(f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}) =
              grad_xk_basis!(zeros(size(X,2), size(f.idx,1)), f, X, k, grad_dim, 1:f.Nx, f.idx)
 
 
 
 
-function grad_x_basis!(dψ::Array{Float64,3}, f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+function grad_x_basis!(dψ::Array{Float64,3}, f::ExpandedFunction, X, idx::Array{Int64,2})
     m = f.m
     Nx = f.Nx
     # Compute the k-th order deriviative of an expanded function along the direction grad_dim
@@ -398,7 +398,9 @@ repeated_hess_xk_basis(f::ExpandedFunction, x) = repeated_hess_xk_basis(f, x, f.
 
 # Compute ∂_i (∂_k f(x_{1:k}))
 
-function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+# function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+
+function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
     m = f.m
     Nx = f.Nx
@@ -420,12 +422,17 @@ function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int
     return dxdxkψ
 end
 
-grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = grad_x_grad_xd(f, X, f.idx)
+# grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2})
+
+grad_x_grad_xd(f::ExpandedFunction, X) = grad_x_grad_xd(f, X, f.idx)
 
 
 # Compute ∂_i ∂_j (∂_k f(x_{1:k}))
 
-function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+# function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+
+
+function hess_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
     m = f.m
     Nx = f.Nx
@@ -470,7 +477,9 @@ function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int
     return dxidxjdxkψ
 end
 
-hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = hess_x_grad_xd(f, X, f.idx)
+# hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = hess_x_grad_xd(f, X, f.idx)
+
+hess_x_grad_xd(f::ExpandedFunction, X) = hess_x_grad_xd(f, X, f.idx)
 
 
 # Derivative with respect to the some coefficients
