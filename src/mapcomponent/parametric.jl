@@ -4,7 +4,6 @@ export  ParametricFunction,
         evaluate_diagbasis!,
         evaluate_diagbasis,
         grad_xd_diagbasis!,
-        
         grad_xd_diagbasis,
         hess_xd_diagbasis!,
         hess_xd_diagbasis,
@@ -16,7 +15,6 @@ export  ParametricFunction,
         hess_xd,
         grad_coeff!,
         grad_coeff,
-
         grad_coeff_grad_xd!,
         grad_coeff_grad_xd
 

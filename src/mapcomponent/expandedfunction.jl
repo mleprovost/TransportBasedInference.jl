@@ -1,6 +1,8 @@
 using LoopVectorization: @avx
 
-export  ExpandedFunction, alleval,
+export  ExpandedFunction,
+        sparse_dim,
+        alleval,
         evaluate_basis!,
         evaluate_basis,
         repeated_evaluate_basis,
@@ -35,6 +37,7 @@ struct ExpandedFunction
     Nx::Int64
     B::MultiBasis
     idx::Array{Int64,2}
+    dim::Array{Int64, 1} # contains the active dimensions, i.e. columns of idx not equal to zeros
     coeff::Array{Float64,1}
     function ExpandedFunction(B::MultiBasis, idx::Array{Int64,2}, coeff::Array{Float64,1})
             Nψ = size(idx,1)
@@ -44,7 +47,7 @@ struct ExpandedFunction
 
 
             @assert size(idx,2) == Nx "Size of the array of multi-indices idx is wrong"
-        return new(B.B.m, Nψ, Nx, B, idx, coeff)
+        return new(B.B.m, Nψ, Nx, B, idx, sparse_dim(idx), coeff)
     end
 end
 
@@ -60,6 +63,18 @@ function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
     return out
 end
 
+function sparse_dim(idx::Array{Int64,2})
+    dim = Int64[]
+    Nx = size(idx,2)
+    @inbounds for i=1:Nx
+        if all(view(idx,:,i) .== 0)
+            push!(dim, i)
+        end
+    end
+    return dim
+end
+
+sparse_dim(f::ExpandedFunction) = sparse_dim(f.idx)
 
 
 # alleval computes the evaluation, graidnet of hessian of the function
@@ -129,7 +144,6 @@ evaluate_basis!(ψ, f::ExpandedFunction, X, idx::Array{Int64,2}) =
 
 evaluate_basis!(ψ, f::ExpandedFunction, X) =
             evaluate_basis!(ψ, f, X, 1:f.Nx, f.idx)
-
 
 # Versions with allocations
 evaluate_basis(f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) =
