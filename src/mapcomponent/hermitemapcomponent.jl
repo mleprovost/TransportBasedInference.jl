@@ -4,6 +4,7 @@ export  MapComponent,
         getcoeff,
         setcoeff!,
         getidx,
+        active_dim,
         evaluate!,
         evaluate,
         log_pdf!,
@@ -67,6 +68,7 @@ end
 
 getidx(C::MapComponent) = C.I.f.f.idx
 
+active_dim(C::MapComponent) = C.I.f.f.dim
 
 ## Evaluate
 function evaluate!(out, C::MapComponent, X)
