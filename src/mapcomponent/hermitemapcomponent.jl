@@ -13,6 +13,8 @@ export  MapComponent,
         grad_x_log_pdf,
         hess_x_log_pdf!,
         hess_x_log_pdf,
+        mean_hess_x_log_pdf!,
+        mean_hess_x_log_pdf,
         negative_log_likelihood!,
         negative_log_likelihood,
         hess_negative_log_likelihood!
@@ -185,6 +187,7 @@ end
 hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
                                                      zeros(size(X,2), size(X,1)),
                                                      zeros(size(X,2)), C, X)
+
 
 
 ## negative_log_likelihood

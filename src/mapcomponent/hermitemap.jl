@@ -6,6 +6,8 @@ export  HermiteMap,
         grad_x_log_pdf,
         hess_x_log_pdf!,
         hess_x_log_pdf,
+        mean_hess_x_log_pdf!,
+        mean_hess_x_log_pdf,
         optimize
 
 import Base: @propagate_inbounds
@@ -154,14 +156,16 @@ grad_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = grad_x_log_pdf!
 
 ## Compute hess_x_log_pdf
 
-function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
+# function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
+function hess_x_log_pdf!(result, M::HermiteMap, X; apply_rescaling::Bool = true)
+
         Nx = M.Nx
         NxX, Ne = size(X)
         @assert size(X,1) == Nx "Wrong dimension of the input vector"
         @assert size(result) == (Ne, Nx, Nx) "Wrong dimension of the result"
-        @assert size(cache_hess) == (Ne, Nx, Nx) "Wrong dimension of cache_hess"
-        @assert size(cache_grad) == (Ne, Nx) "Wrong dimension of cache_grad"
-        @assert size(cache) == (Ne, ) "Wrong dimension of cache"
+        # @assert size(cache_hess) == (Ne, Nx, Nx) "Wrong dimension of cache_hess"
+        # @assert size(cache_grad) == (Ne, Nx) "Wrong dimension of cache_grad"
+        # @assert size(cache) == (Ne, ) "Wrong dimension of cache"
 
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
@@ -170,14 +174,13 @@ function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X
 
         # The rescaling doesn't appears in the hessian, log(xy) = log(x) + log(y)
         @inbounds for i=1:Nx
-                @show i
                 Xi = view(X,1:i,:)
                 resulti = view(result,:,1:i,1:i)
                 # cache_gradi = view(cache_grad,:,1:i)
                 # cache_hessi = view(cache_hess,:,1:i,1:i)
                 # hess_x_log_pdf!(cache_hessi, cache_gradi, cache, M.C[i], Xi)
                 # @avx @. resulti += cache_hessi
-                resulti .+= hess_x_log_pdf!(M.C[i], Xi)
+                resulti .+= hess_x_log_pdf(M.C[i], Xi)
         end
 
         if apply_rescaling == true
@@ -187,10 +190,55 @@ function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X
         return result
 end
 
-hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
-                                        zeros(size(X,2), size(X,1), size(X,1)),
-                                        zeros(size(X,2), size(X,1)),
-                                        zeros(size(X,2)), M, X; apply_rescaling = apply_rescaling)
+hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)), M, X; apply_rescaling = apply_rescaling)
+
+#
+# # function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
+# function mean_hess_x_log_pdf!(result, M::HermiteMap, X; apply_rescaling::Bool = true)
+#
+#         Nx = M.Nx
+#         NxX, Ne = size(X)
+#         @assert size(X,1) == Nx "Wrong dimension of the input vector"
+#         @assert size(result) == (Nx, Nx) "Wrong dimension of the result"
+#         # @assert size(cache_hess) == (Ne, Nx, Nx) "Wrong dimension of cache_hess"
+#         # @assert size(cache_grad) == (Ne, Nx) "Wrong dimension of cache_grad"
+#         # @assert size(cache) == (Ne, ) "Wrong dimension of cache"
+#
+#         # We can apply the rescaling to all the components once
+#         if apply_rescaling == true
+#                 transform!(M.L, X)
+#         end
+#
+#         # The rescaling doesn't appears in the hessian, log(xy) = log(x) + log(y)
+#         @inbounds for i=1:Nx
+#                 for j=1:Ne
+#                 Xi = view(X,1:i,j)
+#                 resulti = view(result,:,1:i,1:i)
+#                 # cache_gradi = view(cache_grad,:,1:i)
+#                 # cache_hessi = view(cache_hess,:,1:i,1:i)
+#                 # hess_x_log_pdf!(cache_hessi, cache_gradi, cache, M.C[i], Xi)
+#                 # @avx @. resulti += cache_hessi
+#                 resulti .+= hess_x_log_pdf(M.C[i], Xi)
+#                 end
+#         end
+#
+#         rmul!(result, 1/Ne)
+#
+#         if apply_rescaling == true
+#                 itransform!(M.L, X)
+#         end
+#
+#         return result
+# end
+#
+# mean_hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = mean_hess_x_log_pdf!(zeros(size(X,1), size(X,1)), M, X; apply_rescaling = apply_rescaling)
+#
+
+
+# hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
+#                                         zeros(size(X,2), size(X,1), size(X,1)),
+#                                         zeros(size(X,2), size(X,1)),
+#                                         zeros(size(X,2)), M, X; apply_rescaling = apply_rescaling)
 
 ## Optimization function
 

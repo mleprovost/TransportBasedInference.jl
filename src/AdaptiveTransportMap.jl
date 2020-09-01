@@ -5,6 +5,7 @@ using Random
 using ProgressMeter
 using BenchmarkTools
 using ForwardDiff
+using SparseArrays
 # using StaticUnivariatePolynomials
 using Polynomials
 using TransportMap

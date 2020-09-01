@@ -423,6 +423,16 @@ repeated_hess_xk_basis(f::ExpandedFunction, x) = repeated_hess_xk_basis(f, x, f.
 
 ## Compute ∂_i (∂_k f(x_{1:k}))
 
+# function active_dimik(idx::Array{Int64,2})
+#     dim = Int64[]
+#     Nx = size(idx,2)
+#     boolik = sum(idx .* idx[:,end]; dims = 1)[1,:] .> 0
+#     return (1:Nx)[boolik]
+# end
+#
+# active_dimik(f::ExpandedFunction) = active_dimik(f.idx)
+
+
 # function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
 function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
@@ -432,14 +442,20 @@ function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     @assert NxX == Nx "Wrong dimension of the input"
 
     if f.Nx ∈ f.dim
-        dxdxkψ = zeros(Ne, Nx)
+        # dxdxkψ = zeros(Ne, Nx)
+        dxdxkψ = spzeros(Ne, Nx)
+
         dxdxkψ_basis = zeros(Ne, Nψ)
         # dxdxkψ_basis = zeros(Ne, Nψ, Nx)
         @inbounds for i ∈ f.dim[f.dim .< f.Nx]
-            fill!(dxdxkψ_basis, 0.0)
-            grad_xk_basis!(dxdxkψ_basis, f, X, 1, [i;Nx], idx)
-            dxidxkψ = view(dxdxkψ,:,i)
-            mul!(dxidxkψ, dxdxkψ_basis, f.coeff)
+            # Reduce further the computation, we have a non-zero output only if
+            # there is a feature such that idx[:,i]*idx[:,Nx]>0
+            if any([line[i]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0)
+                fill!(dxdxkψ_basis, 0.0)
+                grad_xk_basis!(dxdxkψ_basis, f, X, 1, [i;Nx], idx)
+                dxidxkψ = view(dxdxkψ,:,i)
+                mul!(dxidxkψ, dxdxkψ_basis, f.coeff)
+            end
         end
 
         d2xkψ = view(dxdxkψ,:,f.Nx)
@@ -449,7 +465,8 @@ function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
         # dxdxkψ = zeros(Ne, Nx)
         # @tensor dxdxkψ[a,b] = dxdxkψ_basis[a,c,b] * f.coeff[c]
     else
-        dxdxkψ = zeros(Ne, Nx)
+        # dxdxkψ = zeros(Ne, Nx)
+        dxdxkψ = spzeros(Ne, Nx)
     end
 
     return dxdxkψ
@@ -469,6 +486,7 @@ function hess_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     @assert NxX == Nx "Wrong dimension of the input"
     # dxidxjdxkψ_basis = zeros(Ne, Nψ, Nx, Nx)
     d2xdxkψ = zeros(Ne, Nx, Nx)
+
     d2xdxkψ_basis = zeros(Ne, Nψ)
 
     # Store the derivative of the basis with respect to the last component
@@ -477,32 +495,36 @@ function hess_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
 
     @inbounds for i ∈ f.dim
         for j ∈ f.dim[f.dim .>= i]
-            fill!(d2xdxkψ_basis, 0.0)
-            dxidxjdxkψ = view(d2xdxkψ,:,i,j)
-            #  Case i = j = k
-            if i==Nx && j==Nx
-                grad_xk_basis!(d2xdxkψ_basis, f, X, 3, Nx)
+            # Reduce further the computation, we have a non-zero output only if
+            # there is a feature such that idx[:,i]*idx[:,j]*idx[:,Nx]>0
+            if any([line[i]*line[j]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0)
+                fill!(d2xdxkψ_basis, 0.0)
                 dxidxjdxkψ = view(d2xdxkψ,:,i,j)
-                mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
-            elseif i==j && j!=Nx
-                grad_xk_basis!(d2xdxkψ_basis, f, X, 2, i, f.dim[f.dim .< f.Nx], idx)
-                d2xdxkψ_basis .*= dxkψ
-                dxidxjdxkψ = view(d2xdxkψ,:,i,j)
-                mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
-            elseif i!=Nx && j==Nx #(use symmetry as well)
-                grad_xk_basis!(d2xdxkψ_basis, f, X, 1, i, f.dim[f.dim .< f.Nx], idx)
-                d2xdxkψ_basis .*= d2xkψ
-                dxidxjdxkψ = view(d2xdxkψ,:,i,j)
-                dxjdxidxkψ = view(d2xdxkψ,:,j,i)
-                mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
-                dxjdxidxkψ .= dxidxjdxkψ
-            else # the rest of the cases (use symmetry as well)
-                grad_xk_basis!(d2xdxkψ_basis, f, X, 1, [i;j], f.dim[f.dim .< f.Nx], idx)
-                d2xdxkψ_basis .*= dxkψ
-                dxidxjdxkψ = view(d2xdxkψ,:,i,j)
-                dxjdxidxkψ = view(d2xdxkψ,:,j,i)
-                mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
-                dxjdxidxkψ .= dxidxjdxkψ
+                #  Case i = j = k
+                if i==Nx && j==Nx
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 3, Nx)
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                elseif i==j && j!=Nx
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 2, i, f.dim[f.dim .< f.Nx], idx)
+                    d2xdxkψ_basis .*= dxkψ
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                elseif i!=Nx && j==Nx #(use symmetry as well)
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 1, i, f.dim[f.dim .< f.Nx], idx)
+                    d2xdxkψ_basis .*= d2xkψ
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    dxjdxidxkψ = view(d2xdxkψ,:,j,i)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                    dxjdxidxkψ .= dxidxjdxkψ
+                else # the rest of the cases (use symmetry as well)
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 1, [i;j], f.dim[f.dim .< f.Nx], idx)
+                    d2xdxkψ_basis .*= dxkψ
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    dxjdxidxkψ = view(d2xdxkψ,:,j,i)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                    dxjdxidxkψ .= dxidxjdxkψ
+                end
             end
         end
     end
