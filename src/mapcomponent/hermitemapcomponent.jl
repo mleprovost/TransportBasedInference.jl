@@ -13,6 +13,8 @@ export  MapComponent,
         grad_x_log_pdf,
         hess_x_log_pdf!,
         hess_x_log_pdf,
+        reduced_hess_x_log_pdf!,
+        reduced_hess_x_log_pdf,
         mean_hess_x_log_pdf!,
         mean_hess_x_log_pdf,
         negative_log_likelihood!,
@@ -174,19 +176,81 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
 
     return result
 end
-#
-# function hess_x_log_pdf(C::MapComponent, X)
-#     NxX, Ne = size(X)
-#     Nx = C.Nx
-#     dim = active_dim(C)
-#     result = spzeros(Ne, Nx, Nx)
-#     = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
-#                                                      zeros(size(X,2), size(X,1)),
-#                                                      zeros(size(X,2)), C, X)
 
 hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
                                                      zeros(size(X,2), size(X,1)),
                                                      zeros(size(X,2)), C, X)
+
+
+
+# This version outputs a result of size(Ne, active_dim(C), active_dim(C))
+
+
+function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
+    NxX, Ne = size(X)
+    Nx = C.Nx
+
+    dim = active_dim(C)
+    dimoff = dim[dim .< Nx]
+
+
+    @assert Nx == NxX "Wrong dimension of the sample"
+    @assert size(result) == (Ne, length(dim), length(dim)) "Wrong dimension of the result"
+
+    # Compute hessian of log η∘C(x_{1:k}) with η the log pdf of N(O, I_n)
+    evaluate!(cache, C, X)
+    reduced_grad_x!(dcache, C.I, X)
+    reduced_hess_x!(result, C.I, X)
+
+    dim = active_dim(C)
+
+    @inbounds for i=1:length(dim)
+             for j=i:length(dim)
+             # dcachei = view(dcache,:,dim[i])
+             # dcachej = view(dcache,:,dim[j])
+             # resultij = view(result,:,dim[i],dim[j])
+             # resultji = view(result,:,dim[j], dim[i])
+             dcachei = view(dcache,:,i)
+             dcachej = view(dcache,:,j)
+             resultij = view(result,:,i,j)
+             resultji = view(result,:,j, i)
+             @avx @. resultij = resultij * cache + dcachei * dcachej
+             resultji .= resultij
+     end
+    end
+
+    rmul!(result, -1.0)
+
+    # Compute hessian of log ∂k C(x_{1:k})
+    cache .= grad_xd(C.I.f, X)
+    cached2log = vhess_x_logeval(C.I.g, cache)
+    dcache .= grad_x_grad_xd(C.I.f.f, X)
+
+    @inbounds for i=1:length(dim)
+             for j=i:length(dim)
+             # dcachei = view(dcache,:,dim[i])
+             # dcachej = view(dcache,:,dim[j])
+             # resultij = view(result,:,dim[i],dim[j])
+             # resultji = view(result,:,dim[j], dim[i])
+             dcachei = view(dcache,:,i)
+             dcachej = view(dcache,:,j)
+             resultij = view(result,:,i,j)
+             resultji = view(result,:,j, i)
+             @avx @. resultij += dcachei * dcachej * cached2log
+
+             resultji .= resultij
+     end
+    end
+
+    grad_x_logeval!(cache, C.I.g, cache)
+    result .+= hess_x_grad_xd(C.I.f.f, X) .* cache
+
+    return result
+end
+
+
+reduced_hess_x_log_pdf(C::MapComponent, X) = reduced_hess_x_log_pdf!(zeros(size(X,2), length(active_dim(C)), length(active_dim(C))),
+                                                zeros(size(X,2), length(active_dim(C))), zeros(size(X,2)), C, X)
 
 
 
