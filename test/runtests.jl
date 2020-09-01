@@ -38,6 +38,7 @@ using FiniteDiff
 # include("mapcomponent/rectifier.jl")
 # include("mapcomponent/basis.jl")
 include("mapcomponent/expandedfunction.jl")
+include("mapcomponent/reduced.jl")
 include("mapcomponent/parametric.jl")
 
 # Test tools for integrated function

@@ -181,6 +181,7 @@ function hess_x_log_pdf!(result, M::HermiteMap, X; apply_rescaling::Bool = true)
                 # hess_x_log_pdf!(cache_hessi, cache_gradi, cache, M.C[i], Xi)
                 # @avx @. resulti += cache_hessi
                 resulti .+= hess_x_log_pdf(M.C[i], Xi)
+
         end
 
         if apply_rescaling == true
@@ -219,7 +220,7 @@ function reduced_hess_x_log_pdf!(M::HermiteMap, X; apply_rescaling::Bool = true)
         sparsity_pattern = spzeros(Nx, Nx)
         @inbounds for i=1:Nx
                 dimi = active_dim(M.C[i])
-                sparsity_pattern[dimi, dimi] .= 1.0
+                sparsity_pattern[dimi, dimi] .= 0.0
         end
 
         result = ntuple(x->sparsity_pattern, Ne)
