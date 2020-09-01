@@ -6,8 +6,8 @@ export  HermiteMap,
         grad_x_log_pdf,
         hess_x_log_pdf!,
         hess_x_log_pdf,
-        mean_hess_x_log_pdf!,
-        mean_hess_x_log_pdf,
+        reduced_hess_x_log_pdf!,
+        reduced_hess_x_log_pdf,
         optimize
 
 import Base: @propagate_inbounds
@@ -192,53 +192,68 @@ end
 
 hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)), M, X; apply_rescaling = apply_rescaling)
 
-#
-# # function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
-# function mean_hess_x_log_pdf!(result, M::HermiteMap, X; apply_rescaling::Bool = true)
-#
-#         Nx = M.Nx
-#         NxX, Ne = size(X)
-#         @assert size(X,1) == Nx "Wrong dimension of the input vector"
-#         @assert size(result) == (Nx, Nx) "Wrong dimension of the result"
-#         # @assert size(cache_hess) == (Ne, Nx, Nx) "Wrong dimension of cache_hess"
-#         # @assert size(cache_grad) == (Ne, Nx) "Wrong dimension of cache_grad"
-#         # @assert size(cache) == (Ne, ) "Wrong dimension of cache"
-#
-#         # We can apply the rescaling to all the components once
-#         if apply_rescaling == true
-#                 transform!(M.L, X)
-#         end
-#
-#         # The rescaling doesn't appears in the hessian, log(xy) = log(x) + log(y)
-#         @inbounds for i=1:Nx
-#                 for j=1:Ne
-#                 Xi = view(X,1:i,j)
-#                 resulti = view(result,:,1:i,1:i)
-#                 # cache_gradi = view(cache_grad,:,1:i)
-#                 # cache_hessi = view(cache_hess,:,1:i,1:i)
-#                 # hess_x_log_pdf!(cache_hessi, cache_gradi, cache, M.C[i], Xi)
-#                 # @avx @. resulti += cache_hessi
-#                 resulti .+= hess_x_log_pdf(M.C[i], Xi)
-#                 end
-#         end
-#
-#         rmul!(result, 1/Ne)
-#
-#         if apply_rescaling == true
-#                 itransform!(M.L, X)
-#         end
-#
-#         return result
-# end
-#
-# mean_hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = mean_hess_x_log_pdf!(zeros(size(X,1), size(X,1)), M, X; apply_rescaling = apply_rescaling)
-#
+
+# This forms output an array of dimension (Ne, Nx, Nx) but the intermediate computation have been done
+# by only looking at the active dimensions
+# function reduced_hess_x_log_pdf!(result, d2cache, dcache, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
+function reduced_hess_x_log_pdf!(M::HermiteMap, X; apply_rescaling::Bool = true)
+
+        Nx = M.Nx
+        NxX, Ne = size(X)
+
+        # Find the maximal length of active dimensions among the different map components
+        Nmax = maximum(i -> length(active_dim(M.C[i])), 1:Nx)
+
+        @assert size(X,1)     ==  Nx              "Wrong dimension of the input vector"
+        # @assert size(result)  == (Ne, Nx, Nx)     "Wrong dimension of the result"
+        # @assert size(d2cache) == (Ne, Nmax, Nmax) "Wrong dimension of the d2cache"
+        # @assert size(dcache)  == (Ne, Nmax)       "Wrong dimension of the dcache"
+        # @assert size(cache)   == (Ne,)            "Wrong dimension of the cache"
 
 
-# hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
-#                                         zeros(size(X,2), size(X,1), size(X,1)),
-#                                         zeros(size(X,2), size(X,1)),
-#                                         zeros(size(X,2)), M, X; apply_rescaling = apply_rescaling)
+        # We can apply the rescaling to all the components once
+        if apply_rescaling == true
+                transform!(M.L, X)
+        end
+
+        sparsity_pattern = spzeros(Nx, Nx)
+        @inbounds for i=1:Nx
+                dimi = active_dim(M.C[i])
+                sparsity_pattern[dimi, dimi] .= 1.0
+        end
+
+        result = ntuple(x->sparsity_pattern, Ne)
+
+        # The rescaling doesn't appears in the hessian, log(xy) = log(x) + log(y)
+        @inbounds for j=1:Ne
+                for i=1:Nx
+
+                dimi = active_dim(M.C[i])
+                Xi = X[1:i,j:j]
+                # d2logM
+                # d2cachei = view(dcache,:,1:length(dimi), 1:length(dimi))
+                # dcachei = view(dcache,:,1:length(dimi))
+                result[j][dimi, dimi] .+= view(reduced_hess_x_log_pdf(M.C[i], Xi),1,:,:)
+                # result[j][dimi, dimi] .+=reduced_hess_x_log_pdf(d2cachei, dcachei, cache, M.C[i], Xi)[1,:,:]
+                end
+        end
+
+        if apply_rescaling == true
+                itransform!(M.L, X)
+        end
+
+        return result
+end
+
+function reduced_hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true)
+        Nmax = maximum(i -> length(active_dim(M.C[i])), 1:M.Nx)
+        NxX, Ne = size(X)
+        result  = zeros(Ne, NxX, NxX)
+        d2cache = zeros(Ne, Nmax, Nmax)
+        dcache  = zeros(Ne, Nmax)
+        cache   = zeros(Ne)
+        reduced_hess_x_log_pdf!(result, d2cache, dcache, cache, M, X; apply_rescaling = apply_rescaling)
+end
 
 ## Optimization function
 

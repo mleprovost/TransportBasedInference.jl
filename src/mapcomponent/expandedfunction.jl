@@ -20,6 +20,10 @@ export  ExpandedFunction,
         grad_xd, hess_xd,
         grad_x_grad_xd,
         hess_x_grad_xd,
+        reduced_grad_x_grad_xd!,
+        reduced_grad_x_grad_xd,
+        reduced_hess_x_grad_xd!,
+        reduced_hess_x_grad_xd,
         grad_coeff, hess_coeff,
         grad_coeff_grad_xd,
         hess_coeff_grad_xd
@@ -440,17 +444,19 @@ function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     Nx = f.Nx
     Nψ = f.Nψ
     @assert NxX == Nx "Wrong dimension of the input"
+    dxdxkψ = zeros(Ne, Nx)
 
-    if f.Nx ∈ f.dim
-        # dxdxkψ = zeros(Ne, Nx)
-        dxdxkψ = spzeros(Ne, Nx)
+    if f.dim == Int64[]
+        return dxdxkψ
+    end
 
+    if f.Nx == f.dim[end]
         dxdxkψ_basis = zeros(Ne, Nψ)
         # dxdxkψ_basis = zeros(Ne, Nψ, Nx)
         @inbounds for i ∈ f.dim[f.dim .< f.Nx]
             # Reduce further the computation, we have a non-zero output only if
             # there is a feature such that idx[:,i]*idx[:,Nx]>0
-            if any([line[i]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0)
+            if any([line[i]*line[f.Nx] for line in eachslice(idx; dims = 1)] .> 0)
                 fill!(dxdxkψ_basis, 0.0)
                 grad_xk_basis!(dxdxkψ_basis, f, X, 1, [i;Nx], idx)
                 dxidxkψ = view(dxdxkψ,:,i)
@@ -464,9 +470,6 @@ function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
         mul!(d2xkψ, dxdxkψ_basis, f.coeff)
         # dxdxkψ = zeros(Ne, Nx)
         # @tensor dxdxkψ[a,b] = dxdxkψ_basis[a,c,b] * f.coeff[c]
-    else
-        # dxdxkψ = zeros(Ne, Nx)
-        dxdxkψ = spzeros(Ne, Nx)
     end
 
     return dxdxkψ
@@ -474,6 +477,46 @@ end
 
 grad_x_grad_xd(f::ExpandedFunction, X) = grad_x_grad_xd(f, X, f.idx)
 
+
+# This version outputs an object of dimension (Ne, f.dim)
+function reduced_grad_x_grad_xd!(dxdxkψ, f::ExpandedFunction, X, idx::Array{Int64,2})
+    NxX, Ne = size(X)
+    m = f.m
+    Nx = f.Nx
+    Nψ = f.Nψ
+
+    dim = f.dim
+    dimoff = dim[ dim .< Nx]
+    @assert NxX == Nx "Wrong dimension of the input"
+    @assert size(dxdxkψ) == (Ne, length(f.dim))
+
+    if f.Nx == f.dim[end]
+        dxdxkψ_basis = zeros(Ne, Nψ)
+        # dxdxkψ_basis = zeros(Ne, Nψ, Nx)
+        @inbounds for i=1:length(dimoff)
+            # Reduce further the computation, we have a non-zero output only if
+            # there is a feature such that idx[:,i]*idx[:,Nx]>0
+            if any([line[dim[i]]*line[f.Nx] for line in eachslice(idx; dims = 1)] .> 0)
+                fill!(dxdxkψ_basis, 0.0)
+                grad_xk_basis!(dxdxkψ_basis, f, X, 1, [dim[i]; Nx], idx)
+                dxidxkψ = view(dxdxkψ,:,i)
+                mul!(dxidxkψ, dxdxkψ_basis, f.coeff)
+            end
+        end
+
+        d2xkψ = view(dxdxkψ,:,length(f.dim))
+        fill!(dxdxkψ_basis, 0.0)
+        grad_xk_basis!(dxdxkψ_basis, f, X, 2, f.Nx)
+        mul!(d2xkψ, dxdxkψ_basis, f.coeff)
+        # dxdxkψ = zeros(Ne, Nx)
+        # @tensor dxdxkψ[a,b] = dxdxkψ_basis[a,c,b] * f.coeff[c]
+    end
+    return dxdxkψ
+end
+
+reduced_grad_x_grad_xd!(dxdxkψ, f::ExpandedFunction, X) = reduced_grad_x_grad_xd!(dxdxkψ, f, X, f.idx)
+
+reduced_grad_x_grad_xd(f::ExpandedFunction, X) = reduced_grad_x_grad_xd!(zeros(size(X,2), length(f.dim)), f, X, f.idx)
 
 # Compute ∂_i ∂_j (∂_k f(x_{1:k}))
 
@@ -539,6 +582,64 @@ end
 
 hess_x_grad_xd(f::ExpandedFunction, X) = hess_x_grad_xd(f, X, f.idx)
 
+
+# function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+function reduced_hess_x_grad_xd!(d2xdxkψ, f::ExpandedFunction, X, idx::Array{Int64,2})
+    NxX, Ne = size(X)
+    m = f.m
+    Nx = f.Nx
+    Nψ = f.Nψ
+    dim = f.dim
+    @assert NxX == Nx "Wrong dimension of the input"
+    # dxidxjdxkψ_basis = zeros(Ne, Nψ, Nx, Nx)
+    @assert size(d2xdxkψ) == (Ne, length(dim), length(dim))
+
+    d2xdxkψ_basis = zeros(Ne, Nψ)
+
+    # Store the derivative of the basis with respect to the last component
+    dxkψ  = repeated_grad_xk_basis(f, view(X, Nx,:))
+    d2xkψ = repeated_hess_xk_basis(f, view(X, Nx,:))
+
+    @inbounds for i=1:length(dim)
+        for j = i:length(dim)
+            # Reduce further the computation, we have a non-zero output only if
+            # there is a feature such that idx[:,i]*idx[:,j]*idx[:,Nx]>0
+            if any([line[dim[i]]*line[dim[j]]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0)
+                fill!(d2xdxkψ_basis, 0.0)
+                dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                #  Case i = j = k
+                if dim[i]==Nx && dim[j]==Nx
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 3, Nx)
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                elseif dim[i]==dim[j] && dim[j]!=Nx
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 2, dim[i], f.dim[f.dim .< f.Nx], idx)
+                    d2xdxkψ_basis .*= dxkψ
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                elseif dim[i]!=Nx && dim[j]==Nx #(use symmetry as well)
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 1, dim[i], f.dim[f.dim .< f.Nx], idx)
+                    d2xdxkψ_basis .*= d2xkψ
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    dxjdxidxkψ = view(d2xdxkψ,:,j,i)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                    dxjdxidxkψ .= dxidxjdxkψ
+                else # the rest of the cases (use symmetry as well)
+                    grad_xk_basis!(d2xdxkψ_basis, f, X, 1, [dim[i]; dim[j]], f.dim[f.dim .< f.Nx], idx)
+                    d2xdxkψ_basis .*= dxkψ
+                    dxidxjdxkψ = view(d2xdxkψ,:,i,j)
+                    dxjdxidxkψ = view(d2xdxkψ,:,j,i)
+                    mul!(dxidxjdxkψ, d2xdxkψ_basis, f.coeff)
+                    dxjdxidxkψ .= dxidxjdxkψ
+                end
+            end
+        end
+    end
+
+    return d2xdxkψ
+end
+
+reduced_hess_x_grad_xd(f::ExpandedFunction, X) = reduced_hess_x_grad_xd!(zeros(size(X, 2), length(f.dim), length(f.dim)), f, X, f.idx)
 
 # Derivative with respect to the some coefficients
 function grad_coeff(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64, 1})

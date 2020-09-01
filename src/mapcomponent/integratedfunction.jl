@@ -855,6 +855,7 @@ function reduced_hess_x!(out, R::IntegratedFunction, X)
                     dxψbasisi = view(dxψbasis,:,:,i)
                     dxψbasisj = view(dxψbasis,:,:,j)
                     vij .= ((dxijψbasis_count .* dxkψ) * coeff) .* cachedg + (((dxψbasisi .* dxkψ) * coeff) .* ((dxψbasisj .* dxkψ) * coeff)) .* cached2g
+                    # @avx @. vij = ((dxijψbasis_count * dxkψ) *ˡ coeff) * cachedg + (((dxψbasisi * dxkψ) *ˡ coeff) * ((dxψbasisj * dxkψ) *ˡ coeff)) * cached2g
                 end
             end
         end

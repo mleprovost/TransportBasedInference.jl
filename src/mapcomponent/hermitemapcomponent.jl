@@ -170,7 +170,7 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
                 resultji .= resultij
         end
     end
-
+    #
     grad_x_logeval!(cache, C.I.g, cache)
     result .+= hess_x_grad_xd(C.I.f.f, X) .* cache
 
@@ -205,7 +205,7 @@ function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     dim = active_dim(C)
 
     @inbounds for i=1:length(dim)
-             for j=i:length(dim)
+        for j=i:length(dim)
              # dcachei = view(dcache,:,dim[i])
              # dcachej = view(dcache,:,dim[j])
              # resultij = view(result,:,dim[i],dim[j])
@@ -213,10 +213,10 @@ function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
              dcachei = view(dcache,:,i)
              dcachej = view(dcache,:,j)
              resultij = view(result,:,i,j)
-             resultji = view(result,:,j, i)
-             @avx @. resultij = resultij * cache + dcachei * dcachej
+             resultji = view(result,:,j,i)
+             @. resultij = resultij * cache + dcachei * dcachej
              resultji .= resultij
-     end
+         end
     end
 
     rmul!(result, -1.0)
@@ -224,26 +224,30 @@ function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     # Compute hessian of log ∂k C(x_{1:k})
     cache .= grad_xd(C.I.f, X)
     cached2log = vhess_x_logeval(C.I.g, cache)
-    dcache .= grad_x_grad_xd(C.I.f.f, X)
 
-    @inbounds for i=1:length(dim)
+    if Nx == dim[end] # check if the last component is an active dimension
+        # dcache .= grad_x_grad_xd(C.I.f.f, X)
+        # Clear dcache
+        fill!(dcache, 0.0)
+        reduced_grad_x_grad_xd!(dcache, C.I.f.f, X)
+        @inbounds for i=1:length(dim)
              for j=i:length(dim)
-             # dcachei = view(dcache,:,dim[i])
-             # dcachej = view(dcache,:,dim[j])
-             # resultij = view(result,:,dim[i],dim[j])
-             # resultji = view(result,:,dim[j], dim[i])
-             dcachei = view(dcache,:,i)
-             dcachej = view(dcache,:,j)
-             resultij = view(result,:,i,j)
-             resultji = view(result,:,j, i)
-             @avx @. resultij += dcachei * dcachej * cached2log
+                 # dcachei = view(dcache,:,dim[i])
+                 # dcachej = view(dcache,:,dim[j])
+                 # resultij = view(result,:,dim[i],dim[j])
+                 # resultji = view(result,:,dim[j], dim[i])
+                 dcachei = view(dcache,:,i)
+                 dcachej = view(dcache,:,j)
+                 resultij = view(result,:,i,j)
+                 resultji = view(result,:,j, i)
+                 @avx @. resultij += dcachei * dcachej * cached2log
 
-             resultji .= resultij
-     end
+                 resultji .= resultij
+             end
+         end
     end
-
     grad_x_logeval!(cache, C.I.g, cache)
-    result .+= hess_x_grad_xd(C.I.f.f, X) .* cache
+    result .+= reduced_hess_x_grad_xd(C.I.f.f, X) .* cache
 
     return result
 end
