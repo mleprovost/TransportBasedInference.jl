@@ -490,6 +490,11 @@ function reduced_grad_x_grad_xd!(dxdxkψ, f::ExpandedFunction, X, idx::Array{Int
     @assert NxX == Nx "Wrong dimension of the input"
     @assert size(dxdxkψ) == (Ne, length(f.dim))
 
+    if f.dim == Int64[]
+        fill!(dxdxkψ, 0.0)
+        return dxdxkψ
+    end
+
     if f.Nx == f.dim[end]
         dxdxkψ_basis = zeros(Ne, Nψ)
         # dxdxkψ_basis = zeros(Ne, Nψ, Nx)
