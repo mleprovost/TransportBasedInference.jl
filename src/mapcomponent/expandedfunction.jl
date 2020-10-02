@@ -68,6 +68,7 @@ function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
 end
 
 function active_dim(idx::Array{Int64,2})
+    # Nx should always be an active dimension
     dim = Int64[]
     Nx = size(idx,2)
     @inbounds for i=1:Nx

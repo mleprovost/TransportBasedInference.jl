@@ -68,6 +68,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             # error[2] contains the history of the validation error
             valid_error[:,i] .= deepcopy(error[2])
         end
+
         # Find optimal numbers of terms
         mean_valid_error = mean(valid_error, dims  = 2)[:,1]
 
@@ -91,7 +92,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                              withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose)
     else
-        error("Argument max_terms is not recognized")
+        println("Argument max_terms is not recognized")
+        error()
     end
     return C, error
 end

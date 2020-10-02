@@ -9,7 +9,6 @@ using SparseArrays
 # using StaticUnivariatePolynomials
 using Polynomials
 using TransportMap
-using DiffResults
 using Distributions
 using QuadGK
 using TensorOperations
