@@ -48,7 +48,6 @@ function MapComponent(f::ExpandedFunction; α::Float64 = 1e-6)
     return MapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
-
 function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     Nψ = 1
 

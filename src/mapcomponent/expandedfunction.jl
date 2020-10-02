@@ -71,11 +71,12 @@ function active_dim(idx::Array{Int64,2})
     # Nx should always be an active dimension
     dim = Int64[]
     Nx = size(idx,2)
-    @inbounds for i=1:Nx
+    @inbounds for i=1:Nx-1
         if !all(view(idx,:,i) .== 0)
             push!(dim, i)
         end
     end
+    push!(dim, Nx)
     return dim
 end
 

@@ -343,7 +343,6 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         # We can skip the evaluation of the map on the observations components,
         # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
-        @show i
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
                               withqr = withqr, verbose = verbose)
@@ -378,7 +377,6 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
         # if P == serial
         # We can skip the evaluation of the map on the observations components
         @inbounds for k = start:Nx
-            @show k
             Fk = view(F,k,:)
             Xk = view(X,1:k,:)
             Sk = Storage(M[k].I.f, Xk)

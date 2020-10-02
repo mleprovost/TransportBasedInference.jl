@@ -3,7 +3,7 @@ using AdaptiveTransportMap: evaluate
 @testset "Test active_dim" begin
 
 idx = reshape([0], (1, 1))
-@test active_dim(idx) == Int64[]
+@test active_dim(idx) == [1]
 
 idx = reshape([0; 1; 2; 3], (4, 1))
 @test active_dim(idx) == [1]
@@ -13,7 +13,7 @@ idx = [0 0; 0 1; 1 0; 1 1; 1 2]
 
 
 idx = [0 0 0]
-@test active_dim(idx) == Int64[]
+@test active_dim(idx) == [3]
 
 idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 0 2 2 1; 0 0 1 2; 0 2 0 2;0 2 2 2]
 @test active_dim(idx) == [2;3;4]
