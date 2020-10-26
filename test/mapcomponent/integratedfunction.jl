@@ -199,7 +199,7 @@ dcRt = zeros(Ne, Nψ)
 X0 = deepcopy(X)
 X0[end,:] .= zeros(Ne)
 # ∂_c f(x_{1:k-1},0)
-dcRt += evaluate_basis(R.f.f, X)
+dcRt += evaluate_basis(R.f.f, X0)
 xi = zeros(Nx)
 
 for j=1:Nψ
@@ -412,7 +412,7 @@ end
     dcRt = zeros(Ne, Nψ)
 
     X0 = deepcopy(X)
-    X0.S[end,:] .= zeros(Ne)
+    X0[end,:] .= zeros(Ne)
     # ∂_c f(x_{1:k-1},0)
     dcRt += evaluate_basis(R.f.f, X0)
     xi = zeros(Nx)
@@ -585,8 +585,6 @@ end
     end
 
     @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<1e-10
-
-
 
     # Test integrate_xd
     intψt = zeros(Ne)

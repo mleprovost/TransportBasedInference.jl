@@ -189,11 +189,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, view(X,:,i)) - dxlogC[i,:])<1e-5
+    @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, view(X,:,i))) - d2xlogC[i,:,:])<1e-5
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
   end
 
 end
