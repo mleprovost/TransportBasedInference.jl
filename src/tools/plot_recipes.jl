@@ -7,7 +7,7 @@ const mygreen = RGBA{Float64}(151/255,180/255,118/255,1)
 const mygreen2 = RGBA{Float64}(113/255,161/255,103/255,1)
 const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 
-@recipe function heatmap(M::HermiteMap; start::Int64=1)
+@recipe function heatmap(M::HermiteMap; start::Int64=1, color = cgrad([:white, :teal, :navyblue, :purple]))
     Nx = M.Nx
     idx = zeros(Int64, Nx-start+1, Nx)
 
@@ -21,14 +21,14 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
     @series begin
     seriestype := :heatmap
     # size --> (600, 600)
-    # xguide -->  "Index"
-    # yguide -->  "Map index"
+    xguide -->  "Index"
+    yguide -->  "Map index"
+    yflip --> true
     aspect_ratio --> 1
     # legend --> :none
     colorbar --> true
-    # colorbarlabel --> "Occurences"
-    seriescolor --> cgrad([:white, :skyblue, :purple])
+    seriescolor --> color
 
-    collect(1:Nx), collect(start:Nx), reverse(idx; dims = 1)
+    collect(1:Nx), collect(start:Nx), idx
     end
 end

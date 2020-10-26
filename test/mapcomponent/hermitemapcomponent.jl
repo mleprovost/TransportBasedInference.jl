@@ -15,9 +15,8 @@ end
     Nx = 2
     Ne = 8
     m = 5
-    ens = EnsembleState(Nx, Ne)
 
-    ens.S .=  [0.267333   1.43021;
+    X     =  [0.267333   1.43021;
               0.364979   0.607224;
              -1.23693    0.249277;
              -2.0526     0.915629;
@@ -41,9 +40,9 @@ end
     fp = ParametricFunction(f)
     R = IntegratedFunction(fp)
     H = MapComponent(R; α = 0.0)
-    S = Storage(H.I.f, ens.S);
+    S = Storage(H.I.f, X);
 
-   res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, ens.S)), coeff, Optim.BFGS())
+   res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
    coeff_opt = Optim.minimizer(res)
 
     @test norm(coeff_opt - [3.015753764546621;
@@ -55,9 +54,9 @@ end
     # Verify with L-2 penalty term
 
     H = MapComponent(R; α = 0.1)
-    S = Storage(H.I.f, ens.S);
+    S = Storage(H.I.f, X);
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, ens.S)), coeff, Optim.BFGS())
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
     coeff_opt = Optim.minimizer(res)
 
     @test norm(coeff_opt - [ -0.11411931034615422;
@@ -72,11 +71,10 @@ end
 
   Nx = 2
   Ne = 500
-  ens = EnsembleState(Nx, Ne)
 
-  ens.S .= randn(Nx, Ne)
+  X = randn(Nx, Ne)
 
-  # ens.S .=  [0.267333   1.43021;
+  # X .=  [0.267333   1.43021;
   #           0.364979   0.607224;
   #          -1.23693    0.249277;
   #          -2.0526     0.915629;
@@ -107,11 +105,11 @@ end
   ψt = zeros(Ne)
 
   for i=1:Ne
-      x = member(ens, i)
+      x = view(X,:,i)
       ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
   end
 
-  ψ = evaluate(C, ens.S)
+  ψ = evaluate(C, X)
 
   @test norm(ψ - ψt)<1e-10
 end
@@ -154,12 +152,12 @@ end
                                 -7.082679248037675])<1e-8
 end
 
+
 @testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 1" begin
 
   Nx = 1
   Ne = 100
   X = randn(Nx, Ne)
-  ens = EnsembleState(X)
   m = 10
   B = MultiBasis(CstProHermite(3), Nx)
 
@@ -191,11 +189,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+    @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
   end
 
 end
@@ -206,7 +204,6 @@ end
   Nx = 2
   Ne = 100
   X = randn(Nx, Ne)
-  ens = EnsembleState(X)
   m = 10
   B = MultiBasis(CstProHermite(3), Nx)
 
@@ -238,11 +235,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+    @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
   end
 
 end
@@ -253,7 +250,6 @@ end
   Nx = 4
   Ne = 100
   X = randn(Nx, Ne)
-  ens = EnsembleState(X)
   m = 10
   B = MultiBasis(CstProHermite(3), Nx)
 
@@ -286,11 +282,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+    @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
   end
 
 end

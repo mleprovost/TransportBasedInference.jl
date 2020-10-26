@@ -5,10 +5,10 @@ using Random
 using ProgressMeter
 using BenchmarkTools
 using ForwardDiff
+using SparseArrays
 # using StaticUnivariatePolynomials
 using Polynomials
-using TransportMap
-using DiffResults
+# using TransportMap
 using Distributions
 using QuadGK
 using TensorOperations
@@ -17,9 +17,10 @@ using FastGaussQuadrature
 using Optim
 # using LinearMaps
 using NLsolve
+using LineSearches
 # using SparseArrays
 using MLDataUtils
-using MLDataPattern
+# using MLDataPattern
 using ThreadPools
 using QRupdate
 
@@ -30,7 +31,7 @@ using LaTeXStrings
 using Quadrature
 
 
-
+include("tools/parallel.jl")
 include("tools/ADtools.jl")
 include("tools/product.jl")
 include("tools/tools.jl")
@@ -44,17 +45,18 @@ include("tools/banana.jl")
 # Tools for mixture of Gaussian distributions
 include("tools/mixture.jl")
 
+
 include("mapcomponent/rectifier.jl")
 
 
 # Hermite Polynomials
+include("hermitefunction/hermite.jl")
 include("hermitefunction/polyhermite.jl")
 include("hermitefunction/phypolyhermite.jl")
 include("hermitefunction/propolyhermite.jl")
 
 
 # Hermite Functions
-include("hermitefunction/hermite.jl")
 include("hermitefunction/phyhermite.jl")
 include("hermitefunction/prohermite.jl")
 

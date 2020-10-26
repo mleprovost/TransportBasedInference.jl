@@ -13,7 +13,7 @@ export  PhyHermite, degree,
 # Create a structure to hold physicist Hermite functions defined as
 # ψn(x) = Hn(x)*exp(-x^2/2)
 
-struct PhyHermite<: ParamFcn
+struct PhyHermite<: Hermite
     m::Int64
     Poly::PhyPolyHermite
     scaled::Bool

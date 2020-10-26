@@ -18,7 +18,7 @@ export Basis,
 struct Basis
     m::Int64
     # f::Tuple
-    # function Basis(f::NTuple{N, ParamFcn}) where {N}
+    # function Basis(f::NTuple{N, Hermite}) where {N}
     #     return new(length(f), f)
     # end
 end

@@ -4,6 +4,7 @@ export  MapComponent,
         getcoeff,
         setcoeff!,
         getidx,
+        active_dim,
         evaluate!,
         evaluate,
         log_pdf!,
@@ -12,6 +13,10 @@ export  MapComponent,
         grad_x_log_pdf,
         hess_x_log_pdf!,
         hess_x_log_pdf,
+        reduced_hess_x_log_pdf!,
+        reduced_hess_x_log_pdf,
+        mean_hess_x_log_pdf!,
+        mean_hess_x_log_pdf,
         negative_log_likelihood!,
         negative_log_likelihood,
         hess_negative_log_likelihood!
@@ -43,7 +48,6 @@ function MapComponent(f::ExpandedFunction; α::Float64 = 1e-6)
     return MapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
-
 function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     Nψ = 1
 
@@ -57,6 +61,13 @@ function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     return MapComponent(I; α = α)
 end
 
+function Base.show(io::IO, C::MapComponent)
+    println(io,"Map component of dimension "*string(C.Nx)*" with Nψ "*string(C.Nψ)*" active features")
+    # for i=1:B.m
+    #     println(io, B[i])
+    # end
+end
+
 ncoeff(C::MapComponent) = C.Nψ
 getcoeff(C::MapComponent)= C.I.f.f.coeff
 
@@ -67,6 +78,7 @@ end
 
 getidx(C::MapComponent) = C.I.f.f.idx
 
+active_dim(C::MapComponent) = C.I.f.f.dim
 
 ## Evaluate
 function evaluate!(out, C::MapComponent, X)
@@ -77,6 +89,8 @@ end
 
 evaluate(C::MapComponent, X::Array{Float64,2}) =
     evaluate!(zeros(size(X,2)), C, X)
+
+(C::MapComponent)(x::Array{Float64,1}) = evaluate(C, reshape(x, (size(x,1), 1)))
 
 ## Compute log_pdf
 
@@ -132,14 +146,15 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     evaluate!(cache, C, X)
     grad_x!(dcache, C.I, X)
     hess_x!(result, C.I, X)
-    # nonid_idx =
 
-    @inbounds for i=1:Nx
-                for j=i:Nx
-                dcachei = view(dcache,:,i)
-                dcachej = view(dcache,:,j)
-                resultij = view(result,:,i,j)
-                resultji = view(result,:,j,i)
+    dim = active_dim(C)
+
+    @inbounds for i=1:length(dim)
+                for j=i:length(dim)
+                dcachei = view(dcache,:,dim[i])
+                dcachej = view(dcache,:,dim[j])
+                resultij = view(result,:,dim[i],dim[j])
+                resultji = view(result,:,dim[j], dim[i])
                 @avx @. resultij = resultij * cache + dcachei * dcachej
                 resultji .= resultij
         end
@@ -152,18 +167,18 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     cached2log = vhess_x_logeval(C.I.g, cache)
     dcache .= grad_x_grad_xd(C.I.f.f, X)
 
-    @inbounds for i=1:Nx
-                for j=i:Nx
-                resultij = view(result,:,i,j)
-                resultji = view(result,:,j,i)
-                dcachei = view(dcache,:,i)
-                dcachej = view(dcache,:,j)
+    @inbounds for i=1:length(dim)
+                for j=i:length(dim)
+                dcachei = view(dcache,:,dim[i])
+                dcachej = view(dcache,:,dim[j])
+                resultij = view(result,:,dim[i],dim[j])
+                resultji = view(result,:,dim[j], dim[i])
                 @avx @. resultij += dcachei * dcachej * cached2log
 
                 resultji .= resultij
         end
     end
-
+    #
     grad_x_logeval!(cache, C.I.g, cache)
     result .+= hess_x_grad_xd(C.I.f.f, X) .* cache
 
@@ -173,6 +188,82 @@ end
 hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
                                                      zeros(size(X,2), size(X,1)),
                                                      zeros(size(X,2)), C, X)
+
+
+
+# This version outputs a result of size(Ne, active_dim(C), active_dim(C))
+
+
+function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
+    NxX, Ne = size(X)
+    Nx = C.Nx
+
+    dim = active_dim(C)
+    dimoff = dim[dim .< Nx]
+
+
+    @assert Nx == NxX "Wrong dimension of the sample"
+    @assert size(result) == (Ne, length(dim), length(dim)) "Wrong dimension of the result"
+
+    # Compute hessian of log η∘C(x_{1:k}) with η the log pdf of N(O, I_n)
+    evaluate!(cache, C, X)
+    reduced_grad_x!(dcache, C.I, X)
+    reduced_hess_x!(result, C.I, X)
+
+    dim = active_dim(C)
+
+    @inbounds for i=1:length(dim)
+        for j=i:length(dim)
+             # dcachei = view(dcache,:,dim[i])
+             # dcachej = view(dcache,:,dim[j])
+             # resultij = view(result,:,dim[i],dim[j])
+             # resultji = view(result,:,dim[j], dim[i])
+             dcachei = view(dcache,:,i)
+             dcachej = view(dcache,:,j)
+             resultij = view(result,:,i,j)
+             resultji = view(result,:,j,i)
+             @. resultij = resultij * cache + dcachei * dcachej
+             resultji .= resultij
+         end
+    end
+
+    rmul!(result, -1.0)
+
+    # Compute hessian of log ∂k C(x_{1:k})
+    cache .= grad_xd(C.I.f, X)
+    cached2log = vhess_x_logeval(C.I.g, cache)
+
+    if Nx == dim[end] # check if the last component is an active dimension
+        # dcache .= grad_x_grad_xd(C.I.f.f, X)
+        # Clear dcache
+        fill!(dcache, 0.0)
+        reduced_grad_x_grad_xd!(dcache, C.I.f.f, X)
+        @inbounds for i=1:length(dim)
+             for j=i:length(dim)
+                 # dcachei = view(dcache,:,dim[i])
+                 # dcachej = view(dcache,:,dim[j])
+                 # resultij = view(result,:,dim[i],dim[j])
+                 # resultji = view(result,:,dim[j], dim[i])
+                 dcachei = view(dcache,:,i)
+                 dcachej = view(dcache,:,j)
+                 resultij = view(result,:,i,j)
+                 resultji = view(result,:,j, i)
+                 @avx @. resultij += dcachei * dcachej * cached2log
+
+                 resultji .= resultij
+             end
+         end
+    end
+    grad_x_logeval!(cache, C.I.g, cache)
+    result .+= reduced_hess_x_grad_xd(C.I.f.f, X) .* cache
+
+    return result
+end
+
+
+reduced_hess_x_log_pdf(C::MapComponent, X) = reduced_hess_x_log_pdf!(zeros(size(X,2), length(active_dim(C)), length(active_dim(C))),
+                                                zeros(size(X,2), length(active_dim(C))), zeros(size(X,2)), C, X)
+
 
 
 ## negative_log_likelihood
@@ -374,7 +465,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComp
     if d2J != nothing
         reshape_cacheintegral = reshape(S.cache_integral[Ne+1:Ne+Ne*Nψ], (Ne, Nψ))
         reshape2_cacheintegral = reshape(S.cache_integral[Ne + Ne*Nψ + 1: Ne + Ne*Nψ + Ne*Nψ*Nψ], (Ne, Nψ, Nψ))
-        # @show reshape2_cacheintegral
+
         fill!(d2J, 0.0)
         # d2J .= zeros(Nψ, Nψ)
         @inbounds for l=1:Ne
