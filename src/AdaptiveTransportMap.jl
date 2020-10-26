@@ -31,7 +31,7 @@ using LaTeXStrings
 using Quadrature
 
 
-
+include("tools/parallel.jl")
 include("tools/ADtools.jl")
 include("tools/product.jl")
 include("tools/tools.jl")
@@ -44,6 +44,7 @@ include("tools/transform.jl")
 include("tools/banana.jl")
 # Tools for mixture of Gaussian distributions
 include("tools/mixture.jl")
+
 
 include("mapcomponent/rectifier.jl")
 

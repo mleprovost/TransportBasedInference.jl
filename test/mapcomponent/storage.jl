@@ -4,9 +4,8 @@
 
     Nx = 2
     Ne = 8
-    ens = EnsembleState(Nx, Ne)
 
-    ens.S .=  [0.267333   1.43021;
+    X    =  [0.267333   1.43021;
               0.364979   0.607224;
              -1.23693    0.249277;
              -2.0526     0.915629;
@@ -33,16 +32,16 @@
     H = MapComponent(R; α = 1e-2)
 
 
-    S = Storage(H.I.f, ens.S);
+    S = Storage(H.I.f, X);
 
-    @test norm(S.ψoff     -  evaluate_offdiagbasis(fp, ens.S)) < 1e-8
-    @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fp, ens.S) .*
-                             evaluate_diagbasis(fp, ens.S)) < 1e-8
-    @test norm(S.ψoffψd0  -  evaluate_offdiagbasis(fp, ens.S) .*
+    @test norm(S.ψoff     -  evaluate_offdiagbasis(fp, X)) < 1e-8
+    @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fp, X) .*
+                             evaluate_diagbasis(fp, X)) < 1e-8
+    @test norm(S.ψoffψd0  -  evaluate_offdiagbasis(fp, X) .*
                              repeated_evaluate_basis(fp.f, zeros(Ne))) < 1e-8
-    @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fp, ens.S) .*
-                             repeated_grad_xk_basis(f, ens.S[end,:])) < 1e-8
-    @test norm(S.ψnorm - 1/sqrt(Ne)*norm.(eachcol(evaluate_basis(fp.f, ens.S)))) < 1e-8
+    @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fp, X) .*
+                             repeated_grad_xk_basis(f, X[end,:])) < 1e-8
+    @test norm(S.ψnorm - 1/sqrt(Ne)*norm.(eachcol(evaluate_basis(fp.f, X)))) < 1e-8
 
      #test cache dimension
     @test size(S.cache_dcψxdt) == (Ne, Nψ)
@@ -54,19 +53,19 @@
     # Test add new components via update_storage!
     addedidx = [2 1; 2 2; 2 3; 3 2]
 
-    S = update_storage(S, ens.S, addedidx)
+    S = update_storage(S, X, addedidx)
 
     addednψ = size(addedidx,1)
     fnew = ParametricFunction(ExpandedFunction(fp.f.B, vcat(fp.f.idx, addedidx), vcat(fp.f.coeff, zeros(addednψ))))
 
-    @test norm(S.ψoff     -  evaluate_offdiagbasis(fnew, ens.S)) < 1e-8
-    @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fnew, ens.S) .*
-                             evaluate_diagbasis(fnew, ens.S)) < 1e-8
-    @test norm(S.ψoffψd0  -  evaluate_offdiagbasis(fnew, ens.S) .*
+    @test norm(S.ψoff     -  evaluate_offdiagbasis(fnew, X)) < 1e-8
+    @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fnew, X) .*
+                             evaluate_diagbasis(fnew, X)) < 1e-8
+    @test norm(S.ψoffψd0  -  evaluate_offdiagbasis(fnew, X) .*
                              repeated_evaluate_basis(fnew.f, zeros(Ne))) < 1e-8
-    @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fnew, ens.S) .*
-                             repeated_grad_xk_basis(fnew.f, ens.S[end,:])) < 1e-8
-    @test norm(S.ψnorm - 1/sqrt(Ne)*norm.(eachcol(evaluate_basis(fnew.f, ens.S)))) < 1e-8
+    @test norm(S.ψoffdψxd -  evaluate_offdiagbasis(fnew, X) .*
+                             repeated_grad_xk_basis(fnew.f, X[end,:])) < 1e-8
+    @test norm(S.ψnorm - 1/sqrt(Ne)*norm.(eachcol(evaluate_basis(fnew.f, X)))) < 1e-8
 
     newNψ = addednψ + Nψ
     #test cache dimension

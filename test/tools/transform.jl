@@ -3,10 +3,9 @@
     # Diagonal rescaling
     Nx = 1
     Ne = 500
-    ens = EnsembleState(Nx, Ne)
 
-    ens.S .= randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
-    X = deepcopy(ens.S)
+    X = randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
+    X0 = deepcopy(X)
     L = LinearTransform(X; diag = true)
 
     AdaptiveTransportMap.transform!(L, X);
@@ -16,16 +15,16 @@
 
     AdaptiveTransportMap.itransform!(L, X)
 
-    @test norm(mean(X;dims = 2) - mean(ens))<1e-10
-    @test norm(cov(X')  - cov(ens))<1e-10
+    @test norm(mean(X;dims = 2) - mean(X0;dims = 2))<1e-10
+    @test norm(cov(X')  - cov(X0'))<1e-10
 
     # Diagonal rescaling
     Nx = 100
     Ne = 500
-    ens = EnsembleState(Nx, Ne)
+    X = zeros(Nx, Ne)
 
-    ens.S .= randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
-    X = deepcopy(ens.S)
+    X .= randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
+    X0 = deepcopy(X)
     L = LinearTransform(X; diag = true)
 
     AdaptiveTransportMap.transform!(L, X);
@@ -35,16 +34,16 @@
 
     AdaptiveTransportMap.itransform!(L, X)
 
-    @test norm(mean(X;dims = 2) - mean(ens))<1e-10
-    @test norm(cov(X')  - cov(ens))<1e-10
+    @test norm(mean(X; dims = 2) - mean(X0; dims = 2))<1e-10
+    @test norm(cov(X')  - cov(X0'))<1e-10
 
     # Dense rescaling
     Nx = 100
     Ne = 500
-    ens = EnsembleState(Nx, Ne)
+    X = zeros(Nx, Ne)
 
-    ens.S .= randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
-    X = deepcopy(ens.S)
+    X .= randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
+    X0 = deepcopy(X)
     L = LinearTransform(X; diag = false)
 
     AdaptiveTransportMap.transform!(L, X);
@@ -54,8 +53,8 @@
 
     AdaptiveTransportMap.itransform!(L, X)
 
-    @test norm(mean(X;dims = 2) - mean(ens))<1e-10
-    @test norm(cov(X')  - cov(ens))<1e-10
+    @test norm(mean(X;dims = 2) - mean(X0; dims = 2))<1e-10
+    @test norm(cov(X')  - cov(X0'))<1e-10
 end
 
 

@@ -85,7 +85,8 @@ active_dim(f::ExpandedFunction) = f.dim
 
 # alleval computes the evaluation, graidnet of hessian of the function
 # use it for validatio since it is slower than the other array-based variants
-function alleval(f::ExpandedFunction, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
+function alleval(f::ExpandedFunction, X)
+        Nx, Ne = size(X)
         Nψ = f.Nψ
         ψ = zeros(Ne, Nψ)
        dψ = zeros(Ne, Nψ, Nx)
@@ -95,7 +96,7 @@ function alleval(f::ExpandedFunction, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
     for i=1:Nψ
         fi = MultiFunction(f.B, f.idx[i,:])
         for j=1:Ne
-            result = ForwardDiff.hessian!(result, fi, member(ens,j))
+            result = ForwardDiff.hessian!(result, fi, X[:,j])
             ψ[j,i] = DiffResults.value(result)
             dψ[j,i,:,:] .= DiffResults.gradient(result)
             d2ψ[j,i,:,:] .= DiffResults.hessian(result)
@@ -686,7 +687,7 @@ end
 function grad_coeff_grad_xd(f::ExpandedFunction, X::Array{Float64,2})
     return grad_xk_basis(f, X, 1, f.Nx)
 end
-# function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, X::EnsembleState{Nx, Ne}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
+# function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
 
 function grad_coeff_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64,1})
     return grad_xk_basis(f, X, 1, f.Nx, f.idx[coeff_idx,:])
