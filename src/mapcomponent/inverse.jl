@@ -65,12 +65,15 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
                                     f0, f0, Diagonal(f0))
 
     # Start minimization from the prior value
-    result = nlsolve(df_inverse, X[end,:]; method = :newton);
+    result = nlsolve(df_inverse, X[end,:]; method = :newton, linesearch = LineSearches.HagerZhang());
 
     # Check convergence
-    @assert converged(result) "Optimization hasn't converged"
-
-    X[end,:] .= result.zero
+    @show converged(result)
+    # @show "hello 2.0"
+    if converged(result) == true
+    # @assert converged(result) "Optimization hasn't converged"
+        X[end,:] .= result.zero
+    end
 end
 
 

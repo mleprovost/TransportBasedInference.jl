@@ -1,3 +1,4 @@
-# export Hermite
-#
-# struct Hermite <:ParamFcn end
+export Hermite
+
+# Type to hold 1D Hermite functions
+abstract type Hermite end

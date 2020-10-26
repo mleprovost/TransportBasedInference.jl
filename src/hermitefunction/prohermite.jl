@@ -12,7 +12,7 @@ export  ProHermite, degree,
 # Create a structure to hold physicist Hermite functions defined as
 # ψen(x) = Hen(x)*exp(-x^2/4)
 
-struct ProHermite <: ParamFcn
+struct ProHermite <: Hermite
     m::Int64
     Poly::ProPolyHermite
     scaled::Bool

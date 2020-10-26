@@ -1,7 +1,7 @@
 using Test
 
 using LinearAlgebra, Statistics
-using TransportMap
+# using TransportMap
 using AdaptiveTransportMap
 using AdaptiveTransportMap: evaluate
 using ForwardDiff

@@ -1,6 +1,6 @@
 export AbstractPhyHermite, AbstractProHermite, CstMaxDegree
 
-struct AbstractPhyHermite <: ParamFcn
+struct AbstractPhyHermite <: Hermite
     P::ImmutablePolynomial
     scaled::Bool
 end
@@ -8,7 +8,7 @@ end
 (P::AbstractPhyHermite)(x::T) where {T<:Real} = P.P(x)*exp(-x^2/2)
 
 
-struct AbstractProHermite <: ParamFcn
+struct AbstractProHermite <: Hermite
     P::ImmutablePolynomial
     scaled::Bool
 end

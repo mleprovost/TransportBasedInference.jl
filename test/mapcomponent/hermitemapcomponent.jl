@@ -154,6 +154,7 @@ end
                                 -7.082679248037675])<1e-8
 end
 
+
 @testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 1" begin
 
   Nx = 1
@@ -191,11 +192,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-5
   end
 
 end
@@ -238,11 +239,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-5
   end
 
 end
@@ -286,11 +287,11 @@ end
   log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
 
   @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-8
+    @test norm(ForwardDiff.gradient(log_pdfCt, member(ens,i)) - dxlogC[i,:])<1e-5
   end
 
   @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-6
+    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, member(ens,i)) - d2xlogC[i,:,:])<1e-5
   end
 
 end

@@ -61,6 +61,13 @@ function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
     return MapComponent(I; α = α)
 end
 
+function Base.show(io::IO, C::MapComponent)
+    println(io,"Map component of dimension "*string(C.Nx)*" with Nψ "*string(C.Nψ)*" active features")
+    # for i=1:B.m
+    #     println(io, B[i])
+    # end
+end
+
 ncoeff(C::MapComponent) = C.Nψ
 getcoeff(C::MapComponent)= C.I.f.f.coeff
 
@@ -82,6 +89,8 @@ end
 
 evaluate(C::MapComponent, X::Array{Float64,2}) =
     evaluate!(zeros(size(X,2)), C, X)
+
+(C::MapComponent)(x::Array{Float64,1}) = evaluate(C, reshape(x, (size(x,1), 1)))
 
 ## Compute log_pdf
 
@@ -456,7 +465,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComp
     if d2J != nothing
         reshape_cacheintegral = reshape(S.cache_integral[Ne+1:Ne+Ne*Nψ], (Ne, Nψ))
         reshape2_cacheintegral = reshape(S.cache_integral[Ne + Ne*Nψ + 1: Ne + Ne*Nψ + Ne*Nψ*Nψ], (Ne, Nψ, Nψ))
-        # @show reshape2_cacheintegral
+
         fill!(d2J, 0.0)
         # d2J .= zeros(Nψ, Nψ)
         @inbounds for l=1:Ne
