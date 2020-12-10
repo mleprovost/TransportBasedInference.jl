@@ -1,7 +1,7 @@
 using Test
 
 using LinearAlgebra, Statistics
-# using TransportMap
+using OrdinaryDiffEq
 using AdaptiveTransportMap
 using AdaptiveTransportMap: evaluate
 using ForwardDiff
@@ -23,8 +23,16 @@ using FiniteDiff
 # include("tools/clenshaw_curtis.jl")
 # include("tools/adaptiveCC.jl")
 # include("tools/transform.jl")
-#
-# # Functions to manage margins
+
+# Tools for data assimilation
+include("DA/inflation.jl")
+
+
+# Tools for state-space models
+include("dynamic/system.jl")
+
+
+# Functions to manage margins
 # include("margin/reducedmargin.jl")
 # include("margin/totalorder.jl")
 #

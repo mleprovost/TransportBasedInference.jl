@@ -1,5 +1,6 @@
 module AdaptiveTransportMap
 
+using OrdinaryDiffEq
 using LinearAlgebra, SpecialFunctions
 using Random
 using ProgressMeter
@@ -44,10 +45,31 @@ include("tools/transform.jl")
 include("tools/banana.jl")
 # Tools for mixture of Gaussian distributions
 include("tools/mixture.jl")
+include("tools/view.jl")
+
+# Tools for state-space model
+include("dynamic/system.jl")
+
+# Tools for data assimilation
+include("DA/inflation.jl")
+include("DA/model.jl")
+include("DA/gaspari.jl")
+include("DA/seqfilter.jl")
+include("DA/seqassim.jl")
+
+# Tools for EnKF
+include("enkf/senkf.jl")
+include("enkf/etkf.jl")
+
+# Tools for lorenz63
+include("lorenz63/lorenz63.jl")
+
+# Tools for lorenz96
+include("lorenz96/lorenz96.jl")
 
 
+# Rectifier tools
 include("mapcomponent/rectifier.jl")
-
 
 # Hermite Polynomials
 include("hermitefunction/hermite.jl")
