@@ -20,7 +20,7 @@ struct StochEnKF<:SeqFilter
 end
 
 function StochEnKF(G::Function, ϵy::AdditiveInflation,
-    Δtdyn, Δtobs; islocal = false, isfiltered = true)
+    Δtdyn, Δtobs; islocal = false, isfiltered = false)
     @assert norm(mod(Δtobs, Δtdyn))<1e-12 "Δtobs should be an integer multiple of Δtdyn"
 
     return StochEnKF(G, ϵy, Δtdyn, Δtobs, islocal, isfiltered)
@@ -99,9 +99,8 @@ function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool
     meas  = viewmeas(X,Ny,Nx)
     state = viewstate(X,Ny,Nx)
 
-    x̄ = copy(mean(state,dims=2)[:,1])
-
-    Xf = copy(state)
+    x̄ = deepcopy(mean(X[Ny+1:Ny+Nx,:],dims=2)[:,1])
+    Xf = deepcopy(X[Ny+1:Ny+Nx,:])
     Xf .-= x̄
 	rmul!(Xf, 1/sqrt(Ne-1))
 
@@ -135,9 +134,9 @@ function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, ȳf::Array{Float64,1}, t
     meas  = viewmeas(X,Ny,Nx)
     state = viewstate(X,Ny,Nx)
 
-    x̄ = copy(mean(state,dims=2)[:,1])
+    x̄ = deepcopy(mean(X[Ny+1:Ny+Nx,:],dims=2)[:,1])
 
-    Xf = copy(state)
+    Xf = deepcopy(X[Ny+1:Ny+Nx,:])
     Xf .-= x̄
 
 	# Need the covariance to perform the localisation

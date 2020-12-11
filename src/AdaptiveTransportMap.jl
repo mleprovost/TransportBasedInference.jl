@@ -6,20 +6,16 @@ using Random
 using ProgressMeter
 using BenchmarkTools
 using ForwardDiff
-using SparseArrays
-# using StaticUnivariatePolynomials
+using JLD
 using Polynomials
-# using TransportMap
 using Distributions
 using QuadGK
 using TensorOperations
 using LoopVectorization
 using FastGaussQuadrature
 using Optim
-# using LinearMaps
 using NLsolve
 using LineSearches
-# using SparseArrays
 using MLDataUtils
 # using MLDataPattern
 using ThreadPools
@@ -34,6 +30,7 @@ using Quadrature
 
 include("tools/parallel.jl")
 include("tools/ADtools.jl")
+include("tools/metric.jl")
 include("tools/product.jl")
 include("tools/tools.jl")
 include("tools/normal.jl")

@@ -3,21 +3,22 @@ export Model, SyntheticData
 
 struct Model
     # Dimension of the state variable
-    d::Int64
-    #
+    Nx::Int64
+
+    # Dimension of the observation variable
+    Ny::Int64
+
     Δtdyn::Float64
-    #
+
     Δtobs::Float64
 
     ϵx::InflationType
 
     ϵy::AdditiveInflation
-
-    #Log-likelihood function
-    loglik::Function
-
-    # Sample the likelihood
-    samplelik::Function
+    # #Log-likelihood function
+    # loglik::Function
+    # # Sample the likelihood
+    # samplelik::Function
 
     # Mean of the initial distribution
     m0::Array{Float64,1}
@@ -31,8 +32,6 @@ struct Model
     Tstep::Int64
     Tspinup::Int64
 
-    ## Operators
-    
     # Forward operator
     f::Function
 

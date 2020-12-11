@@ -142,10 +142,10 @@ end
 
 (A::AdditiveInflation)(X; laplace::Bool=false) = A(X, 1, size(X,1); laplace = laplace)
 
-# # Only for 1D array
-# function (A::AdditiveInflation)(s)
-#     s .+= A.m + A.σ*rand(A.Nx)
-# end
+# Only for 1D array
+function (A::AdditiveInflation)(x::Array{Float64,1})
+    x .+= A.m + A.σ*rand(A.Nx)
+end
 
 
 # """

@@ -3,6 +3,8 @@ export seqassim
 # Create a function to perform the sequential assimilation for any sequential filter SeqFilter
 function seqassim(dyn::DynamicalSystem, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64)
 
+Ne = size(X, 2)
+
 step = ceil(Int, algo.Δtobs/algo.Δtdyn)
 statehist = Array{Float64,2}[]
 push!(statehist, deepcopy(view(X, Ny+1:Ny+Nx,:)))
@@ -26,19 +28,21 @@ for i=1:length(Acycle)
 				dense = false, save_everystep=false);
 
 	@inbounds for i=1:Ne
-	    view(X, Ny+1:Ny+Nx, i) .= sim[i]
+	    X[Ny+1:Ny+Nx, i] .= sim[i]
 	end
 
 
     # Assimilation # Get real measurement # Fix this later # Things are shifted in data.yt
-    ystar = view(data.yt,:,Acycle[i])
+    ystar = data.yt[:,Acycle[i]]
 	# Replace at some point by realobserve(model.h, t0+i*model.Δtobs, ens)
 	# Perform inflation for each ensemble member
 	ϵx(X, Ny+1, Ny+Nx)
 	# Compute measurements
-	observe(dyn.h, t0+i*algo.Δtobs, X)
+	observe(dyn.h, t0+i*algo.Δtobs, X, Ny, Nx)
     # Generate posterior samples
+	@show norm(viewstate(X, Ny, Nx))
     X = algo(X, ystar, t0+i*algo.Δtobs)
+	@show norm(viewstate(X, Ny, Nx))
 
 	# Filter state
 	if algo.isfiltered == true
@@ -77,7 +81,7 @@ prob = ODEProblem(dyn.f, zeros(Nx), tspan)
 
 	prob_func(prob,i,repeat) = ODEProblem(prob.f,view(X,Ny+1:Ny+Nx,i),prob.tspan)
 
-	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	ensemble_prob = EnsembleProblem(prob, output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
 	sim = solve(ensemble_prob, Tsit5(), EnsembleThreads(),trajectories = Ne,
 				dense = false, save_everystep=false);

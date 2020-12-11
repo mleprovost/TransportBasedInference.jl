@@ -38,7 +38,7 @@ struct ETKF<:SeqFilter
 end
 
 function ETKF(G::Function, ϵy::AdditiveInflation,
-    Δtdyn, Δtobs, Δtshuff; islocal = false, isfiltered = true)
+    Δtdyn, Δtobs, Δtshuff; islocal = false, isfiltered = false)
     @assert norm(mod(Δtobs, Δtdyn))<1e-12 "Δtobs should be an integer multiple of Δtdyn"
 
     return ETKF(G, ϵy, Δtdyn, Δtobs, Δtshuff, islocal, isfiltered)
