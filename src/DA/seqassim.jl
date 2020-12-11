@@ -7,7 +7,7 @@ Ne = size(X, 2)
 
 step = ceil(Int, algo.Δtobs/algo.Δtdyn)
 statehist = Array{Float64,2}[]
-push!(statehist, deepcopy(view(X, Ny+1:Ny+Nx,:)))
+push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
 
 n0 = ceil(Int64, t0/algo.Δtobs) + 1
 Acycle = n0:n0+J-1
@@ -20,7 +20,7 @@ for i=1:length(Acycle)
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
 	prob = remake(prob; tspan=tspan)
 
-	prob_func(prob,i,repeat) = ODEProblem(prob.f,view(X,Ny+1:Ny+Nx,i),prob.tspan)
+	prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
@@ -28,7 +28,7 @@ for i=1:length(Acycle)
 				dense = false, save_everystep=false);
 
 	@inbounds for i=1:Ne
-	    X[Ny+1:Ny+Nx, i] .= sim[i]
+	    X[Ny+1:Ny+Nx, i] .= deepcopy(sim[i])
 	end
 
 
@@ -39,10 +39,9 @@ for i=1:length(Acycle)
 	ϵx(X, Ny+1, Ny+Nx)
 	# Compute measurements
 	observe(dyn.h, t0+i*algo.Δtobs, X, Ny, Nx)
+
     # Generate posterior samples
-	@show norm(viewstate(X, Ny, Nx))
     X = algo(X, ystar, t0+i*algo.Δtobs)
-	@show norm(viewstate(X, Ny, Nx))
 
 	# Filter state
 	if algo.isfiltered == true
@@ -96,7 +95,7 @@ prob = ODEProblem(dyn.f, zeros(Nx), tspan)
 	# Perform inflation for each ensemble member
 	ϵx(X, Ny+1, Ny+Nx)
 	# Compute measurements
-	observe(dyn.h, t0+i*algo.Δtobs, X)
+	observe(dyn.h, t0+i*algo.Δtobs, X, Ny, Nx)
     # Generate posterior samples
     X = algo(X, ystar, t0+i*algo.Δtobs, Loc)
 

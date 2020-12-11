@@ -49,13 +49,13 @@ end
 
 
 # Definition from Spantini
-rmse(x::Array{Float64,1}, X::Array{Array{Float64,2},1}) where  = norm(mean(X)-x)/sqrt(size(x,1))
+rmse(x::Array{Float64,1}, X::Array{Float64,2}) = norm(mean(X; dims = 2)[:,1]-x)/sqrt(size(X,1))
 
 
-function spread(P::Array{Float64,2})
-    @assert size(P,1)==size(P,2) "P should be square"
-     return sqrt(tr(P)/size(P,1))
-end
+# function spread(P::Array{Float64,2})
+#     @assert size(P,1)==size(P,2) "P should be square"
+#      return sqrt(tr(P)/size(P,1))
+# end
 
 spread(X::Array{Float64,2}) = @show "check cov(X')" sqrt(tr(TransportMap.cov(X'; dims = 2))/size(X,1))
 
@@ -67,7 +67,7 @@ function mean_hist(hist::Array{Array{Float64,2},1})
     x̂ = zeros(Nx, l)
 
     for i=1:l
-        x̂[:,i] .= mean(hist[i])
+        x̂[:,i] .= mean(hist[i]; dims = 2)[:,1]
     end
     return x̂
 end

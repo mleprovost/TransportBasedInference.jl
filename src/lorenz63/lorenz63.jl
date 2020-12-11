@@ -41,7 +41,7 @@ function generate_lorenz63(model::Model, x0::Array{Float64,1}, J::Int64)
     	# Collect observations
     	tt[i] = deepcopy(i*model.Δtobs)
     	xt[:,i] = deepcopy(x)
-    	yt[:,i] = deepcopy(model.ϵy(model.h(tt[i], x)))
+    	yt[:,i] = deepcopy(model.h(tt[i], x) + model.ϵy.m + model.ϵy.σ*rand(model.ϵy.Nx))
     end
     	return SyntheticData(tt, x0, xt, yt)
 end
@@ -64,8 +64,8 @@ function spin_lorenz63(model::Model, data::SyntheticData, Ne::Int64, path::Strin
 
 
     # return statehist
-# 	_,_,rmse_mean,_ = metric_hist(rmse, data.xt[:,1:J], statehist[2:end])
-# 	println("Ne "*string(Ne)* " RMSE: "*string(rmse_mean))
+	_,_,rmse_mean,_ = metric_hist(rmse, data.xt[:,1:J], statehist[2:end])
+	println("Ne "*string(Ne)* " RMSE: "*string(rmse_mean))
 # 	# Save data
 # 	save(path*"set_up_Ne"*string(Ne)*".jld", "ens", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
 end
@@ -78,7 +78,7 @@ function setup_lorenz63(path::String, Ne_array::Array{Int64,1})
     Δtobs = 0.05
 
     σx = 1e-2#1e-6#1e-2
-    σy = 1.0#1e-6#2.0
+    σy = 2.0#1e-6#2.0
 
     ϵx = AdditiveInflation(Nx, zeros(Nx), σx)
     ϵy = AdditiveInflation(Ny, zeros(Ny), σy)
