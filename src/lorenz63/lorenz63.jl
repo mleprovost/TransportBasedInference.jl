@@ -7,9 +7,6 @@ function lorenz63!(du,u,p,t)
     return du
 end
 
-# This file contains the benchmark for the stochastic EnKF and Stochastic Map for the Lorenz 63 problem
-#, benchmark_lorenz63, benchmark_TMap_lorenz63
-
 
 function generate_lorenz63(model::Model, x0::Array{Float64,1}, J::Int64)
 
@@ -41,7 +38,9 @@ function generate_lorenz63(model::Model, x0::Array{Float64,1}, J::Int64)
     	# Collect observations
     	tt[i] = deepcopy(i*model.Δtobs)
     	xt[:,i] = deepcopy(x)
-    	yt[:,i] = deepcopy(model.h(tt[i], x) + model.ϵy.m + model.ϵy.σ*rand(model.ϵy.Nx))
+    	yt[:,i] = deepcopy(model.h(tt[i], x))
+        model.ϵy(yt[:,i])
+
     end
     	return SyntheticData(tt, x0, xt, yt)
 end
@@ -75,7 +74,7 @@ function setup_lorenz63(path::String, Ne_array::Array{Int64,1})
     Nx = 3
     Ny = 3
     Δtdyn = 0.05
-    Δtobs = 0.05
+    Δtobs = 0.1
 
     σx = 1e-2#1e-6#1e-2
     σy = 2.0#1e-6#2.0

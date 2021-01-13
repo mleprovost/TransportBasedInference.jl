@@ -145,6 +145,7 @@ end
 # Only for 1D array
 function (A::AdditiveInflation)(x::Array{Float64,1})
     x .+= A.m + A.σ*rand(A.Nx)
+    return x
 end
 
 
