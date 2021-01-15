@@ -36,7 +36,10 @@ for i=1:length(Acycle)
     ystar = data.yt[:,Acycle[i]]
 	# Replace at some point by realobserve(model.h, t0+i*model.Δtobs, ens)
 	# Perform inflation for each ensemble member
+	# @show X[Ny+1:Ny+Nx,1]
 	ϵx(X, Ny+1, Ny+Nx)
+	# @show X[Ny+1:Ny+Nx,1]
+
 	# Compute measurements
 	observe(dyn.h, t0+i*algo.Δtobs, X, Ny, Nx)
 

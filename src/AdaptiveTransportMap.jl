@@ -43,6 +43,7 @@ include("tools/banana.jl")
 # Tools for mixture of Gaussian distributions
 include("tools/mixture.jl")
 include("tools/view.jl")
+include("tools/postprocess.jl")
 
 # Tools for state-space model
 include("dynamic/system.jl")

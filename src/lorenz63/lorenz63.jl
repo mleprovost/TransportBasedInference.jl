@@ -1,4 +1,4 @@
-export lorenz63!, setup_lorenz63, generate_lorenz63
+export lorenz63!, setup_lorenz63, generate_lorenz63, benchmark_lorenz63
 
 function lorenz63!(du,u,p,t)
     du[1] = 10.0*(u[2]-u[1])
@@ -65,8 +65,8 @@ function spin_lorenz63(model::Model, data::SyntheticData, Ne::Int64, path::Strin
     # return statehist
 	_,_,rmse_mean,_ = metric_hist(rmse, data.xt[:,1:J], statehist[2:end])
 	println("Ne "*string(Ne)* " RMSE: "*string(rmse_mean))
-# 	# Save data
-# 	save(path*"set_up_Ne"*string(Ne)*".jld", "ens", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
+	# Save data
+	save(path*"set_up_Ne"*string(Ne)*".jld", "ens", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
 end
 
 
@@ -119,44 +119,41 @@ function setup_lorenz63(path::String, Ne_array::Array{Int64,1})
 end
 
 
+function benchmark_lorenz63(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1})
+@assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
 
+#Store all the metric per number of ensemble members
+Metric_list = []
 
+@showprogress for Ne in Ne_array
+    Metric_Ne = Metrics[]
+    for β in β_array
+    @show Ne, β
+    # Load file
+    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "ens")
 
-#
-# function benchmark_lorenz63(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1})
-# @assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
-#
-# #Store all the metric per number of ensemble members
-# Metric_hist = []
-#
-# @showprogress for Ne in Ne_array
-#     Metric_Ne = Metrics[]
-#     for β in β_array
-#     @show Ne, β
-#     # Load file
-#     ens0 = load(path*"set_up_Ne"*string(Ne)*".jld", "ens")
-#
-#     ens = EnsembleStateMeas(3,3,Ne)
-#     ens.state.S .= ens0
-#     J = model.Tstep
-#     t0 = model.Tspinup*model.Δtobs
-#     dyn = DynamicalSystem(model.f, model.h)
-#     enkf = StochEnKF(x->x, model.ϵy, model.Δtdyn, model.Δtobs, false, false)
-#
-#     # Use this multi-additive inflation
-#     ϵx = MultiAddInflation(3, β, zeros(3), model.ϵx.Σ, model.ϵx.σ)
-#
-#     @time enshist = seqassim(dyn, data, J, ϵx, enkf, ens, t0)
-#
-#     Metric = post_process(data, model, J, enshist)
-#     push!(Metric_Ne, deepcopy(Metric))
-#     println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(Metric.rmse_mean))
-#     end
-#     push!(Metric_hist, deepcopy(Metric_Ne))
-# end
-#
-# return Metric_hist
-# end
+    X = zeros(model.Ny + model.Nx, Ne)
+    X[model.Ny+1:model.Ny+model.Nx,:] .= deepcopy(X0)
+    J = model.Tstep
+    t0 = model.Tspinup*model.Δtobs
+    dyn = DynamicalSystem(model.f, model.h)
+    enkf = StochEnKF(x->x, model.ϵy, model.Δtdyn, model.Δtobs, false, false)
+
+    # Use this multi-additive inflation
+    ϵx = MultiAddInflation(3, β, zeros(3), model.ϵx.Σ, model.ϵx.σ)
+
+    # @time enshist = seqassim(dyn, data, J, ϵx, enkf, ens, t0)
+	@time statehist = seqassim(dyn, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0);
+
+    Metric = post_process(data, model, J, statehist)
+    push!(Metric_Ne, deepcopy(Metric))
+    println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(Metric.rmse_mean))
+    end
+    push!(Metric_list, deepcopy(Metric_Ne))
+end
+
+return Metric_list
+end
 #
 #
 # function benchmark_TMap_lorenz63(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1})

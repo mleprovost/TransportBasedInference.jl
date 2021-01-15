@@ -127,6 +127,7 @@ cov(A::AdditiveInflation) = A.Σ
 function (A::AdditiveInflation)(X, start::Int64, final::Int64; laplace::Bool=false)
     Ne = size(X,2)
     @assert A.Nx == final - start + 1 "final-start + 1 doesn't match the length of the additive noise"
+    # @show X[start:final, 1]
     if laplace == false
         @inbounds for i=1:Ne
             col = view(X, start:final, i)
@@ -138,6 +139,7 @@ function (A::AdditiveInflation)(X, start::Int64, final::Int64; laplace::Bool=fal
             col .+= A.m + sqrt(2.0)*A.σ*rand(Laplace(), A.Nx)
         end
     end
+    # @show X[start:final, 1]
 end
 
 (A::AdditiveInflation)(X; laplace::Bool=false) = A(X, 1, size(X,1); laplace = laplace)

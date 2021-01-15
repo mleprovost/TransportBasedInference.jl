@@ -57,7 +57,7 @@ rmse(x::Array{Float64,1}, X::Array{Float64,2}) = norm(mean(X; dims = 2)[:,1]-x)/
 #      return sqrt(tr(P)/size(P,1))
 # end
 
-spread(X::Array{Float64,2}) = @show "check cov(X')" sqrt(tr(TransportMap.cov(X'; dims = 2))/size(X,1))
+spread(X::Array{Float64,2}) = sqrt(tr(cov(X'))/size(X,1))
 
 
 # Create function to construct the mean of an array of ensemble
@@ -81,7 +81,7 @@ function quant(hist::Array{Array{Float64,2},1})
 
     for j=1:Nx
         for i=1:l
-            q₋, q₊ = quant(view(hist[i].S,j,:),[0.025, 0.975])
+            q₋, q₊ = quantile(hist[i][j,:],[0.025, 0.975])
             qinf[j,i] = deepcopy(q₋)
             qsup[j,i] = deepcopy(q₊)
         end
