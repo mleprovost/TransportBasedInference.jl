@@ -140,7 +140,7 @@ Metric_list = []
     enkf = StochEnKF(x->x, model.ϵy, model.Δtdyn, model.Δtobs, false, false)
 
     # Use this multi-additive inflation
-    ϵx = MultiAddInflation(3, β, zeros(3), model.ϵx.Σ, model.ϵx.σ)
+    ϵx = MultiAddInflation(model.Nx, β, zeros(model.Nx), model.ϵx.Σ, model.ϵx.σ)
 
     # @time enshist = seqassim(dyn, data, J, ϵx, enkf, ens, t0)
 	@time statehist = seqassim(dyn, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0);
