@@ -1,8 +1,8 @@
 module AdaptiveTransportMap
 
+using LinearAlgebra
 using OrdinaryDiffEq
-using LinearAlgebra, SpecialFunctions
-using Random
+using SpecialFunctions
 using ProgressMeter
 using BenchmarkTools
 using ForwardDiff
@@ -12,12 +12,10 @@ using Distributions
 using QuadGK
 using TensorOperations
 using LoopVectorization
-using FastGaussQuadrature
 using Optim
 using NLsolve
 using LineSearches
 using MLDataUtils
-# using MLDataPattern
 using ThreadPools
 using QRupdate
 
@@ -25,7 +23,6 @@ using PlotUtils
 using RecipesBase
 using ColorTypes
 using LaTeXStrings
-using Quadrature
 
 
 include("tools/parallel.jl")
