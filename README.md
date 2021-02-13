@@ -2,7 +2,7 @@
 
 _A framework for estimation of adaptive transport maps between two densities from samples_
 
-[![Build Status](https://github.com/mleprovost/AdaptiveTransportMap.jl/workflows/CI/badge.svg)](https://github.com/mleprovost/AdaptiveTransportMap.jl/actions)
+[![Build Status](https://github.com/mleprovost/AdaptiveTransportMap/workflows/CI/badge.svg)](https://github.com/mleprovost/AdaptiveTransportMap/actions)
 
 ## About the package
 
