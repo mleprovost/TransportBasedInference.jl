@@ -15,4 +15,4 @@ end
 
 (P::AbstractProHermite)(x) = P.P(x)*exp(-x^2/4)
 
-const CstMaxDegree = 30
+const CstMaxDegree = 40

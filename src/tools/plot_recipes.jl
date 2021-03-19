@@ -35,8 +35,8 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
     aspect_ratio --> 1
     # legend --> :none
     colorbar --> true
+    clims --> (0, maximum(idx))
     seriescolor --> color
-
     collect(1:Nx), collect(start:Nx), idx
     end
 end

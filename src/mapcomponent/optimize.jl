@@ -60,7 +60,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
     elseif typeof(maxterms) <: Int64
         C, error =  greedyfit(m, Nx, X, maxterms; withconstant = withconstant,
                               withqr = withqr, maxpatience = maxpatience,
-                              verbose = verbose)
+                              verbose = verbose, conditioner = conditioner)
 
     elseif maxterms ∈ ("kfold", "Kfold", "Kfolds")
         # Define cross-validation splits of data
@@ -75,7 +75,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             idx_train, idx_valid = folds[i]
 
             C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
-                                 withconstant = withconstant, withqr = withqr, verbose  = verbose)
+                                 withconstant = withconstant, withqr = withqr, verbose  = verbose,
+                                 conditioner = conditioner)
 
             # error[2] contains the history of the validation error
             valid_error[:,i] .= deepcopy(error[2])
@@ -87,7 +88,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
         _, opt_nterms = findmin(mean_valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose)
+        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose, conditioner = conditioner)
 
     elseif maxterms ∈ ("split", "Split")
         nvalid = ceil(Int64, floor(0.2*size(X,2)))
@@ -102,7 +103,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              withconstant = withconstant, withqr = withqr,
-                             maxpatience = maxpatience, verbose  = verbose)
+                             maxpatience = maxpatience, verbose  = verbose,
+                             conditioner = conditioner)
     else
         println("Argument max_terms is not recognized")
         error()
