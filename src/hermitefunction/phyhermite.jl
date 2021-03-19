@@ -12,7 +12,9 @@ export  PhyHermite, degree,
 
 # Create a structure to hold physicist Hermite functions defined as
 # ψn(x) = Hn(x)*exp(-x^2/2)
+"""
 
+"""
 struct PhyHermite<: Hermite
     m::Int64
     Poly::PhyPolyHermite
@@ -34,7 +36,9 @@ const FamilyScaledPhyHermite = ntuple(i->PhyHermite(i-1; scaled = true),CstMaxDe
 
 
 # Store P′n - Pn * X with Pn the n-th Physicist Hermite Polynomial
+"""
 
+"""
 function DPhyPolyHermite(m::Int64; scaled::Bool)
     k = 1
     factor = 2^k*exp(loggamma(m+1) - loggamma(m+1-k))

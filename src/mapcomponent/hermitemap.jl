@@ -321,7 +321,8 @@ end
 ## Optimization function
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
+                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, conditioner::Bool=true,
+                  start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
 
         @assert size(X,1) == Nx "Error dimension of the sample"
@@ -336,7 +337,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @showprogress for i=start:Nx
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose)
+                              withqr = withqr, verbose = verbose, conditioner = conditioner)
         end
 
         elseif typeof(P) <: Thread
@@ -345,7 +346,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose)
+                              withqr = withqr, verbose = verbose, conditioner = conditioner)
         end
         end
 

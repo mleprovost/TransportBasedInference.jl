@@ -3,7 +3,8 @@ export optimize
 
 function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false,
-                  maxpatience::Int64 = 10^5, verbose::Bool = false)
+                  maxpatience::Int64 = 10^5, verbose::Bool = false,
+                  conditioner = true)
 
     m = C.m
     Nx = C.Nx
@@ -14,11 +15,18 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
-            precond = zeros(ncoeff(C), ncoeff(C))
-            precond!(precond, coeff0, S, C, X)
 
-            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                  Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+
+            if conditioner == true
+                precond = zeros(ncoeff(C), ncoeff(C))
+                precond!(precond, coeff0, S, C, X)
+
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                      Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+            else
+                     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                           Optim.LBFGS(; m = 20))
+            end
 
             setcoeff!(C, Optim.minimizer(res))
             error = res.minimum
@@ -29,12 +37,16 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
 
             # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
             # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+            if conditioner == true
+                qrprecond = zeros(ncoeff(C), ncoeff(C))
+                qrprecond!(qrprecond, coeff0, F, S, C, X)
 
-            qrprecond = zeros(ncoeff(C), ncoeff(C))
-            qrprecond!(qrprecond, coeff0, F, S, C, X)
-
-            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                 Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+            end
 
             mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
@@ -100,12 +112,12 @@ end
 
 
 function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false)
+                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false, conditioner::Bool = true)
 
     transform!(L.L, X)
     C = L.C
     C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
-                            verbose = verbose)
+                            verbose = verbose, conditioner = conditioner)
 
     itransform!(L.L, X)
 

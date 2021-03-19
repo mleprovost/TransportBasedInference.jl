@@ -50,12 +50,12 @@ function updateQRscaling(F::QRscaling, S::Storage)
     mul!(S.ψoffψd, S.ψoffψd, Dinv)
     R = UpperTriangular(qraddcol(view(S.ψoffψd,:,1:Nψ-1), F.R, view(S.ψoffψd,:, Nψ)))
     mul!(S.ψoffψd, S.ψoffψd, D)
-    # Use Schur complement to efficiently compute the inverse of the UpperDiaognal Matrix
+    # Use Schur complement to efficiently compute the inverse of the UpperDiagonal Matrix
     # https://en.wikipedia.org/wiki/Schur_complement
     Rinv = UpperTriangular(hcat(vcat(F.Rinv.data, zeros(1, Nψ-1)), vcat(-1.0/R[Nψ,Nψ]*F.Rinv*view(R,1:Nψ-1,Nψ), 1.0/R[Nψ,Nψ])))
 
     U = UpperTriangular(hcat(vcat(F.U.data, zeros(1, Nψ-1)), S.ψnorm[Nψ]*view(R,:,Nψ)))
-    # Use Schur complement to efficiently compute the inverse of the UpperDiaognal Matrix
+    # Use Schur complement to efficiently compute the inverse of the UpperDiagonal Matrix
     Uinv = UpperTriangular(hcat(vcat(F.Uinv.data, zeros(1, Nψ-1)), vcat(-1.0/U[Nψ,Nψ]*F.Uinv*view(U,1:Nψ-1,Nψ), 1.0/U[Nψ,Nψ])))
 
     L2Uinvlower = F.Uinv'*view(Uinv, 1:Nψ-1, Nψ)

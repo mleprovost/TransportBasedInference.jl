@@ -4,7 +4,7 @@ export greedyfit, update_component, update_coeffs
 # function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
 function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant::Bool = false,
-                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true)
+                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, conditioner::Bool=true)
 
     best_valid_error = Inf
     patience = 0
@@ -54,11 +54,15 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
     if withqr == false
         coeff0 = getcoeff(C)
-        precond = zeros(ncoeff(C), ncoeff(C))
-        precond!(precond, coeff0, S, C, X)
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                             Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
-
+        if conditioner  == true
+            precond = zeros(ncoeff(C), ncoeff(C))
+            precond!(precond, coeff0, S, C, X)
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+        else
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 20))
+        end
         setcoeff!(C, Optim.minimizer(res))
 
         # Compute initial loss on training set
@@ -69,11 +73,16 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         coeff0 = getcoeff(C)
         mul!(coeff0, F.U, coeff0)
 
-        qrprecond = zeros(ncoeff(C), ncoeff(C))
-        qrprecond!(qrprecond, coeff0, F, S, C, X)
+        if conditioner == true
+            qrprecond = zeros(ncoeff(C), ncoeff(C))
+            qrprecond!(qrprecond, coeff0, F, S, C, X)
 
-        res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                             Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+        else
+            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20))
+        end
 
         C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
 
@@ -106,10 +115,15 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
-            precond = zeros(ncoeff(C), ncoeff(C))
-            precond!(precond, coeff0, S, C, X)
-            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                  Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+            if conditioner == true
+                precond = zeros(ncoeff(C), ncoeff(C))
+                precond!(precond, coeff0, S, C, X)
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                      Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                      Optim.LBFGS(; m = 20))
+            end
 
             setcoeff!(C, Optim.minimizer(res))
 
@@ -123,11 +137,16 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             # F = QRscaling(S)
 
             mul!(coeff0, F.U, coeff0)
-            qrprecond = zeros(ncoeff(C), ncoeff(C))
-            qrprecond!(qrprecond, coeff0, F, S, C, X)
+            if conditioner == true
+                qrprecond = zeros(ncoeff(C), ncoeff(C))
+                qrprecond!(qrprecond, coeff0, F, S, C, X)
 
-            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                   Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                       Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                       Optim.LBFGS(; m = 20))
+            end
             # Reverse to the non-QR space and update in-place the coefficients
             mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
@@ -164,7 +183,8 @@ end
 # function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
 
-function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
+function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false,
+                   maxpatience::Int64 = 10^5, verbose::Bool = true, conditioner::Bool=true)# where {m, Nψ, Nx}
 
     @assert maxterms >=1 "maxterms should be >= 1"
     best_valid_error = Inf
@@ -208,10 +228,15 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
     if withqr == false
         coeff0 = getcoeff(C)
-        precond = zeros(ncoeff(C), ncoeff(C))
-        precond!(precond, coeff0, S, C, X)
-        res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                             Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+        if conditioner == true
+            precond = zeros(ncoeff(C), ncoeff(C))
+            precond!(precond, coeff0, S, C, X)
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+        else
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20))
+        end
 
         setcoeff!(C, Optim.minimizer(res))
 
@@ -224,12 +249,17 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
         # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
         # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-
+        if conditioner == true
         qrprecond = zeros(ncoeff(C), ncoeff(C))
         qrprecond!(qrprecond, coeff0, F, S, C, X)
 
         res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                              Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+        else
+
+        res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20))
+        end
 
         # mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
         C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
@@ -262,11 +292,16 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
+            if conditioner == true
             precond = zeros(ncoeff(C), ncoeff(C))
             precond!(precond, coeff0, S, C, X)
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                   Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+            else
 
+            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                 Optim.LBFGS(; m = 20))
+            end
             setcoeff!(C, Optim.minimizer(res))
 
             # Compute new loss on training and validation sets
@@ -279,14 +314,19 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             F = updateQRscaling(F, S)
             mul!(coeff0, F.U, coeff0)
 
-            qrprecond = zeros(ncoeff(C), ncoeff(C))
-            qrprecond!(qrprecond, coeff0, F, S, C, X)
+            if conditioner == true
+                qrprecond = zeros(ncoeff(C), ncoeff(C))
+                qrprecond!(qrprecond, coeff0, F, S, C, X)
+                # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
+                # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
 
-            # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 20))
+            end
 
-            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                   Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
             # Reverse to the non-QR space and update in-place the coefficients
             C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
 

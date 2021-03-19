@@ -28,12 +28,15 @@ export  ExpandedFunction,
         grad_coeff_grad_xd,
         hess_coeff_grad_xd
 
+"""
 # ExpandedFunction decomposes a multi-dimensional function f:Rᴹ → R onto
 # a basis of MultiFunctions ψ_α where c_α are scalar coefficients
 # for each MultiFunction:
 # f(x1, x2, ..., xNx) = ∑_α c_α ψ_α(x1, x2, ..., xNx)
 # Nψ is the number of MultiFunctions used,
 # Nx is the dimension of the input vector x
+
+"""
 
 struct ExpandedFunction
     m::Int64

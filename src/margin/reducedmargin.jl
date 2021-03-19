@@ -8,7 +8,7 @@ function getreducedmargin(midx::Array{Int64,2})
 
     n, d = size(midx)
 
-    # add [0 0 0] to copute the reduced margin
+    # add [0 0 0] to compute the reduced margin
     if !any(zeros(Int64,d) in eachslice(midx; dims = 1))
             idx = vcat(zeros(Int64,1,d), midx)
     else

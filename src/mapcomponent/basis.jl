@@ -14,7 +14,19 @@ export Basis,
        # CstPhyHermite, CstProHermite,
        # CstLinPhyHermite, CstLinProHermite,
 
+"""
+   Basis
 
+A structure to hold a basis of functions
+For instance, (1, x, ψ0, ψ1,..., ψn) defines a basis where the index:
+0 corresponds to the constant function
+1 corresponds to the linear function
+n+2 corresponds to the n-th order physicist Hermite function
+
+# Constructors
+- `Basis(m)`
+
+"""
 struct Basis
     m::Int64
     # f::Tuple
@@ -32,7 +44,14 @@ function Base.show(io::IO, B::Basis)
 end
 
 
-# Specialize method
+# Specialized method
+"""
+    vander!(dV, B, maxi, k, x)
+
+Compute the Vandermonde matrix for the vector `x`
+
+
+"""
 function vander!(dV, B::Basis, maxi::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
@@ -71,6 +90,8 @@ vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 #
 # This is just a placeholder
 CstProHermite(m::Int64) = Basis(m+2)
+
+Base.size(B::Basis) = B.m
 
 # (m::Int64) = ntuple(i -> i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1], m+2)
 
@@ -154,7 +175,6 @@ CstProHermite(m::Int64) = Basis(m+2)
 # @propagate_inbounds Base.getindex(B::Basis, i::Int) = getindex(B.f,i)
 # @propagate_inbounds Base.setindex!(B::Basis, v::ParamFcn, i::Int) = setindex!(B.f,v,i)
 #
-Base.size(B::Basis) = B.m
 
 
 # function vander!(dV, B::Basis{m}, maxi::Int64, k::Int64, x) where {m}
