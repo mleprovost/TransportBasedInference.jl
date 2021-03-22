@@ -4,7 +4,7 @@ export optimize
 function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false,
                   maxpatience::Int64 = 10^5, verbose::Bool = false,
-                  conditioner = true)
+                  conditioner = true, P::Parallel = serial)
 
     m = C.m
     Nx = C.Nx
@@ -71,15 +71,28 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
         max_iter = min(m-1, ceil(Int64, sqrt(size(X,2))))
 
         valid_error = zeros(max_iter+1, n_folds)
-        @inbounds for i=1:n_folds
-            idx_train, idx_valid = folds[i]
+        if typeof(P) <: Serial
+            @inbounds for i=1:n_folds
+                idx_train, idx_valid = folds[i]
 
-            C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
-                                 withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                 conditioner = conditioner)
+                C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
+                                     withconstant = withconstant, withqr = withqr, verbose  = verbose,
+                                     conditioner = conditioner)
 
-            # error[2] contains the history of the validation error
-            valid_error[:,i] .= deepcopy(error[2])
+                # error[2] contains the history of the validation error
+                valid_error[:,i] .= deepcopy(error[2])
+            end
+        elseif typeof(P) <: Thread
+            @inbounds  Threads.@threads for i=1:n_folds
+                idx_train, idx_valid = folds[i]
+
+                C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
+                                     withconstant = withconstant, withqr = withqr, verbose  = verbose,
+                                     conditioner = conditioner)
+
+                # error[2] contains the history of the validation error
+                valid_error[:,i] .= deepcopy(error[2])
+            end
         end
 
         # Find optimal numbers of terms
