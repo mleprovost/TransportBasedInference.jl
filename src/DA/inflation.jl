@@ -12,6 +12,7 @@ export  InflationType, IdentityInflation, AdditiveInflation,
 # exactn
 #
 # A function to create a 1D sample with exactly mean 0 and covariance 1
+# (The samples are no longer i.i.d but this can be usueful when the initialization of the problem is challenging.)
 #
 # """
 function exactn(N)

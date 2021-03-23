@@ -90,7 +90,7 @@ end
 # end
 
 
-function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false)
+function (enkf::StochEnKF)(X, ystar::Array{Float64,1}; laplace::Bool=false)
 
     Ny = size(ystar,1)
     Nx = size(X,1)-Ny
@@ -126,7 +126,7 @@ function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool
 	return X
 end
 
-function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, ȳf::Array{Float64,1}, t::Float64; laplace::Bool=false)
+function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, ȳf::Array{Float64,1}; laplace::Bool=false)
     Ny = size(ystar,1)
     Nx = size(X,1)-Ny
     Ne = size(X, 2)

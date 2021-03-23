@@ -55,7 +55,7 @@ end
 # """
 # Bocquet Data assimilation p.160 Chapter 6 ETKF
 
-function (enkf::ETKF)(X, ystar, t)
+function (enkf::ETKF)(X, ystar)
 	Ny = size(ystar,1)
 	Nx = size(X,1)-Ny
 	Ne = size(X, 2)
@@ -95,7 +95,7 @@ function (enkf::ETKF)(X, ystar, t)
 end
 
 
-function (enkf::ETKF)(X, ystar, ȳf, t)
+function (enkf::ETKF)(X, ystar, ȳf)
 
 	Ny = size(ystar,1)
 	Nx = size(X,1)-Ny

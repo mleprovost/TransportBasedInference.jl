@@ -1,6 +1,6 @@
-export DynamicalSystem, propagate, observe
+export StateSpace, propagate, observe
 
-struct DynamicalSystem
+struct StateSpace
     "Propagatation f"
     f::Function
 
@@ -45,4 +45,4 @@ function observe(h::Function, t, X, Ny::Int64, Nx::Int64; P::Parallel=serial)
     end
 end
 
-observe(F::DynamicalSystem, t, state::Array{Float64,1}) = F.h(t, state)
+observe(F::StateSpace, t, x::Array{Float64,1}) = F.h(t, x)

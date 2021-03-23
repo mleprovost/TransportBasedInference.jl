@@ -42,7 +42,7 @@ include("tools/mixture.jl")
 include("tools/view.jl")
 
 # Tools for state-space model
-include("dynamic/system.jl")
+include("statespace/system.jl")
 
 # Tools for data assimilation
 include("DA/inflation.jl")

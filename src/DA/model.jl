@@ -15,10 +15,6 @@ struct Model
     ϵx::InflationType
 
     ϵy::AdditiveInflation
-    # #Log-likelihood function
-    # loglik::Function
-    # # Sample the likelihood
-    # samplelik::Function
 
     # Mean of the initial distribution
     m0::Array{Float64,1}
@@ -32,12 +28,8 @@ struct Model
     Tstep::Int64
     Tspinup::Int64
 
-    # Forward operator
-    f::Function
-
-    # Observation operator
-    h::Function
-
+    # State-Space Model
+    F::StateSpace
 end
 
 

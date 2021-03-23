@@ -13,6 +13,6 @@ end
 
 # const idfilter = IdFilter()
 
-function (filter::IdFilter)(X, ystar, t)
+function (filter::IdFilter)(X, ystar)
 	return X
 end
