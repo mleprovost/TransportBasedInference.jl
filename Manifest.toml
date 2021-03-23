@@ -759,7 +759,9 @@ version = "1.5.0"
 
 [[QRupdate]]
 deps = ["LinearAlgebra", "Test"]
-path = "../QRupdate.jl"
+git-tree-sha1 = "64270bd3ae4baf4b313df6850e165d96882d9b4e"
+repo-rev = "master"
+repo-url = "https://github.com/mleprovost/QRupdate.jl.git"
 uuid = "29d2ae51-7246-454b-9a65-19ff7b2849a5"
 version = "0.1.0"
 
