@@ -62,7 +62,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                               withqr = withqr, maxpatience = maxpatience,
                               verbose = verbose, conditioner = conditioner)
 
-    elseif maxterms ∈ ("kfold", "Kfold", "Kfolds")
+    elseif maxterms ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
         # Define cross-validation splits of data
         n_folds = 5
         folds = kfolds(1:size(X,2), k = n_folds)

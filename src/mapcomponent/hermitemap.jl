@@ -410,3 +410,56 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
         #         end
         # end
 end
+
+# function inverse!(F, M::HermiteMap, X, ystar; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
+#
+#         Nx = M.Nx
+#         NxX, Ne = size(X)
+#
+#         Ny, NeY = size(Ystar)
+#         @assert NxX == Nx
+#         @assert Ne == NeY
+#         @assert 1 <= Ny < Nx
+#         @assert size(F) == (Nx, Ne)
+#
+#         @view(X[1:Ny,:]) .= Ystar
+#
+#         # We can apply the rescaling to all the components once
+#         if apply_rescaling == true
+#             transform!(M.L, X)
+#         end
+#         # if P == serial
+#         # We can skip the evaluation of the map on the observations components
+#         @inbounds for k = start:Nx
+#             Fk = view(F,k,:)
+#             Xk = view(X,1:k,:)
+#             Sk = Storage(M[k].I.f, Xk)
+#             inverse!(Xk, Fk, M[k], Sk)
+#         end
+#
+#
+#         if apply_rescaling == true
+#             itransform!(M.L, X)
+#         end
+#         # else P == thread
+#         # There is a run-race problem, and the serial version is fast enough.
+#         #         nthread = Threads.nthreads()
+#         #         @time if nthread == 1
+#         #                 idx_folds = 1:Ne
+#         #         else
+#         #                 q = div(Ne, nthread)
+#         #                 r = rem(Ne, nthread)
+#         #                 @assert Ne == q*nthread + r
+#         #                 idx_folds = UnitRange{Int64}[i < nthread ? ((i-1)*q+1:i*q) : ((i-1)*q+1:i*q+r) for i in 1:nthread]
+#         #         end
+#         #
+#         #         @inbounds Threads.@threads for idx in idx_folds
+#         #                 for k = start:Nx
+#         #                 Fk = view(F,k,idx)
+#         #                 Xk = view(X,1:k,idx)
+#         #                 Sk = Storage(M[k].I.f, Xk)
+#         #                 inverse!(Xk, Fk, M[k], Sk)
+#         #                 end
+#         #         end
+#         # end
+# end
