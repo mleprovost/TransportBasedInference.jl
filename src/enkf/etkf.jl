@@ -95,7 +95,7 @@ function (enkf::ETKF)(X, ystar, t)
 end
 
 
-function (enkf::ETKF)(X, ystar, ȳf)
+function (enkf::ETKF)(X, ystar, ȳf, t)
 
 	Ny = size(ystar,1)
 	Nx = size(X,1)-Ny

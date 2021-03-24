@@ -1,5 +1,10 @@
 export sample_banana, log_pdf_banana
 
+"""
+    sample_banana(N; μ = 0.0, σ = 2.0, bananicity = 0.2)
+
+Generate `N` samples of the Banana dsitribution defined as:
+"""
 function sample_banana(N; μ = 0.0, σ = 2.0, bananicity = 0.2)
     X = zeros(2,N)
     for i=1:N

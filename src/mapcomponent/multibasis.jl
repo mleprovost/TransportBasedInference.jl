@@ -1,6 +1,6 @@
 import Base: size
 
-export MultiBasis, Element
+export MultiBasis
 
 # MultiBasis holds the Nx- cartesian product of the  1D basis of functions B
 # MB = B × B× ... × B (Nx elements)

@@ -5,6 +5,13 @@ export   LinearTransform,
          itransform!,
          itransform
 
+"""
+    LinearTransform
+
+
+
+
+"""    
 struct LinearTransform
     Nx::Int64
 

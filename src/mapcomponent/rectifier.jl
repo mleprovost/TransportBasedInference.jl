@@ -1,5 +1,3 @@
-
-
 export  Rectifier,
         square, dsquare, d2square,
         softplus, dsoftplus, d2softplus, invsoftplus,

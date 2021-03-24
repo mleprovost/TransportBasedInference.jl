@@ -1,5 +1,11 @@
 export lorenz63!, setup_lorenz63, generate_lorenz63, benchmark_lorenz63
 
+"""
+    lorenz63!(du,u,p,t)
+
+Compute in-place the right-hand-side of the Lorenz-63 system for a state `u` at time `t`,
+and store it in `du`. `p` is vector of user-defined parameters. 
+"""
 function lorenz63!(du,u,p,t)
     du[1] = 10.0*(u[2]-u[1])
     du[2] = u[1]*(28.0-u[3]) - u[2]

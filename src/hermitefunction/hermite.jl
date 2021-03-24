@@ -1,4 +1,9 @@
 export Hermite
 
-# An abstract type to hold 1D Hermite functions
+
+"""
+    Hermite
+
+An abstract type for 1D Hermite polynomials and functions
+"""
 abstract type Hermite end

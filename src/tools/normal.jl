@@ -1,12 +1,22 @@
-# Define the Hessian of the logpdf of a Normal distribution
-# The logpdf and gradient of the logpdf are already defined in Distributions.jl
-
 export log_pdf, gradlog_pdf, hesslog_pdf
 
-# gradlogpdf(Normal(), 2.0)
-# logpdf(Normal(1.0, 2.0),randn(10))
+"""
+    log_pdf(x)
 
-# Define only for the standard Normal distribution in 1D
+Compute the log of the density of the univariate standard Gaussian distribution (zero mean and unitary standard deviation).
+"""
 log_pdf(x) = -0.5*(log(2*π) + x^2)
+
+"""
+    gradlog_pdf(x)
+
+Compute the gradient of the log of the density of the univariate standard Gaussian distribution (zero mean and unitary standard deviation).
+"""
 gradlog_pdf(x) = -x
+
+"""
+    hesslog_pdf(x)
+
+Compute the hessian of the log of the density of the univariate standard Gaussian distribution (zero mean and unitary standard deviation).
+"""
 hesslog_pdf(x) = -1.0

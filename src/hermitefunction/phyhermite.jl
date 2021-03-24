@@ -10,12 +10,17 @@ export  PhyHermite, degree,
         vander!, vander
 
 
-# Create a structure to hold physicist Hermite functions defined as
-# ψn(x) = Hn(x)*exp(-x^2/2)
-"""
 
 """
-struct PhyHermite<: Hermite
+    PhyHermite <: Hermite
+
+A structure for physicist Hermite functions defined as ψn(x) = Hn(x)*exp(-x^2/2).
+
+### Fields
+
+
+"""
+struct PhyHermite <: Hermite
     m::Int64
     Poly::PhyPolyHermite
     scaled::Bool

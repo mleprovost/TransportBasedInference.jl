@@ -1,5 +1,12 @@
 export lorenz96!, generate_lorenz96, spin_lorenz96, setup_lorenz96, benchmark_lorenz96
 
+
+"""
+    lorenz96!(du,u,p,t)
+
+Compute in-place the right-hand-side of the Lorenz-96 system for a state `u` at time `t`,
+and store it in `du`. `p` is vector of user-defined parameters.
+"""
 function lorenz96!(du,u,p,t)
     F = 8.0
     n = size(u,1)
@@ -26,7 +33,7 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
 
     step = ceil(Int, model.Δtobs/model.Δtdyn)
     tspan = (t0, t0 + model.Δtobs)
-    prob = ODEProblem(model.f,x,tspan)
+    prob = ODEProblem(model.F.f,x,tspan)
 
     for i=1:J
     	# Run dynamics and save results
@@ -44,7 +51,7 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
     	# Collect observations
     	tt[i] = deepcopy(i*model.Δtobs)
     	xt[:,i] = deepcopy(x)
-		yt[:,i] = deepcopy(model.h(tt[i], x))
+		yt[:,i] = deepcopy(model.F.h(tt[i], x))
 		# model.ϵy(yt[:,i])
 		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*rand(model.Ny)
     end
@@ -60,10 +67,10 @@ function spin_lorenz96(model::Model, data::SyntheticData, Ne::Int64, path::Strin
 
 	J = model.Tspinup
 	t0 = 0.0
-	dyn = DynamicalSystem(model.f, model.h)
+	F = model.F
 	enkf = StochEnKF(x->x, model.ϵy, model.Δtdyn, model.Δtobs, false, false)
 
-	statehist = seqassim(dyn, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0)
+	statehist = seqassim(F, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0)
 
     save(path*"set_up_Ne"*string(Ne)*".jld", "state", statehist, "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
 
@@ -109,8 +116,9 @@ function setup_lorenz96(path::String, Ne_array::Array{Int64,1})
     h(t,x) = x[yidx]
     # Create a local version of the observation operator
     h(t,x,idx) = x[idx]
+	F = StateSpace(f, h)
 
-    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, m0, C0, Tburn, Tstep, Tspinup, f, h);
+    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, m0, C0, Tburn, Tstep, Tspinup, F);
 
     # Set initial condition
     x0 = model.m0 + sqrt(model.C0)*randn(Nx)
@@ -144,14 +152,14 @@ Metric_list = []
     X[model.Ny+1:model.Ny+model.Nx,:] .= deepcopy(X0)
     J = model.Tstep
     t0 = model.Tspinup*model.Δtobs
-    dyn = DynamicalSystem(model.f, model.h)
+    F = model.F
     enkf = StochEnKF(x->x, model.ϵy, model.Δtdyn, model.Δtobs, false, false)
 
     # Use this multi-additive inflation
     ϵx = MultiAddInflation(model.Nx, β, zeros(model.Nx), model.ϵx.Σ, model.ϵx.σ)
 
     # @time enshist = seqassim(dyn, data, J, ϵx, enkf, ens, t0)
-	@time statehist = seqassim(dyn, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0);
+	@time statehist = seqassim(F, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0);
 
     Metric = post_process(data, model, J, statehist)
     push!(Metric_Ne, deepcopy(Metric))
