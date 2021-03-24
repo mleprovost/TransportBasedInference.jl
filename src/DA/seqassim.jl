@@ -44,7 +44,7 @@ for i=1:length(Acycle)
 
     # Generate posterior samples.
 	# Note that the additive inflation of the observation is applied within the sequential filter.
-    X = algo(X, ystar)#, t0+i*algo.Δtobs)
+    X = algo(X, ystar, t0+i*algo.Δtobs-t0)
 
 	# Filter state
 	if algo.isfiltered == true

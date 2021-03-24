@@ -31,7 +31,7 @@ function Base.show(io::IO, smf::StochMapFilter)
 	println(io,"Stochastic Map Filter  with filtered = $(smf.isfiltered)")
 end
 
-function (smf::StochMapFilter)(X, ystar::Array{Float64,1}; laplace::Bool=false)
+function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false)
 	Ny = smf.Ny
 	Nx = smf.Nx
 	M = smf.M

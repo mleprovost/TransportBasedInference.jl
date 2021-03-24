@@ -90,7 +90,7 @@ end
 # end
 
 
-function (enkf::StochEnKF)(X, ystar::Array{Float64,1}; laplace::Bool=false)
+function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false)
 
     Ny = size(ystar,1)
     Nx = size(X,1)-Ny
