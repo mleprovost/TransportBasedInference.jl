@@ -320,7 +320,7 @@ end
 
 ## Optimization function
 
-function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
+function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, Array{Int64,1}, String};
                   withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, conditioner::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
@@ -333,15 +333,15 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         end
 
         if typeof(P) <: Serial
-        # We can skip the evaluation of the map on the observations components
+        # We can skip the evaluation of the map on the observation components
         @showprogress for i=start:Nx
          Xi = view(X,1:i,:)
-         M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, conditioner = conditioner)
+        M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
+                             withqr = withqr, verbose = verbose, conditioner = conditioner)
         end
 
         elseif typeof(P) <: Thread
-        # We can skip the evaluation of the map on the observations components,
+        # We can skip the evaluation of the map on the observation components,
         # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
@@ -358,7 +358,48 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         return M
 end
 
-function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
+function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
+                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, conditioner::Bool=true,
+                  start::Int64=1, P::Parallel = serial)
+        Nx = M.Nx
+
+        @assert size(X,1) == Nx "Error dimension of the sample"
+        @assert size(maxterms, 1) == Nx-start+1 "Error dimension of the components"
+
+        # We can apply the rescaling to all the components once
+        if apply_rescaling == true
+         transform!(M.L, X)
+        end
+
+        if typeof(P) <: Serial
+        # We can skip the evaluation of the map on the observation components
+        @showprogress for i=start:Nx
+         Xi = view(X,1:i,:)
+        M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
+                             withqr = withqr, verbose = verbose, conditioner = conditioner)
+        end
+
+        elseif typeof(P) <: Thread
+        # We can skip the evaluation of the map on the observation components,
+        # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
+        @inbounds ThreadPools.@qthreads for i=Nx:-1:start
+         Xi = view(X,1:i,:)
+         M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
+                              withqr = withqr, verbose = verbose, conditioner = conditioner)
+        end
+        end
+
+        # We can apply the rescaling to all the components once
+        if apply_rescaling == true
+         itransform!(M.L, X)
+        end
+
+        return M
+end
+
+
+
+function inverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
         Nx = M.Nx
         NxX, Ne = size(X)
@@ -368,6 +409,7 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
         @assert Ne == NeY
         @assert 1 <= Ny < Nx
         @assert size(F) == (Nx, Ne)
+
 
         @view(X[1:Ny,:]) .= Ystar
 
@@ -411,55 +453,55 @@ function inverse!(F, M::HermiteMap, X, Ystar; apply_rescaling::Bool=true, start:
         # end
 end
 
-# function inverse!(F, M::HermiteMap, X, ystar; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
-#
-#         Nx = M.Nx
-#         NxX, Ne = size(X)
-#
-#         Ny, NeY = size(Ystar)
-#         @assert NxX == Nx
-#         @assert Ne == NeY
-#         @assert 1 <= Ny < Nx
-#         @assert size(F) == (Nx, Ne)
-#
-#         @view(X[1:Ny,:]) .= Ystar
-#
-#         # We can apply the rescaling to all the components once
-#         if apply_rescaling == true
-#             transform!(M.L, X)
-#         end
-#         # if P == serial
-#         # We can skip the evaluation of the map on the observations components
-#         @inbounds for k = start:Nx
-#             Fk = view(F,k,:)
-#             Xk = view(X,1:k,:)
-#             Sk = Storage(M[k].I.f, Xk)
-#             inverse!(Xk, Fk, M[k], Sk)
-#         end
-#
-#
-#         if apply_rescaling == true
-#             itransform!(M.L, X)
-#         end
-#         # else P == thread
-#         # There is a run-race problem, and the serial version is fast enough.
-#         #         nthread = Threads.nthreads()
-#         #         @time if nthread == 1
-#         #                 idx_folds = 1:Ne
-#         #         else
-#         #                 q = div(Ne, nthread)
-#         #                 r = rem(Ne, nthread)
-#         #                 @assert Ne == q*nthread + r
-#         #                 idx_folds = UnitRange{Int64}[i < nthread ? ((i-1)*q+1:i*q) : ((i-1)*q+1:i*q+r) for i in 1:nthread]
-#         #         end
-#         #
-#         #         @inbounds Threads.@threads for idx in idx_folds
-#         #                 for k = start:Nx
-#         #                 Fk = view(F,k,idx)
-#         #                 Xk = view(X,1:k,idx)
-#         #                 Sk = Storage(M[k].I.f, Xk)
-#         #                 inverse!(Xk, Fk, M[k], Sk)
-#         #                 end
-#         #         end
-#         # end
-# end
+function inverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
+
+        Nx = M.Nx
+        NxX, Ne = size(X)
+
+        Ny = size(ystar,1)
+        @assert NxX == Nx
+        @assert 1 <= Ny < Nx
+        @assert size(F) == (Nx, Ne)
+
+
+        @view(X[1:Ny,:]) .= ystar
+
+        # We can apply the rescaling to all the components once
+        if apply_rescaling == true
+            transform!(M.L, X)
+        end
+        # if P == serial
+        # We can skip the evaluation of the map on the observations components
+        @inbounds for k = start:Nx
+            Fk = view(F,k,:)
+            Xk = view(X,1:k,:)
+            Sk = Storage(M[k].I.f, Xk)
+            inverse!(Xk, Fk, M[k], Sk)
+        end
+
+
+        if apply_rescaling == true
+            itransform!(M.L, X)
+        end
+        # else P == thread
+        # There is a run-race problem, and the serial version is fast enough.
+        #         nthread = Threads.nthreads()
+        #         @time if nthread == 1
+        #                 idx_folds = 1:Ne
+        #         else
+        #                 q = div(Ne, nthread)
+        #                 r = rem(Ne, nthread)
+        #                 @assert Ne == q*nthread + r
+        #                 idx_folds = UnitRange{Int64}[i < nthread ? ((i-1)*q+1:i*q) : ((i-1)*q+1:i*q+r) for i in 1:nthread]
+        #         end
+        #
+        #         @inbounds Threads.@threads for idx in idx_folds
+        #                 for k = start:Nx
+        #                 Fk = view(F,k,idx)
+        #                 Xk = view(X,1:k,idx)
+        #                 Sk = Storage(M[k].I.f, Xk)
+        #                 inverse!(Xk, Fk, M[k], Sk)
+        #                 end
+        #         end
+        # end
+end

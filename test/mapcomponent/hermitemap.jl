@@ -414,7 +414,7 @@ end
     optimize(M, Xprior, 5; withconstant = false, start = Ny+1)
 
     F = evaluate(M, Xpost; start = Ny+1)
-    inverse!(F, M, Xprior, Ystar; start = Ny+1, P = serial)
+    inverse!(Xprior, F, M, Ystar; start = Ny+1, P = serial)
 
     @test norm(evaluate(M, Xprior; start = Ny+1)-evaluate(M, Xpost; start = Ny+1))/norm(evaluate(M, Xpost; start = Ny+1))<1e-6
 

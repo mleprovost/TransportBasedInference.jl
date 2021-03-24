@@ -20,12 +20,11 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             if conditioner == true
                 precond = zeros(ncoeff(C), ncoeff(C))
                 precond!(precond, coeff0, S, C, X)
-
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                      Optim.LBFGS(; m = 20, P = Preconditioner(precond)))
+                      Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
             else
                      res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                           Optim.LBFGS(; m = 20))
+                           Optim.LBFGS(; m = 10))
             end
 
             setcoeff!(C, Optim.minimizer(res))
@@ -42,10 +41,10 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
 
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
             else
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 20, P = Preconditioner(qrprecond)))
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
             end
 
             mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
