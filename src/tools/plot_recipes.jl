@@ -11,9 +11,9 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 # or we can alternatively plot the maximal degree for each varaible of each component if degree = true
 @recipe function heatmap(M::HermiteMap; start::Int64=1, color = cgrad([:white, :teal, :navyblue, :purple]), degree::Bool=false)
     Nx = M.Nx
-    idx = zeros(Int64, Nx-start+1, Nx)
+    idx = -1e-4*ones(Int64, Nx-start+1, Nx)
 
-    # Count occurence of each index
+    # Count occurence or maximal degree of each index
     for i=start:Nx
         for j=1:i
         if degree == false
@@ -33,7 +33,6 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
     yguide -->  "Map index"
     yflip --> true
     aspect_ratio --> 1
-    # legend --> :none
     colorbar --> true
     clims --> (0, maximum(idx))
     seriescolor --> color

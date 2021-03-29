@@ -321,7 +321,7 @@ end
 ## Optimization function
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, Array{Int64,1}, String};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, conditioner::Bool=true,
+                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessianpreconditioner::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
 
@@ -337,7 +337,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @showprogress for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                             withqr = withqr, verbose = verbose, conditioner = conditioner)
+                             withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
         end
 
         elseif typeof(P) <: Thread
@@ -346,7 +346,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, conditioner = conditioner)
+                              withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
         end
         end
 
@@ -359,7 +359,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
 end
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, conditioner::Bool=true,
+                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessianpreconditioner::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
 
@@ -376,7 +376,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
         @showprogress for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
-                             withqr = withqr, verbose = verbose, conditioner = conditioner)
+                             withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
         end
 
         elseif typeof(P) <: Thread
@@ -385,7 +385,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, conditioner = conditioner)
+                              withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
         end
         end
 

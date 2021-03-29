@@ -3,14 +3,16 @@ export Mixture, sample_mixture, log_pdf_mixture
 
 
 struct Mixture
-    # Number of Gaussian kernels
+    "Number of Gaussian kernels"
     Nψ::Int64
-    # Dimension of the space
+
+    "Dimension of the state"
     Nx::Int64
-    # Array of Nψ dimensinos
+
+    "Array of Nψ dimensions"
     dist::Array{MvNormal,1}
 
-    # Vector of weights for each mode
+    "Vector of weights for each mode"
     w::Array{Float64,1}
 end
 

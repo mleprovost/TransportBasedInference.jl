@@ -1,5 +1,3 @@
-
-
 export  PhyHermite, degree,
         FamilyPhyHermite, FamilyScaledPhyHermite,
         DPhyPolyHermite,
@@ -9,16 +7,19 @@ export  PhyHermite, degree,
         evaluate!, evaluate,
         vander!, vander
 
-
-
 """
     PhyHermite <: Hermite
 
-A structure for physicist Hermite functions defined as ψn(x) = Hn(x)*exp(-x^2/2).
+An immutable structure for physicist Hermite functions defined as ψm(x) = Hm(x)*exp(-x^2/2).
 
-### Fields
+## Fields
+-  `m` : order of the function
+-  `Poly` : physicist Hermite polynomial of order m
+- `scaled` : with rescaling to have unitary norm
 
-
+## Constructors
+PhyHermite(m, Poly, scaled)
+PhyHermite(m; scaled = false)
 """
 struct PhyHermite <: Hermite
     m::Int64
@@ -32,6 +33,11 @@ end
 
 PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite(m, PhyPolyHermite(m; scaled = scaled), scaled)
 
+"""
+        degree(P)
+
+Return the degree of P
+"""
 degree(P::PhyHermite) = P.m
 
 (P::PhyHermite)(x) = P.Poly.P(x)*exp(-x^2/2)

@@ -2,11 +2,11 @@ export StochMapFilter
 
 
 struct StochMapFilter<:SeqFilter
-	"Filter function"
-	G::Function
+		"Filter function"
+		G::Function
 
-	"Standard deviations of the measurement noise distribution"
-	ϵy::AdditiveInflation
+		"Standard deviations of the measurement noise distribution"
+		ϵy::AdditiveInflation
 
         "HermiteMap"
         M::HermiteMap
@@ -23,12 +23,12 @@ struct StochMapFilter<:SeqFilter
         "Time step observation"
         Δtobs::Float64
 
-	"Boolean: is state vector filtered"
-	isfiltered::Bool
+		"Boolean: is state vector filtered"
+		isfiltered::Bool
 end
 
 function Base.show(io::IO, smf::StochMapFilter)
-	println(io,"Stochastic Map Filter  with filtered = $(smf.isfiltered)")
+	println(io,"Stochastic Map Filter with filtered = $(smf.isfiltered)")
 end
 
 function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false)

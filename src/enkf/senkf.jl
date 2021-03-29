@@ -15,6 +15,7 @@ struct StochEnKF<:SeqFilter
 
 	"Boolean: is the covariance matrix localized"
 	islocal::Bool
+
     "Boolean: is state vector filtered"
     isfiltered::Bool
 end

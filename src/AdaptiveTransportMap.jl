@@ -106,7 +106,7 @@ include("mapcomponent/greedyfit.jl")
 include("mapcomponent/optimize.jl")
 
 include("mapcomponent/hermitemap.jl")
-include("mapcomponent/assimilate.jl")
+include("mapcomponent/stochmapfilter.jl")
 
 include("tools/plot_recipes.jl")
 

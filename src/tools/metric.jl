@@ -45,28 +45,32 @@ covprob_std::Float64
 end
 
 
+# Definition from Spantini et al. 2019
+"""
+    rmse(X)
 
-
-
-# Definition from Spantini
+Compute the root-mean square error of the ensemble matrix `X`    
+"""
 rmse(x::Array{Float64,1}, X::Array{Float64,2}) = norm(mean(X; dims = 2)[:,1]-x)/sqrt(size(X,1))
 
+"""
+    spread(X)
 
-# function spread(P::Array{Float64,2})
-#     @assert size(P,1)==size(P,2) "P should be square"
-#      return sqrt(tr(P)/size(P,1))
-# end
-
+Compute the spread of the ensemble matrix `X`
+"""
 spread(X::Array{Float64,2}) = sqrt(tr(cov(X'))/size(X,1))
 
+"""
+    mean_hist(hist)
 
-# Create function to construct the mean of an array of ensemble
+Stack together the mean of the different ensembles.
+"""
 function mean_hist(hist::Array{Array{Float64,2},1})
     l = length(hist)
     Nx = size(hist[1])[1]
     x̂ = zeros(Nx, l)
 
-    for i=1:l
+    @inbounds for i=1:l
         x̂[:,i] .= mean(hist[i]; dims = 2)[:,1]
     end
     return x̂
