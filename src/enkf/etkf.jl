@@ -33,7 +33,7 @@ struct ETKF<:SeqFilter
 
 	"Boolean: is the covariance matrix localized"
 	islocal::Bool
-	
+
     "Boolean: is state vector filtered"
     isfiltered::Bool
 end
@@ -43,6 +43,14 @@ function ETKF(G::Function, ϵy::AdditiveInflation,
     @assert norm(mod(Δtobs, Δtdyn))<1e-12 "Δtobs should be an integer multiple of Δtdyn"
 
     return ETKF(G, ϵy, Δtdyn, Δtobs, Δtshuff, islocal, isfiltered)
+end
+
+# If no filtering function is provided, use the identity in the constructor.
+function ETKF(ϵy::AdditiveInflation,
+    Δtdyn, Δtobs, Δtshuff; islocal = false)
+    @assert norm(mod(Δtobs, Δtdyn))<1e-12 "Δtobs should be an integer multiple of Δtdyn"
+
+    return ETKF(x-> x, ϵy, Δtdyn, Δtobs, Δtshuff, islocal, false)
 end
 
 

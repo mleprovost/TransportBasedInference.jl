@@ -27,6 +27,15 @@ function StochEnKF(G::Function, ϵy::AdditiveInflation,
     return StochEnKF(G, ϵy, Δtdyn, Δtobs, islocal, isfiltered)
 end
 
+# If no filtering function is provided, use the identity in the constructor.
+function StochEnKF(ϵy::AdditiveInflation,
+    Δtdyn, Δtobs; islocal = false)
+    @assert norm(mod(Δtobs, Δtdyn))<1e-12 "Δtobs should be an integer multiple of Δtdyn"
+
+    return StochEnKF(x -> x, ϵy, Δtdyn, Δtobs, islocal, false)
+end
+
+
 
 function Base.show(io::IO, enkf::StochEnKF)
 	println(io,"Stochastic EnKF  with filtered = $(enkf.isfiltered)")
@@ -227,7 +236,6 @@ end
 # 	# idx contains the dictionnary of the mapping
 # 	# First line contains the range of integer 1:Ny
 # 	# Second line contains the associated indice of each measurement
-#
 # end
 #
 # function SeqStochEnKF(G::Function, h::Function, ϵy::AdditiveInflation,

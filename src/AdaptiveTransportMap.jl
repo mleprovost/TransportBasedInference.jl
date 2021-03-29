@@ -32,7 +32,6 @@ include("tools/product.jl")
 include("tools/tools.jl")
 include("tools/normal.jl")
 include("tools/clenshaw_curtis.jl")
-include("tools/adaptiveCC.jl")
 # Tools to apply a linear transformation
 include("tools/transform.jl")
 # Tools for Banana distribution
