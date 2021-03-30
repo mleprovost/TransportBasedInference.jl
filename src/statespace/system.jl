@@ -1,5 +1,15 @@
 export StateSpace, propagate, observe
 
+
+"""
+    StateSpace
+
+An immutable structure representing the dynamical `f` and observation `h` operators.
+The dynamical model is provided by the right hand side of the ODE to solve.
+For a system of ODEs, we will prefer an in-place syntax `f(du, u, p, t)`, where `p` are parameters of the model.
+We rely on `OrdinaryDiffEq` to integrate the dynamical system with the Tsitouras 5/4 Runge-Kutta method adaptive time marching.
+`h` must be a function of the form `h(u, t)`, where `u` is the state vector and `t` is the time.
+"""
 struct StateSpace
     "Propagatation f"
     f::Function
@@ -8,24 +18,31 @@ struct StateSpace
     h::Function
 end
 
-function propagate(f::Function, t, X, Ny::Int64, Nx::Int64; P::Parallel=serial)
+# To remove
+function propagate(f::Function, X, t::Float64, Ny::Int64, Nx::Int64; P::Parallel=serial)
     Nypx, Ne = size(X)
     @assert Nypx == Ny + Nx "Wrong dimension of Ny or Nx"
     if typeof(P)==Serial
         @inbounds for i=1:Ne
         x = view(X, Ny+1:Nypx, i)
-        x .= f(t, x)[2]
+        x .= f(x, t)[2]
         end
     else
         @inbounds Threads.@threads for i=1:Ne
         x = view(X, Ny+1:Nypx, i)
-        x .= f(t, x)[2]
+        x .= f(x, t)[2]
         end
     end
 end
 
+"""
+        observe(h::Function, X, t::Float64, Ny::Int64, Nx::Int64; P::Parallel=serial)
 
-function observe(h::Function, t, X, Ny::Int64, Nx::Int64; P::Parallel=serial)
+Evaluate the function `h` for the different state vectors of the `X` at time `t`, and store the results in the first `Ny` columns of `X`.
+`X` is an ensemble matrix that contains the observation vectors in the first `Ny` lines, and the state vectors in the lines `Ny+1` to `Ny+Nx`.
+The code can run in serial or with multithreading.
+"""
+function observe(h::Function, X, t::Float64, Ny::Int64, Nx::Int64; P::Parallel=serial)
     Nypx, Ne = size(X)
     @assert Nypx == Ny + Nx "Wrong dimension of Ny or Nx"
     if typeof(P)==Serial
@@ -33,16 +50,20 @@ function observe(h::Function, t, X, Ny::Int64, Nx::Int64; P::Parallel=serial)
         x = view(X, Ny+1:Nypx, i)
         y = view(X, 1:Ny, i)
 
-        y .= h(t, x)
+        y .= h(x, t)
         end
-    else
+    elseif typeof(P)==Thread
         @inbounds Threads.@threads for i=1:Ne
         x = view(X, Ny+1:Nypx, i)
         y = view(X, 1:Ny, i)
 
-        y .= h(t, x)
+        y .= h(x, t)
         end
     end
 end
 
-observe(F::StateSpace, t, x::Array{Float64,1}) = F.h(t, x)
+"""
+        observe(F::StateSpace, X, t::Float64, Ny::Int64, Nx::Int64; P::Parallel=serial)
+Apply the observation operator of the `stateSpace` `F` to the ensemble matrix `X` at time `t`.
+"""
+observe(F::StateSpace, x::Array{Float64,1}, t::Float64) = F.h(x, t)

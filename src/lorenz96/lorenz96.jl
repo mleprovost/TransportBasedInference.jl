@@ -51,7 +51,7 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
     	# Collect observations
     	tt[i] = deepcopy(i*model.Δtobs)
     	xt[:,i] = deepcopy(x)
-		yt[:,i] = deepcopy(model.F.h(tt[i], x))
+		yt[:,i] = deepcopy(model.F.h(x, tt[i]))
 		# model.ϵy(yt[:,i])
 		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*rand(model.Ny)
     end
@@ -110,9 +110,9 @@ function setup_lorenz96(path::String, Ne_array::Array{Int64,1})
     Tspinup = 2000
 
     f = lorenz96!
-    h(t,x) = x[yidx]
+    h(x, t) = x[yidx]
     # Create a local version of the observation operator
-    h(t,x,idx) = x[idx]
+    h(x, idx, t) = x[idx]
 	F = StateSpace(f, h)
 
     model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, MvNormal(zeros(Nx), Matrix(1.0*I, Nx, Nx)), Tburn, Tstep, Tspinup, F);

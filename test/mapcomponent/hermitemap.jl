@@ -393,12 +393,28 @@ end
 
     @test getidx(M[3]) == [1 0 0]
     @test norm(getcoeff(M[3]) - [-0.067872411753720])<1e-4
-
-
 end
 
 
-@testset "Test inversion of the Hermite Map" begin
+@testset "Test inversion of the Hermite Map I" begin
+    using Test
+    Nx = 100
+    m = 20
+    Ne = 500
+    Xprior = randn(Nx, Ne).*randn(Nx, Ne)
+    Xpost = deepcopy(Xprior) .+ 0.3*randn(Nx, Ne)
+
+    M = HermiteMap(m, Xprior; diag = true)
+    optimize(M, Xprior, 5; withconstant = false, start = Ny+1)
+
+    F = evaluate(M, Xprior)
+    inverse!(Xpost, F, M)
+
+    @test norm(Xprior - Xpost)/norm(Xpost)<1e-6
+end
+
+
+@testset "Test inversion of the Hermite Map II" begin
 
     Nx = 100
     Ny = 50

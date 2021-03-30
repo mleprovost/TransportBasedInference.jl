@@ -40,7 +40,7 @@ for i=1:length(Acycle)
 	ϵx(X, Ny+1, Ny+Nx)
 
 	# Compute measurements
-	observe(F.h, t0+i*algo.Δtobs, X, Ny, Nx)
+	observe(F.h, X, t0+i*algo.Δtobs, Ny, Nx)
 
     # Generate posterior samples.
 	# Note that the additive inflation of the observation is applied within the sequential filter.
@@ -98,7 +98,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 	# Perform inflation for each ensemble member
 	ϵx(X, Ny+1, Ny+Nx)
 	# Compute measurements
-	observe(F.h, t0+i*algo.Δtobs, X, Ny, Nx)
+	observe(F.h, X, t0+i*algo.Δtobs, Ny, Nx)
     # Generate posterior samples
     X = algo(X, ystar, t0+i*algo.Δtobs, Loc)
 

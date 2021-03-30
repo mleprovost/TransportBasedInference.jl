@@ -29,9 +29,9 @@ using AdaptiveTransportMap: evaluate
 
     inverse!(Xmodified, F, R, S)
 
-    @test norm(Xmodified[end,:] - X[end,:])<1e-8
+    @test norm(Xmodified[end,:] - X[end,:])<2e-8
 
-    @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-8
+    @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<2e-8
 end
 
 @testset "Test inverse HermiteMapComponent" begin
