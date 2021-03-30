@@ -43,39 +43,39 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::
 
 	@assert Nystar == Ny "Size of ystar is not consistent with Ny"
 	@assert Nypx == Ny + Nx "Size of X is not consistent with Ny or Nx"
-	@assert Ne == Neystar "Size of X and Ystar are not consistent"
-	@show getcoeff(M[end])
+	@show getcoeff(M[Nypx])
 
 	# Perturbation of the measurements
 	smf.ϵy(X, 1, Ny; laplace = laplace)
 
 	# Recompute the linear transformation
+	M
 	@show M.L.μ
-	M.L = LinearTransform(X; diag = true)
+	updateLinearTransform!(M.L, X; diag = true)
 	@show M.L.μ
-	# updateLinearTransform(M.L, X; diag = true)
 
-	@show getcoeff(M[end])
+	@show getcoeff(M[Nypx])
 
 	# Re-optimize the map with kfolds
-	if mod(t, smf.Δtrefresh) == 0
+	if mod(t, smf.Δtfresh) == 0
+
+
 		# Perform a kfold optimization of the map
-		optimize(M, X, "kfolds"; withconstant = withconstant, withqr = withqr,
-				   verbose = verbose, start = Ny+1, P = P)
+		optimize(M, X, "kfolds"; withconstant = true, withqr = true,
+				   verbose = true, start = Ny+1, P = P)
 
 	else
 		# Only optimize the existing coefficients of the basis
-		optimize(M, X, nothing; withconstant = withconstant, withqr = withqr,
-				   verbose = verbose, start = Ny+1, P = P)
+		optimize(M, X, "split"; withconstant = true, withqr = true,
+				   verbose = true, start = Ny+1, P = serial)
 	end
 
 	# Evaluate the transport map
-	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = P)
+	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
 
 	# Generate the posterior smaples by partial inversion of the map
-	inverse!(X, F, M, ystar; start = Ny+1, P = P)
-
-	@show getcoeff(M[end])
+	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
+	@show getcoeff(M[Nypx])
 	return X
 end
 
