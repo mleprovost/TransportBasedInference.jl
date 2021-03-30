@@ -505,3 +505,51 @@ function inverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_res
         #         end
         # end
 end
+
+
+function inverse!(X, F, M::HermiteMap; apply_rescaling::Bool=true, P::Parallel = serial)
+
+        Nx = M.Nx
+        NxX, Ne = size(X)
+
+        @assert NxX == Nx
+        @assert size(F) == (Nx, Ne)
+
+        # We can apply the rescaling to all the components once
+        if apply_rescaling == true
+            transform!(M.L, X)
+        end
+        # if P == serial
+        # We can skip the evaluation of the map on the observations components
+        @inbounds for k = 1:Nx
+            Fk = view(F,k,:)
+            Xk = view(X,1:k,:)
+            Sk = Storage(M[k].I.f, Xk)
+            inverse!(Xk, Fk, M[k], Sk)
+        end
+
+        if apply_rescaling == true
+            itransform!(M.L, X)
+        end
+        # else P == thread
+        # There is a run-race problem, and the serial version is fast enough.
+        #         nthread = Threads.nthreads()
+        #         @time if nthread == 1
+        #                 idx_folds = 1:Ne
+        #         else
+        #                 q = div(Ne, nthread)
+        #                 r = rem(Ne, nthread)
+        #                 @assert Ne == q*nthread + r
+        #                 idx_folds = UnitRange{Int64}[i < nthread ? ((i-1)*q+1:i*q) : ((i-1)*q+1:i*q+r) for i in 1:nthread]
+        #         end
+        #
+        #         @inbounds Threads.@threads for idx in idx_folds
+        #                 for k = start:Nx
+        #                 Fk = view(F,k,idx)
+        #                 Xk = view(X,1:k,idx)
+        #                 Sk = Storage(M[k].I.f, Xk)
+        #                 inverse!(Xk, Fk, M[k], Sk)
+        #                 end
+        #         end
+        # end
+end
