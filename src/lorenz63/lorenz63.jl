@@ -4,7 +4,7 @@ export lorenz63!, setup_lorenz63, generate_lorenz63, benchmark_lorenz63
     lorenz63!(du,u,p,t)
 
 Compute in-place the right-hand-side of the Lorenz-63 system for a state `u` at time `t`,
-and store it in `du`. `p` is vector of user-defined parameters. 
+and store it in `du`. `p` is vector of user-defined parameters.
 """
 function lorenz63!(du,u,p,t)
     du[1] = 10.0*(u[2]-u[1])
@@ -56,7 +56,7 @@ function spin_lorenz63(model::Model, data::SyntheticData, Ne::Int64, path::Strin
 
 	# Set initial condition
 	X = zeros(model.Ny + model.Nx, Ne)
-	X[model.Ny+1:model.Ny+model.Nx,:] .= sqrt(model.C0)*randn(model.Nx, Ne) .+ model.m0
+	X[model.Ny+1:model.Ny+model.Nx,:] .= rand(model.π0, Ne)#sqrt(model.C0)*randn(model.Nx, Ne) .+ model.m0
 
 	J = model.Tspinup
 	t0 = 0.0
@@ -99,19 +99,16 @@ function setup_lorenz63(path::String, Ne_array::Array{Int64,1})
     Tstep = 4000
     Tspinup = 2000
 
-    m0 = zeros(Nx)
-    C0 = Matrix(1.0*I, Nx, Nx)
-
     f = lorenz63!
     h(t,x) = x
     # Create a local version of the observation operator
     h(t,x,idx) = x[idx]
 	F = StateSpace(lorenz63!, h)
 
-    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, m0, C0, Tburn, Tstep, Tspinup, F);
+    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, MvNormal(zeros(Nx), mMatrix(1.0*I, Nx, Nx)), Tburn, Tstep, Tspinup, F);
 
     # Set initial condition
-    x0 = model.m0 + sqrt(model.C0)*randn(Nx)
+    x0 = rand(model.π0)
     # x0 = [0.645811242103507;  -1.465126216973632;   0.385227725149822];
 
     # Run dynamics and generate data

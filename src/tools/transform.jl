@@ -1,5 +1,6 @@
 export   LinearTransform,
          MinMaxTransform,
+         updateLinearTransform,
          transform!,
          transform,
          itransform!,
@@ -11,7 +12,7 @@ export   LinearTransform,
 
 
 
-"""    
+"""
 struct LinearTransform
     Nx::Int64
 
@@ -39,6 +40,22 @@ function LinearTransform(X::Array{Float64,2}; diag::Bool=true)
 
     return LinearTransform(Nx, μ, L, diag)
 end
+
+function updateLinearTransform!(Lin::LinearTransform, X::Array{Float64,2}; diag::Bool=true)
+    Nx, Ne = size(X)
+    Lin.μ .= mean(X; dims = 2)[:,1]
+
+    if diag == true || Nx == 1
+        σ = std(X; dims = 2)[:,1]
+        Lin.L .= Diagonal(σ)
+
+    else #create a dense transformation from the Cholesky factor
+        @assert Nx>1 "Only works for Nx>1, otherwise use diagonal scaling"
+        Lin.L = cholesky(cov(X')).L
+    end
+end
+
+
 
 function transform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
     @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"

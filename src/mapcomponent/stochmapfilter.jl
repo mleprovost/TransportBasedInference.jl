@@ -1,6 +1,5 @@
 export StochMapFilter
 
-
 struct StochMapFilter<:SeqFilter
 		"Filter function"
 		G::Function
@@ -22,6 +21,9 @@ struct StochMapFilter<:SeqFilter
 
         "Time step observation"
         Δtobs::Float64
+
+		"Time step between reparametrization of the map"
+		Δtfresh::Float64
 
 		"Boolean: is state vector filtered"
 		isfiltered::Bool
@@ -45,18 +47,35 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::
 	@show getcoeff(M[end])
 
 	# Perturbation of the measurements
-	smf.ϵy(X, 1, Ny; laplace = laplacw)
-	# Optimize the transport map
-	M.L = LinearTransform(X; diag = true)
-	# M.L needs to be re-evaluated at every time step
+	smf.ϵy(X, 1, Ny; laplace = laplace)
 
-	optimize(M, X, nothing; withconstant = withconstant, withqr = withqr,
-			   verbose = verbose, start = Ny+1, P = P)
-	# Evaluate the transport map
-	F = evaluate(M, X; start = Ny+1, P = P)
-	inverse!(X, F, M, ystar; start = Ny+1, P = P)
+	# Recompute the linear transformation
+	@show M.L.μ
+	M.L = LinearTransform(X; diag = true)
+	@show M.L.μ
+	# updateLinearTransform(M.L, X; diag = true)
+
 	@show getcoeff(M[end])
 
+	# Re-optimize the map with kfolds
+	if mod(t, smf.Δtrefresh) == 0
+		# Perform a kfold optimization of the map
+		optimize(M, X, "kfolds"; withconstant = withconstant, withqr = withqr,
+				   verbose = verbose, start = Ny+1, P = P)
+
+	else
+		# Only optimize the existing coefficients of the basis
+		optimize(M, X, nothing; withconstant = withconstant, withqr = withqr,
+				   verbose = verbose, start = Ny+1, P = P)
+	end
+
+	# Evaluate the transport map
+	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = P)
+
+	# Generate the posterior smaples by partial inversion of the map
+	inverse!(X, F, M, ystar; start = Ny+1, P = P)
+
+	@show getcoeff(M[end])
 	return X
 end
 

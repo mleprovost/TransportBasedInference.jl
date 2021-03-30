@@ -1,6 +1,5 @@
 export Model, SyntheticData
 
-
 struct Model
     # Dimension of the state variable
     Nx::Int64
@@ -16,11 +15,8 @@ struct Model
 
     ϵy::AdditiveInflation
 
-    # Mean of the initial distribution
-    m0::Array{Float64,1}
-
-    # Covariance of the initial distribution
-    C0::Array{Float64,2}
+    # Multivariate distribution for the initial condition
+    π0::ContinuousMultivariateDistribution
 
     # Number of steps to burn from the end of the spin up
     # to compute the metrics

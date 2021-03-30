@@ -63,7 +63,7 @@ function spin_lorenz96(model::Model, data::SyntheticData, Ne::Int64, path::Strin
 
 	# Set initial condition
 	X = zeros(model.Ny + model.Nx, Ne)
-	X[model.Ny+1:model.Ny+model.Nx,:] .= sqrt(model.C0)*randn(model.Nx, Ne) .+ model.m0
+	X[model.Ny+1:model.Ny+model.Nx,:] .= rand(model.π0, Ne)#sqrt(model.C0)*randn(model.Nx, Ne) .+ model.m0
 
 	J = model.Tspinup
 	t0 = 0.0
@@ -109,16 +109,13 @@ function setup_lorenz96(path::String, Ne_array::Array{Int64,1})
     Tstep = 4000
     Tspinup = 2000
 
-    m0 = zeros(Nx)
-    C0 = Matrix(1.0*I, Nx, Nx)
-
     f = lorenz96!
     h(t,x) = x[yidx]
     # Create a local version of the observation operator
     h(t,x,idx) = x[idx]
 	F = StateSpace(f, h)
 
-    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, m0, C0, Tburn, Tstep, Tspinup, F);
+    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, MvNormal(zeros(Nx), Matrix(1.0*I, Nx, Nx)), Tburn, Tstep, Tspinup, F);
 
     # Set initial condition
     x0 = model.m0 + sqrt(model.C0)*randn(Nx)

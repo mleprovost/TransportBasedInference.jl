@@ -131,7 +131,7 @@ function (enkf::ETKF)(X, ystar, ȳf, t)
 	w = ϕ * Diagonal(1 ./ λ) * ϕ'*(S'*δH)
 
 
-	if mod(t, enkf.Δtshuff) ==0
+	if mod(t, enkf.Δtshuff) == 0
 		U = rdnortho(Ne)
 	else
 		U = I

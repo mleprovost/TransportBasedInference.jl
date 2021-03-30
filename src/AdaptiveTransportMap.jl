@@ -9,6 +9,7 @@ using ForwardDiff
 using JLD
 using Polynomials
 using Distributions
+import Distributions: ContinuousMultivariateDistribution, MvNormal
 using QuadGK
 using TensorOperations
 using LoopVectorization
@@ -23,6 +24,7 @@ using PlotUtils
 using RecipesBase
 using ColorTypes
 using LaTeXStrings
+
 
 
 include("tools/parallel.jl")
