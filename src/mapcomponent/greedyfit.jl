@@ -9,6 +9,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     best_valid_error = Inf
     patience = 0
 
+    options = Optim.Options()
+
     train_error = Float64[]
     valid_error = Float64[]
 
@@ -51,6 +53,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     end
 
     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
+    # precond = InvPreconditioner(reshape([1.0], 1, 1))
     if withqr == false
         coeff0 = getcoeff(C)
         if hessprecond  == true
@@ -58,6 +61,10 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             precond!(precond, coeff0, S, C, X)
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                                  Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+            # obj = Optim.only_fg!(negative_log_likelihood(S, C, X))
+            # bfgsstate = Optim.initial_state(Optim.BFGS(P = precond), options, obj, coeff0)
+            # res = Optim.optimize(obj, coeff0, Optim.BFGS(P = precond), bfgssstate)
+            # precond = InvPreconditioner(bfgsstate.invH)
         else
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))
@@ -78,6 +85,10 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
 
             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                  Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
+            # obj = Optim.only_fg!(qrnegative_log_likelihood(S, C, X))
+            # bfgsstate = Optim.initial_state(Optim.BFGS(P = precond), options, obj, coeff0)
+            # res = Optim.optimize(obj, coeff0, Optim.BFGS(P = precond), bfgssstate)
+            # precond = InvPreconditioner(bfgsstate.invH)
         else
             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                  Optim.LBFGS(; m = 10))

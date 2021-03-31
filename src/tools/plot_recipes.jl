@@ -7,8 +7,13 @@ const mygreen = RGBA{Float64}(151/255,180/255,118/255,1)
 const mygreen2 = RGBA{Float64}(113/255,161/255,103/255,1)
 const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 
-# Recipe to plot a heatmap of the number of terms for each variable,
-# or we can alternatively plot the maximal degree for each varaible of each component if degree = true
+"""
+        heatmap(M::HermiteMap; start::Int64=1, color, degree)
+
+Plot recipe for an `HermiteMap`. We can either plot
+the number of occurences of each variable (columns) in each map component (rows) if `degree = false` (default behavior),
+or the maximum multi-index of the features identified for each variable (columns) in each map component (rows) if `degree = true`.
+"""
 @recipe function heatmap(M::HermiteMap; start::Int64=1, color = cgrad([:white, :teal, :navyblue, :purple]), degree::Bool=false)
     Nx = M.Nx
     idx = -1e-4*ones(Int64, Nx-start+1, Nx)

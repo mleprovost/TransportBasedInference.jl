@@ -64,6 +64,7 @@ end
 
 """
         observe(F::StateSpace, X, t::Float64, Ny::Int64, Nx::Int64; P::Parallel=serial)
-Apply the observation operator of the `stateSpace` `F` to the ensemble matrix `X` at time `t`.
+        
+Apply the observation operator of the `StateSpace` `F` to the ensemble matrix `X` at time `t`.
 """
 observe(F::StateSpace, x::Array{Float64,1}, t::Float64) = F.h(x, t)

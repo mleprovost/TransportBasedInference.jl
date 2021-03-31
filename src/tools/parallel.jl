@@ -10,14 +10,14 @@ abstract type Parallel end
 """
     Serial <: Parallel
 
-A type for serial computations
+A type for serial computing
 """
 struct Serial <:Parallel end
 
 """
     Thread <: Parallel
 
-A type for multi-threading computations
+A type for multi-threaded computing
 """
 struct Thread <:Parallel end
 

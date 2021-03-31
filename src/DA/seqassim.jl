@@ -1,6 +1,10 @@
 export seqassim
 
-# Create a function to perform the sequential assimilation for any sequential filter SeqFilter
+"""
+		seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64)
+
+Generic API for sequential data assimilation for any sequential filter of parent type `SeqFilter`.
+"""
 function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64)
 
 Ne = size(X, 2)
@@ -62,7 +66,11 @@ end
 
 #Version with Localization metric
 
-# Create a function to perform the sequential assimilation for any sequential filter SeqFilter
+"""
+		seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64, Loc::Localization)
+
+Generic API for localized sequential data assimilation for any sequential filter of parent type `SeqFilter` with localization scheme `Loc`.
+"""
 function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx,t0::Float64, Loc::Localization)
 
 step = ceil(Int, algo.Δtobs/algo.Δtdyn)

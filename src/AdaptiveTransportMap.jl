@@ -19,7 +19,7 @@ using LineSearches
 using MLDataUtils
 using ThreadPools
 using QRupdate
-
+using Statistics
 using PlotUtils
 using RecipesBase
 using ColorTypes

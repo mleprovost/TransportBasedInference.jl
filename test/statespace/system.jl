@@ -49,7 +49,7 @@
 
     for i=1:Ne
         @test norm(view(statehist[end], :,i) - sol(5.0))<1e-11
-        @test norm(view(X, 1:Ny,i) - h(5.0, sol(5.0)))<1e-11
+        @test norm(view(X, 1:Ny,i) - h(sol(5.0), 5.0))<1e-11
         @test norm(view(X, Ny+1:Ny+Nx,i) - sol(5.0))<1e-11
 
     end
