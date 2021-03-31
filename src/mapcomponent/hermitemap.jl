@@ -8,7 +8,8 @@ export  HermiteMap,
         hess_x_log_pdf,
         reduced_hess_x_log_pdf!,
         reduced_hess_x_log_pdf,
-        optimize
+        optimize,
+        inverse!
 
 import Base: @propagate_inbounds
 
@@ -26,9 +27,10 @@ function HermiteMap(L::LinearTransform, C::Array{MapComponent,1})
         return HermiteMap(m, Nx, L, C)
 end
 
+# Base.size(M::HermiteMap) = M.Nx
 @propagate_inbounds Base.getindex(M::HermiteMap, i::Int) = getindex(M.C,i)
 @propagate_inbounds Base.setindex!(M::HermiteMap, C::MapComponent, i::Int) = setindex!(M.C,C,i)
-
+# @propagate_inbounds Base.lastindex(M::HermiteMap) = M.Nx
 
 function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, α::Float64 = 1e-6)
         L = LinearTransform(X; diag = diag)
@@ -321,7 +323,7 @@ end
 ## Optimization function
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, Array{Int64,1}, String};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessianpreconditioner::Bool=true,
+                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
 
@@ -337,7 +339,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @showprogress for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                             withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
+                             withqr = withqr, verbose = verbose, hessprecond = hessprecond)
         end
 
         elseif typeof(P) <: Thread
@@ -346,7 +348,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
+                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)
         end
         end
 
@@ -359,7 +361,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
 end
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessianpreconditioner::Bool=true,
+                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
 
@@ -376,7 +378,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
         @showprogress for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
-                             withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
+                             withqr = withqr, verbose = verbose, hessprecond = hessprecond)
         end
 
         elseif typeof(P) <: Thread
@@ -385,7 +387,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, hessianpreconditioner = hessianpreconditioner)
+                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)
         end
         end
 

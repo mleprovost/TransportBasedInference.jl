@@ -4,7 +4,7 @@ export greedyfit, update_component, update_coeffs
 # function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 
 function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant::Bool = false,
-                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessianpreconditioner::Bool=true)
+                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)
 
     best_valid_error = Inf
     patience = 0
@@ -48,13 +48,12 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         C = MapComponent(f; α = 1e-6)
         S = Storage(C.I.f, X)
         Svalid = Storage(C.I.f, Xvalid)
-
     end
 
     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
     if withqr == false
         coeff0 = getcoeff(C)
-        if hessianpreconditioner  == true
+        if hessprecond  == true
             precond = zeros(ncoeff(C), ncoeff(C))
             precond!(precond, coeff0, S, C, X)
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
@@ -73,7 +72,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         coeff0 = getcoeff(C)
         mul!(coeff0, F.U, coeff0)
 
-        if hessianpreconditioner == true
+        if hessprecond == true
             qrprecond = zeros(ncoeff(C), ncoeff(C))
             qrprecond!(qrprecond, coeff0, F, S, C, X)
 
@@ -115,7 +114,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
-            if hessianpreconditioner == true
+            if hessprecond == true
                 precond = zeros(ncoeff(C), ncoeff(C))
                 precond!(precond, coeff0, S, C, X)
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
@@ -137,7 +136,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             # F = QRscaling(S)
 
             mul!(coeff0, F.U, coeff0)
-            if hessianpreconditioner == true
+            if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
@@ -183,7 +182,7 @@ end
 
 
 function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false,
-                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessianpreconditioner::Bool=true)# where {m, Nψ, Nx}
+                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)# where {m, Nψ, Nx}
 
     @assert maxterms >=1 "maxterms should be >= 1"
     best_valid_error = Inf
@@ -227,7 +226,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
     if withqr == false
         coeff0 = getcoeff(C)
-        if hessianpreconditioner == true
+        if hessprecond == true
             precond = zeros(ncoeff(C), ncoeff(C))
             precond!(precond, coeff0, S, C, X)
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
@@ -248,7 +247,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
         # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
         # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-        if hessianpreconditioner == true
+        if hessprecond == true
         qrprecond = zeros(ncoeff(C), ncoeff(C))
         qrprecond!(qrprecond, coeff0, F, S, C, X)
 
@@ -291,7 +290,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
-            if hessianpreconditioner == true
+            if hessprecond == true
             precond = zeros(ncoeff(C), ncoeff(C))
             precond!(precond, coeff0, S, C, X)
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
@@ -313,7 +312,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             F = updateQRscaling(F, S)
             mul!(coeff0, F.U, coeff0)
 
-            if hessianpreconditioner == true
+            if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
                 # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)

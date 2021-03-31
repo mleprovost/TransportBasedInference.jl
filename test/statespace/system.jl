@@ -7,10 +7,12 @@
 
     J = ceil(Int64, (tf-t0)/Δt)
 
-    prob = ODEProblem(lorenz63!,u0,(t0,tf))
-    sol = solve(prob, RK4(), dt = Δt, adaptive = false);
 
-    h(t,u) = [sum(u)]
+    h(u, t) = [sum(u)]
+    F = StateSpace(lorenz63!, h)
+
+    prob = ODEProblem(F.f,u0,(t0,tf))
+    sol = solve(prob, RK4(), dt = Δt, adaptive = false);
 
 
 #     Run it for the different ensemble members
@@ -43,7 +45,7 @@
         push!(statehist, deepcopy(viewstate(X, Ny, Nx)))
     end
 
-    observe(h, 5.0, X, Ny, Nx)
+    observe(F.h, X, 5.0, Ny, Nx)
 
     for i=1:Ne
         @test norm(view(statehist[end], :,i) - sol(5.0))<1e-11

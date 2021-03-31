@@ -27,7 +27,7 @@ include("DA/inflation.jl")
 
 
 # Tools for state-space models
-include("dynamic/system.jl")
+include("statespace/system.jl")
 
 
 # Functions to manage margins

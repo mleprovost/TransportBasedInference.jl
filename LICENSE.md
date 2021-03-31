@@ -1,4 +1,4 @@
-MIT License
+The AdaptiveTransportMap package is licensed under the MIT License:
 
 Copyright (c) 2021 Mathieu Le Provost
 

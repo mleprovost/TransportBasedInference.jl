@@ -4,7 +4,7 @@ export optimize
 function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false,
                   maxpatience::Int64 = 10^5, verbose::Bool = false,
-                  hessianpreconditioner = true, P::Parallel = serial)
+                  hessprecond = true, P::Parallel = serial)
 
     m = C.m
     Nx = C.Nx
@@ -17,7 +17,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             coeff0 = getcoeff(C)
 
 
-            if hessianpreconditioner == true
+            if hessprecond == true
                 precond = zeros(ncoeff(C), ncoeff(C))
                 precond!(precond, coeff0, S, C, X)
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
@@ -36,7 +36,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
 
             # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
             # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-            if hessianpreconditioner == true
+            if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
 
@@ -59,7 +59,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
     elseif typeof(maxterms) <: Int64
         C, error =  greedyfit(m, Nx, X, maxterms; withconstant = withconstant,
                               withqr = withqr, maxpatience = maxpatience,
-                              verbose = verbose, hessianpreconditioner = hessianpreconditioner)
+                              verbose = verbose, hessprecond = hessprecond)
 
     elseif maxterms ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
         # Define cross-validation splits of data
@@ -76,7 +76,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
 
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
                                      withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                     hessianpreconditioner = hessianpreconditioner)
+                                     hessprecond = hessprecond)
 
                 # error[2] contains the history of the validation error
                 valid_error[:,i] .= deepcopy(error[2])
@@ -87,7 +87,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
 
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
                                      withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                     hessianpreconditioner = hessianpreconditioner)
+                                     hessprecond = hessprecond)
 
                 # error[2] contains the history of the validation error
                 valid_error[:,i] .= deepcopy(error[2])
@@ -100,7 +100,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
         _, opt_nterms = findmin(mean_valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose, hessianpreconditioner = hessianpreconditioner)
+        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose, hessprecond = hessprecond)
 
     elseif maxterms ∈ ("split", "Split")
         nvalid = ceil(Int64, floor(0.2*size(X,2)))
@@ -116,7 +116,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose,
-                             hessianpreconditioner = hessianpreconditioner)
+                             hessprecond = hessprecond)
     else
         println("Argument max_terms is not recognized")
         error()
@@ -126,12 +126,12 @@ end
 
 
 function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false, hessianpreconditioner::Bool = true)
+                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false, hessprecond::Bool = true)
 
     transform!(L.L, X)
     C = L.C
     C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
-                            verbose = verbose, hessianpreconditioner = hessianpreconditioner)
+                            verbose = verbose, hessprecond = hessprecond)
 
     itransform!(L.L, X)
 

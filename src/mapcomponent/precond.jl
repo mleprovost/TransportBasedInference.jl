@@ -1,6 +1,6 @@
 import LinearAlgebra: ldiv!, dot
 
-export Preconditioner, precond!
+export Preconditioner, InvPreconditioner, precond!
 
 struct Preconditioner
     P::Symmetric{Float64}
@@ -14,6 +14,26 @@ end
 
 ldiv!(x, P::Preconditioner, b) = copyto!(x, P.F \ b)
 dot(A::Array, P::Preconditioner, B::Vector) = dot(A, P.P, B)
+
+
+"""
+    InvPreconditioner
+
+An immutable structure to hold the inverse of the preconditioner.
+For instance, this structure can be used to hold the estimate of the inverse of the Hessian in the BFGS algorithm.
+"""
+struct InvPreconditioner
+    InvP::Symmetric{Float64}
+
+    F::Cholesky{Float64, Matrix{Float64}}
+end
+
+function InvPreconditioner(InvP::Matrix{Float64})
+    return InvPreconditioner(Symmetric(InvP), cholesky(Symmetric(InvP)))
+end
+
+ldiv!(x, P::InvPreconditioner, b) = copyto!(x, P.InvP * b)
+dot(A::Array, P::InvPreconditioner, B::Vector) = ldiv!(A, P.F, B)
 
 function precond!(P, coeff, S::Storage, C::MapComponent, X)
     Nψ = C.Nψ
