@@ -83,7 +83,7 @@ end
 # normal distribution with zero mean and identity covariance matrix
 @inline AdditiveInflation(Nx::Int64) = AdditiveInflation(Nx, MvNormal(zeros(Nx), ones(Nx)))
 
-function AdditiveInflation(Nx::Int64, m::Array{Float64,1}, Σ::Union{Array{Float64,2}, Diagonal{Float64}})
+function AdditiveInflation(Nx::Int64, m::Array{Float64,1}, Σ::AbstractMatrix{Float64})
     @assert Nx==size(m,1) "Error dimension of the mean"
     @assert Nx==size(Σ,1)==size(Σ,2) "Error dimension of the covariance matrix"
     return AdditiveInflation(Nx, MvNormal(m, Σ))
@@ -141,7 +141,7 @@ i.e. xⁱ -> xⁱ + ϵⁱ with ϵⁱ ∼ `A.α`.
 Apply the additive inflation `A` to the vector `x`,
 i.e. x -> x + ϵ with ϵ ∼ `A.α`.
 """
-function (A::AdditiveInflation)(x::AbstractVector{Float64,1})
+function (A::AdditiveInflation)(x::AbstractVector{Float64})
     x .+= rand(A.α)
     return x
 end

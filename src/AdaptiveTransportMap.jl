@@ -100,6 +100,7 @@ include("mapcomponent/hermitemapcomponent.jl")
 include("mapcomponent/linhermitemapcomponent.jl")
 # Tools for fast inversion
 include("mapcomponent/inverse.jl")
+include("mapcomponent/hybridinverse.jl")
 # Tools for greedyfit and optimization
 include("mapcomponent/qraccelerated.jl")
 include("mapcomponent/precond.jl")

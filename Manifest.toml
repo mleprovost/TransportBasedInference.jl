@@ -76,9 +76,9 @@ version = "2.4.1"
 
 [[CategoricalArrays]]
 deps = ["DataAPI", "Future", "JSON", "Missings", "Printf", "Statistics", "StructTypes", "Unicode"]
-git-tree-sha1 = "dbfddfafb75fae5356e00529ce67454125935945"
+git-tree-sha1 = "9f6101597998e8d8cc8c99b85e4aca144354403b"
 uuid = "324d7699-5711-5eae-9e2f-1d82baa6b597"
-version = "0.9.3"
+version = "0.9.4"
 
 [[ChainRulesCore]]
 deps = ["Compat", "LinearAlgebra", "SparseArrays"]
@@ -100,9 +100,9 @@ version = "1.0.5"
 
 [[ColorSchemes]]
 deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random", "StaticArrays"]
-git-tree-sha1 = "3141757b5832ee7a0386db87997ee5a23ff20f4d"
+git-tree-sha1 = "d3cf83862f70d430d4b34e43ed65e74bd50ae0e0"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.10.2"
+version = "3.11.0"
 
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -168,9 +168,9 @@ version = "1.6.0"
 
 [[DataFrames]]
 deps = ["CategoricalArrays", "Compat", "DataAPI", "Future", "InvertedIndices", "IteratorInterfaceExtensions", "LinearAlgebra", "Markdown", "Missings", "PooledArrays", "PrettyTables", "Printf", "REPL", "Reexport", "SortingAlgorithms", "Statistics", "TableTraits", "Tables", "Unicode"]
-git-tree-sha1 = "6b6dcb8c1a32c2151c5110e0e11fecff1c50dfca"
+git-tree-sha1 = "d50972453ef464ddcebdf489d11885468b7b83a3"
 uuid = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
-version = "0.22.6"
+version = "0.22.7"
 
 [[DataStructures]]
 deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
@@ -436,9 +436,9 @@ version = "1.0.0"
 
 [[JLD]]
 deps = ["FileIO", "HDF5", "Printf"]
-git-tree-sha1 = "c19ab1257ef0042a45209f56a1a4794edc3c8f2e"
+git-tree-sha1 = "1d291ba1730de859903b480e6f85a0dc40c19dcb"
 uuid = "4138dd39-2aa7-5051-a626-17a0bb65d9c8"
-version = "0.12.2"
+version = "0.12.3"
 
 [[JLLWrappers]]
 git-tree-sha1 = "a431f5f2ca3f4feef3bd7a5e94b8b8d4f2f647a0"
@@ -475,9 +475,9 @@ version = "1.2.1"
 
 [[LabelledArrays]]
 deps = ["ArrayInterface", "LinearAlgebra", "MacroTools", "StaticArrays"]
-git-tree-sha1 = "5e288800819c323de5897fa6d5a002bdad54baf7"
+git-tree-sha1 = "df09e970c816637191ef8794ef5c5c9f8950db88"
 uuid = "2ee39098-c373-598a-b85f-a56591580800"
-version = "1.5.0"
+version = "1.6.0"
 
 [[LazyArtifacts]]
 deps = ["Pkg"]
@@ -731,9 +731,9 @@ version = "1.0.10"
 
 [[Polynomials]]
 deps = ["Intervals", "LinearAlgebra", "RecipesBase"]
-git-tree-sha1 = "c6b8b87670b9e765db3001ffe640e0583a5ec317"
+git-tree-sha1 = "b49a0a4a8adec9dbc2198dccc95aea66fd9d8ceb"
 uuid = "f27b6e38-b328-58d1-80ce-0feddd5e7a45"
-version = "2.0.3"
+version = "2.0.5"
 
 [[PooledArrays]]
 deps = ["DataAPI", "Future"]
@@ -854,9 +854,9 @@ version = "0.1.0"
 
 [[SciMLBase]]
 deps = ["ArrayInterface", "CommonSolve", "Distributed", "DocStringExtensions", "IteratorInterfaceExtensions", "LinearAlgebra", "Logging", "RecipesBase", "RecursiveArrayTools", "StaticArrays", "Statistics", "Tables", "TreeViews"]
-git-tree-sha1 = "617d5ade740dc628884b6a33e1b02b9bb950e9b3"
+git-tree-sha1 = "8e9e23501111b35fb8ccf67e3694e614e6362184"
 uuid = "0bca4576-84f4-4d90-8ffe-ffa030f20462"
-version = "1.9.1"
+version = "1.9.2"
 
 [[Scratch]]
 deps = ["Dates"]
@@ -1087,10 +1087,10 @@ uuid = "700de1a5-db45-46bc-99cf-38207098b444"
 version = "0.2.1"
 
 [[libsodium_jll]]
-deps = ["Libdl", "Pkg"]
-git-tree-sha1 = "7127f5f40332ccfa43ee07dcd0c4d81a27d9bb23"
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "8ebe4f8eeb6ba5115eaf9a7301b635c3f3f28947"
 uuid = "a9144af2-ca23-56d9-984f-0d03f7b5ccf8"
-version = "1.0.18+1"
+version = "1.0.19+0"
 
 [[nghttp2_jll]]
 deps = ["Libdl", "Pkg"]

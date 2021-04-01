@@ -1,6 +1,7 @@
 
 export   functionalf!,
          functionalg!,
+         functionalg1D!,
          inverse!,
          inversehybrid!,
          inverse1D!
@@ -35,10 +36,20 @@ function functionalg!(J, xk, cache, cache_vander, ψoff, output, R::IntegratedFu
     nothing
 end
 
-
 functionalg!(cache, cache_vander, ψoff, output, R::IntegratedFunction) =
     (J, xk) -> functionalg!(J, xk, cache, cache_vander, ψoff, output, R)
 
+# In this version, the Jacobian is stored as a vector (it is diagonal in this case).
+function functionalg1D!(J::AbstractVector{Float64}, xk, cache, cache_vander, ψoff, output, R::IntegratedFunction)
+    # cache .= repeated_grad_xk_basis(R.f.f,  xk)
+    repeated_grad_xk_basis!(cache, cache_vander, R.f.f,  xk)
+    @avx @. J = (cache .* ψoff) *ˡ R.f.f.coeff
+    evaluate!(J, R.g, J)
+    nothing
+end
+
+functionalg1D!(cache, cache_vander, ψoff, output, R::IntegratedFunction) =
+    (J, xk) -> functionalg1D!(J, xk, cache, cache_vander, ψoff, output, R)
 
 # The state is modified in-place
 # function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction, S::Storage)

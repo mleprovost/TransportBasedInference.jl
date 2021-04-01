@@ -83,7 +83,7 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::
 	ystar .-= view(M.L.μ,1:Ny)
 	ystar ./= M.L.L.diag[1:Ny]
 
-	# Generate the posterior smaples by partial inversion of the map
+	# Generate the posterior samples by partial inversion of the map
 	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
 	@show getcoeff(M[Nypx])
 	@show "after inversion"
