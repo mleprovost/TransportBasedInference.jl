@@ -837,12 +837,6 @@ git-tree-sha1 = "1b7bf41258f6c5c9c31df8c1ba34c1fc88674957"
 uuid = "f50d1b31-88e8-58de-be2c-1cc44531875f"
 version = "0.2.2+2"
 
-[[Roots]]
-deps = ["Printf"]
-git-tree-sha1 = "369e25546984dff5df351bc056fccc30de615080"
-uuid = "f2b01f46-fcfa-551c-844a-d8ac1e96c665"
-version = "1.0.8"
-
 [[SHA]]
 uuid = "ea8e919c-243c-51af-8825-aaa63cd721ce"
 

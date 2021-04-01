@@ -129,9 +129,6 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx
                 else
                     xb[i] += Δ
                 end
-                # center, width = 0.5*(xb[i] + xa[i]), factor*(xb[i] - xa[i])
-                # xa[i] = center - width
-                # xb[i] = center + width
             end
         end
     end
@@ -197,4 +194,13 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx
         end
     end
     @assert convergence == true "Inversion did not converge"
+end
+
+hybridinverse!(X, F, C::MapComponent, S::Storage; P::Parallel = serial) = hybridinverse!(X, F, C.I, S; P = P)
+
+function hybridinverse!(X::Array{Float64,2}, F, L::LinMapComponent, S::Storage; P::Parallel = serial)
+    # Pay attention that S is computed in the renormalized space for improve performance !!!
+    transform!(L.L, X)
+    hybridinverse!(X, F, L.C, S; P = P)
+    itransform!(L.L, X)
 end
