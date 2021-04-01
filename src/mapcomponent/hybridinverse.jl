@@ -1,22 +1,22 @@
 export bisection, hybridsolver, hybridinverse!
 
 function bisectionbook(f′, a, b, ϵ)
-if a > b; a,b = b,a; end # ensure a < b
-ya, yb = f′(a), f′(b)
-if ya == 0; b = a; end
-if yb == 0; a = b; end
-while b - a > ϵ
-x = (a+b)/2
-y = f′(x)
-if y == 0
-a, b = x, x
-elseif sign(y) == sign(ya)
-a = x
-else
-b = x
-end
-end
-return (a,b)
+    if a > b; a,b = b,a; end # ensure a < b
+    ya, yb = f′(a), f′(b)
+    if ya == 0; b = a; end
+    if yb == 0; a = b; end
+    while b - a > ϵ
+    x = (a+b)/2
+    y = f′(x)
+    if y == 0
+    a, b = x, x
+    elseif sign(y) == sign(ya)
+    a = x
+    else
+    b = x
+    end
+    end
+    return (a,b)
 end
 
 function bisection(x, fx, xm, fm, xp, fp)
@@ -80,7 +80,7 @@ function hybridsolver(f, g, out, a, b; ϵx = 1e-4, ϵf = 1e-4, niter = 100)
     return out
 end
 
-function hybridinverse!(X, F, R::IntegratedFunction, S::Storage)
+function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx = 1e-4, ϵf = 1e-4, P::Parallel = serial)
     Nψ = R.Nψ
     Nx = R.Nx
     NxX, Ne = size(X)
@@ -89,7 +89,7 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage)
 
     cache  = zeros(Ne, Nψ)
     cache_vander = zeros(Ne, maximum(R.f.f.idx[:,Nx])+1)
-    f0 = zeros(Ne)
+    fout = zeros(Ne)
 
     # Remove f(x_{1:k-1},0) from the output F
     @avx for i=1:Ne
@@ -100,58 +100,101 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage)
         F[i] -= f0i
     end
 
-
     # lower and upper brackets of the ensemble members
     xk = view(X, Nx, :)
-    xm = copy(xk)
-    xp = copy(xk)
-    σ = std(xm)
-    xm .-= 1.0*σ
-    xp .+= 1.0*σ
-    fm = zeros(Ne)
-    fp = zeros(Ne)
-    # Find a bracket for the different samples
-    niter = 100
+    xa = copy(xk)
+    xb = copy(xk)
+    σ = std(xa)
+    xa .-= 2.0*σ
+    xb .+= 2.0*σ
+    fa = zeros(Ne)
+    fb = zeros(Ne)
+
+    ##  Find a bracket for the different samples
     factor = 1.6
-    counter = 0
     bracketed = false
-    while bracketed == false
-        functionalf!(fm, xm, cache, cache_vander, S.ψoff, F, R)
-        functionalf!(fp, xp, cache, cache_vander, S.ψoff, F, R)
+    @inbounds for j=1:niter
+        functionalf!(fa, xa, cache, cache_vander, S.ψoff, F, R)
+        functionalf!(fb, xb, cache, cache_vander, S.ψoff, F, R)
         # We know that the function is strictly increasing
-        @show all(fm .< 0.0)
-        @show all(fp .> 0.0)
-        if all(fm .< 0.0) && all(fp .> 0.0)
+        if all(fa .< 0.0) && all(fb .> 0.0)
             bracketed = true
             break
         end
         @inbounds for i=1:Ne
-            if fm[i]*fp[i] > 0.0
-                counter += 1
-                center, width = 0.5*(xp[i] + xm[i]), factor*(xp[i] - xm[i])
-                xm[i] = center - width
-                xp[i] = center + width
+            if fa[i]*fb[i] > 0.0
+                Δ = factor*(xb[i] - xa[i])
+                if abs(fa[i]) < abs(fb[i])
+                    xa[i] -= Δ
+                else
+                    xb[i] += Δ
+                end
+                # center, width = 0.5*(xb[i] + xa[i]), factor*(xb[i] - xa[i])
+                # xa[i] = center - width
+                # xb[i] = center + width
             end
         end
-        counter += 1
     end
 
-    @assert counter < niter "Maximal number of iterations reached"
+    @assert bracketed == true "Maximal number of iterations reached, without bracket"
 
-    @show all(fm .< 0.0) && all(fp .> 0.0)
-
-
-end
-function bracket_sign_change(f, a, b; k=2, niter = 100)
-    if a > b; a,b = b,a; end # ensure a < b
-    center, half_width = (b+a)/2, (b-a)/2
-    counter = 0
-    while f(a)*f(b) > 0
-    counter += 1
-    half_width *= k
-    a = center - half_width
-    b = center + half_width
+    dx = zeros(Ne)
+    gout = zeros(Ne)
+    # Initial guess: mid point of the bracket
+    @avx for i=1:Ne
+        xai = xa[i]
+        xbi = xb[i]
+        dx[i] = xbi - xai
+        xk[i] = xai + 0.5*(dx[i])
     end
-    @assert counter < niter "Maximal number of iterations reached"
-    return a, b
+
+    dxold = copy(dx)
+
+    functionalf!(fout, xk, cache, cache_vander, S.ψoff, F, R)
+    functionalg1D!(gout, xk, cache, cache_vander, S.ψoff, F, R)
+    convergence = false
+    @inbounds for j=1:niter
+        @inbounds for i=1:Ne
+            # Bisect if Newton out of range, or not decreasing fast enough.
+            if ((xk[i] - xb[i])*gout[i] - fout[i])*((xk[i] - xa[i])*gout[i] - fout[i]) > 0.0 ||
+                abs(2.0*fout[i]) >  abs(dxold[i] * gout[i])
+                dxold[i] = dx[i]
+                dx[i] = 0.5*(xb[i]-xa[i])
+                xk[i] = xa[i] + dx[i]
+                # if isapprox(xa[i], xk[i], atol = ϵx)
+                # end
+            else #Newton step is acceptable
+                dxold[i] = dx[i]
+                dx[i]    = fout[i]/gout[i]
+                xk[i] -=  dx[i]
+                # if isapprox(dx[i], 0.0, atol = ϵx)
+                # # if isapprox(tmp, xk[i], atol = ϵx)
+                #     continue
+                # end
+            end
+
+            # if abs(dx[i]) < ϵx || abs(fout[i]) < ϵf
+            #     continue
+            # end
+        end
+        # Convergence criterion
+        if norm(xa - xk, Inf) < ϵx || norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
+            convergence = true
+            break
+        end
+
+        # Evaluate the function and its gradient for the different samples
+        functionalf!(fout, xk, cache, cache_vander, S.ψoff, F, R)
+        functionalg1D!(gout, xk, cache, cache_vander, S.ψoff, F, R)
+
+        # Maintain the bracket on the root
+        @inbounds for i=1:Ne
+            if fout[i]<0.0
+                xa[i] = xk[i]
+            else
+                xb[i] = xk[i]
+            end
+        end
+    end
+    @assert convergence == true "Inversion did not converge"
 end
