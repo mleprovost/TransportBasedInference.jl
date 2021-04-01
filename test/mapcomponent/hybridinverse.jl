@@ -20,7 +20,7 @@
     @test abs(f(x)) <= ϵf
 end
 
-@testset "Test bisection, Newton for wavy globally increasing function" begin
+@testset "Test bisection, Newton, hybrid method for wavy globally increasing function" begin
     f(x) = 3*x - exp(0.5-x) + cos(3.5π*x)
     g(x) = ForwardDiff.derivative(f, x)
 
@@ -75,4 +75,18 @@ end
     xrootbisection = x
     @test isapprox(xroot, xrootbisection, atol = ϵx)
     @test isapprox(a, b, atol = ϵx)
+
+    # hybrid method Newton + bisection
+
+    a = -5.0
+    b = 7.0
+    ϵx = 1e-4
+    ϵf = 1e-4
+
+    # Start with a bad initial guees
+    x = -4.9
+
+    xroothybrid = hybridsolver(f, g, x, a, b)
+
+    @test isapprox(xroot, xroothybrid, atol = ϵx)
 end

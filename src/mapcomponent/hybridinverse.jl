@@ -1,4 +1,4 @@
-export bisection, hybridinverse!
+export bisection, hybridsolver, hybridinverse!
 
 function bisectionbook(f′, a, b, ϵ)
 if a > b; a,b = b,a; end # ensure a < b
@@ -20,7 +20,6 @@ return (a,b)
 end
 
 function bisection(x, fx, xm, fm, xp, fp)
-
 @assert xm < xp "Error in the order of the argument"
     if sign(fx) == sign(fp)
     xp = x
@@ -32,6 +31,53 @@ function bisection(x, fx, xm, fm, xp, fp)
     # More stable than 0.5*(xp +xm)
     x = xm + 0.5*(xp - xm)
     return x, fx, xm, fm, xp, fp
+end
+
+# Combine Bisection and Newton method, this method has guaranteed convergence.
+function hybridsolver(f, g, out, a, b; ϵx = 1e-4, ϵf = 1e-4, niter = 100)
+    dxold = abs(b-a)
+    dx = dxold
+    fout = f(out)
+    gout = g(out)
+
+
+    fa = f(a)
+    fb = f(b)
+
+    @inbounds for j=1:niter
+        # Bisect if Newton out of range, or not decreasing fast enough.
+        if ((out - b)*gout - fout)*((out - a)*gout - fout) > 0.0 || abs(2.0*fout) >  abs(dxold * gout)
+            dxold = dx
+            dx = 0.5*(b-a)
+            out = a + dx
+            if isapprox(a, out, atol = ϵx)
+                return out
+            end
+        else #Newton step is acceptable
+            dxold = dx
+            dx    = fout/gout
+            tmp   = out
+            out = out - dx
+            if isapprox(tmp, out, atol = ϵx)
+                return out
+            end
+        end
+        # Convergence criterion
+        if abs(dx) < ϵx || abs(fout) < ϵf
+            return out
+        end
+        # The one new function evaluation per iteration
+        fout = f(out)
+        gout = g(out)
+        # Maintain the bracket on the root
+        if fout<0.0
+            a = out
+        else
+            b = out
+        end
+    end
+
+    return out
 end
 
 function hybridinverse!(X, F, R::IntegratedFunction, S::Storage)
@@ -94,24 +140,6 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage)
 
     @show all(fm .< 0.0) && all(fp .> 0.0)
 
-    # Iterate until converge
-
-    frel = 1e-4
-    xrel = 1e-6
-
-
-
-    # Compute possible Newton Update
-
-    # Check whether this goes out of the bracket
-
-
-    # Check whether this is converging too slow
-
-
-    # Update the state
-
-    # Breakout condition
 
 end
 function bracket_sign_change(f, a, b; k=2, niter = 100)
