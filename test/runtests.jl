@@ -63,5 +63,5 @@ include("mapcomponent/greedyfit.jl")
 include("mapcomponent/optimize.jl")
 
 include("mapcomponent/inverse.jl")
-
+include("mapcomponent/hybridinverse.jl")
 include("mapcomponent/hermitemap.jl")

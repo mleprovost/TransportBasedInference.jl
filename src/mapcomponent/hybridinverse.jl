@@ -29,7 +29,8 @@ function bisection(x, fx, xm, fm, xp, fp)
     xm = x
     fm = fx
     end
-    x = 0.5*(xm + xp)
+    # More stable than 0.5*(xp +xm)
+    x = xm + 0.5*(xp - xm)
     return x, fx, xm, fm, xp, fp
 end
 
@@ -59,8 +60,8 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage)
     xm = copy(xk)
     xp = copy(xk)
     σ = std(xm)
-    xm .-= 1*σ
-    xp .+= 1*σ
+    xm .-= 1.0*σ
+    xp .+= 1.0*σ
     fm = zeros(Ne)
     fp = zeros(Ne)
     # Find a bracket for the different samples

@@ -405,7 +405,7 @@ end
     Xpost = deepcopy(Xprior) .+ 0.3*randn(Nx, Ne)
 
     M = HermiteMap(m, Xprior; diag = true)
-    optimize(M, Xprior, 5; withconstant = false, start = Ny+1)
+    optimize(M, Xprior, 5; withconstant = false)
 
     F = evaluate(M, Xprior)
     inverse!(Xpost, F, M)
