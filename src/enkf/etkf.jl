@@ -1,6 +1,5 @@
 export ETKF, rdnortho
 
-
 function rdnortho(N)
     Ω = (svd(randn(N-1,N-1)).V)';
     b1 = 1/√(N)
@@ -80,14 +79,11 @@ function (enkf::ETKF)(X, ystar, t)
 
 	ȳ = copy(mean(meas,dims=2)[:,1])
 
-	# S = enkf.ϵy.σ^(-1)*(meas .- ȳ)
-	σ = sqrt(Diagonal(cov(enkf.ϵy)))
-	S = σ \ (meas .- ȳ)
+	S = enkf.ϵy.σ^(-1)*(meas .- ȳ)
 
 	rmul!(S, 1/√(Ne-1))
 
-	# δH = enkf.ϵy.σ^(-1)*(ystar - ȳ)
-	δH = σ \ (ystar - ȳ)
+	δH = enkf.ϵy.σ^(-1)*(ystar - ȳ)
 
 
 	# Th = Hermitian(inv(S'*S+I))
@@ -124,13 +120,9 @@ function (enkf::ETKF)(X, ystar, ȳf, t)
 	Xf .-= x̄
 	rmul!(Xf, 1/sqrt(Ne-1))
 
-	σ = sqrt(Diagonal(cov(enkf.ϵy)))
+	S = enkf.ϵy.σ^(-1)*(meas .- ȳf)
 
-	# S = enkf.ϵy.σ^(-1)*(meas .- ȳf)
-	S = σ \ (meas .- ȳf)
-
-	# δH = enkf.ϵy.σ^(-1)*(ystar - ȳf)
-	δH = σ \ (ystar - ȳf)
+	δH = enkf.ϵy.σ^(-1)*(ystar - ȳf)
 
 	# Th = inv(Hermitian(I + S'*S))
 	λ, ϕ = eigen(Hermitian(S'*S + I))

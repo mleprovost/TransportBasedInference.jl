@@ -38,10 +38,6 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	Nx = smf.Nx
 	@show t
 
-	# @show Ny
-	# @show Nx
-
-
 	Nystar = size(ystar, 1)
 	Nypx, Ne = size(X)
 
@@ -62,12 +58,12 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 
 		# Perform a kfold optimization of the map
 		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-				   verbose = false, start = Ny+1, P = P)
+				   verbose = false, start = Ny+1, P = serial, hessprecond = true)
 
 	else
 		# Only optimize the existing coefficients of the basis
 		optimize(M, X, nothing; withconstant = false, withqr = true,
-				   verbose = false, start = Ny+1, P = serial, hessprecond = false)
+				   verbose = false, start = Ny+1, P = serial, hessprecond = true)
 	end
 
 	# Evaluate the transport map

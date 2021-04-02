@@ -130,14 +130,11 @@ end
 
     @test size(T)== 10
     @test T.β == 1.0
-
-    # @test T.α == MvNormal(zeros(10), I)
-
+    
     @test mean(T) == zeros(10)
     @test cov(T) ==  Diagonal(ones(10))
 
 
-    # A = MvNormal(zeros(10), 1.01*ones(10))
     T = MultiAddInflation(10, 1.01, zeros(10), 1.01)
 
     @test T.β == 1.01
