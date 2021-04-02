@@ -52,8 +52,8 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
     	tt[i] = deepcopy(i*model.Δtobs)
     	xt[:,i] = deepcopy(x)
 		yt[:,i] = deepcopy(model.F.h(x, tt[i]))
-		# model.ϵy(yt[:,i])
-		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*rand(model.Ny)
+		# yt[:,i] .+= model.ϵy.m + model.ϵy.σ*rand(model.Ny)
+		yt[:,i] .+= rand(model.ϵy.α)
     end
     	return SyntheticData(tt, x0, xt, yt)
 end
@@ -92,7 +92,7 @@ function setup_lorenz96(path::String, Ne_array::Array{Int64,1})
     Δtdyn = 0.01
     Δtobs = 0.4
 
-    σx = 0.0#1e-2#1e-6#1e-2
+    σx = 1e-6#1e-2#1e-6#1e-2
     σy = sqrt(0.5)#1e-6#2.0
 
     ϵx = AdditiveInflation(Nx, zeros(Nx), σx)

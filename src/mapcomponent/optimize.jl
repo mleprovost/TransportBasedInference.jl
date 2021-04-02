@@ -24,10 +24,10 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                 precond = zeros(ncoeff(C), ncoeff(C))
                 precond!(precond, coeff0, S, C, X)
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                      Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
             else
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                      Optim.LBFGS(; m = 10))
+                                     Optim.LBFGS(; m = 10))
             end
 
             setcoeff!(C, Optim.minimizer(res))

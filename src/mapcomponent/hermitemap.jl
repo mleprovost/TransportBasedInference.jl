@@ -478,8 +478,8 @@ function inverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_res
             Fk = view(F,k,:)
             Xk = view(X,1:k,:)
             Sk = Storage(M[k].I.f, Xk)
-            # hybridinverse!(Xk, Fk, M[k], Sk; P = P)
-            inverse!(Xk, Fk, M[k], Sk)
+            hybridinverse!(Xk, Fk, M[k], Sk; P = P)
+            # inverse!(Xk, Fk, M[k], Sk)
         end
 
 
@@ -506,8 +506,8 @@ function inverse!(X, F, M::HermiteMap; apply_rescaling::Bool=true, P::Parallel =
             Fk = view(F,k,:)
             Xk = view(X,1:k,:)
             Sk = Storage(M[k].I.f, Xk)
-            # hybridinverse!(Xk, Fk, M[k], Sk; P = P)
-            inverse!(Xk, Fk, M[k], Sk)
+            hybridinverse!(Xk, Fk, M[k], Sk; P = P)
+            # inverse!(Xk, Fk, M[k], Sk)
         end
 
         if apply_rescaling == true
