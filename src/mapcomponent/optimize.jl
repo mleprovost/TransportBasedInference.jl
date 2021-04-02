@@ -10,7 +10,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
     Nx = C.Nx
 
     # algo = Optim.BFGS()
-    algo = Optim.LBFGS(; m = 10)
+    # algo = Optim.LBFGS(; m = 10)
 
     if typeof(maxterms) <: Nothing
         S = Storage(C.I.f, X)
@@ -26,8 +26,8 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                       Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
             else
-                     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                           algo)
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                      Optim.LBFGS(; m = 10))
             end
 
             setcoeff!(C, Optim.minimizer(res))
@@ -47,7 +47,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                                      Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
             else
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
+                                     Optim.LBFGS(; m = 10))
             end
 
             mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))

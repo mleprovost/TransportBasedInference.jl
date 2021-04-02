@@ -33,12 +33,13 @@ function Base.show(io::IO, smf::StochMapFilter)
 	println(io,"Stochastic Map Filter with filtered = $(smf.isfiltered)")
 end
 
-function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false)
+function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	Ny = smf.Ny
 	Nx = smf.Nx
+	@show t
 
-	@show Ny
-	@show Nx
+	# @show Ny
+	# @show Nx
 
 
 	Nystar = size(ystar, 1)
@@ -48,32 +49,25 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::
 	@assert Nypx == Ny + Nx "Size of X is not consistent with Ny or Nx"
 
 	# Perturbation of the measurements
-	smf.ϵy(X, 1, Ny; laplace = laplace)
+	smf.ϵy(X, 1, Ny)
 
-	M = HermiteMap(30, X; diag = true)
-	@show getcoeff(M[Nypx])
+	L = LinearTransform(X; diag = true)
 
+	M = HermiteMap(30, Ny+Nx, L, smf.M.C)
 
-	# Recompute the linear transformation
-	# M
-	# @show M.L.μ
-	# updateLinearTransform!(M.L, X; diag = true)
-	# @show M.L.μ
-
-	# @show getcoeff(M[Nypx])
-	@show norm(X)
+	@show getcoeff(M[6])
 	# Re-optimize the map with kfolds
 	if mod(t, smf.Δtfresh) == 0
 
 
 		# Perform a kfold optimization of the map
 		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-				   verbose = true, start = Ny+1, P = P)
+				   verbose = false, start = Ny+1, P = P)
 
 	else
 		# Only optimize the existing coefficients of the basis
-		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-				   verbose = true, start = Ny+1, P = serial, hessprecond = false)
+		optimize(M, X, nothing; withconstant = false, withqr = true,
+				   verbose = false, start = Ny+1, P = serial, hessprecond = false)
 	end
 
 	# Evaluate the transport map
@@ -85,9 +79,9 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64; laplace::
 
 	# Generate the posterior samples by partial inversion of the map
 	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
-	@show getcoeff(M[Nypx])
-	@show "after inversion"
-	@show norm(X)
+	# @show getcoeff(M[Nypx])
+	# @show "after inversion"
+	# @show norm(X)
 	return X
 end
 

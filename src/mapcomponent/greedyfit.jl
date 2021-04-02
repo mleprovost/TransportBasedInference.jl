@@ -154,7 +154,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
                                      Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
             else
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                       Optim.LBFGS(; m = 10))
+                                     Optim.LBFGS(; m = 10))
             end
             # Reverse to the non-QR space and update in-place the coefficients
             mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))

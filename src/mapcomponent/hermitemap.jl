@@ -393,7 +393,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
 
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
-         itransform!(M.L, X)
+           itransform!(M.L, X)
         end
 
         return M
@@ -478,7 +478,8 @@ function inverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_res
             Fk = view(F,k,:)
             Xk = view(X,1:k,:)
             Sk = Storage(M[k].I.f, Xk)
-            hybridinverse!(Xk, Fk, M[k], Sk; P = P)
+            # hybridinverse!(Xk, Fk, M[k], Sk; P = P)
+            inverse!(Xk, Fk, M[k], Sk)
         end
 
 
@@ -505,7 +506,8 @@ function inverse!(X, F, M::HermiteMap; apply_rescaling::Bool=true, P::Parallel =
             Fk = view(F,k,:)
             Xk = view(X,1:k,:)
             Sk = Storage(M[k].I.f, Xk)
-            hybridinverse!(Xk, Fk, M[k], Sk; P = P)
+            # hybridinverse!(Xk, Fk, M[k], Sk; P = P)
+            inverse!(Xk, Fk, M[k], Sk)
         end
 
         if apply_rescaling == true
