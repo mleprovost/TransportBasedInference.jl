@@ -1,4 +1,5 @@
 export  MapComponent,
+        αreg,
         EmptyMapComponent,
         ncoeff,
         getcoeff,
@@ -32,11 +33,14 @@ struct MapComponent
     α::Float64
 end
 
-function MapComponent(I::IntegratedFunction; α::Float64=1e-6)
+# Define default regularization
+const αreg = 1.0e-6
+
+function MapComponent(I::IntegratedFunction; α::Float64=αreg)
     return MapComponent(I.m, I.Nψ, I.Nx, I, α)
 end
 
-function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = 1e-6)
+function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg)
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
     B = MultiBasis(CstProHermite(m-2), Nx)
@@ -44,11 +48,11 @@ function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Flo
     return MapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
 end
 
-function MapComponent(f::ExpandedFunction; α::Float64 = 1e-6)
+function MapComponent(f::ExpandedFunction; α::Float64 = αreg)
     return MapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
-function MapComponent(m::Int64, Nx::Int64; α::Float64 = 1e-6)
+function MapComponent(m::Int64, Nx::Int64; α::Float64 = αreg)
     Nψ = 1
 
     # m is the dimension of the basis

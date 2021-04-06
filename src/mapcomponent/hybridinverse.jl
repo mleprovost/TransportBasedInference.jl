@@ -1,23 +1,5 @@
 export bisection, hybridsolver, hybridinverse!
 
-function bisectionbook(f′, a, b, ϵ)
-    if a > b; a,b = b,a; end # ensure a < b
-    ya, yb = f′(a), f′(b)
-    if ya == 0; b = a; end
-    if yb == 0; a = b; end
-    while b - a > ϵ
-    x = (a+b)/2
-    y = f′(x)
-    if y == 0
-    a, b = x, x
-    elseif sign(y) == sign(ya)
-    a = x
-    else
-    b = x
-    end
-    end
-    return (a,b)
-end
 
 function bisection(x, fx, xm, fm, xp, fp)
 @assert xm < xp "Error in the order of the argument"
@@ -34,6 +16,8 @@ function bisection(x, fx, xm, fm, xp, fp)
 end
 
 # Combine Bisection and Newton method, this method has guaranteed convergence.
+# Convergence order should be between linear and quadratic
+# http://www.m-hikari.com/ams/ams-2017/ams-53-56-2017/p/hahmAMS53-56-2017.pdf
 function hybridsolver(f, g, out, a, b; ϵx = 1e-4, ϵf = 1e-4, niter = 100)
     dxold = abs(b-a)
     dx = dxold

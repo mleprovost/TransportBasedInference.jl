@@ -32,7 +32,7 @@ end
 @propagate_inbounds Base.setindex!(M::HermiteMap, C::MapComponent, i::Int) = setindex!(M.C,C,i)
 # @propagate_inbounds Base.lastindex(M::HermiteMap) = M.Nx
 
-function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, α::Float64 = 1e-6)
+function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, α::Float64 = αreg)
         L = LinearTransform(X; diag = diag)
 
         B = CstProHermite(m-2)
@@ -44,7 +44,7 @@ function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, α::Float64 
         @inbounds for i=1:Nx
                 MultiB = MultiBasis(B, i)
                 vidx = idx[:,1:i]
-                push!(C, MapComponent(IntegratedFunction(ExpandedFunction(MultiB, vidx, coeff))))
+                push!(C, MapComponent(IntegratedFunction(ExpandedFunction(MultiB, vidx, coeff)); α = α))
         end
 
         return HermiteMap(m, Nx, L, C)

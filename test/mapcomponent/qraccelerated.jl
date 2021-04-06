@@ -35,15 +35,15 @@ import AdaptiveTransportMap: ncoeff
 
     Fnew = QRscaling(Snew)
 
-    @test norm(Fupdated.D - Fnew.D)<1e-8
-    @test norm(Fupdated.Dinv - Fnew.Dinv)<1e-8
+    @test norm(Fupdated.D - Fnew.D)<1e-6
+    @test norm(Fupdated.Dinv - Fnew.Dinv)<1e-6
 
-    @test norm(Fupdated.R.data'*Fupdated.R.data - Fnew.R.data'*Fnew.R.data)<1e-8
+    @test norm(Fupdated.R.data'*Fupdated.R.data - Fnew.R.data'*Fnew.R.data)<1e-6
 
-    @test norm(inv(Fupdated.R) - Fupdated.Rinv.data)<1e-8
-    @test norm(inv(Fupdated.U) - Fupdated.Uinv.data)<1e-8
+    @test norm(inv(Fupdated.R) - Fupdated.Rinv.data)<1e-6
+    @test norm(inv(Fupdated.U) - Fupdated.Uinv.data)<1e-6
 
-    @test norm(Fupdated.L2Uinv - Fupdated.Uinv'*Fupdated.Uinv)<1e-8
+    @test norm(Fupdated.L2Uinv - Fupdated.Uinv'*Fupdated.Uinv)<1e-6
 
 end
 

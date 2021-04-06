@@ -15,7 +15,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     valid_error = Float64[]
 
     # Initialize map C to identity
-    C = MapComponent(m, Nx; α = 1e-6);
+    C = MapComponent(m, Nx; α = αreg);
 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
@@ -36,7 +36,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         # Compute the reduced margin
         reduced_margin = getreducedmargin(getidx(C))
         f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
-        C = MapComponent(f; α = 1e-6)
+        C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         coeff0 = getcoeff(C)
         dJ = zero(coeff0)
@@ -47,7 +47,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 
         f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
-        C = MapComponent(f; α = 1e-6)
+        C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         Svalid = Storage(C.I.f, Xvalid)
     end
@@ -202,7 +202,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     train_error = Float64[]
 
     # Initialize map C to identity
-    C = MapComponent(m, Nx; α = 1e-6);
+    C = MapComponent(m, Nx; α = αreg);
 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
@@ -219,7 +219,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         # Compute the reduced margin
         reduced_margin = getreducedmargin(getidx(C))
         f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
-        C = MapComponent(f; α = 1e-6)
+        C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         coeff0 = getcoeff(C)
         dJ = zero(coeff0)
@@ -230,7 +230,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 
         f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
-        C = MapComponent(f; α = 1e-6)
+        C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
     end
 
@@ -364,7 +364,7 @@ end
 #     train_error = Float64[]
 #
 #     # Initialize map C to identity
-#     C = MapComponent(m, Nx; α = 1e-6);
+#     C = MapComponent(m, Nx; α = αreg);
 #
 #     # Compute storage # Add later storage for validation S_valid
 #     S = Storage(C.I.f, X)
@@ -381,7 +381,7 @@ end
 #         # Compute the reduced margin
 #         reduced_margin = getreducedmargin(getidx(C))
 #         f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
-#         C = MapComponent(f; α = 1e-6)
+#         C = MapComponent(f; α = αreg)
 #         S = Storage(C.I.f, X)
 #         coeff0 = getcoeff(C)
 #         dJ = zero(coeff0)
@@ -392,7 +392,7 @@ end
 #         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 #
 #         f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
-#         C = MapComponent(f; α = 1e-6)
+#         C = MapComponent(f; α = αreg)
 #         S = Storage(C.I.f, X)
 #     end
 #
@@ -513,7 +513,7 @@ function update_component(C::MapComponent, X, reduced_margin::Array{Int64,2}, S:
 
     # Define updated map
     f_new = ExpandedFunction(C.I.f.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
-    C_new = MapComponent(f_new; α = 1e-6)
+    C_new = MapComponent(f_new; α = αreg)
 
 
     # Set coefficients based on previous optimal solution
