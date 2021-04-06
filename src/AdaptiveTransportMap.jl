@@ -18,7 +18,6 @@ using NLsolve
 using LineSearches
 using MLDataUtils
 using ThreadPools
-using QRupdate
 using Statistics
 using PlotUtils
 using RecipesBase
@@ -102,6 +101,7 @@ include("mapcomponent/linhermitemapcomponent.jl")
 include("mapcomponent/inverse.jl")
 include("mapcomponent/hybridinverse.jl")
 # Tools for greedyfit and optimization
+include("mapcomponent/qr.jl")
 include("mapcomponent/qraccelerated.jl")
 include("mapcomponent/precond.jl")
 include("mapcomponent/greedyfit.jl")

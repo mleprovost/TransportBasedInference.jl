@@ -49,7 +49,7 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 
 	L = LinearTransform(X; diag = true)
 
-	M = HermiteMap(30, Ny+Nx, L, smf.M.C)
+	M = HermiteMap(10, Ny+Nx, L, smf.M.C)
 
 	@show getcoeff(M[6])
 	# Re-optimize the map with kfolds

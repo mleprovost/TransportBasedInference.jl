@@ -59,6 +59,7 @@ include("mapcomponent/linhermitemapcomponent.jl")
 include("mapcomponent/greedyfit.jl")
 
 # Test optimization of HermiteMap component
+include("mapcomponent/qr.jl")
 # include("mapcomponent/qraccelerated.jl")
 include("mapcomponent/optimize.jl")
 

@@ -88,9 +88,9 @@ version = "0.9.37"
 
 [[CheapThreads]]
 deps = ["ArrayInterface", "IfElse", "Requires", "Static", "StrideArraysCore", "ThreadingUtilities", "VectorizationBase"]
-git-tree-sha1 = "ff62546d4b1e803cfc327d0857689f89e6ccc788"
+git-tree-sha1 = "faf6730fb7ba02d3884396db23465a96bef4e963"
 uuid = "b630d9fa-e28e-4980-896d-83ce5e2106b2"
-version = "0.1.10"
+version = "0.2.1"
 
 [[CodeTracking]]
 deps = ["InteractiveUtils", "UUIDs"]
@@ -537,9 +537,9 @@ uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
 
 [[LoopVectorization]]
 deps = ["ArrayInterface", "CheapThreads", "DocStringExtensions", "IfElse", "LinearAlgebra", "OffsetArrays", "Requires", "SLEEFPirates", "Static", "ThreadingUtilities", "UnPack", "VectorizationBase"]
-git-tree-sha1 = "a108c241b61c2e75687a2d1be80ed63cdf753fae"
+git-tree-sha1 = "da82a865158e1d62e013fa72657fda7e92820a90"
 uuid = "bdcacae8-1622-11e9-2a5c-532679323890"
-version = "0.12.11"
+version = "0.12.12"
 
 [[LoweredCodeUtils]]
 deps = ["JuliaInterpreter"]
@@ -756,14 +756,6 @@ deps = ["Distributed", "Printf"]
 git-tree-sha1 = "6e9c89cba09f6ef134b00e10625590746ba1e036"
 uuid = "92933f4c-e287-5a05-a399-4b506db050ca"
 version = "1.5.0"
-
-[[QRupdate]]
-deps = ["LinearAlgebra", "Test"]
-git-tree-sha1 = "8a4b815011d366ac0140df18136ca2b719867c8b"
-repo-rev = "master"
-repo-url = "https://github.com/mleprovost/QRupdate.jl.git"
-uuid = "29d2ae51-7246-454b-9a65-19ff7b2849a5"
-version = "0.1.0"
 
 [[QuadGK]]
 deps = ["DataStructures", "LinearAlgebra"]
