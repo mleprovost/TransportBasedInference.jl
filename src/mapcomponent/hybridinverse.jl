@@ -84,40 +84,95 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx
         F[i] -= f0i
     end
 
+    # We can tighter the brackets, as we know that g(dxf)>0 for every dxf value
+    # so either the upper or the lower bound is zero for the different smaples
+
     # lower and upper brackets of the ensemble members
     xk = view(X, Nx, :)
-    xa = copy(xk)
-    xb = copy(xk)
-    σ = std(xa)
-    xa .-= 2.0*σ
-    xb .+= 2.0*σ
-    fa = zeros(Ne)
-    fb = zeros(Ne)
+    xbound = copy(xk)
+    fbound = zeros(Ne)
 
-    ##  Find a bracket for the different samples
+    σ = std(xk)
+    # We can reduce by two the number of evaluations, if we use the sign of F
+    xbound = xk +2σ*sign.(F)
+    # @inbounds for i=1:Ne
+    #     if F[i]>0.0
+    #         # implies the root is >0
+    #         # xa[i] = 0.0
+    #         # xb[i] = xk[i] + 2σ
+    #         xbound[i] += 2σ
+    #     else
+    #         # xa[i] = xk[i] - 2σ
+    #         # xb[i] = 0.0
+    #         xbound[i] -= 2σ
+    #     end
+    # end
+    # Evaluate at 0.0 f
+    # We can rewrite the bracketing with a single function evaluation for xbound
     factor = 1.6
     bracketed = false
-    @inbounds for j=1:niter
-        functionalf!(fa, xa, cache, cache_vander, S.ψoff, F, R)
-        functionalf!(fb, xb, cache, cache_vander, S.ψoff, F, R)
+    for j=1:niter
+        functionalf!(fbound, xbound, cache, cache_vander, S.ψoff, F, R)
         # We know that the function is strictly increasing
-        if all(fa .< 0.0) && all(fb .> 0.0)
+        if all(sign.(fbound) == sign.(xbound))
             bracketed = true
             break
         end
         @inbounds for i=1:Ne
-            if fa[i]*fb[i] > 0.0
-                Δ = factor*(xb[i] - xa[i])
-                if abs(fa[i]) < abs(fb[i])
-                    xa[i] -= Δ
+            if sign(fbound[i]) != sign(xbound[i])
+                Δ = factor*(xbound[i] - 0.0)
+                if xbound[i]<0.0
+                    xbound[i] -= Δ
                 else
-                    xb[i] += Δ
+                    xbound[i] += Δ
                 end
             end
         end
     end
 
     @assert bracketed == true "Maximal number of iterations reached, without bracket"
+
+    # Let create xa, xb, fa, fb based on xbound
+    xa = zeros(Ne)
+    xb = zeros(Ne)
+    fa = zeros(Ne)
+    fb = zeros(Ne)
+
+    @inbounds for i=1:Ne
+        if xbound[i]<0.0
+            xa[i] = xbound[i]
+            fa[i] = fbound[i]
+            fb[i] = F[i]
+        else
+            xb[i] = xbound[i]
+            fa[i] = F[i]
+            fb[i] = fbound[i]
+        end
+    end
+
+    ##  Find a bracket for the different samples
+    # factor = 1.6
+    # bracketed = false
+    # @inbounds for j=1:niter
+    #     functionalf!(fa, xa, cache, cache_vander, S.ψoff, F, R)
+    #     functionalf!(fb, xb, cache, cache_vander, S.ψoff, F, R)
+    #     # We know that the function is strictly increasing
+    #     if all(fa .< 0.0) && all(fb .> 0.0)
+    #         bracketed = true
+    #         break
+    #     end
+    #     @inbounds for i=1:Ne
+    #         if fa[i]*fb[i] > 0.0
+    #             Δ = factor*(xb[i] - xa[i])
+    #             if abs(fa[i]) < abs(fb[i])
+    #                 xa[i] -= Δ
+    #             else
+    #                 xb[i] += Δ
+    #             end
+    #         end
+    #     end
+    # end
+    # @assert bracketed == true "Maximal number of iterations reached, without bracket"
 
     dx = zeros(Ne)
     gout = zeros(Ne)

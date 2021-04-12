@@ -24,13 +24,13 @@ struct LinearTransform
     diag::Bool
 end
 
-function LinearTransform(X::Array{Float64,2}; diag::Bool=true)
+function LinearTransform(X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0)
     Nx, Ne = size(X)
     μ = mean(X; dims = 2)[:,1]
 
     if diag == true || Nx == 1
         σ = std(X; dims = 2)[:,1]
-        L = Diagonal(σ)
+        L = (1.0/factor)*Diagonal(σ)
         diag = true
 
     else #create a dense transformation from the Cholesky factor
@@ -86,6 +86,7 @@ function transform!(L::LinearTransform, X::Array{Float64,2})
     return X
 end
 
+transform(L::LinearTransform, X::Array{Float64,2}) = transform!(L, zero(X), X)
 
 transform(X::Array{Float64,2}; diag::Bool = true) = transform!(LinearTransform(X; diag = diag), zero(X), X)
 
