@@ -1,7 +1,7 @@
 export quantile_ricardo, center_std_diag, center_std_off, center_std
 
 # Set ξ and σ for the diagonal entry, i.e. the last element of Vk
-function center_std_diag(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {Nx, Ne}
+function center_std_diag(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
     @get Vk (k, p)
     @assert (p>0 && γ >0.0) || (p==0 && γ>=0.0) "Error scaling factor γ"
 
@@ -9,7 +9,7 @@ function center_std_diag(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where 
     if p>0
     ξ′ = view(Vk.ξ[end],:)
     σ′ = view(Vk.σ[end],:)
-    tmp = view(ens.S,k,:)
+    tmp = view(X,k,:)
     quant!(ξ′, tmp, collect(1:p+2)./(p+3), sorted=true, alpha=0.5, beta = 0.5)
 
     σ′[1] = ξ′[2]-ξ′[1]
@@ -23,7 +23,7 @@ function center_std_diag(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where 
 end
 
 # Set ξ and σ for the off-diagonal entries, i.e. i=1:k-1 entries of Vk
-function center_std_off(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {Nx, Ne}
+function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
     @get Vk (k, p)
     @assert (p>0 && γ >0.0) || (p==0 && γ>=0.0) "Error scaling factor γ"
 
@@ -36,7 +36,7 @@ function center_std_off(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {
             @inbounds begin
             ξ = view(Vk.ξ[i],:)
             σ = view(Vk.σ[i],:)
-            tmp = view(ens.S, i, :)
+            tmp = view(X, i, :)
             quant!(qq, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
             ξ .= qq[2]
             σ .= (qq[3]-qq[1])*0.5
@@ -49,7 +49,7 @@ function center_std_off(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {
             @inbounds begin
             ξ = view(Vk.ξ[i],:)
             σ = view(Vk.σ[i],:)
-            tmp = view(ens.S,i,:)
+            tmp = view(X,i,:)
             quant!(ξ, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
             σ[1:2] .= (ξ[2]-ξ[1])*ones(2)
             rmul!(σ, γ)
@@ -62,7 +62,7 @@ function center_std_off(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {
             @inbounds begin
             ξ = view(Vk.ξ[i],:)
             σ = view(Vk.σ[i],:)
-            tmp = view(ens.S,i,:)
+            tmp = view(X,i,:)
             quant!(ξ, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
 
             σ[1] = (ξ[2]-ξ[1])
@@ -77,10 +77,10 @@ function center_std_off(Vk::Uk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {
 end
 
 # Assume an unsorted array
-function center_std(T::KRmap, ens::EnsembleState{Nx, Ne};start::Int64=1) where {Nx, Ne}
+function center_std(T::KRmap, X::AbstractMatrix{Float64};start::Int64=1)
     @get T (k, p, γ)
     if p>0
-    Sens = deepcopy(ens)
+    Sens = deepcopy(X)
     sort!(Sens,2)
     if k==1
         center_std_diag(T.U[1], Sens, γ)
@@ -100,7 +100,7 @@ end
 ## Define center_std for Sparse maps
 
 # Set ξ and σ for the diagonal entry, i.e. the last element of SparseVk
-function center_std_diag(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {Nx, Ne}
+function center_std_diag(Vk::SparseUk, X::AbstractMatrix{Float64}, γ::Float64)
     @get Vk (k, p)
     @assert (p[k]>0 && γ >0.0) || (p[k]==0 && γ>=0.0) "Error scaling factor γ"
 
@@ -108,7 +108,7 @@ function center_std_diag(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, γ::Float64) 
     if p[k]>0
     ξ′ = view(Vk.ξ[end],:)
     σ′ = view(Vk.σ[end],:)
-    tmp = view(ens.S,k,:)
+    tmp = view(X,k,:)
     quant!(ξ′, tmp, collect(1:p[k]+2)./(p[k]+3), sorted=true, alpha=0.5, beta = 0.5)
 
     σ′[1] = ξ′[2]-ξ′[1]
@@ -123,7 +123,7 @@ end
 
 
 # Set ξ and σ for the off-diagonal entries, i.e. i=1:k-1 entries of Vk
-function center_std_off(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, γ::Float64) where {Nx, Ne}
+function center_std_off(Vk::SparseUk, X::AbstractMatrix{Float64}, γ::Float64)
     @get Vk (k, p)
     @assert γ>=0.0 "Error scaling factor γ"
 
@@ -132,7 +132,7 @@ function center_std_off(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, γ::Float64) w
 
         ξ = view(Vk.ξ[i],:)
         σ = view(Vk.σ[i],:)
-        tmp = view(ens.S, i, :)
+        tmp = view(X, i, :)
 
         # Testcase according to pidx
 
@@ -167,9 +167,9 @@ function center_std_off(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, γ::Float64) w
 end
 
 # Assume an unsorted array
-function center_std(T::SparseKRmap, ens::EnsembleState{Nx, Ne};start::Int64=1) where {Nx, Ne}
+function center_std(T::SparseKRmap, X::AbstractMatrix{Float64}; start::Int64=1)
     @get T (k, p, γ)
-    Sens = deepcopy(ens)
+    Sens = deepcopy(X)
     sort!(Sens,2)
     if k==1 && !allequal(p[k], -1)
         center_std_diag(T.U[1], Sens, γ)

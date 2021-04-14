@@ -23,9 +23,10 @@ using PlotUtils
 using RecipesBase
 using ColorTypes
 using LaTeXStrings
+using UnPack
 
 
-
+include("tools/get.jl")
 include("tools/parallel.jl")
 include("tools/ADtools.jl")
 include("tools/metric.jl")
@@ -95,8 +96,8 @@ include("margin/totalorder.jl")
 
 
 # KR-rearrangement and TransportMap structure
-include("hermitemap/hermitehermitemap.jl")
-include("hermitemap/linhermitehermitemap.jl")
+include("hermitemap/hermitemapcomponent.jl")
+include("hermitemap/linhermitemapcomponent.jl")
 # Tools for fast inversion
 include("hermitemap/inverse.jl")
 include("hermitemap/hybridinverse.jl")
@@ -112,19 +113,19 @@ include("hermitemap/stochmapfilter.jl")
 
 
 # Tools for radial maps
-include("radialmap/function.jl")
-include("radialmap/separablecomponent.jl")
-include("radialmap/mapcomponent.jl")
-include("radialmap/sparsemapcomponent.jl")
-include("radialmap/map.jl")
-include("radialmap/weights.jl")
-include("radialmap/quantile.jl")
-include("radialmap/cost.jl")
-include("radialmap/solver.jl")
-include("radialmap/optimize.jl")
-include("radialmap/iterativeoptimize.jl")
-include("radialmap/invert.jl")
-include("radialmap/TMap.jl")
+# include("radialmap/function.jl")
+# include("radialmap/separablecomponent.jl")
+# include("radialmap/mapcomponent.jl")
+# include("radialmap/sparsemapcomponent.jl")
+# include("radialmap/map.jl")
+# include("radialmap/weights.jl")
+# include("radialmap/quantile.jl")
+# include("radialmap/cost.jl")
+# include("radialmap/solver.jl")
+# include("radialmap/optimize.jl")
+# include("radialmap/iterativeoptimize.jl")
+# include("radialmap/invert.jl")
+# include("radialmap/TMap.jl")
 
 
 include("tools/plot_recipes.jl")

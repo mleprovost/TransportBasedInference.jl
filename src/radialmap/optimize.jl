@@ -1,4 +1,4 @@
-export fast_mul, optimize_ricardo, run_optimization, run_optimization_parallel,  optimize_coeffs,
+export fast_mul, optimize, run_optimization, run_optimization_parallel,  optimize_coeffs,
 				solve_nonlinear
 
 
@@ -8,7 +8,7 @@ fast_mul(ψbis::Array{Float64,2}, Q, N::Int64, nx::Int64) = ([([ψbis zeros(size
 
 
 # Code to identify the coefficients
-function optimize_ricardo(Vk::Uk, W::Weights, λ, δ)
+function optimize(Vk::Uk, W::Weights, λ, δ)
 	# Vk and W can have different dimension
 	@assert Vk.p == W.p "Mismatch order p of the map"
 	k = Vk.k
@@ -198,12 +198,12 @@ function run_optimization(S::KRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1, 
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
 		@inbounds for i=start:k
-				xopt = optimize_ricardo(S.U[i], W, λ, δ)
+				xopt = optimize(S.U[i], W, λ, δ)
 		    	modify_a(xopt, S.U[i])
 		end
 	else
 		@inbounds Threads.@threads for i=start:k
-				xopt = optimize_ricardo(S.U[i], W, λ, δ)
+				xopt = optimize(S.U[i], W, λ, δ)
 				modify_a(xopt, S.U[i])
 		end
 	end
@@ -227,7 +227,7 @@ function run_optimization_parallel(S::KRmap, ens::EnsembleState{Nx, Ne}; start::
 	scoeffs = SharedArray{Int64}(k-start+1)
 	@sync @distributed for i=start:k
 		@inbounds begin
-		xopt = optimize_ricardo(S.U[i], W, λ, δ)
+		xopt = optimize(S.U[i], W, λ, δ)
 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
 	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
 		end
@@ -244,7 +244,7 @@ end
 ## Optimize for the weights with SparseUkMap
 
 # Code to identify the coefficients
-function optimize_ricardo(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
+function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
 	@get Vk (k,p)
 
 	# Compute weights
@@ -400,14 +400,14 @@ function run_optimization(S::SparseKRmap, ens::EnsembleState{Nx, Ne}; start::Int
 	if typeof(P)==Serial
 		@inbounds for i=start:k
 			if !allequal(p[i], -1)
-					xopt = optimize_ricardo(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
+					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
 					modify_a(xopt, S.U[i])
 			end
 		end
 	else
 		@inbounds Threads.@threads for i=start:k
 			if !allequal(p[i], -1)
-					xopt = optimize_ricardo(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
+					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
 					modify_a(xopt, S.U[i])
 			end
 		end

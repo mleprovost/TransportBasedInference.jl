@@ -48,25 +48,37 @@ function (U::KRmap)(z; start::Int64=1)
         return out
 end
 
+function evaluate!(out, U::KRmap, z; start::Int64=1)
+        k = U.k
+        @assert k==size(z,1) "Incorrect length of the input vector"
+        out = zeros(k-start+1)
+
+        for i=start:k
+        # @inbounds out[i] = U.U[i](z[1:i])
+        @inbounds out[i] = U.U[i](view(z,1:i))
+        end
+        return out
+end
+
 # Evaluate the map Uk at z = (z1,...,zk)
-function (U::KRmap)(ens::EnsembleState{Nx,Ne}; start::Int64=1) where {Nx, Ne}
+function (U::KRmap)(X::AbstractMatrix{Float64}; start::Int64=1)
         k = U.k
         out = zeros(k-start+1,Ne)
         # out = SharedArray{Float64}(k-start+1,Ne)
                 @inbounds for i=1:Ne
-                tmp_ens = view(ens.S,:,i)
-                out[:,i] .= U(tmp_ens, start=start)
+                col = view(X,:,i)
+                out[:,i] .= U(col, start=start)
                 end
         return out
 end
 
 # Evaluate the map Uk at z = (z1,...,zk)
-function evaluate(U::KRmap, ens::EnsembleState{Nx,Ne}; start::Int64=1) where {Nx, Ne}
+function evaluate(U::KRmap, X::AbstractMatrix{Float64}; start::Int64=1)
         @get U (k, p)
         out = zeros(k-start+1,Ne)
         @inbounds Threads.@threads for i=1:Ne
-                tmp_ens = view(ens.S,:,i)
-                out[:,i] .= U(tmp_ens, start=start)
+                col = view(X,:,i)
+                out[:,i] .= U(col, start=start)
         end
         return out
 end
@@ -130,19 +142,19 @@ function (U::SparseKRmap)(z; start::Int64=1)
 end
 
 # Evaluate the map Sparse Uk at z = (z1,...,zk)
-function (U::SparseKRmap)(ens::EnsembleState{Nx,Ne}; start::Int64=1) where {Nx, Ne}
+function (U::SparseKRmap)(X::AbstractMatrix{Float64}; start::Int64=1)
         k = U.k
         out = zeros(k-start+1,Ne)
         # out = SharedArray{Float64}(k-start+1,Ne)
                 @inbounds for i=1:Ne
-                tmp_ens = view(ens.S,:,i)
-                out[:,i] .= U(tmp_ens, start=start)
+                col = view(X,:,i)
+                out[:,i] .= U(col, start=start)
                 end
         return out
 end
 
 # Evaluate the map SparseUk at z = (z1,...,zk)
-function evaluate(U::SparseKRmap, ens::EnsembleState{Nx,Ne}; start::Int64=1) where {Nx, Ne}
+function evaluate(U::SparseKRmap, X::AbstractMatrix{Float64}; start::Int64=1)
         @get U (k, p)
         out = zeros(k-start+1,Ne)
         @inbounds Threads.@threads for i=1:Ne

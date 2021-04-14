@@ -1,7 +1,7 @@
 export ParamFcn, AddedParamFcn, reduction, null, Null, constant, Cst, linear, Lin, rbf, rbf′,
         ψ₀, ψj, ψpp1, ψ₀′, ψⱼ′, ψpp1′
 
-import Base:*, show, zero, size, getindex, setindex!
+import Base: +, *, show, zero, size, getindex, setindex!
 
 # Type to hold 1D functions
 abstract type ParamFcn end
