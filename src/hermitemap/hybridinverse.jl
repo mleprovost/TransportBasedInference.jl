@@ -64,7 +64,7 @@ function hybridsolver(f, g, out, a, b; ϵx = 1e-4, ϵf = 1e-4, niter = 100)
     return out
 end
 
-function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx = 1e-4, ϵf = 1e-4, P::Parallel = serial)
+function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵx = 1e-4, ϵf = 1e-4, P::Parallel = serial)
     Nψ = R.Nψ
     Nx = R.Nx
     NxX, Ne = size(X)
@@ -159,7 +159,8 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx
             # end
         end
         # Convergence criterion
-        if norm(xa - xk, Inf) < ϵx || norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
+        # if norm(xa - xk, Inf) < ϵx || norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
+        if norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
             convergence = true
             break
         end

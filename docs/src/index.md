@@ -1,25 +1,26 @@
 # AdaptiveTransportMap.jl
 
-*a framework for estimation of transport maps between two densities from samples*
+*A framework for Bayesian inference with transport maps*
 
-This code is based on the adaptive transport framework developed by Baptista et al [^1].
+The objective of this package is to allow for easy and fast resolution of Bayesian inference problems using transport maps. The package provides tools for
+- joint and conditional density estimation from limited samples of the target distribution.
+- sequential ensemble data assimilation with the stochastic ensemble Kalman filter, the ensemble transform Kalman filter and a nonlinear generalization of the stochastic ensemble Kalman filter.
 
-## Installation
+This package has been designed to address the following question:
 
-This package works on Julia `1.4` and above and is registered in the general Julia registry. To install from the REPL, type
-e.g.,
-```julia
-] add AdaptiveTransportMap
-```
+For a random variable $\mathsf{X} \in \mathbb{R}^n$ with distribution $\pi$
+Given $\{ \boldsymbol{x}^i \}, \; \text{for} \; i = 1, \ldots, N_e$
 
-Then, in any version, type
-```julia
-julia> using AdaptiveTransportMap
-```
+For a random variable $\mathsf{X} \sim \pi$ where $\pi$ a complex distribution of interest, can we identify a transformation $\boldsymbol{S}$ such that the target distribution is pushed forward to a reference density $\eta$ (e.g. the standard Gaussian distribution).
 
-The plots in this documentation are generated using [Plots.jl](http://docs.juliaplots.org/latest/).
-You might want to install that, too, to follow the examples.
+
+Given two probability measuresνπandνηonRd, assumed to have densitiesπandηrespectively,acouplingis a pair of random variablesXandZwhich admitπandηas marginals. One specialkind of coupling is given by a deterministic transformationS:Rd→Rdsuch thatS(X) =Zindistribution. The transformationSthat satisfies this property is called atransport map[39].
+
 
 ## References
 
 [^1]: Baptista, R., Zahm, O., & Marzouk, Y. (2020). An adaptive transport framework for joint and conditional density estimation. arXiv preprint arXiv:2009.10303.
+
+[^2]: Spantini, A., Baptista, R., & Marzouk, Y. (2019). Coupling techniques for nonlinear ensemble filtering. arXiv preprint arXiv:1907.00389.
+
+[^3]: Le Provost, M., Baptista, R., Marzouk, Y., & Eldredge, J. (2021). A low-rank nonlinear ensemble filter for vortex models of aerodynamic flows. In AIAA Scitech 2021 Forum (p. 1937).

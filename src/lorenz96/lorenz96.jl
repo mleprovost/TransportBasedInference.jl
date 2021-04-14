@@ -52,7 +52,7 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
     	tt[i] = deepcopy(i*model.Δtobs)
     	xt[:,i] = deepcopy(x)
 		yt[:,i] = deepcopy(model.F.h(x, tt[i]))
-		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*rand(model.Ny)
+		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*randn(model.Ny)
     end
     	return SyntheticData(tt, x0, xt, yt)
 end

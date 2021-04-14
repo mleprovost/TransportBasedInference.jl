@@ -15,7 +15,7 @@ A function to create a 1D sample with exactly mean 0 and covariance 1
 (The samples are no longer i.i.d but this can be usueful when the initialization of the problem is challenging.)
 """
 function exactn(N)
-    a = deepcopy(rand(N))
+    a = deepcopy(randn(N))
     return (a .- mean(a))./std(a)
 end
 
@@ -58,8 +58,7 @@ Define additive inflation: x <- x + ϵ with ϵ a random vector
 drawn from the distribution α
 
 ## Fields:
-- `Nx`: Dimension of the vector
-- 'α' : Distribution of the additive inflation
+$(TYPEDFIELDS)
 
 ## Constructors
 - `AdditiveInflation(Nx::Int64, α::ContinuousMultivariateDistribution)`
@@ -135,12 +134,12 @@ function (A::AdditiveInflation)(X, start::Int64, final::Int64; laplace::Bool=fal
     if laplace == false
         @inbounds for i=1:Ne
             col = view(X, start:final, i)
-            col .+= A.m + A.σ*rand(A.Nx)
+            col .+= A.m + A.σ*randn(A.Nx)
         end
     else
         @inbounds for i=1:Ne
             col = view(X, start:final, i)
-            col .+= A.m + sqrt(2.0)*A.σ*rand(Laplace(), A.Nx)
+            col .+= A.m + sqrt(2.0)*A.σ*randn(Laplace(), A.Nx)
         end
     end
     # @show X[start:final, 1]
@@ -162,7 +161,7 @@ Apply the additive inflation `A` to the vector `x`,
 i.e. x -> x + ϵ with ϵ ∼ `A.α`.
 """
 function (A::AdditiveInflation)(x::Array{Float64,1})
-    x .+= A.m + A.σ*rand(A.Nx)
+    x .+= A.m + A.σ*randn(A.Nx)
     return x
 end
 

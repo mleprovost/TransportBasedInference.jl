@@ -41,28 +41,28 @@ include("hermitefunction/phyhermite.jl")
 include("hermitefunction/prohermite.jl")
 
 # Test tools for Basis, MultiBasis, ExpandedFunction
-include("mapcomponent/rectifier.jl")
-include("mapcomponent/basis.jl")
-include("mapcomponent/expandedfunction.jl")
-include("mapcomponent/reduced.jl")
-include("mapcomponent/parametric.jl")
+include("hermitemap/rectifier.jl")
+include("hermitemap/basis.jl")
+include("hermitemap/expandedfunction.jl")
+include("hermitemap/reduced.jl")
+include("hermitemap/parametric.jl")
 
 # Test tools for integrated function
-include("mapcomponent/integratedfunction.jl")
-include("mapcomponent/storage.jl")
+include("hermitemap/integratedfunction.jl")
+include("hermitemap/storage.jl")
 
 # Test tools for HermiteMap component
-include("mapcomponent/hermitemapcomponent.jl")
-include("mapcomponent/linhermitemapcomponent.jl")
+include("hermitemap/hermitehermitemap.jl")
+include("hermitemap/linhermitehermitemap.jl")
 
 # Test greedy procedure
-include("mapcomponent/greedyfit.jl")
+include("hermitemap/greedyfit.jl")
 
 # Test optimization of HermiteMap component
-include("mapcomponent/qr.jl")
-# include("mapcomponent/qraccelerated.jl")
-include("mapcomponent/optimize.jl")
+include("hermitemap/qr.jl")
+# include("hermitemap/qraccelerated.jl")
+include("hermitemap/optimize.jl")
 
-include("mapcomponent/inverse.jl")
-include("mapcomponent/hybridinverse.jl")
-include("mapcomponent/hermitemap.jl")
+include("hermitemap/inverse.jl")
+include("hermitemap/hybridinverse.jl")
+include("hermitemap/hermitemap.jl")

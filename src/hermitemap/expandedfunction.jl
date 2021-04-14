@@ -29,6 +29,8 @@ export  ExpandedFunction,
         hess_coeff_grad_xd
 
 """
+$(TYPEDEF)
+
 # ExpandedFunction decomposes a multi-dimensional function f:Rᴹ → R onto
 # a basis of MultiFunctions ψ_α where c_α are scalar coefficients
 # for each MultiFunction:

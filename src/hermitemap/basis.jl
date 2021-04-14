@@ -15,7 +15,7 @@ export Basis,
        # CstLinPhyHermite, CstLinProHermite,
 
 """
-   Basis
+   $(TYPEDEF)
 
 A structure to hold a basis of functions
 For instance, (1, x, ψ0, ψ1,..., ψn) defines a basis where the index:
@@ -23,7 +23,10 @@ For instance, (1, x, ψ0, ψ1,..., ψn) defines a basis where the index:
 1 corresponds to the linear function
 n+2 corresponds to the n-th order physicist Hermite function
 
-# Constructors
+## Fields
+$(TYPEDFIELDS)
+
+## Constructors
 - `Basis(m)`
 
 """

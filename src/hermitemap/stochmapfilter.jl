@@ -36,7 +36,6 @@ end
 function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	Ny = smf.Ny
 	Nx = smf.Nx
-	@show t
 
 	Nystar = size(ystar, 1)
 	Nypx, Ne = size(X)
@@ -47,23 +46,18 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Perturbation of the measurements
 	smf.ϵy(X, 1, Ny)
 
-	L = LinearTransform(X; diag = true)
-
-	M = HermiteMap(10, Ny+Nx, L, smf.M.C)
-
-	@show getcoeff(M[6])
-	# Re-optimize the map with kfolds
-	if mod(t, smf.Δtfresh) == 0
-
-
+	if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-12
+		M = HermiteMap(40, X; diag = true)
 		# Perform a kfold optimization of the map
 		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-				   verbose = false, start = Ny+1, P = serial, hessprecond = true)
-
+			     verbose = false, start = Ny+1, P = serial, hessprecond = true)
 	else
+		L = LinearTransform(X; diag = true)
+		M = HermiteMap(40, Ny+Nx, L, smf.M.C)
+		# M = HermiteMap(40, X; diag = true)
 		# Only optimize the existing coefficients of the basis
 		optimize(M, X, nothing; withconstant = false, withqr = true,
-				   verbose = false, start = Ny+1, P = serial, hessprecond = true)
+			   verbose = false, start = Ny+1, P = serial, hessprecond = true)
 	end
 
 	# Evaluate the transport map
@@ -74,7 +68,7 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	ystar ./= M.L.L.diag[1:Ny]
 
 	# Generate the posterior samples by partial inversion of the map
-	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
+	hybridinverse!(X, F, M, ystar; start = Ny+1, P = serial)
 	# @show getcoeff(M[Nypx])
 	# @show "after inversion"
 	# @show norm(X)

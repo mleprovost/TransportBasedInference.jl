@@ -1,6 +1,16 @@
 export ETKF, rdnortho
 
-function rdnortho(N)
+"""
+$(TYPEDSIGNATURES)
+
+A routine to generate mean-preserving random rotations.
+
+References:
+
+Nerger, L., Janjić, T., Schröter, J., & Hiller, W. (2012). A unification of ensemble square root Kalman filters. Monthly Weather Review, 140(7), 2335-2345.
+Tödter, J., & Ahrens, B. (2015). A second-order exact ensemble square root filter for nonlinear data assimilation. Monthly Weather Review, 143(4), 1347-1367.
+"""
+function rdnortho(N::Int64)
     Ω = (svd(randn(N-1,N-1)).V)';
     b1 = 1/√(N)
     b1sgn = b1*ones(N)
@@ -13,6 +23,21 @@ function rdnortho(N)
     Λb[2:end,2:end] = Ω
     return B*Λb*B'
 end
+
+
+
+"""
+$(TYPEDEF)
+
+A structure for the ensemble transform Kalman filter (ETKF)
+
+References:
+
+Bishop, C. H., Etherton, B. J., & Majumdar, S. J. (2001). Adaptive sampling with the ensemble transform Kalman filter. Part I: Theoretical aspects. Monthly weather review, 129(3), 420-436.
+
+## Fields
+$(TYPEDFIELDS)
+"""
 
 struct ETKF<:SeqFilter
     "Filter function"
