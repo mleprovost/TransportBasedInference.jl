@@ -40,7 +40,7 @@ include("hermitefunction/propolyhermite.jl")
 include("hermitefunction/phyhermite.jl")
 include("hermitefunction/prohermite.jl")
 
-# Test tools for Basis, MultiBasis, ExpandedFunction
+Test tools for Basis, MultiBasis, ExpandedFunction
 include("hermitemap/rectifier.jl")
 include("hermitemap/basis.jl")
 include("hermitemap/expandedfunction.jl")
@@ -52,8 +52,8 @@ include("hermitemap/integratedfunction.jl")
 include("hermitemap/storage.jl")
 
 # Test tools for HermiteMap component
-include("hermitemap/hermitehermitemap.jl")
-include("hermitemap/linhermitehermitemap.jl")
+include("hermitemap/hermitemapcomponent.jl")
+include("hermitemap/linhermitemapcomponent.jl")
 
 # Test greedy procedure
 include("hermitemap/greedyfit.jl")

@@ -1,18 +1,8 @@
-
-@testset "Verify vander for basis: evaluation first and second derivatives" begin
-    Ne = 20
+@testset "Verify vander for CstProHermite: evaluation, first and second derivatives" begin
+    Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = Basis(5)#CstProHermite(5; scaled = true)
-    # Btab = [CstProHermite(5; scaled = false);
-    #         CstProHermite(5; scaled = true)];
-            # CstPhyHermite(5; scaled = false);
-            # CstPhyHermite(5; scaled = true);
-            # CstLinPhyHermite(5; scaled = false);
-            # CstLinPhyHermite(5; scaled = true);
-            # CstLinProHermite(5; scaled = false);
-            # CstLinProHermite(5; scaled = true)]
-            # Test evaluation, derivative and second derivative
+    B = CstProHermite(6)
     ktab = [0; 1; 2]
 
     for k in ktab
@@ -31,6 +21,118 @@
         @test norm(dV - dVtrue)<1e-6
     end
 end
+
+@testset "Verify vander for CstPhyHermite: evaluation, first and second derivatives" begin
+    Ne = 200
+    x = randn(Ne)
+    #Test all the basis
+    B = CstPhyHermite(6)
+    ktab = [0; 1; 2]
+
+    for k in ktab
+        # Test evaluation
+        dV = vander(B, k, x)
+        dVtrue = zeros(Ne, size(B))
+
+        for i=1:B.m
+            if i==1
+                Pik = derivative(FamilyProPolyHermite[1], k)
+                dVtrue[:,i] .= Pik.(x)
+            else
+                dVtrue[:,i] .= derivative(FamilyScaledPhyHermite[i-1], k , x)
+            end
+        end
+        @test norm(dV - dVtrue)<1e-6
+    end
+end
+
+@testset "Verify vander for CstLinProHermite: evaluation, first and second derivatives" begin
+    Ne = 200
+    x = randn(Ne)
+    #Test all the basis
+    B = CstLinProHermite(6)
+    ktab = [0; 1; 2]
+
+    for k in ktab
+        # Test evaluation
+        dV = vander(B, k, x)
+        dVtrue = zeros(Ne, size(B))
+
+        for i=1:B.m
+            if i==1
+                Pik = derivative(FamilyProPolyHermite[1], k)
+                dVtrue[:,i] .= Pik.(x)
+            elseif i==2
+                Pik = derivative(FamilyProPolyHermite[2], k)
+                dVtrue[:,i] .= Pik.(x)
+            else
+                dVtrue[:,i] .= derivative(FamilyScaledProHermite[i-2], k , x)
+            end
+        end
+        @test norm(dV - dVtrue)<1e-6
+    end
+end
+
+@testset "Verify vander for CstLinPhyHermite: evaluation, first and second derivatives" begin
+    Ne = 200
+    x = randn(Ne)
+    #Test all the basis
+    B = CstLinPhyHermite(6)
+    ktab = [0; 1; 2]
+
+    for k in ktab
+        # Test evaluation
+        dV = vander(B, k, x)
+        dVtrue = zeros(Ne, size(B))
+
+        for i=1:B.m
+            if i==1
+                Pik = derivative(FamilyProPolyHermite[1], k)
+                dVtrue[:,i] .= Pik.(x)
+            elseif i==2
+                Pik = derivative(FamilyProPolyHermite[2], k)
+                dVtrue[:,i] .= Pik.(x)
+            else
+                dVtrue[:,i] .= derivative(FamilyScaledPhyHermite[i-2], k , x)
+            end
+        end
+        @test norm(dV - dVtrue)<1e-6
+    end
+end
+#
+#
+# @testset "Verify vander for basis: evaluation, first and second derivatives" begin
+#     Ne = 200
+#     x = randn(Ne)
+#     #Test all the basis
+#     B = Basis(5)#CstProHermite(5; scaled = true)
+#     # Btab = [CstProHermite(5; scaled = false);
+#     #         CstProHermite(5; scaled = true)];
+#             # CstPhyHermite(5; scaled = false);
+#             # CstPhyHermite(5; scaled = true);
+#             # CstLinPhyHermite(5; scaled = false);
+#             # CstLinPhyHermite(5; scaled = true);
+#             # CstLinProHermite(5; scaled = false);
+#             # CstLinProHermite(5; scaled = true)]
+#             # Test evaluation, derivative and second derivative
+#     ktab = [0; 1; 2]
+#
+#     for k in ktab
+#         # Test evaluation
+#         dV = vander(B, k, x)
+#         dVtrue = zeros(Ne, size(B))
+#
+#         for i=1:B.m
+#             if i==1
+#                 Pik = derivative(FamilyProPolyHermite[1], k)
+#                 dVtrue[:,i] .= Pik.(x)
+#             else
+#                 dVtrue[:,i] .= derivative(FamilyScaledProHermite[i-1], k , x)
+#             end
+#         end
+#         @test norm(dV - dVtrue)<1e-6
+#     end
+# end
 
 # @testset "Test defined families list" begin
 #

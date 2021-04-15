@@ -45,17 +45,29 @@ struct CstProHermite <: Basis
     m::Int64
 end
 
+@propagate_inbounds Base.getindex(B::CstProHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
+
 struct CstPhyHermite <: Basis
     m::Int64
 end
+
+@propagate_inbounds Base.getindex(B::CstPhyHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledPhyHermite[i-1]
+
+
+struct CstLinProHermite <: Basis
+    m::Int64
+end
+
+@propagate_inbounds Base.getindex(B::CstLinProHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledProHermite[i-2]
 
 struct CstLinPhyHermite <: Basis
     m::Int64
 end
 
-struct CstLinProHermite <: Basis
-    m::Int64
-end
+@propagate_inbounds Base.getindex(B::CstLinPhyHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledPhyHermite[i-2]
+
+
+
 
 # Implementation of vander! for the different bases
 """
@@ -121,7 +133,7 @@ function vander!(dV, B::CstLinProHermite, maxi::Int64, k::Int64, x)
     col1 = view(dV,:,2)
     if k==0
          fill!(col0, 1.0)
-         fill!(col1, x)
+         copy!(col1, x)
     elseif k==1
          fill!(col0, 0.0)
          fill!(col1, 1.0)
@@ -133,7 +145,7 @@ function vander!(dV, B::CstLinProHermite, maxi::Int64, k::Int64, x)
     if maxi == 0
         return dV
     end
-    dVshift = view(dV,:,3:maxi+1)
+    dVshift = view(dV,:,3:maxi+2)
     vander!(dVshift, FamilyScaledProHermite[maxi], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
@@ -154,7 +166,7 @@ function vander!(dV, B::CstLinPhyHermite, maxi::Int64, k::Int64, x)
     col1 = view(dV,:,2)
     if k==0
          fill!(col0, 1.0)
-         fill!(col1, x)
+         copy!(col1, x)
     elseif k==1
          fill!(col0, 0.0)
          fill!(col1, 1.0)
@@ -166,7 +178,7 @@ function vander!(dV, B::CstLinPhyHermite, maxi::Int64, k::Int64, x)
     if maxi == 0
         return dV
     end
-    dVshift = view(dV,:,3:maxi+1)
+    dVshift = view(dV,:,3:maxi+2)
     vander!(dVshift, FamilyScaledPhyHermite[maxi], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
@@ -202,7 +214,6 @@ vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 #      # .= vander(B.f[maxi+1], k, x)
 #     return dV
 # end
-# @propagate_inbounds Base.getindex(B::Basis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
 # @propagate_inbounds Base.getindex(B::Basis, i::Int64) = B.f[i]
 
 #
