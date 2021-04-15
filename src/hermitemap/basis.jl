@@ -10,9 +10,10 @@ import Base: size, show, @propagate_inbounds
 export Basis,
        vander!,
        vander,
-       CstProHermite
-       # CstPhyHermite, CstProHermite,
-       # CstLinPhyHermite, CstLinProHermite,
+       CstProHermite,
+       CstPhyHermite,
+       CstLinPhyHermite,
+       CstLinProHermite
 
 """
    $(TYPEDEF)
@@ -30,32 +31,39 @@ $(TYPEDFIELDS)
 - `Basis(m)`
 
 """
-struct Basis
+
+abstract type Basis end
+
+Base.size(B::Basis) = B.m
+
+# A particular feature basis is a subtype of Basis.
+# To define a new basis, you need to provide the following routines:
+# Base.show(io::IO, B::MyBasis) (optional, but desired)
+# vander!(dV, B::MyBasis, maxi::Int64, k::Int64, x)
+
+struct CstProHermite <: Basis
     m::Int64
-    # f::Tuple
-    # function Basis(f::NTuple{N, Hermite}) where {N}
-    #     return new(length(f), f)
-    # end
 end
 
-
-function Base.show(io::IO, B::Basis)
-    println(io,"Basis of "*string(B.m)*" functions: Constant -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
-    # for i=1:B.m
-    #     println(io, B[i])
-    # end
+struct CstPhyHermite <: Basis
+    m::Int64
 end
 
+struct CstLinPhyHermite <: Basis
+    m::Int64
+end
 
-# Specialized method
+struct CstLinProHermite <: Basis
+    m::Int64
+end
+
+# Implementation of vander! for the different bases
 """
-    vander!(dV, B, maxi, k, x)
+    vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
 
 Compute the Vandermonde matrix for the vector `x`
-
-
 """
-function vander!(dV, B::Basis, maxi::Int64, k::Int64, x)
+function vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
 
@@ -74,16 +82,131 @@ function vander!(dV, B::Basis, maxi::Int64, k::Int64, x)
     return dV
 end
 
-vander!(dV, B::Basis, k::Int64, x) = vander!(dV, B, B.m-1, k, x)
+"""
+    vander!(dV, B::CstPhyHermite, maxi::Int64, k::Int64, x)
 
-vander(B::Basis, maxi::Int64, k::Int64, x) = vander!(zeros(size(x,1),maxi+1), B, maxi, k, x)
+Compute the Vandermonde matrix for the vector `x`
+"""
+function vander!(dV, B::CstPhyHermite, maxi::Int64, k::Int64, x)
+    N = size(x,1)
+    @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
+
+    col0 = view(dV,:,1)
+    if k==0
+         fill!(col0, 1.0)
+    else
+         fill!(col0, 0.0)
+    end
+    if maxi == 0
+        return dV
+    end
+    dVshift = view(dV,:,2:maxi+1)
+    vander!(dVshift, FamilyScaledPhyHermite[maxi], k, x)
+     # .= vander(B.f[maxi+1], k, x)
+    return dV
+end
+
+"""
+    vander!(dV, B::CstLinProHermite, maxi::Int64, k::Int64, x)
+
+Compute the Vandermonde matrix for the vector `x`
+"""
+function vander!(dV, B::CstLinProHermite, maxi::Int64, k::Int64, x)
+    N = size(x,1)
+    @assert size(dV) == (N, maxi+2) "Wrong dimension of the Vander matrix"
+
+    # Constant feature
+    col0 = view(dV,:,1)
+    # Linear feature
+    col1 = view(dV,:,2)
+    if k==0
+         fill!(col0, 1.0)
+         fill!(col1, x)
+    elseif k==1
+         fill!(col0, 0.0)
+         fill!(col1, 1.0)
+    else
+        fill!(col0, 0.0)
+        fill!(col1, 0.0)
+    end
+
+    if maxi == 0
+        return dV
+    end
+    dVshift = view(dV,:,3:maxi+1)
+    vander!(dVshift, FamilyScaledProHermite[maxi], k, x)
+     # .= vander(B.f[maxi+1], k, x)
+    return dV
+end
+
+"""
+    vander!(dV, B::CstLinPhyHermite, maxi::Int64, k::Int64, x)
+
+Compute the Vandermonde matrix for the vector `x`
+"""
+function vander!(dV, B::CstLinPhyHermite, maxi::Int64, k::Int64, x)
+    N = size(x,1)
+    @assert size(dV) == (N, maxi+2) "Wrong dimension of the Vander matrix"
+
+    # Constant feature
+    col0 = view(dV,:,1)
+    # Linear feature
+    col1 = view(dV,:,2)
+    if k==0
+         fill!(col0, 1.0)
+         fill!(col1, x)
+    elseif k==1
+         fill!(col0, 0.0)
+         fill!(col1, 1.0)
+    else
+        fill!(col0, 0.0)
+        fill!(col1, 0.0)
+    end
+
+    if maxi == 0
+        return dV
+    end
+    dVshift = view(dV,:,3:maxi+1)
+    vander!(dVshift, FamilyScaledPhyHermite[maxi], k, x)
+     # .= vander(B.f[maxi+1], k, x)
+    return dV
+end
+
+vander!(dV, B::Union{CstPhyHermite, CstProHermite}, k::Int64, x) = vander!(dV, B, B.m-1, k, x)
+vander!(dV, B::Union{CstLinPhyHermite, CstLinProHermite}, k::Int64, x) = vander!(dV, B, B.m-2, k, x)
+
+vander(B::Union{CstPhyHermite, CstProHermite}, maxi::Int64, k::Int64, x) = vander!(zeros(size(x,1),maxi+1), B, maxi, k, x)
+vander(B::Union{CstLinPhyHermite, CstLinProHermite}, maxi::Int64, k::Int64, x) = vander!(zeros(size(x,1),maxi+2), B, maxi, k, x)
 vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 
-@propagate_inbounds Base.getindex(B::Basis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
-
+# """
+#     vander!(dV, B, maxi, k, x)
+#
+# Compute the Vandermonde matrix for the vector `x`
+# """
+# function vander!(dV, B::Basis, maxi::Int64, k::Int64, x)
+#     N = size(x,1)
+#     @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
+#
+#     col0 = view(dV,:,1)
+#     if k==0
+#          fill!(col0, 1.0)
+#     else
+#          fill!(col0, 0.0)
+#     end
+#     if maxi == 0
+#         return dV
+#     end
+#     dVshift = view(dV,:,2:maxi+1)
+#     vander!(dVshift, FamilyScaledProHermite[maxi], k, x)
+#      # .= vander(B.f[maxi+1], k, x)
+#     return dV
+# end
+# @propagate_inbounds Base.getindex(B::Basis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
+# @propagate_inbounds Base.getindex(B::Basis, i::Int64) = B.f[i]
 
 #
-# function CstPhyHermite(m::Int64; scaled::Bool = false)
+# function CstPhyHermite(m::Int64; scaled::Bool = true)
 #     if scaled == true
 #         return Basis(ntuple(i -> i==1 ? FamilyProPolyHermite[1] : FamilyScaledPhyHermite[i-1], m+2))
 #     else
@@ -91,48 +214,24 @@ vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 #     end
 # end
 #
-# This is just a placeholder
-CstProHermite(m::Int64) = Basis(m+2)
-
-Base.size(B::Basis) = B.m
-
-# (m::Int64) = ntuple(i -> i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1], m+2)
-
+# function CstLinPhyHermite(m::Int64; scaled::Bool = true)
 #     if scaled == true
-#         return Basis(ntuple(i -> i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1], m+2))
-#     else
-#         return Basis(ntuple(i -> i==1 ? FamilyProPolyHermite[1] : FamilyProHermite[i-1], m+2))
-#     end
-# end
-#
-# function CstLinPhyHermite(m::Int64; scaled::Bool = false)
-#     if scaled == true
-#         return Basis(ntuple(i -> i<3 ? FamilyProPolyHermite[i] : FamilyScaledPhyHermite[i-2], m+3))
+#         return Basis(ntuple(i -> i<=2 ? FamilyProPolyHermite[i] : FamilyScaledPhyHermite[i-2], m+3))
 #     else
 #         return Basis(ntuple(i -> i==1 ? FamilyProPolyHermite[i] : FamilyPhyHermite[i-2], m+3))
 #     end
 # end
 #
-# function CstLinProHermite(m::Int64; scaled::Bool = false)
+# function CstLinProHermite(m::Int64; scaled::Bool = true)
 #     if scaled == true
-#         return Basis(ntuple(i -> i<3 ? FamilyProPolyHermite[i] : FamilyScaledProHermite[i-2], m+3))
+#         return Basis(ntuple(i -> i<=2 ? FamilyProPolyHermite[i] : FamilyScaledProHermite[i-2], m+3))
 #     else
 #         return Basis(ntuple(i -> i==1 ? FamilyProPolyHermite[i] : FamilyProHermite[i-2], m+3))
 #     end
 # end
-    #
-    #
-    # end
-    # ntuple(i-> i = 1 ? FamilyProPolyHermite[1] : )
-    # # f = zeros(ParamFcn, m+2)
-    # # # f[1] = 1.0
-    # f[1] = FamilyProPolyHermite[1]
-    # for i=0:m
-    #     f[2+i] = PhyHermite(i; scaled = scaled)
-    # end
-    # return Basis(f)
 
-#
+
+
 # function CstProHermite(m::Int64; scaled::Bool = false)
 #     f = zeros(ParamFcn, m+2)
 #     # f[1] = 1.0

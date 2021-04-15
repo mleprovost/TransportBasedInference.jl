@@ -27,9 +27,9 @@ struct PhyHermite <: Hermite
     scaled::Bool
 end
 
-# function Base.show(io::IO, P::PhyHermite{m}) where {m}
-# println(io,string(m)*"-th order physicist Hermite function, scaled = "*string(P.scaled))
-# end
+function Base.show(io::IO, P::PhyHermite)
+    println(io, string(P.m)*"-th order physicist Hermite function, scaled = "*string(P.scaled))
+end
 
 PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite(m, PhyPolyHermite(m; scaled = scaled), scaled)
 

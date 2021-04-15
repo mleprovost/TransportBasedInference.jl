@@ -12,9 +12,9 @@ struct ProPolyHermite <: Hermite
     scaled::Bool
 end
 
-# function Base.show(io::IO, P::PhyPolyHermite{m}) where {m}
-# println(io,string(m)*"-th order probabilistic Hermite polynomial"*string(P.P)*", scaled = "*string(P.scaled))
-# end
+function Base.show(io::IO, P::ProPolyHermite)
+    println(io, string(P.m)*"-th order probabilistic Hermite polynomial "*string(P.P)*", scaled = "*string(P.scaled))
+end
 
 # Hen(x)  = (-1)ⁿ*exp(x²/2)dⁿ/dxⁿ exp(-x²/2)
 # Hen′(x) = n*Hen-1(x)

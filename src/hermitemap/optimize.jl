@@ -9,16 +9,12 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
     m = C.m
     Nx = C.Nx
 
-    # algo = Optim.BFGS()
-    # algo = Optim.LBFGS(; m = 10)
-
     if typeof(maxterms) <: Nothing
         S = Storage(C.I.f, X)
 
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
-
 
             if hessprecond == true
                 precond = zeros(ncoeff(C), ncoeff(C))
