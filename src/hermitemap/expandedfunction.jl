@@ -120,7 +120,7 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     if typeof(f.B.B) <: Union{CstProHermite, CstPhyHermite}
         offset = 1
     elseif typeof(f.B.B) <: Union{CstLinProHermite, CstLinPhyHermite}
-        offset = 2
+        offset = 1
     end
 
     maxdim = maximum(idx)
@@ -129,7 +129,7 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     if maxdim+offset<= Nψreduced
         ψtmp = zero(ψ)
     else
-        ψtmp = zeros(Ne, maxdim+offset)
+        ψtmp = zeros(Ne, maxdim+1)
     end
 
     # The maximal size of ψtmp assumes that the set of index is downward closed
@@ -138,14 +138,14 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
         midxj = view(idx,:,j)
         maxj = maximum(midxj)
         Xj = view(X,j,:)
-        ψj = ψtmp[:,1:maxj+offset]
+        ψj = ψtmp[:,1:maxj+1]
 
         vander!(ψj, f.B.B, maxj, 0, Xj)
         @show ψ
-        
+
         @avx for l = 1:Nψreduced
             for k=1:Ne
-                ψ[k,l] *= ψj[k, midxj[l] + offset]
+                ψ[k,l] *= ψj[k, midxj[l] + 1]
             end
         end
 
