@@ -88,7 +88,7 @@ end
 active_dim(f::ExpandedFunction) = f.dim
 
 
-# alleval computes the evaluation, graidnet of hessian of the function
+# alleval computes the evaluation, gradient and hessian of the function
 # use it for validatio since it is slower than the other array-based variants
 function alleval(f::ExpandedFunction, X)
         Nx, Ne = size(X)
@@ -117,13 +117,19 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     @assert NxX == f.Nx "Wrong dimension of the input sample X"
     @assert size(ψ) == (Ne, Nψreduced) "Wrong dimension of the ψ"
 
+    if typeof(f.B.B) <: Union{CstProHermite, CstPhyHermite}
+        offset = 1
+    elseif typeof(f.B.B) <: Union{CstLinProHermite, CstLinPhyHermite}
+        offset = 2
+    end
+
     maxdim = maximum(idx)
     # ψvander = zeros(Ne, maxdim)
     fill!(ψ, 1.0)
-    if maxdim+1<= Nψreduced
+    if maxdim+offset<= Nψreduced
         ψtmp = zero(ψ)
     else
-        ψtmp = zeros(Ne, maxdim+1)
+        ψtmp = zeros(Ne, maxdim+offset)
     end
 
     # The maximal size of ψtmp assumes that the set of index is downward closed
@@ -132,13 +138,14 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
         midxj = view(idx,:,j)
         maxj = maximum(midxj)
         Xj = view(X,j,:)
-        ψj = ψtmp[:,1:maxj+1]
+        ψj = ψtmp[:,1:maxj+offset]
 
         vander!(ψj, f.B.B, maxj, 0, Xj)
-
+        @show ψ
+        
         @avx for l = 1:Nψreduced
             for k=1:Ne
-                ψ[k,l] *= ψj[k, midxj[l] + 1]
+                ψ[k,l] *= ψj[k, midxj[l] + offset]
             end
         end
 

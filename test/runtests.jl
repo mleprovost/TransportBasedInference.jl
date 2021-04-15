@@ -40,12 +40,13 @@ include("hermitefunction/propolyhermite.jl")
 include("hermitefunction/phyhermite.jl")
 include("hermitefunction/prohermite.jl")
 
-Test tools for Basis, MultiBasis, ExpandedFunction
+# Test tools for Basis, MultiBasis, ExpandedFunction
 include("hermitemap/rectifier.jl")
 include("hermitemap/basis.jl")
 include("hermitemap/expandedfunction.jl")
 include("hermitemap/reduced.jl")
 include("hermitemap/parametric.jl")
+include("hermitemap/multifunction.jl")
 
 # Test tools for integrated function
 include("hermitemap/integratedfunction.jl")

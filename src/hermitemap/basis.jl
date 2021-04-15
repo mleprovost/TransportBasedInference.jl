@@ -39,6 +39,7 @@ Base.size(B::Basis) = B.m
 # A particular feature basis is a subtype of Basis.
 # To define a new basis, you need to provide the following routines:
 # Base.show(io::IO, B::MyBasis) (optional, but desired)
+# @propagate_inbounds Base.getindex(B::MyBasis, i::Int64)
 # vander!(dV, B::MyBasis, maxi::Int64, k::Int64, x)
 
 struct CstProHermite <: Basis
@@ -47,12 +48,20 @@ end
 
 @propagate_inbounds Base.getindex(B::CstProHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
 
+function Base.show(io::IO, B::CstProHermite)
+    println(io,"Basis of "*string(B.m)*" functions: Constant -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
+end
+
+
 struct CstPhyHermite <: Basis
     m::Int64
 end
 
 @propagate_inbounds Base.getindex(B::CstPhyHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledPhyHermite[i-1]
 
+function Base.show(io::IO, B::CstPhyHermite)
+    println(io,"Basis of "*string(B.m)*" functions: Constant -> "*string(B.m-2)*"th degree Physicist Hermite function")
+end
 
 struct CstLinProHermite <: Basis
     m::Int64
@@ -60,12 +69,19 @@ end
 
 @propagate_inbounds Base.getindex(B::CstLinProHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledProHermite[i-2]
 
+function Base.show(io::IO, B::CstLinProHermite)
+    println(io,"Basis of "*string(B.m)*" functions: Constant, Linear -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
+end
+
 struct CstLinPhyHermite <: Basis
     m::Int64
 end
 
 @propagate_inbounds Base.getindex(B::CstLinPhyHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledPhyHermite[i-2]
 
+function Base.show(io::IO, B::CstLinPhyHermite)
+    println(io,"Basis of "*string(B.m)*" functions: Constant, Linear -> "*string(B.m-2)*"th degree Physicist Hermite function")
+end
 
 
 
@@ -73,7 +89,7 @@ end
 """
     vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
 
-Compute the Vandermonde matrix for the vector `x`
+Compute the Vandermonde matrix of the basis `B` for the vector `x`
 """
 function vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
     N = size(x,1)

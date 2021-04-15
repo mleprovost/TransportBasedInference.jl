@@ -10,6 +10,33 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 """
         heatmap(M::HermiteMap; start::Int64=1, color, degree)
 
+Plot recipe for an `ExpandedFunction`. We can either plot
+the number of occurences of each variable (columns) in each map component (rows) if `degree = false` (default behavior),
+or the maximum multi-index of the features identified for each variable (columns) in each map component (rows) if `degree = true`.
+"""
+@recipe function heatmap(f::ExpandedFunction; color = cgrad([:white, :teal, :navyblue, :purple]))
+
+    @series begin
+    seriestype := :heatmap
+    # size --> (600, 600)
+    xticks --> collect(1:f.Nx)
+    yticks --> collect(1:f.Nψ)
+    xguide -->  "Dimension"
+    yguide -->  "Feature Index"
+    yflip --> true
+    aspect_ratio --> 1
+    colorbar --> true
+    # levels --> 1:maximum(f.idx)
+    clims --> (0, maximum(f.idx))
+    seriescolor --> color
+    collect(1:f.Nx), collect(1:f.Nψ), f.idx
+    end
+end
+
+
+"""
+        heatmap(M::HermiteMap; start::Int64=1, color, degree)
+
 Plot recipe for an `HermiteMap`. We can either plot
 the number of occurences of each variable (columns) in each map component (rows) if `degree = false` (default behavior),
 or the maximum multi-index of the features identified for each variable (columns) in each map component (rows) if `degree = true`.
