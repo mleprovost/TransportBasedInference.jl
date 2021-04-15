@@ -117,16 +117,10 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     @assert NxX == f.Nx "Wrong dimension of the input sample X"
     @assert size(ψ) == (Ne, Nψreduced) "Wrong dimension of the ψ"
 
-    if typeof(f.B.B) <: Union{CstProHermite, CstPhyHermite}
-        offset = 1
-    elseif typeof(f.B.B) <: Union{CstLinProHermite, CstLinPhyHermite}
-        offset = 1
-    end
-
     maxdim = maximum(idx)
     # ψvander = zeros(Ne, maxdim)
     fill!(ψ, 1.0)
-    if maxdim+offset<= Nψreduced
+    if maxdim+1<= Nψreduced
         ψtmp = zero(ψ)
     else
         ψtmp = zeros(Ne, maxdim+1)
@@ -135,20 +129,18 @@ function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},
     # The maximal size of ψtmp assumes that the set of index is downward closed
     # such that Nψreduced is always smaller of equal to maxj+1
     @inbounds for j in intersect(dims, f.dim)
-        midxj = view(idx,:,j)
-        maxj = maximum(midxj)
+        idxj = view(idx,:,j)
+        maxj = maximum(idxj)
         Xj = view(X,j,:)
         ψj = ψtmp[:,1:maxj+1]
 
         vander!(ψj, f.B.B, maxj, 0, Xj)
-        @show ψ
 
         @avx for l = 1:Nψreduced
             for k=1:Ne
-                ψ[k,l] *= ψj[k, midxj[l] + 1]
+                ψ[k,l] *= ψj[k, idxj[l] + 1]
             end
         end
-
         # @avx  ψ .*= view(ψj,:, midxj .+ 1)#view(ψvanderj, :, midxj .+ 1)#
     end
     return ψ

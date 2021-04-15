@@ -87,13 +87,14 @@ end
 
 # Implementation of vander! for the different bases
 """
-    vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
+    vander!(dV, B::T, m::Int64, k::Int64, x) where T <: Basis
 
-Compute the Vandermonde matrix of the basis `B` for the vector `x`
+Compute the Vandermonde matrix of the basis `B` for the vector `x`up to the m-th feature of the basis
 """
-function vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
+
+function vander!(dV, B::CstProHermite, m::Int64, k::Int64, x)
     N = size(x,1)
-    @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
     col0 = view(dV,:,1)
     if k==0
@@ -101,11 +102,11 @@ function vander!(dV, B::CstProHermite, maxi::Int64, k::Int64, x)
     else
          fill!(col0, 0.0)
     end
-    if maxi == 0
+    if m == 0
         return dV
     end
-    dVshift = view(dV,:,2:maxi+1)
-    vander!(dVshift, FamilyScaledProHermite[maxi], k, x)
+    dVshift = view(dV,:,2:m+1)
+    vander!(dVshift, FamilyScaledProHermite[m], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
@@ -115,9 +116,9 @@ end
 
 Compute the Vandermonde matrix for the vector `x`
 """
-function vander!(dV, B::CstPhyHermite, maxi::Int64, k::Int64, x)
+function vander!(dV, B::CstPhyHermite, m::Int64, k::Int64, x)
     N = size(x,1)
-    @assert size(dV) == (N, maxi+1) "Wrong dimension of the Vander matrix"
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
     col0 = view(dV,:,1)
     if k==0
@@ -125,11 +126,11 @@ function vander!(dV, B::CstPhyHermite, maxi::Int64, k::Int64, x)
     else
          fill!(col0, 0.0)
     end
-    if maxi == 0
+    if m == 0
         return dV
     end
-    dVshift = view(dV,:,2:maxi+1)
-    vander!(dVshift, FamilyScaledPhyHermite[maxi], k, x)
+    dVshift = view(dV,:,2:m+1)
+    vander!(dVshift, FamilyScaledPhyHermite[m], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
@@ -139,30 +140,37 @@ end
 
 Compute the Vandermonde matrix for the vector `x`
 """
-function vander!(dV, B::CstLinProHermite, maxi::Int64, k::Int64, x)
+function vander!(dV, B::CstLinProHermite, m::Int64, k::Int64, x)
     N = size(x,1)
-    @assert size(dV) == (N, maxi+2) "Wrong dimension of the Vander matrix"
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
-    # Constant feature
-    col0 = view(dV,:,1)
-    # Linear feature
-    col1 = view(dV,:,2)
-    if k==0
-         fill!(col0, 1.0)
-         copy!(col1, x)
-    elseif k==1
-         fill!(col0, 0.0)
-         fill!(col1, 1.0)
-    else
-        fill!(col0, 0.0)
-        fill!(col1, 0.0)
+    if m >= 0
+        # Constant feature
+        col0 = view(dV,:,1)
+        if k==0
+             fill!(col0, 1.0)
+        else
+             fill!(col0, 0.0)
+        end
     end
 
-    if maxi == 0
+    if m >= 1
+        # Linear eature
+        col1 = view(dV,:,2)
+        if k==0
+            copy!(col1, x)
+        elseif k==1
+            fill!(col1, 1.0)
+        else
+            fill!(col1, 0.0)
+        end
+    end
+
+    if m < 2
         return dV
     end
-    dVshift = view(dV,:,3:maxi+2)
-    vander!(dVshift, FamilyScaledProHermite[maxi], k, x)
+    dVshift = view(dV,:,3:m+1)
+    vander!(dVshift, FamilyScaledProHermite[m-1], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
@@ -172,39 +180,46 @@ end
 
 Compute the Vandermonde matrix for the vector `x`
 """
-function vander!(dV, B::CstLinPhyHermite, maxi::Int64, k::Int64, x)
+function vander!(dV, B::CstLinPhyHermite, m::Int64, k::Int64, x)
     N = size(x,1)
-    @assert size(dV) == (N, maxi+2) "Wrong dimension of the Vander matrix"
+    @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
 
-    # Constant feature
-    col0 = view(dV,:,1)
-    # Linear feature
-    col1 = view(dV,:,2)
-    if k==0
-         fill!(col0, 1.0)
-         copy!(col1, x)
-    elseif k==1
-         fill!(col0, 0.0)
-         fill!(col1, 1.0)
-    else
-        fill!(col0, 0.0)
-        fill!(col1, 0.0)
+    if m >= 0
+        # Constant feature
+        col0 = view(dV,:,1)
+        if k==0
+             fill!(col0, 1.0)
+        else
+             fill!(col0, 0.0)
+        end
     end
 
-    if maxi == 0
+    if m >= 1
+        # Linear eature
+        col1 = view(dV,:,2)
+        if k==0
+            copy!(col1, x)
+        elseif k==1
+            fill!(col1, 1.0)
+        else
+            fill!(col1, 0.0)
+        end
+    end
+
+    if m < 2
         return dV
     end
-    dVshift = view(dV,:,3:maxi+2)
-    vander!(dVshift, FamilyScaledPhyHermite[maxi], k, x)
+    dVshift = view(dV,:,3:m+1)
+    vander!(dVshift, FamilyScaledPhyHermite[m-1], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
 
 vander!(dV, B::Union{CstPhyHermite, CstProHermite}, k::Int64, x) = vander!(dV, B, B.m-1, k, x)
-vander!(dV, B::Union{CstLinPhyHermite, CstLinProHermite}, k::Int64, x) = vander!(dV, B, B.m-2, k, x)
+vander!(dV, B::Union{CstLinPhyHermite, CstLinProHermite}, k::Int64, x) = vander!(dV, B, B.m-1, k, x)
 
-vander(B::Union{CstPhyHermite, CstProHermite}, maxi::Int64, k::Int64, x) = vander!(zeros(size(x,1),maxi+1), B, maxi, k, x)
-vander(B::Union{CstLinPhyHermite, CstLinProHermite}, maxi::Int64, k::Int64, x) = vander!(zeros(size(x,1),maxi+2), B, maxi, k, x)
+vander(B::Union{CstPhyHermite, CstProHermite}, m::Int64, k::Int64, x) = vander!(zeros(size(x,1),m+1), B, m, k, x)
+vander(B::Union{CstLinPhyHermite, CstLinProHermite}, m::Int64, k::Int64, x) = vander!(zeros(size(x,1),m+1), B, m, k, x)
 vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 
 # """
