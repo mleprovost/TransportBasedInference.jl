@@ -54,6 +54,7 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	else
 		L = LinearTransform(X; diag = true)
 		M = HermiteMap(40, Ny+Nx, L, smf.M.C)
+		getcoeff(smf.M.C[6])
 		# M = HermiteMap(40, X; diag = true)
 		# Only optimize the existing coefficients of the basis
 		optimize(M, X, nothing; withconstant = false, withqr = true,
