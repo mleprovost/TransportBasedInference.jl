@@ -18,35 +18,35 @@ using FiniteDiff
 using Random
 
 # Tools: double factorial, adaptive integration
-include("tools/tools.jl")
-include("tools/normal.jl")
-include("tools/transform.jl")
-
-# Tools for data assimilation
-include("DA/inflation.jl")
-
-
-# Tools for state-space models
-include("statespace/system.jl")
-
-
-# Functions to manage margins
-include("margin/reducedmargin.jl")
-include("margin/totalorder.jl")
-
-include("hermitefunction/phypolyhermite.jl")
-include("hermitefunction/propolyhermite.jl")
-
-include("hermitefunction/phyhermite.jl")
-include("hermitefunction/prohermite.jl")
-
-# Test tools for Basis, MultiBasis, ExpandedFunction
-include("hermitemap/rectifier.jl")
-include("hermitemap/basis.jl")
-include("hermitemap/expandedfunction.jl")
-include("hermitemap/reduced.jl")
-include("hermitemap/parametric.jl")
-include("hermitemap/multifunction.jl")
+# include("tools/tools.jl")
+# include("tools/normal.jl")
+# include("tools/transform.jl")
+#
+# # Tools for data assimilation
+# include("DA/inflation.jl")
+#
+#
+# # Tools for state-space models
+# include("statespace/system.jl")
+#
+#
+# # Functions to manage margins
+# include("margin/reducedmargin.jl")
+# include("margin/totalorder.jl")
+#
+# include("hermitefunction/phypolyhermite.jl")
+# include("hermitefunction/propolyhermite.jl")
+#
+# include("hermitefunction/phyhermite.jl")
+# include("hermitefunction/prohermite.jl")
+#
+# # Test tools for Basis, MultiBasis, ExpandedFunction
+# include("hermitemap/rectifier.jl")
+# include("hermitemap/basis.jl")
+# include("hermitemap/expandedfunction.jl")
+# include("hermitemap/reduced.jl")
+# include("hermitemap/parametric.jl")
+# include("hermitemap/multifunction.jl")
 
 # Test tools for integrated function
 include("hermitemap/integratedfunction.jl")

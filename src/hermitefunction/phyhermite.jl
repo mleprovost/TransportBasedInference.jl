@@ -221,7 +221,7 @@ end
 evaluate(P::PhyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
-function vander!(dV, P::PhyHermite, k::Int64, x::Array{Float64,1})
+function vander!(dV, P::PhyHermite, k::Int64, x)
     m = P.m
 
     if k==0

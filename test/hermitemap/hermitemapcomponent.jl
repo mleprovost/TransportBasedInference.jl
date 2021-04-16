@@ -82,36 +82,41 @@ end
   #           0.412907   1.01672;
   #           1.41332   -0.918205;
   #           0.766647  -1.00445]';
-  B = MultiBasis(CstProHermite(6), Nx)
 
-  idx = [0 0; 0 1; 1 0; 1 1; 1 2]
-  truncidx = idx[1:2:end,:]
-  Nψ = 5
+  Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+  for b in Blist
+      B = MultiBasis(b, Nx)
 
-  coeff = randn(Nψ)
 
-  # coeff =   [0.6285037650645056;
-  #  -0.4744029092496623;
-  #   1.1405280011620331;
-  #  -0.7217760771894809;
-  #   0.11855056306742319]
-  f = ExpandedFunction(B, idx, coeff)
-  fp = ParametricFunction(f);
-  R = IntegratedFunction(fp)
+    idx = [0 0; 0 1; 1 0; 1 1; 1 2]
+    truncidx = idx[1:2:end,:]
+    Nψ = 5
 
-  C = MapComponent(R)
+    coeff = randn(Nψ)
 
-  # Test evaluate
-  ψt = zeros(Ne)
+    # coeff =   [0.6285037650645056;
+    #  -0.4744029092496623;
+    #   1.1405280011620331;
+    #  -0.7217760771894809;
+    #   0.11855056306742319]
+    f = ExpandedFunction(B, idx, coeff)
+    fp = ParametricFunction(f);
+    R = IntegratedFunction(fp)
 
-  for i=1:Ne
-      x = view(X,:,i)
-      ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+    C = MapComponent(R)
+
+    # Test evaluate
+    ψt = zeros(Ne)
+
+    for i=1:Ne
+        x = view(X,:,i)
+        ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+    end
+
+    ψ = evaluate(C, X)
+
+    @test norm(ψ - ψt)<1e-10
   end
-
-  ψ = evaluate(C, X)
-
-  @test norm(ψ - ψt)<1e-10
 end
 
 
@@ -159,43 +164,45 @@ end
   Ne = 100
   X = randn(Nx, Ne)
   m = 10
-  B = MultiBasis(CstProHermite(3), Nx)
+  Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+  for b in Blist
+      B = MultiBasis(b, Nx)
 
-  idx = reshape([0; 1; 2; 3], (4,1))
+    idx = reshape([0; 1; 2; 3], (4,1))
 
-  coeff =  randn(size(idx,1))
+    coeff =  randn(size(idx,1))
 
-  C = MapComponent(m, Nx, idx, coeff)
+    C = MapComponent(m, Nx, idx, coeff)
 
-  dxlogC  = grad_x_log_pdf(C, X)
-  d2xlogC = hess_x_log_pdf(C, X)
+    dxlogC  = grad_x_log_pdf(C, X)
+    d2xlogC = hess_x_log_pdf(C, X)
 
-  function evaluatef0(x)
-    y = copy(x)
-    y[end] = 0.0
-    return C.I.f.f(y)
+    function evaluatef0(x)
+      y = copy(x)
+      y[end] = 0.0
+      return C.I.f.f(y)
+    end
+
+    integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f.f(y), vcat(x[1:end-1],t*x[end]))[end])
+
+    function Ct(x)
+        lb = 0.0
+        ub = 1.0
+        prob = QuadratureProblem(integrand,lb,ub,x)
+        out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
+        return out
+    end
+
+    log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
+
+    @inbounds for i=1:Ne
+      @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
+    end
+
+    @inbounds for i=1:Ne
+      @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
+    end
   end
-
-  integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f.f(y), vcat(x[1:end-1],t*x[end]))[end])
-
-  function Ct(x)
-      lb = 0.0
-      ub = 1.0
-      prob = QuadratureProblem(integrand,lb,ub,x)
-      out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
-      return out
-  end
-
-  log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f.f(z),x)[end]))
-
-  @inbounds for i=1:Ne
-    @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
-  end
-
-  @inbounds for i=1:Ne
-    @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
-  end
-
 end
 
 
