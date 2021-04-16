@@ -30,14 +30,14 @@ end
 
 
 ncoeff(L::LinMapComponent) = L.C.Nψ
-getcoeff(L::LinMapComponent) = L.C.I.f.f.coeff
+getcoeff(L::LinMapComponent) = L.C.I.f.coeff
 
 function setcoeff!(L::LinMapComponent, coeff::Array{Float64,1})
         @assert size(coeff,1) == Nψ "Wrong dimension of coeff"
-        L.C.I.f.f.coeff .= coeff
+        L.C.I.f.coeff .= coeff
 end
 
-getidx(L::LinMapComponent) = L.C.I.f.f.idx
+getidx(L::LinMapComponent) = L.C.I.f.idx
 
 
 function evaluate!(out, L::LinMapComponent, X)

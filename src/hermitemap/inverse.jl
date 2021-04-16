@@ -10,11 +10,11 @@ export   functionalf!,
 
 function functionalf!(F, xk, cache, cache_vander, ψoff, output, R::IntegratedFunction)
     function integrand!(v::Vector{Float64}, t::Float64)
-        repeated_grad_xk_basis!(cache, cache_vander, R.f.f,  t*xk)
-        # cache .= repeated_grad_xk_basis(R.f.f,  t*xk)
-        @avx @. v = (cache .* ψoff) *ˡ R.f.f.coeff
+        repeated_grad_xk_basis!(cache, cache_vander, R.f,  t*xk)
+        # cache .= repeated_grad_xk_basis(R.f,  t*xk)
+        @avx @. v = (cache .* ψoff) *ˡ R.f.coeff
         evaluate!(v, R.g, v)
-        # v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
+        # v .= R.g((repeated_grad_xk_basis(R.f,  t*xk) .* ψoff)*R.f.coeff)
     end
 
     quadgk!(integrand!, F, 0.0, 1.0; rtol = 1e-3)
@@ -29,9 +29,9 @@ functionalf!(cache, cache_vander, ψoff, output, R::IntegratedFunction) =
     (F, xk) -> functionalf!(F, xk, cache, cache_vander, ψoff, output, R)
 
 function functionalg!(J, xk, cache, cache_vander, ψoff, output, R::IntegratedFunction)
-    # cache .= repeated_grad_xk_basis(R.f.f,  xk)
-    repeated_grad_xk_basis!(cache, cache_vander, R.f.f,  xk)
-    @avx @. J.diag = (cache .* ψoff) *ˡ R.f.f.coeff
+    # cache .= repeated_grad_xk_basis(R.f,  xk)
+    repeated_grad_xk_basis!(cache, cache_vander, R.f,  xk)
+    @avx @. J.diag = (cache .* ψoff) *ˡ R.f.coeff
     evaluate!(J.diag, R.g, J.diag)
     nothing
 end
@@ -41,9 +41,9 @@ functionalg!(cache, cache_vander, ψoff, output, R::IntegratedFunction) =
 
 # In this version, the Jacobian is stored as a vector (it is diagonal in this case).
 function functionalg1D!(J::AbstractVector{Float64}, xk, cache, cache_vander, ψoff, output, R::IntegratedFunction)
-    # cache .= repeated_grad_xk_basis(R.f.f,  xk)
-    repeated_grad_xk_basis!(cache, cache_vander, R.f.f,  xk)
-    @avx @. J = (cache .* ψoff) *ˡ R.f.f.coeff
+    # cache .= repeated_grad_xk_basis(R.f,  xk)
+    repeated_grad_xk_basis!(cache, cache_vander, R.f,  xk)
+    @avx @. J = (cache .* ψoff) *ˡ R.f.coeff
     evaluate!(J, R.g, J)
     nothing
 end
@@ -61,14 +61,14 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
     @assert NxX == R.Nx "Wrong dimension of the sample X"
 
     cache  = zeros(Ne, Nψ)
-    cache_vander = zeros(Ne, maximum(R.f.f.idx[:,Nx])+1)
+    cache_vander = zeros(Ne, maximum(R.f.idx[:,Nx])+1)
     f0 = zeros(Ne)
 
     # Remove f(x_{1:k-1},0) from the output F
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += (S.ψoffψd0[i,j])*R.f.f.coeff[j]
+            f0i += (S.ψoffψd0[i,j])*R.f.coeff[j]
         end
         F[i] -= f0i
     end
@@ -103,14 +103,14 @@ end
 #
 #     if !(F == nothing)
 #         function integrand!(v::Vector{Float64}, t::Float64)
-#             v .= R.g((repeated_grad_xk_basis(R.f.f,  t*xk) .* ψoff)*R.f.f.coeff)
+#             v .= R.g((repeated_grad_xk_basis(R.f,  t*xk) .* ψoff)*R.f.coeff)
 #         end
 #         F .= xk .* quadgk!(integrand!, cache, 0, 1)[1]
 #         F .-= output
 #     end
 #
 #     if !(J == nothing)
-#         J .= Diagonal(R.g((repeated_grad_xk_basis(R.f.f,  xk) .* ψoff)*R.f.f.coeff))
+#         J .= Diagonal(R.g((repeated_grad_xk_basis(R.f,  xk) .* ψoff)*R.f.coeff))
 #     end
 # end
 #

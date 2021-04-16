@@ -35,7 +35,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     if withconstant == false
         # Compute the reduced margin
         reduced_margin = getreducedmargin(getidx(C))
-        f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
         C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         coeff0 = getcoeff(C)
@@ -46,7 +46,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
 
         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 
-        f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
+        f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
         C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         Svalid = Storage(C.I.f, Xvalid)
@@ -94,7 +94,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
                                  Optim.LBFGS(; m = 10))
         end
 
-        C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
+        C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
         # The computation is the non-QR space is slightly faster,
         # even if we prefer the QR form to optimize the coefficients
@@ -157,7 +157,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
                                      Optim.LBFGS(; m = 10))
             end
             # Reverse to the non-QR space and update in-place the coefficients
-            mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
+            mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
             # The computation is the non-QR space is slightly faster,
             # even if we prefer the QR form to optimize the coefficients
@@ -218,7 +218,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     if withconstant == false
         # Compute the reduced margin
         reduced_margin = getreducedmargin(getidx(C))
-        f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
         C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         coeff0 = getcoeff(C)
@@ -229,7 +229,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 
-        f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
+        f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
         C = MapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
     end
@@ -270,8 +270,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
                                  Optim.LBFGS(; m = 10))
         end
 
-        # mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
-        C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
+        # mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
+        C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
         # Compute initial loss on training set
         # mul!(S.ψoffψd0, S.ψoffψd0, F.U)
@@ -337,7 +337,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             end
 
             # Reverse to the non-QR space and update in-place the coefficients
-            C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
+            C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
             # Compute initial loss on training set
             # mul!(S.ψoffψd0, S.ψoffψd0, F.U)
@@ -380,7 +380,7 @@ end
 #     if withconstant == false
 #         # Compute the reduced margin
 #         reduced_margin = getreducedmargin(getidx(C))
-#         f = ExpandedFunction(C.I.f.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+#         f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
 #         C = MapComponent(f; α = αreg)
 #         S = Storage(C.I.f, X)
 #         coeff0 = getcoeff(C)
@@ -391,7 +391,7 @@ end
 #
 #         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 #
-#         f = ExpandedFunction(C.I.f.f.B, opt_idx, zeros(size(opt_idx,1)))
+#         f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
 #         C = MapComponent(f; α = αreg)
 #         S = Storage(C.I.f, X)
 #     end
@@ -422,8 +422,8 @@ end
 #         res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
 #                              Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
 #
-#         # mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
-#         C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
+#         # mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
+#         C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 #
 #
 #         # Compute initial loss on training set
@@ -482,7 +482,7 @@ end
 #             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
 #                                    Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
 #             # Reverse to the non-QR space and update in-place the coefficients
-#             C.I.f.f.coeff .= F.Uinv*Optim.minimizer(res)
+#             C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 #
 #             # Compute initial loss on training set
 #             mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
@@ -512,7 +512,7 @@ function update_component(C::MapComponent, X, reduced_margin::Array{Int64,2}, S:
     idx_new = vcat(idx_old, reduced_margin)
 
     # Define updated map
-    f_new = ExpandedFunction(C.I.f.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
+    f_new = ExpandedFunction(C.I.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
     C_new = MapComponent(f_new; α = αreg)
 
 

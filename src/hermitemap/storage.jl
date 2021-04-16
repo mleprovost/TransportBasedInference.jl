@@ -11,8 +11,8 @@ struct Storage
     Nψ::Int64
     Nx::Int64
 
-    # Parametric function
-    f::ParametricFunction
+    # Expanded function
+    f::ExpandedFunction
 
     # Off-diagonal basis evaluation
     ψoff::Array{Float64,2}
@@ -44,18 +44,16 @@ struct Storage
     cache_g::Array{Float64,1}
 end
 
-# function Storage(f::ParametricFunction{m, Nψ, Nx}, X::Array{Float64,2}; hess::Bool = false) where {m, Nψ, Nx}
-
-function Storage(f::ParametricFunction, X)#, hess::Bool = false)
-        m = f.f.m
-        Nψ = f.f.Nψ
-        Nx = f.f.Nx
+function Storage(f::ExpandedFunction, X)#, hess::Bool = false)
+        m = f.m
+        Nψ = f.Nψ
+        Nx = f.Nx
         NxX, Ne = size(X)
         @assert NxX == Nx
         ψoff = evaluate_offdiagbasis(f, X)
         ψoffψd = evaluate_diagbasis(f, X)
-        ψoffψd0  = repeated_evaluate_basis(f.f, zeros(Ne))
-        ψoffdψxd = repeated_grad_xk_basis(f.f, X[Nx,:])
+        ψoffψd0  = repeated_evaluate_basis(f, zeros(Ne))
+        ψoffdψxd = repeated_grad_xk_basis(f, X[Nx,:])
 
         @avx for j=1:Nψ
             for i=1:Ne
@@ -75,7 +73,7 @@ function Storage(f::ParametricFunction, X)#, hess::Bool = false)
 
         # Cache variable
         cache_dcψxdt = zero(ψoff)
-        cache_gradxd = zeros(Ne, maximum(f.f.idx[:,end])+1)
+        cache_gradxd = zeros(Ne, maximum(f.idx[:,end])+1)
         cache_dψxd = zeros(Ne)
         cache_integral = zeros(Ne + Ne*Nψ)
         cache_g = zeros(Ne)
@@ -93,10 +91,10 @@ function update_storage(S::Storage, X, addedidx::Array{Int64,2})
     addedNψ = size(addedidx,1)
     newNψ = addedNψ + Nψ
 
-    fnew = ParametricFunction(ExpandedFunction(S.f.f.B, vcat(S.f.f.idx, addedidx), vcat(S.f.f.coeff, zeros(addedNψ))))
+    fnew = ExpandedFunction(S.f.B, vcat(S.f.idx, addedidx), vcat(S.f.coeff, zeros(addedNψ)))
 
-    oldmaxj = maximum(S.f.f.idx[:,end])
-    newmaxj = maximum(fnew.f.idx[:,end])
+    oldmaxj = maximum(S.f.idx[:,end])
+    newmaxj = maximum(fnew.idx[:,end])
 
     @assert newmaxj >= oldmaxj "Error in the adaptive procedure, the set is not downward closed"
 
@@ -108,10 +106,10 @@ function update_storage(S::Storage, X, addedidx::Array{Int64,2})
     addedψoffψd = evaluate_diagbasis(fnew, X, addedidx)
 
     # Update ψd0
-    addedψoffψd0  = repeated_evaluate_basis(fnew.f, zeros(Ne), addedidx)
+    addedψoffψd0  = repeated_evaluate_basis(fnew, zeros(Ne), addedidx)
 
     # Update dψxd
-    addedψoffdψxd = repeated_grad_xk_basis(fnew.f, X[S.Nx,:], addedidx)
+    addedψoffdψxd = repeated_grad_xk_basis(fnew, X[S.Nx,:], addedidx)
 
 
     @avx for j=1:addedNψ

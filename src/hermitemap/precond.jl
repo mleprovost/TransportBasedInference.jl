@@ -49,7 +49,7 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
+        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         @avx @. S.cache_dcψxdt *= S.ψoff
@@ -147,7 +147,7 @@ function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2}
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         S.cache_dcψxdt .*= S.ψoff

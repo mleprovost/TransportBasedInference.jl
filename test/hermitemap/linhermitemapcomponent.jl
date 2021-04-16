@@ -4,37 +4,39 @@
     Nx = 2
     Ne = 500
     X = randn(Nx, Ne)
-    B = MultiBasis(CstProHermite(6), Nx)
+    Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+    for b in Blist
+        B = MultiBasis(b, Nx)
 
-    idx = [0 0; 0 1; 1 0; 1 1; 1 2]
-    truncidx = idx[1:2:end,:]
-    Nψ = 5
+        idx = [0 0; 0 1; 1 0; 1 1; 1 2]
+        truncidx = idx[1:2:end,:]
+        Nψ = 5
 
-    coeff = randn(Nψ)
+        coeff = randn(Nψ)
 
-    f = ExpandedFunction(B, idx, coeff)
-    fp = ParametricFunction(f);
-    R = IntegratedFunction(fp)
-    C = MapComponent(R)
-    L = LinMapComponent(X, C)
+        f = ExpandedFunction(B, idx, coeff)
+        R = IntegratedFunction(f)
+        C = MapComponent(R)
+        L = LinMapComponent(X, C)
 
-    X0 = deepcopy(X)
+        X0 = deepcopy(X)
 
-    # Test evaluate
-    ψt = zeros(Ne)
-    transform!(L.L, X)
+        # Test evaluate
+        ψt = zeros(Ne)
+        transform!(L.L, X)
 
-    for i=1:Ne
-      x = view(X,:,i)
-      ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+        for i=1:Ne
+          x = view(X,:,i)
+          ψt[i] = R.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+        end
+
+        itransform!(L.L, X)
+
+        ψ = evaluate(L, X0)
+
+        @test norm(X - X0)<1e-10
+        @test norm(ψ - ψt)<1e-10
     end
-
-    itransform!(L.L, X)
-
-    ψ = evaluate(L, X0)
-
-    @test norm(X - X0)<1e-10
-    @test norm(ψ - ψt)<1e-10
 end
 
 

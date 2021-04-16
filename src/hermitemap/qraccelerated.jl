@@ -84,7 +84,7 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
+        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f, t*xlast)
 
          # This computing is also reused in the computation of the gradient, no interest to skip it
         @avx @. S.cache_dcψxdt *= S.ψoff
@@ -167,7 +167,7 @@ function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
+        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         @avx @. S.cache_dcψxdt *= S.ψoff
@@ -268,7 +268,7 @@ end
 #
 #     # Integrate at the same time for the objective, gradient
 #     function integrand!(v::Vector{Float64}, t::Float64)
-#         repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
+#         repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f, t*xlast)
 #
 #          # This computing is also reused in the computation of the gradient, no interest to skip it
 #         @avx @. S.cache_dcψxdt *= S.ψoff
@@ -321,7 +321,7 @@ end
 #
 #     # Integrate at the same time for the objective, gradient
 #     function integrand!(v::Vector{Float64}, t::Float64)
-#         repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
+#         repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f, t*xlast)
 #
 #          # This computing is also reused in the computation of the gradient, no interest to skip it
 #         @avx @. S.cache_dcψxdt *= S.ψoff

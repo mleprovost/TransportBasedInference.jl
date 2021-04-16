@@ -111,7 +111,7 @@ end
     idx_new0 = vcat(idx_old0, reduced_margin0)
 
     # Define updated map
-    f_new = ExpandedFunction(C_old.I.f.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
+    f_new = ExpandedFunction(C_old.I.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
     C_new = MapComponent(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(C_old, X, reduced_margin0, S)
 
@@ -185,7 +185,7 @@ end
     idx_new0 = vcat(idx_old0, reduced_margin0)
 
     # Define updated map
-    f_new = ExpandedFunction(C_old.I.f.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
+    f_new = ExpandedFunction(C_old.I.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
     C_new = MapComponent(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(C_old, X, reduced_margin0, S)
 

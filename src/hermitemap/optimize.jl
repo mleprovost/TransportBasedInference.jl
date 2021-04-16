@@ -46,7 +46,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
                                      Optim.LBFGS(; m = 10))
             end
 
-            mul!(view(C.I.f.f.coeff,:), F.Uinv, Optim.minimizer(res))
+            mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
             error = res.minimum
 

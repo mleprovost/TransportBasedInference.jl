@@ -6,14 +6,6 @@ Ne = 100
 
 X = randn(Nx, Ne)
 
-# X .=  [0.267333   1.43021;
-#           0.364979   0.607224;
-#          -1.23693    0.249277;
-#          -2.0526     0.915629;
-#          -0.182465   0.415874;
-#           0.412907   1.01672;
-#           1.41332   -0.918205;
-#           0.766647  -1.00445]';
 Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
 for b in Blist
     B = MultiBasis(b, Nx)
@@ -24,22 +16,16 @@ for b in Blist
 
     coeff = randn(Nψ)
 
-    # coeff =   [0.6285037650645056;
-    #  -0.4744029092496623;
-    #   1.1405280011620331;
-    #  -0.7217760771894809;
-    #   0.11855056306742319]
     f = ExpandedFunction(B, idx, coeff)
-    fp = ParametricFunction(f);
-    R = IntegratedFunction(fp)
+    R = IntegratedFunction(f)
 
     # Test evaluate
     ψt = zeros(Ne)
 
     for i=1:Ne
         x = X[:,i]
-        ψt[i] = R.f.f(vcat(x[1:end-1], 0.0)) +
-                quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+        ψt[i] = R.f(vcat(x[1:end-1], 0.0)) +
+                quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
     end
 
     ψ = evaluate(R, X)
@@ -52,10 +38,10 @@ for b in Blist
     function Gradient(x)
         return ForwardDiff.gradient(y->begin
                                y[end] = 0.0
-                               return  R.f.f(y)
+                               return  R.f(y)
             end, x) + quadgk(t->ForwardDiff.gradient(
-                      z->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1],t))[end]),
-                x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f.f(y), x)[end]))
+                      z->R.g(ForwardDiff.gradient(y->R.f(y), vcat(z[1:end-1],t))[end]),
+                x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f(y), x)[end]))
     end
 
     for i=1:Ne
@@ -72,15 +58,15 @@ for b in Blist
 
         H[1:Nx-1,1:Nx-1] .= ForwardDiff.hessian(y->begin
                             y[Nx] = 0.0
-                            return R.f.f(y) end, x)[1:Nx-1,1:Nx-1]
+                            return R.f(y) end, x)[1:Nx-1,1:Nx-1]
 
         # Hessian of the integral term
         H[1:Nx-1,1:Nx-1] .+= (quadgk(t -> ForwardDiff.hessian(
-        z-> R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1], t))[end]), x),
+        z-> R.g(ForwardDiff.gradient(y->R.f(y), vcat(z[1:end-1], t))[end]), x),
                 0.0, x[end], rtol = 1e-3)[1])[1:Nx-1,1:Nx-1]
 
         # H[Nx,:] and H[:,Nx]
-        H[:, Nx] .= ForwardDiff.gradient(z->R.g(ForwardDiff.gradient(y->R.f.f(y), z)[end]), x)
+        H[:, Nx] .= ForwardDiff.gradient(z->R.g(ForwardDiff.gradient(y->R.f(y), z)[end]), x)
         H[Nx, :] .= H[:, Nx]
         return H
     end
@@ -95,7 +81,7 @@ for b in Blist
     gdψt = zeros(Ne)
 
     for i=1:Ne
-        gdψt[i] = R.g(ForwardDiff.gradient(R.f.f, X[:,i])[end])
+        gdψt[i] = R.g(ForwardDiff.gradient(R.f, X[:,i])[end])
     end
 
     @test norm(gdψ - gdψt) <1e-10
@@ -105,9 +91,9 @@ for b in Blist
     dψ_xd_dct = zeros(Ne, Nψ)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-        ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+        ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
         for i=1:Ne
             dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
         end
@@ -120,11 +106,11 @@ for b in Blist
     d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-        ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+        ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
         for l=1:Nψ
-        fl = MultiFunction(R.f.f.B, f.idx[l,:])
+        fl = MultiFunction(R.f.B, f.idx[l,:])
         ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -143,7 +129,7 @@ for b in Blist
 
     for i=1:Ne
         xi = X[:,i]
-        intψt[i] = quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(xi[1:end-1],t))[end]), 0, xi[end],rtol = 1e-4)[1]
+        intψt[i] = quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(xi[1:end-1],t))[end]), 0, xi[end],rtol = 1e-4)[1]
     end
 
     intψ = integrate_xd(R, X)
@@ -156,9 +142,9 @@ for b in Blist
     dcintψt = zeros(Ne, Nψ)
     xi = zeros(Nx)
     for j=1:Nψ
-        fj = MultiFunction(R.f.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-        ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+        ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
         for i=1:Ne
             xi .= X[:,i]
             dcintψt[i,j] = quadgk(t->∂kfj(vcat(xi[1:end-1],t))*grad_x(R.g, ∂kf(vcat(xi[1:end-1],t))),0,xi[end])[1]
@@ -173,14 +159,14 @@ for b in Blist
     # Test hess_coeff_integrate_xd
     d2cintψt = zeros(Ne, Nψ, Nψ)
     xi = zeros(Nx)
-    ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+    ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
     for j=1:Nψ
-        fj = MultiFunction(R.f.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for l=1:Nψ
 
-            fl = MultiFunction(R.f.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.B, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -201,13 +187,13 @@ for b in Blist
     X0 = deepcopy(X)
     X0[end,:] .= zeros(Ne)
     # ∂_c f(x_{1:k-1},0)
-    dcRt += evaluate_basis(R.f.f, X0)
+    dcRt += evaluate_basis(R.f, X0)
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-        ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+        ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
         for i=1:Ne
             xi .= X[:,i]
             dcRt[i,j] += quadgk(t->∂kfj(vcat(xi[1:end-1],t))*grad_x(R.g, ∂kf(vcat(xi[1:end-1],t))),0,xi[end])[1]
@@ -226,12 +212,12 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.B, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for l=1:Nψ
 
-            fl = MultiFunction(R.f.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.B, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -260,14 +246,6 @@ end
 
     X = randn(Nx, Ne)
 
-    # X .=  [0.267333   1.43021;
-    #           0.364979   0.607224;
-    #          -1.23693    0.249277;
-    #          -2.0526     0.915629;
-    #          -0.182465   0.415874;
-    #           0.412907   1.01672;
-    #           1.41332   -0.918205;
-    #           0.766647  -1.00445]';
 
     Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
     for b in Blist
@@ -281,14 +259,8 @@ end
 
         coeff = randn(Nψ)
 
-        # coeff =   [0.6285037650645056;
-        #  -0.4744029092496623;
-        #   1.1405280011620331;
-        #  -0.7217760771894809;
-        #   0.11855056306742319]
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f);
-        R = IntegratedFunction(fp)
+        R = IntegratedFunction(f)
 
         # Test grad_x
         dψ = grad_x(R, X)
@@ -296,10 +268,10 @@ end
         function Gradient(x)
             return ForwardDiff.gradient(y->begin
                                    y[end] = 0.0
-                                   return  R.f.f(y)
+                                   return  R.f(y)
                 end, x) + quadgk(t->ForwardDiff.gradient(
-                          z->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1],t))[end]),
-                    x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f.f(y), x)[end]))
+                          z->R.g(ForwardDiff.gradient(y->R.f(y), vcat(z[1:end-1],t))[end]),
+                    x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f(y), x)[end]))
         end
 
         for i=1:Ne
@@ -315,7 +287,7 @@ end
         gdψt = zeros(Ne)
 
         for i=1:Ne
-            gdψt[i] = R.g(ForwardDiff.gradient(R.f.f, X[:,i])[end])
+            gdψt[i] = R.g(ForwardDiff.gradient(R.f, X[:,i])[end])
         end
 
         @test norm(gdψ - gdψt) <1e-10
@@ -325,9 +297,9 @@ end
         dψ_xd_dct = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for i=1:Ne
                 dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
             end
@@ -340,11 +312,11 @@ end
         d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for l=1:Nψ
-            fl = MultiFunction(R.f.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.B, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -363,7 +335,7 @@ end
 
         for i=1:Ne
             xi = X[:,i]
-            intψt[i] = quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(xi[1:end-1],t))[end]), 0, xi[end],rtol = 1e-4)[1]
+            intψt[i] = quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(xi[1:end-1],t))[end]), 0, xi[end],rtol = 1e-4)[1]
         end
 
         intψ = integrate_xd(R, X)
@@ -376,9 +348,9 @@ end
         dcintψt = zeros(Ne, Nψ)
         xi = zeros(Nx)
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
                 dcintψt[i,j] = quadgk(t->∂kfj(vcat(xi[1:end-1],t))*grad_x(R.g, ∂kf(vcat(xi[1:end-1],t))),0,xi[end])[1]
@@ -393,14 +365,14 @@ end
         # Test hess_coeff_integrate_xd
         d2cintψt = zeros(Ne, Nψ, Nψ)
         xi = zeros(Nx)
-        ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+        ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.B, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -421,13 +393,13 @@ end
         X0 = deepcopy(X)
         X0[end,:] .= zeros(Ne)
         # ∂_c f(x_{1:k-1},0)
-        dcRt += evaluate_basis(R.f.f, X0)
+        dcRt += evaluate_basis(R.f, X0)
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
                 dcRt[i,j] += quadgk(t->∂kfj(vcat(xi[1:end-1],t))*grad_x(R.g, ∂kf(vcat(xi[1:end-1],t))),0,xi[end])[1]
@@ -446,12 +418,12 @@ end
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.B, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -477,15 +449,6 @@ end
 
     X = randn(Nx, Ne)
 
-    # X .=  [0.267333   1.43021;
-    #           0.364979   0.607224;
-    #          -1.23693    0.249277;
-    #          -2.0526     0.915629;
-    #          -0.182465   0.415874;
-    #           0.412907   1.01672;
-    #           1.41332   -0.918205;
-    #           0.766647  -1.00445]';
-
     Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
     for b in Blist
         B = MultiBasis(b, Nx)
@@ -497,15 +460,8 @@ end
         Nψ = 7
 
         coeff = randn(Nψ)
-
-        # coeff =   [0.6285037650645056;
-        #  -0.4744029092496623;
-        #   1.1405280011620331;
-        #  -0.7217760771894809;
-        #   0.11855056306742319]
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f);
-        R = IntegratedFunction(fp)
+        R = IntegratedFunction(f)
 
         # Test grad_x
         dψ = grad_x(R, X)
@@ -513,10 +469,10 @@ end
         function Gradient(x)
             return ForwardDiff.gradient(y->begin
                                    y[end] = 0.0
-                                   return  R.f.f(y)
+                                   return  R.f(y)
                 end, x) + quadgk(t->ForwardDiff.gradient(
-                          z->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1],t))[end]),
-                    x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f.f(y), x)[end]))
+                          z->R.g(ForwardDiff.gradient(y->R.f(y), vcat(z[1:end-1],t))[end]),
+                    x), 0.0, x[end])[1] + vcat(zeros(size(x,1)-1), R.g(ForwardDiff.gradient(y->R.f(y), x)[end]))
         end
 
         for i=1:Ne
@@ -533,15 +489,15 @@ end
 
             H[1:Nx-1,1:Nx-1] .= ForwardDiff.hessian(y->begin
                                 y[Nx] = 0.0
-                                return R.f.f(y) end, x)[1:Nx-1,1:Nx-1]
+                                return R.f(y) end, x)[1:Nx-1,1:Nx-1]
 
             # Hessian of the integral term
             H[1:Nx-1,1:Nx-1] .+= (quadgk(t -> ForwardDiff.hessian(
-            z-> R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(z[1:end-1], t))[end]), x),
+            z-> R.g(ForwardDiff.gradient(y->R.f(y), vcat(z[1:end-1], t))[end]), x),
                     0.0, x[end], rtol = 1e-3)[1])[1:Nx-1,1:Nx-1]
 
             # H[Nx,:] and H[:,Nx]
-            H[:, Nx] .= ForwardDiff.gradient(z->R.g(ForwardDiff.gradient(y->R.f.f(y), z)[end]), x)
+            H[:, Nx] .= ForwardDiff.gradient(z->R.g(ForwardDiff.gradient(y->R.f(y), z)[end]), x)
             H[Nx, :] .= H[:, Nx]
             return H
         end
@@ -556,7 +512,7 @@ end
         gdψt = zeros(Ne)
 
         for i=1:Ne
-            gdψt[i] = R.g(ForwardDiff.gradient(R.f.f, X[:,i])[end])
+            gdψt[i] = R.g(ForwardDiff.gradient(R.f, X[:,i])[end])
         end
 
         @test norm(gdψ - gdψt) <1e-10
@@ -566,9 +522,9 @@ end
         dψ_xd_dct = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for i=1:Ne
                 dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
             end
@@ -581,11 +537,11 @@ end
         d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for l=1:Nψ
-            fl = MultiFunction(R.f.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.B, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -602,7 +558,7 @@ end
 
         for i=1:Ne
             xi = X[:,i]
-            intψt[i] = quadgk(t->R.g(ForwardDiff.gradient(y->R.f.f(y), vcat(xi[1:end-1],t))[end]), 0, xi[end],rtol = 1e-4)[1]
+            intψt[i] = quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(xi[1:end-1],t))[end]), 0, xi[end],rtol = 1e-4)[1]
         end
 
         intψ = integrate_xd(R, X)
@@ -615,9 +571,9 @@ end
         dcintψt = zeros(Ne, Nψ)
         xi = zeros(Nx)
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
                 dcintψt[i,j] = quadgk(t->∂kfj(vcat(xi[1:end-1],t))*grad_x(R.g, ∂kf(vcat(xi[1:end-1],t))),0,xi[end])[1]
@@ -632,14 +588,14 @@ end
         # Test hess_coeff_integrate_xd
         d2cintψt = zeros(Ne, Nψ, Nψ)
         xi = zeros(Nx)
-        ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+        ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.B, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -660,13 +616,13 @@ end
         X0 = deepcopy(X)
         X0[end,:] .= zeros(Ne)
         # ∂_c f(x_{1:k-1},0)
-        dcRt += evaluate_basis(R.f.f, X0)
+        dcRt += evaluate_basis(R.f, X0)
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
-            ∂kf(y) = ForwardDiff.gradient(R.f.f, y)[end]
+            ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
                 dcRt[i,j] += quadgk(t->∂kfj(vcat(xi[1:end-1],t))*grad_x(R.g, ∂kf(vcat(xi[1:end-1],t))),0,xi[end])[1]
@@ -685,12 +641,12 @@ end
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.B, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.B, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne

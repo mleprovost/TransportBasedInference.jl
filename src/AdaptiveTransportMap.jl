@@ -84,7 +84,7 @@ include("hermitemap/basis.jl")
 include("hermitemap/multibasis.jl")
 include("hermitemap/multifunction.jl")
 include("hermitemap/expandedfunction.jl")
-include("hermitemap/parametric.jl")
+include("hermitemap/expandedfunction2.jl")
 include("hermitemap/storage.jl")
 
 # Integrated positive function

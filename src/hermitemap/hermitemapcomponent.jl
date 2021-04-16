@@ -73,16 +73,16 @@ function Base.show(io::IO, C::MapComponent)
 end
 
 ncoeff(C::MapComponent) = C.Nψ
-getcoeff(C::MapComponent)= C.I.f.f.coeff
+getcoeff(C::MapComponent)= C.I.f.coeff
 
 function setcoeff!(C::MapComponent, coeff::Array{Float64,1})
         @assert size(coeff,1) == C.Nψ "Wrong dimension of coeff"
-        C.I.f.f.coeff .= coeff
+        C.I.f.coeff .= coeff
 end
 
-getidx(C::MapComponent) = C.I.f.f.idx
+getidx(C::MapComponent) = C.I.f.idx
 
-active_dim(C::MapComponent) = C.I.f.f.dim
+active_dim(C::MapComponent) = C.I.f.dim
 
 ## Evaluate
 function evaluate!(out, C::MapComponent, X)
@@ -132,7 +132,7 @@ function grad_x_log_pdf!(result, cache, C::MapComponent, X)
     # Compute gradient of log ∂k C(x_{1:k})
     cache .= grad_xd(C.I.f, X)
     grad_x_logeval!(cache, C.I.g, cache)
-    result += cache .* grad_x_grad_xd(C.I.f.f, X)
+    result += cache .* grad_x_grad_xd(C.I.f, X)
     return result
 end
 
@@ -169,7 +169,7 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     # Compute hessian of log ∂k C(x_{1:k})
     cache .= grad_xd(C.I.f, X)
     cached2log = vhess_x_logeval(C.I.g, cache)
-    dcache .= grad_x_grad_xd(C.I.f.f, X)
+    dcache .= grad_x_grad_xd(C.I.f, X)
 
     @inbounds for i=1:length(dim)
                 for j=i:length(dim)
@@ -184,7 +184,7 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     end
     #
     grad_x_logeval!(cache, C.I.g, cache)
-    result .+= hess_x_grad_xd(C.I.f.f, X) .* cache
+    result .+= hess_x_grad_xd(C.I.f, X) .* cache
 
     return result
 end
@@ -238,10 +238,10 @@ function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     cached2log = vhess_x_logeval(C.I.g, cache)
 
     if Nx == dim[end] # check if the last component is an active dimension
-        # dcache .= grad_x_grad_xd(C.I.f.f, X)
+        # dcache .= grad_x_grad_xd(C.I.f, X)
         # Clear dcache
         fill!(dcache, 0.0)
-        reduced_grad_x_grad_xd!(dcache, C.I.f.f, X)
+        reduced_grad_x_grad_xd!(dcache, C.I.f, X)
         @inbounds for i=1:length(dim)
              for j=i:length(dim)
                  # dcachei = view(dcache,:,dim[i])
@@ -259,7 +259,7 @@ function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
          end
     end
     grad_x_logeval!(cache, C.I.g, cache)
-    result .+= reduced_hess_x_grad_xd(C.I.f.f, X) .* cache
+    result .+= reduced_hess_x_grad_xd(C.I.f, X) .* cache
 
     return result
 end
@@ -290,7 +290,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f.f, t*xlast)
+        repeated_grad_xk_basis!(S.cache_dcψxdt, S.cache_gradxd, C.I.f, t*xlast)
 
          # This computing is also reused in the computation of the gradient, no interest to skip it
         @avx @. S.cache_dcψxdt *= S.ψoff
@@ -398,7 +398,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComp
 
     # Integrate at the same time for the objective, gradient
     function integrand!(v::Vector{Float64}, t::Float64)
-        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f.f, t*xlast)
+        S.cache_dcψxdt .= repeated_grad_xk_basis(C.I.f, t*xlast)
 
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt .* S.ψoff) *ˡ coeff
         S.cache_dcψxdt .*= S.ψoff

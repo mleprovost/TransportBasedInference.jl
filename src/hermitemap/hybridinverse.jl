@@ -1,18 +1,18 @@
 export bisection, hybridsolver, hybridinverse!
 
 
-function bisection(x, fx, xm, fm, xp, fp)
+function bisection(x, fx, xm, fm, xp, f)
 @assert xm < xp "Error in the order of the argument"
-    if sign(fx) == sign(fp)
+    if sign(fx) == sign(f)
     xp = x
-    fp = fx
+    f = fx
     else
     xm = x
     fm = fx
     end
     # More stable than 0.5*(xp +xm)
     x = xm + 0.5*(xp - xm)
-    return x, fx, xm, fm, xp, fp
+    return x, fx, xm, fm, xp, f
 end
 
 # Combine Bisection and Newton method, this method has guaranteed convergence.
@@ -72,14 +72,14 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵ
     @assert NxX == R.Nx "Wrong dimension of the sample X"
 
     cache  = zeros(Ne, Nψ)
-    cache_vander = zeros(Ne, maximum(R.f.f.idx[:,Nx])+1)
+    cache_vander = zeros(Ne, maximum(R.f.idx[:,Nx])+1)
     fout = zeros(Ne)
 
     # Remove f(x_{1:k-1},0) from the output F
     @avx for i=1:Ne
         f0i = zero(Float64)
         for j=1:Nψ
-            f0i += (S.ψoffψd0[i,j])*R.f.f.coeff[j]
+            f0i += (S.ψoffψd0[i,j])*R.f.coeff[j]
         end
         F[i] -= f0i
     end
@@ -189,14 +189,14 @@ end
 #     @assert NxX == R.Nx "Wrong dimension of the sample X"
 #
 #     cache  = zeros(Ne, Nψ)
-#     cache_vander = zeros(Ne, maximum(R.f.f.idx[:,Nx])+1)
+#     cache_vander = zeros(Ne, maximum(R.f.idx[:,Nx])+1)
 #     fout = zeros(Ne)
 #
 #     # Remove f(x_{1:k-1},0) from the output F
 #     @avx for i=1:Ne
 #         f0i = zero(Float64)
 #         for j=1:Nψ
-#             f0i += (S.ψoffψd0[i,j])*R.f.f.coeff[j]
+#             f0i += (S.ψoffψd0[i,j])*R.f.coeff[j]
 #         end
 #         F[i] -= f0i
 #     end

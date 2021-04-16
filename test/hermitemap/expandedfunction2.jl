@@ -1,6 +1,6 @@
 using AdaptiveTransportMap: evaluate
 
-@testset "Test tools for parametric function Nx = 1 " begin
+@testset "Test tools for expanded function Nx = 1 " begin
 
     Nx = 1
     Ne = 500
@@ -18,11 +18,10 @@ using AdaptiveTransportMap: evaluate
 
         coeff = randn(Nψ)
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f)
 
         ## Test evaluate_offdiagbasis
-        ψoff = evaluate_offdiagbasis(fp, X)
-        ψofftrunc = evaluate_offdiagbasis(fp, X, truncidx)
+        ψoff = evaluate_offdiagbasis(f, X)
+        ψofftrunc = evaluate_offdiagbasis(f, X, truncidx)
 
         @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
@@ -40,8 +39,8 @@ using AdaptiveTransportMap: evaluate
 
 
         ## Test evaluate_diagbasis
-        ψdiag = evaluate_diagbasis(fp, X)
-        ψdiagtrunc = evaluate_diagbasis(fp, X, truncidx)
+        ψdiag = evaluate_diagbasis(f, X)
+        ψdiagtrunc = evaluate_diagbasis(f, X, truncidx)
 
         @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
@@ -59,8 +58,8 @@ using AdaptiveTransportMap: evaluate
         @test norm(ψdiagt - ψdiag)<1e-8
 
         ## Test grad_xd_diagbasis
-        Gψ_xd_diag = grad_xd_diagbasis(fp, X)
-        Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, X, truncidx)
+        Gψ_xd_diag = grad_xd_diagbasis(f, X)
+        Gψ_xd_diagtrunc = grad_xd_diagbasis(f, X, truncidx)
         @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
         Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -76,8 +75,8 @@ using AdaptiveTransportMap: evaluate
 
         ## Test hess_xd_diagbasis
 
-        Hψ_xd_diag = hess_xd_diagbasis(fp, X)
-        Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, X, truncidx)
+        Hψ_xd_diag = hess_xd_diagbasis(f, X)
+        Hψ_xd_diagtrunc = hess_xd_diagbasis(f, X, truncidx)
         @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
         Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -93,17 +92,17 @@ using AdaptiveTransportMap: evaluate
 
         ## Test function evaluation
 
-        ψ = evaluate(fp, X)
+        ψ = evaluate(f, X)
         ψt = zeros(Ne)
 
         for i=1:Ne
-            ψt[i] = fp.f(X[:,i])
+            ψt[i] = f(X[:,i])
         end
         @test norm(ψ - ψt)<1e-10
 
         ## Test grad_xd
 
-        dψxd = grad_xd(fp, X)
+        dψxd = grad_xd(f, X)
         dψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -114,7 +113,7 @@ using AdaptiveTransportMap: evaluate
 
         ## Test hess_xd
 
-        d2ψxd = hess_xd(fp, X)
+        d2ψxd = hess_xd(f, X)
         d2ψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -125,20 +124,20 @@ using AdaptiveTransportMap: evaluate
 
         ## Test grad_coeff
 
-        dψ_coefft = evaluate_basis(fp.f, X)
-        dψ_coeff = grad_coeff(fp, X)
-        dψ_coeffexpanded = grad_coeff(fp.f, X)
+        dψ_coefft = evaluate_basis(f, X)
+        dψ_coeff = grad_coeff(f, X)
+        dψ_coeffexpanded = grad_coeff(f, X)
 
         @test norm(dψ_coeff - dψ_coefft) < 1e-10
         @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
         ## Test grad_coeff_grad_xd
 
-        dψ_coeff_xd = grad_coeff_grad_xd(fp, X)
+        dψ_coeff_xd = grad_coeff_grad_xd(f, X)
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(fp.f.B.B,Nx-1), fp.f.idx[j,1:end-1])
+            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
             fdiagj = f.B.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
@@ -149,7 +148,7 @@ using AdaptiveTransportMap: evaluate
     end
 end
 
-@testset "Test tools for parametric function Nx = 1 II " begin
+@testset "Test tools for expanded function Nx = 1 II " begin
 
     Nx = 1
     Ne = 500
@@ -167,11 +166,10 @@ end
 
         coeff = randn(Nψ)
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f)
 
         ## Test evaluate_offdiagbasis
-        ψoff = evaluate_offdiagbasis(fp, X)
-        ψofftrunc = evaluate_offdiagbasis(fp, X, truncidx)
+        ψoff = evaluate_offdiagbasis(f, X)
+        ψofftrunc = evaluate_offdiagbasis(f, X, truncidx)
 
         @test ψoff[:,1:2:end] == ψofftrunc
 
@@ -189,8 +187,8 @@ end
 
 
         ## Test evaluate_diagbasis
-        ψdiag = evaluate_diagbasis(fp, X)
-        ψdiagtrunc = evaluate_diagbasis(fp, X, truncidx)
+        ψdiag = evaluate_diagbasis(f, X)
+        ψdiagtrunc = evaluate_diagbasis(f, X, truncidx)
 
         @test ψdiag[:,1:2:end] == ψdiagtrunc
 
@@ -208,8 +206,8 @@ end
         @test norm(ψdiagt - ψdiag)<1e-8
 
         ## Test grad_xd_diagbasis
-        Gψ_xd_diag = grad_xd_diagbasis(fp, X)
-        Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, X, truncidx)
+        Gψ_xd_diag = grad_xd_diagbasis(f, X)
+        Gψ_xd_diagtrunc = grad_xd_diagbasis(f, X, truncidx)
         @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
         Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -225,8 +223,8 @@ end
 
         ## Test hess_xd_diagbasis
 
-        Hψ_xd_diag = hess_xd_diagbasis(fp, X)
-        Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, X, truncidx)
+        Hψ_xd_diag = hess_xd_diagbasis(f, X)
+        Hψ_xd_diagtrunc = hess_xd_diagbasis(f, X, truncidx)
         @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
         Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -242,17 +240,17 @@ end
 
         ## Test function evaluation
 
-        ψ = evaluate(fp, X)
+        ψ = evaluate(f, X)
         ψt = zeros(Ne)
 
         for i=1:Ne
-            ψt[i] = fp.f(X[:,i])
+            ψt[i] = f(X[:,i])
         end
         @test norm(ψ - ψt)<1e-10
 
         ## Test grad_xd
 
-        dψxd = grad_xd(fp, X)
+        dψxd = grad_xd(f, X)
         dψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -263,7 +261,7 @@ end
 
         ## Test hess_xd
 
-        d2ψxd = hess_xd(fp, X)
+        d2ψxd = hess_xd(f, X)
         d2ψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -274,20 +272,20 @@ end
 
         ## Test grad_coeff
 
-        dψ_coefft = evaluate_basis(fp.f, X)
-        dψ_coeff = grad_coeff(fp, X)
-        dψ_coeffexpanded = grad_coeff(fp.f, X)
+        dψ_coefft = evaluate_basis(f, X)
+        dψ_coeff = grad_coeff(f, X)
+        dψ_coeffexpanded = grad_coeff(f, X)
 
         @test norm(dψ_coeff - dψ_coefft) < 1e-10
         @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
         ## Test grad_coeff_grad_xd
 
-        dψ_coeff_xd = grad_coeff_grad_xd(fp, X)
+        dψ_coeff_xd = grad_coeff_grad_xd(f, X)
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(fp.f.B.B,Nx-1), fp.f.idx[j,1:end-1])
+            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
             fdiagj = f.B.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
@@ -299,7 +297,7 @@ end
 
 end
 
-@testset "Test tools for parametric function Nx = 2" begin
+@testset "Test tools for expanded function Nx = 2" begin
 
     Nx = 2
     Ne = 500
@@ -318,11 +316,10 @@ end
 
         coeff = randn(Nψ)
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f)
 
         ## Test evaluate_offdiagbasis
-        ψoff = evaluate_offdiagbasis(fp, X)
-        ψofftrunc = evaluate_offdiagbasis(fp, X, truncidx)
+        ψoff = evaluate_offdiagbasis(f, X)
+        ψofftrunc = evaluate_offdiagbasis(f, X, truncidx)
 
         @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
@@ -340,8 +337,8 @@ end
 
 
         ## Test evaluate_diagbasis
-        ψdiag = evaluate_diagbasis(fp, X)
-        ψdiagtrunc = evaluate_diagbasis(fp, X, truncidx)
+        ψdiag = evaluate_diagbasis(f, X)
+        ψdiagtrunc = evaluate_diagbasis(f, X, truncidx)
 
         @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
@@ -359,8 +356,8 @@ end
         @test norm(ψdiagt - ψdiag)<1e-8
 
         ## Test grad_xd_diagbasis
-        Gψ_xd_diag = grad_xd_diagbasis(fp, X)
-        Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, X, truncidx)
+        Gψ_xd_diag = grad_xd_diagbasis(f, X)
+        Gψ_xd_diagtrunc = grad_xd_diagbasis(f, X, truncidx)
         @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
         Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -376,8 +373,8 @@ end
 
         ## Test hess_xd_diagbasis
 
-        Hψ_xd_diag = hess_xd_diagbasis(fp, X)
-        Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, X, truncidx)
+        Hψ_xd_diag = hess_xd_diagbasis(f, X)
+        Hψ_xd_diagtrunc = hess_xd_diagbasis(f, X, truncidx)
         @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
         Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -393,17 +390,17 @@ end
 
         ## Test function evaluation
 
-        ψ = evaluate(fp, X)
+        ψ = evaluate(f, X)
         ψt = zeros(Ne)
 
         for i=1:Ne
-            ψt[i] = fp.f(X[:,i])
+            ψt[i] = f(X[:,i])
         end
         @test norm(ψ - ψt)<1e-10
 
         ## Test grad_xd
 
-        dψxd = grad_xd(fp, X)
+        dψxd = grad_xd(f, X)
         dψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -414,7 +411,7 @@ end
 
         ## Test hess_xd
 
-        d2ψxd = hess_xd(fp, X)
+        d2ψxd = hess_xd(f, X)
         d2ψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -425,20 +422,20 @@ end
 
         ## Test grad_coeff
 
-        dψ_coefft = evaluate_basis(fp.f, X)
-        dψ_coeff = grad_coeff(fp, X)
-        dψ_coeffexpanded = grad_coeff(fp.f, X)
+        dψ_coefft = evaluate_basis(f, X)
+        dψ_coeff = grad_coeff(f, X)
+        dψ_coeffexpanded = grad_coeff(f, X)
 
         @test norm(dψ_coeff - dψ_coefft) < 1e-10
         @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
         ## Test grad_coeff_grad_xd
 
-        dψ_coeff_xd = grad_coeff_grad_xd(fp, X)
+        dψ_coeff_xd = grad_coeff_grad_xd(f, X)
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(fp.f.B.B,Nx-1), fp.f.idx[j,1:end-1])
+            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
             fdiagj = f.B.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
@@ -451,7 +448,7 @@ end
 end
 
 
-@testset "Test tools for parametric function Nx = 3" begin
+@testset "Test tools for expanded function Nx = 3" begin
 
     Nx = 3
     Ne = 500
@@ -469,11 +466,10 @@ end
 
         coeff = randn(Nψ)
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f)
 
         ## Test evaluate_offdiagbasis
-        ψoff = evaluate_offdiagbasis(fp, X)
-        ψofftrunc = evaluate_offdiagbasis(fp, X, truncidx)
+        ψoff = evaluate_offdiagbasis(f, X)
+        ψofftrunc = evaluate_offdiagbasis(f, X, truncidx)
 
         @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
@@ -491,8 +487,8 @@ end
 
 
         ## Test evaluate_diagbasis
-        ψdiag = evaluate_diagbasis(fp, X)
-        ψdiagtrunc = evaluate_diagbasis(fp, X, truncidx)
+        ψdiag = evaluate_diagbasis(f, X)
+        ψdiagtrunc = evaluate_diagbasis(f, X, truncidx)
 
         @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
@@ -510,8 +506,8 @@ end
         @test norm(ψdiagt - ψdiag)<1e-8
 
         ## Test grad_xd_diagbasis
-        Gψ_xd_diag = grad_xd_diagbasis(fp, X)
-        Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, X, truncidx)
+        Gψ_xd_diag = grad_xd_diagbasis(f, X)
+        Gψ_xd_diagtrunc = grad_xd_diagbasis(f, X, truncidx)
         @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
         Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -527,8 +523,8 @@ end
 
         ## Test hess_xd_diagbasis
 
-        Hψ_xd_diag = hess_xd_diagbasis(fp, X)
-        Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, X, truncidx)
+        Hψ_xd_diag = hess_xd_diagbasis(f, X)
+        Hψ_xd_diagtrunc = hess_xd_diagbasis(f, X, truncidx)
         @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
         Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -544,17 +540,17 @@ end
 
         ## Test function evaluation
 
-        ψ = evaluate(fp, X)
+        ψ = evaluate(f, X)
         ψt = zeros(Ne)
 
         for i=1:Ne
-            ψt[i] = fp.f(X[:,i])
+            ψt[i] = f(X[:,i])
         end
         @test norm(ψ - ψt)<1e-10
 
         ## Test grad_xd
 
-        dψxd = grad_xd(fp, X)
+        dψxd = grad_xd(f, X)
         dψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -565,7 +561,7 @@ end
 
         ## Test hess_xd
 
-        d2ψxd = hess_xd(fp, X)
+        d2ψxd = hess_xd(f, X)
         d2ψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -576,20 +572,20 @@ end
 
         ## Test grad_coeff
 
-        dψ_coefft = evaluate_basis(fp.f, X)
-        dψ_coeff = grad_coeff(fp, X)
-        dψ_coeffexpanded = grad_coeff(fp.f, X)
+        dψ_coefft = evaluate_basis(f, X)
+        dψ_coeff = grad_coeff(f, X)
+        dψ_coeffexpanded = grad_coeff(f, X)
 
         @test norm(dψ_coeff - dψ_coefft) < 1e-10
         @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
         ## Test grad_coeff_grad_xd
 
-        dψ_coeff_xd = grad_coeff_grad_xd(fp, X)
+        dψ_coeff_xd = grad_coeff_grad_xd(f, X)
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(fp.f.B.B,Nx-1), fp.f.idx[j,1:end-1])
+            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
             fdiagj = f.B.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
@@ -600,7 +596,7 @@ end
     end
 end
 
-@testset "Test tools for parametric function Nx = 3" begin
+@testset "Test tools for expanded function Nx = 3" begin
 
     Nx = 3
     Ne = 500
@@ -617,11 +613,10 @@ end
 
         coeff = randn(Nψ)
         f = ExpandedFunction(B, idx, coeff)
-        fp = ParametricFunction(f)
 
         ## Test evaluate_offdiagbasis
-        ψoff = evaluate_offdiagbasis(fp, X)
-        ψofftrunc = evaluate_offdiagbasis(fp, X, truncidx)
+        ψoff = evaluate_offdiagbasis(f, X)
+        ψofftrunc = evaluate_offdiagbasis(f, X, truncidx)
 
         @test norm(ψoff[:,1:2:end] - ψofftrunc) < 1e-8
 
@@ -639,8 +634,8 @@ end
 
 
         ## Test evaluate_diagbasis
-        ψdiag = evaluate_diagbasis(fp, X)
-        ψdiagtrunc = evaluate_diagbasis(fp, X, truncidx)
+        ψdiag = evaluate_diagbasis(f, X)
+        ψdiagtrunc = evaluate_diagbasis(f, X, truncidx)
 
         @test norm(ψdiag[:,1:2:end] - ψdiagtrunc) < 1e-8
 
@@ -658,8 +653,8 @@ end
         @test norm(ψdiagt - ψdiag)<1e-8
 
         ## Test grad_xd_diagbasis
-        Gψ_xd_diag = grad_xd_diagbasis(fp, X)
-        Gψ_xd_diagtrunc = grad_xd_diagbasis(fp, X, truncidx)
+        Gψ_xd_diag = grad_xd_diagbasis(f, X)
+        Gψ_xd_diagtrunc = grad_xd_diagbasis(f, X, truncidx)
         @test Gψ_xd_diag[:,1:2:end] == Gψ_xd_diagtrunc
 
         Gψ_xd_diagt = zeros(Ne, Nψ)
@@ -675,8 +670,8 @@ end
 
         ## Test hess_xd_diagbasis
 
-        Hψ_xd_diag = hess_xd_diagbasis(fp, X)
-        Hψ_xd_diagtrunc = hess_xd_diagbasis(fp, X, truncidx)
+        Hψ_xd_diag = hess_xd_diagbasis(f, X)
+        Hψ_xd_diagtrunc = hess_xd_diagbasis(f, X, truncidx)
         @test Hψ_xd_diag[:,1:2:end] == Hψ_xd_diagtrunc
 
         Hψ_xd_diagt = zeros(Ne, Nψ)
@@ -692,17 +687,17 @@ end
 
         ## Test function evaluation
 
-        ψ = evaluate(fp, X)
+        ψ = evaluate(f, X)
         ψt = zeros(Ne)
 
         for i=1:Ne
-            ψt[i] = fp.f(X[:,i])
+            ψt[i] = f(X[:,i])
         end
         @test norm(ψ - ψt)<1e-10
 
         ## Test grad_xd
 
-        dψxd = grad_xd(fp, X)
+        dψxd = grad_xd(f, X)
         dψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -713,7 +708,7 @@ end
 
         ## Test hess_xd
 
-        d2ψxd = hess_xd(fp, X)
+        d2ψxd = hess_xd(f, X)
         d2ψxdt = zeros(Ne)
 
         for i=1:Ne
@@ -724,20 +719,20 @@ end
 
         ## Test grad_coeff
 
-        dψ_coefft = evaluate_basis(fp.f, X)
-        dψ_coeff = grad_coeff(fp, X)
-        dψ_coeffexpanded = grad_coeff(fp.f, X)
+        dψ_coefft = evaluate_basis(f, X)
+        dψ_coeff = grad_coeff(f, X)
+        dψ_coeffexpanded = grad_coeff(f, X)
 
         @test norm(dψ_coeff - dψ_coefft) < 1e-10
         @test norm(dψ_coeffexpanded - dψ_coefft) < 1e-10
 
         ## Test grad_coeff_grad_xd
 
-        dψ_coeff_xd = grad_coeff_grad_xd(fp, X)
+        dψ_coeff_xd = grad_coeff_grad_xd(f, X)
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(fp.f.B.B,Nx-1), fp.f.idx[j,1:end-1])
+            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
             fdiagj = f.B.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
