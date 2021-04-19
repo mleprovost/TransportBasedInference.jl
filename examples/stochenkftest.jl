@@ -1,4 +1,5 @@
 #let's see if we can get an example of the non-adaptive map filter to work
+using Revise
 using AdaptiveTransportMap
 using LinearAlgebra
 using Statistics
@@ -39,17 +40,19 @@ F = StateSpace(lorenz63!, h)
 model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, π0, 0, 0, 0, F)
 
 #set the initial condition of the TRUE state and generate true data
-x0 = rand(model.π0)
+x0 = rand(model.π0) #TODO may need to put this x0 into prob
 data = generate_lorenz63(model, x0, Tf)
 
-XY = [data.xt; data.yt]
+#let's see if we can instantiate a TMap
+p = 3 #degree
+γ = 2.0
+λ = 0.1
+δ = 1e-8
+κ = 10.0
 
-#have to set up some extra stuff for the map filter
-m = 10 #number of map components
-S = HermiteMap(m, XY, diag=true, α=1e-4)
+mapper = SparseTMap(Nx, Ny, p, γ, λ, δ, κ, x -> x, ϵy, Δtdyn, Δtobs, false, false)
 
-#now, define the mf map filter! We'll see how this goes...
-#mfmf = MfMapFilter()
 
-#stochenkf call will not work
-#mfmf = MfMapFilter(model.ϵy, model.Δtdyn, model.Δtobs)
+# we now have TMap <: SeqFilter, which will be a better starting point for
+# mfmapfilter than AdaptiveTransportMap. Figure out how to initialize...
+# need to find documentation on what all of these parameters mean

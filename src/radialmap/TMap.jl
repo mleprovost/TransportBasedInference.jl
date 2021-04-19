@@ -126,7 +126,6 @@ end
 
 ## Full map without local observation
 
-
 # Structure for the stochastic transport map
 struct TMap<:SeqFilter
 	"Knothe-Rosenblatt rearrangement"
