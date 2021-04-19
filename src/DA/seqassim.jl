@@ -7,7 +7,7 @@ Generic API for sequential data assimilation for any sequential filter of parent
 """
 function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64)
 
-Ne = size(X, 2)
+Ne = size(X)[end]
 
 step = ceil(Int, algo.Δtobs/algo.Δtdyn) # steps between observations
 statehist = Array{Float64,2}[]

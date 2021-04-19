@@ -112,3 +112,5 @@ function EnsembleStateMeas(state::Array{Float64,2}, meas::Array{Float64,2})
 
     return EnsembleStateMeas{Nx, Ny, Ne}(EnsembleState{Nx, Ne}(state), EnsembleState{Ny, Ne}(meas))
 end
+
+size(ens::EnsembleStateMeas{Nx, Ny, Ne}) where {Nx, Ny, Ne} = (Nx, Ny, Ne)
