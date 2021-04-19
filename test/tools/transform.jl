@@ -6,6 +6,17 @@
 
     X = randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
     X0 = deepcopy(X)
+
+    # Identity transformation
+    L = LinearTransform(Nx)
+    @test norm(L.μ)<1e-6
+    @test norm(L.L - Matrix(1.0*I, Nx, Nx))<1e-6
+
+    AdaptiveTransportMap.transform!(L, X)
+    @test norm(X - X0)<1e-6
+    AdaptiveTransportMap.itransform!(L, X)
+    @test norm(X - X0)<1e-6
+
     L = LinearTransform(X; diag = true)
 
     AdaptiveTransportMap.transform!(L, X);
@@ -25,6 +36,18 @@
 
     X .= randn(Nx).+ randn(Nx, Ne) .* randn(Nx, Ne)
     X0 = deepcopy(X)
+
+    # Identity transformation
+    L = LinearTransform(Nx)
+    @test norm(L.μ)<1e-6
+    @test norm(L.L - Matrix(1.0*I, Nx, Nx))<1e-6
+
+    AdaptiveTransportMap.transform!(L, X)
+    @test norm(X - X0)<1e-6
+    AdaptiveTransportMap.itransform!(L, X)
+    @test norm(X - X0)<1e-6
+
+
     L = LinearTransform(X; diag = true)
 
     AdaptiveTransportMap.transform!(L, X);

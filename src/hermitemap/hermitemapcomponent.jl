@@ -40,10 +40,14 @@ function MapComponent(I::IntegratedFunction; α::Float64=αreg)
     return MapComponent(I.m, I.Nψ, I.Nx, I, α)
 end
 
-function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg)
+function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg, b::String="CstProHermite")
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    B = MultiBasis(CstProHermite(m-2), Nx)
+    if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
+        B = MultiBasis(eval(Symbol(b))(m), Nx)
+    else
+        error("Undefined basis")
+    end
 
     return MapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
 end
@@ -52,11 +56,16 @@ function MapComponent(f::ExpandedFunction; α::Float64 = αreg)
     return MapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
-function MapComponent(m::Int64, Nx::Int64; α::Float64 = αreg)
+function MapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String="CstProHermite")
     Nψ = 1
 
     # m is the dimension of the basis
-    B = MultiBasis(CstProHermite(m-2), Nx)
+    if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
+        B = MultiBasis(eval(Symbol(b))(m), Nx)
+    else
+        error("Undefined basis")
+    end
+
     idx = zeros(Int64, Nψ, Nx)
     coeff = zeros(Nψ)
 
@@ -66,7 +75,7 @@ function MapComponent(m::Int64, Nx::Int64; α::Float64 = αreg)
 end
 
 function Base.show(io::IO, C::MapComponent)
-    println(io,"Map component of dimension "*string(C.Nx)*" with Nψ "*string(C.Nψ)*" active features")
+    println(io,"Map component of dimension "*string(C.Nx)*" with Nψ = "*string(C.Nψ)*" active features")
     # for i=1:B.m
     #     println(io, B[i])
     # end

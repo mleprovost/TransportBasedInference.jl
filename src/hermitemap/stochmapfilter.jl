@@ -46,8 +46,8 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Perturbation of the measurements
 	smf.ϵy(X, 1, Ny)
 
-	if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-12
-		M = HermiteMap(40, X; diag = true)
+	if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
+		M = HermiteMap(40, X; diag = true, b = "CstLinProHermite")
 		# Perform a kfold optimization of the map
 		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
 			     verbose = false, start = Ny+1, P = serial, hessprecond = true)
