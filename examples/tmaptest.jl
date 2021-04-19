@@ -50,7 +50,21 @@ p = 3 #degree
 δ = 1e-8
 κ = 10.0
 
-mapper = SparseTMap(Nx, Ny, p, γ, λ, δ, κ, x -> x, ϵy, Δtdyn, Δtobs, false, false)
+mapper = TMap(Nx, Ny, p, γ, λ, δ, κ, x -> x, ϵy, Δtdyn, Δtobs, false, false)
+
+##
+#aaah it worked! After much weeping and gnashing of teeth
+# need to make an ensemble now
+Ne = 500
+
+#generate initial conditions
+ens = EnsembleStateMeas(Nx, Ny, Ne)
+ens.state.S .= rand(model.π0, Ne)
+
+## see if this filtering thing works
+
+nassim = ceil(Int64, (tf - t0)/Δtobs)
+Xassim = seqassim(F, data, nassim, model.ϵx, mapper, ens, model.Ny, model.Nx, t0)
 
 
 # we now have TMap <: SeqFilter, which will be a better starting point for
