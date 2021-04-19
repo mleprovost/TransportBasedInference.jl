@@ -107,6 +107,7 @@ include("hermitemap/greedyfit.jl")
 include("hermitemap/optimize.jl")
 
 include("hermitemap/hermitemap.jl")
+include("hermitemap/totalordermap.jl")
 include("hermitemap/stochmapfilter.jl")
 
 
