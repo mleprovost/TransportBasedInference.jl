@@ -52,6 +52,7 @@ include("DA/gaspari.jl")
 include("DA/seqfilter.jl")
 include("DA/seqassim.jl")
 include("DA/postprocess.jl")
+include("DA/ensemble.jl")
 
 # Tools for EnKF
 include("enkf/senkf.jl")
