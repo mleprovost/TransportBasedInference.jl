@@ -1,5 +1,17 @@
 export StochEnKF#, SeqStochEnKF
 
+"""
+$(TYPEDEF)
+
+A structure for the stochastic ensemble Kalman filter (sEnKF)
+
+References:
+
+Evensen, G. (1994). Sequential data assimilation with a nonlinear quasi‐geostrophic model using Monte Carlo methods to forecast error statistics. Journal of Geophysical Research: Oceans, 99(C5), 10143-10162.
+## Fields
+$(TYPEDFIELDS)
+"""
+
 struct StochEnKF<:SeqFilter
     "Filter function"
     G::Function

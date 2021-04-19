@@ -27,9 +27,9 @@ struct PhyHermite <: Hermite
     scaled::Bool
 end
 
-# function Base.show(io::IO, P::PhyHermite{m}) where {m}
-# println(io,string(m)*"-th order physicist Hermite function, scaled = "*string(P.scaled))
-# end
+function Base.show(io::IO, P::PhyHermite)
+    println(io, string(P.m)*"-th order physicist Hermite function, scaled = "*string(P.scaled))
+end
 
 PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite(m, PhyPolyHermite(m; scaled = scaled), scaled)
 
@@ -221,7 +221,7 @@ end
 evaluate(P::PhyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
-function vander!(dV, P::PhyHermite, k::Int64, x::Array{Float64,1})
+function vander!(dV, P::PhyHermite, k::Int64, x)
     m = P.m
 
     if k==0

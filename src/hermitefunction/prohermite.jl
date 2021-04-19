@@ -9,8 +9,21 @@ export  ProHermite, degree,
         evaluate!, evaluate,
         vander!, vander
 
-# Create a structure to hold physicist Hermite functions defined as
-# ψen(x) = Hen(x)*exp(-x^2/4)
+
+"""
+    ProHermite <: Hermite
+
+An immutable structure for probabilistic Hermite functions defined as ψem(x) = Hem(x)*exp(-x^2/4).
+
+## Fields
+-  `m` : order of the function
+-  `Poly` : probabilistic Hermite polynomial of order m
+- `scaled` : with rescaling to have unitary norm
+
+## Constructors
+ProHermite(m, Poly, scaled)
+ProHermite(m; scaled = false)
+"""
 
 struct ProHermite <: Hermite
     m::Int64
@@ -18,9 +31,9 @@ struct ProHermite <: Hermite
     scaled::Bool
 end
 #
-# function Base.show(io::IO, P::ProHermite{m}) where {m}
-# println(io,string(m)*"-th order probabilistic Hermite function, scaled = "*string(P.scaled))
-# end
+function Base.show(io::IO, P::ProHermite)
+    println(io, string(P.m)*"-th order probabilistic Hermite function, scaled = "*string(P.scaled))
+end
 
 ProHermite(m::Int64; scaled::Bool = false) = ProHermite(m, ProPolyHermite(m; scaled = scaled), scaled)
 

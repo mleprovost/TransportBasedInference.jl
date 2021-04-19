@@ -15,9 +15,9 @@ struct PhyPolyHermite <: Hermite
     scaled::Bool
 end
 
-# function Base.show(io::IO, P::PhyPolyHermite{m}) where {m}
-# println(io,string(m)*"-th order physicist Hermite polynomial"*string(P.P.coeffs)*", scaled = "*string(P.scaled))
-# end
+function Base.show(io::IO, P::PhyPolyHermite)
+    println(io, string(P.m)*"-th order physicist Hermite polynomial"*string(P.P)*", scaled = "*string(P.scaled))
+end
 # Hn(x)  = (-1)ⁿ*exp(x²)dⁿ/dxⁿ exp(-x²)
 # Hn′(x) = 2n*Hn-1(x)
 # Hn″(x) = 2n*(n-1)*Hn-1(x)
