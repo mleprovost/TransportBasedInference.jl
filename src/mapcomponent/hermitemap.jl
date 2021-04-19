@@ -337,7 +337,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
 
         if typeof(P) <: Serial
         # We can skip the evaluation of the map on the observation components
-        @showprogress for i=start:Nx
+        @showprogress for i=start:Nx #optimize each component of the TM
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)

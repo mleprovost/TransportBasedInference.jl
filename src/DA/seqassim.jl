@@ -9,7 +9,7 @@ function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationTy
 
 Ne = size(X, 2)
 
-step = ceil(Int, algo.Δtobs/algo.Δtdyn)
+step = ceil(Int, algo.Δtobs/algo.Δtdyn) # steps between observations
 statehist = Array{Float64,2}[]
 push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
 
