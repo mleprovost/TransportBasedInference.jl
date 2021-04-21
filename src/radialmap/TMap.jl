@@ -161,7 +161,7 @@ end
 function (T::TMap)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar) where {Nx, Ny, Ne}
 
 # Perturb each observation
-T.ϵy(ens.meas)
+T.ϵy(ens.meas.S)
 augmented_ens = EnsembleState(Nx+Ny, Ne)
 augmented_ens.S[1:Ny,:] = deepcopy(ens.meas.S)
 augmented_ens.S[Ny+1:Ny+Nx,:] = deepcopy(ens.state.S)

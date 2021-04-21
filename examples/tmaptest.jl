@@ -52,8 +52,8 @@ p = 3 #degree
 
 mapper = TMap(Nx, Ny, p, γ, λ, δ, κ, x -> x, ϵy, Δtdyn, Δtobs, false, false)
 
-##
-#aaah it worked! After much weeping and gnashing of teeth
+
+## aaah it worked! After much weeping and gnashing of teeth
 # need to make an ensemble now
 Ne = 500
 

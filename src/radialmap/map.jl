@@ -38,12 +38,24 @@ size(U::KRmap) = (U.k, U.p)
 # Evaluate the map Uk at z = (z1,...,zk)
 function (U::KRmap)(z; start::Int64=1)
         k = U.k
-        @assert k==size(z,1) "Incorrect length of the input vector"
+        @assert k==size(z)[1] "Incorrect length of the input vector"
         out = zeros(k-start+1)
 
         for i=start:k
         # @inbounds out[i] = U.U[i](z[1:i])
         @inbounds out[i] = U.U[i](view(z,1:i))
+        end
+        return out
+end
+
+function (U::KRmap)(z::EnsembleState; start::Int64=1)
+        k = U.k
+        @assert k==size(z)[1] "Incorrect length of the input vector"
+        out = zeros(k-start+1)
+
+        for i=start:k
+        # @inbounds out[i] = U.U[i](z[1:i])
+        @inbounds out[i] = U.U[i](view(z.S,1:i))
         end
         return out
 end

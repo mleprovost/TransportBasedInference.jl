@@ -22,6 +22,27 @@ function center_std_diag(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
     end
 end
 
+function center_std_diag(Vk::Uk, X::EnsembleState, γ::Float64)
+    @get Vk (k, p)
+    @assert (p>0 && γ >0.0) || (p==0 && γ>=0.0) "Error scaling factor γ"
+
+    # As long as he have p>1, we have in fact p+2 centers
+    if p>0
+    ξ′ = view(Vk.ξ[end],:)
+    σ′ = view(Vk.σ[end],:)
+    tmp = view(X.S,k,:)
+    quantile!(ξ′, tmp, collect(1:p+2)./(p+3), sorted=true, alpha=0.5, beta = 0.5)
+
+    σ′[1] = ξ′[2]-ξ′[1]
+    σ′[end] = ξ′[end]-ξ′[end-1]
+    for j=2:p+1
+    @inbounds σ′[j] = 0.5*(ξ′[j+1]-ξ′[j-1])
+    end
+    rmul!(σ′, γ)
+
+    end
+end
+
 # Set ξ and σ for the off-diagonal entries, i.e. i=1:k-1 entries of Vk
 function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
     @get Vk (k, p)
@@ -76,6 +97,59 @@ function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
     end
 end
 
+function center_std_off(Vk::Uk, X::EnsembleState, γ::Float64)
+    @get Vk (k, p)
+    @assert (p>0 && γ >0.0) || (p==0 && γ>=0.0) "Error scaling factor γ"
+
+    if p==0
+
+    elseif p==1 # only one rbf
+        qq = zeros(3)
+        p_range = [0.25;0.5;0.75]
+        for i=1:k-1
+            @inbounds begin
+            ξ = view(Vk.ξ[i],:)
+            σ = view(Vk.σ[i],:)
+            tmp = view(X.S, i, :)
+            quantile!(qq, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
+            ξ .= qq[2]
+            σ .= (qq[3]-qq[1])*0.5
+            rmul!(σ, γ)
+            end
+        end
+    elseif p==2
+        p_range = collect(1.0:p)./(p+1.0)
+        for i=1:k-1
+            @inbounds begin
+            ξ = view(Vk.ξ[i],:)
+            σ = view(Vk.σ[i],:)
+            tmp = view(X.S,i,:)
+            quantile!(ξ, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
+            σ[1:2] .= (ξ[2]-ξ[1])*ones(2)
+            rmul!(σ, γ)
+            end
+        end
+
+    else
+        p_range = collect(1.0:p)./(p+1.0)
+        for i=1:k-1
+            @inbounds begin
+            ξ = view(Vk.ξ[i],:)
+            σ = view(Vk.σ[i],:)
+            tmp = view(X.S,i,:)
+            quantile!(ξ, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
+
+            σ[1] = (ξ[2]-ξ[1])
+            σ[end] = (ξ[end]-ξ[end-1])
+            for j=2:p-1
+            @inbounds σ[j] = 0.5*(ξ[j+1]-ξ[j-1])
+            end
+            rmul!(σ, γ)
+            end
+        end
+    end
+end
+
 # Assume an unsorted array
 function center_std(T::KRmap, X::AbstractMatrix{Float64};start::Int64=1)
     @get T (k, p, γ)
@@ -95,6 +169,25 @@ function center_std(T::KRmap, X::AbstractMatrix{Float64};start::Int64=1)
     end
 end
 
+
+# modify to use EnsembleState
+function center_std(T::KRmap, X::EnsembleState;start::Int64=1)
+    @get T (k, p, γ)
+    if p>0
+    Sens = deepcopy(X)
+    sort!(Sens,2)
+    if k==1
+        center_std_diag(T.U[1], Sens, γ)
+    else
+        for i=start:k
+            @inbounds begin
+            center_std_diag(T.U[i], Sens, γ)
+            center_std_off(T.U[i], Sens, γ)
+            end
+        end
+    end
+    end
+end
 
 
 ## Define center_std for Sparse maps

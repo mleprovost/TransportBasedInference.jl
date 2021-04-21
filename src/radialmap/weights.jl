@@ -49,6 +49,22 @@ function create_weights(T::KRmap, X::AbstractMatrix{Float64})
         return Weights(k, p, Ne, woff, wdiag, w∂k)
 end
 
+function create_weights(T::KRmap, X::EnsembleState)
+        Nx, Ne = size(X)
+        k = T.k
+        p = T.p
+        if p==0
+                woff  = zeros(k-1, Ne)
+                wdiag = zeros(2*k, Ne)
+                w∂k   = zeros(k, Ne)
+        else
+                woff  = zeros((k-1)*(p+1), Ne)
+                wdiag = zeros(k*(p+3), Ne)
+                w∂k   = zeros(k*(p+2), Ne)
+        end
+        return Weights(k, p, Ne, woff, wdiag, w∂k)
+end
+
 function weights(u::ui, z::Float64, woff)
         p = u.p
         # Check that woff has the right size
@@ -279,6 +295,65 @@ else
 end
 end
 
+function weights(T::KRmap, ens::EnsembleState{k,Ne}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2}) where {k, Ne}
+@assert T.k == k "Error in dimension of the ensemble and size of the KR map"
+p = T.p
+if p==0
+        if k==1
+        utmp = component(T.U[1],1)
+        @inbounds for l=1:Ne
+                wd = view(wdiag,:,l)
+                w∂ = view(w∂k,1:1,l)
+                weights(utmp, ens.S[1,l], wd, w∂)
+        end
+        else
+        # Fill wdiag and w∂k
+        @inbounds for i=1:k
+        utmp = component(T.U[i],i)
+                for l=1:Ne
+                wd = view(wdiag, (i-1)*2+1:i*2, l)
+                w∂ = view(w∂k,i:i,l)
+                weights(utmp, ens.S[i,l], wd, w∂)
+                end
+        end
+        # Fill woff
+        @inbounds  for i=1:k-1
+                utmp = component(T.U[end],i)
+                for l=1:Ne
+                wo = view(woff,i:i,l)
+                weights(utmp, ens.S[i,l], wo)
+                end
+        end
+        end
+else
+        if k==1
+        utmp = component(T.U[1],1)
+        @inbounds for l=1:Ne
+                wd = view(wdiag,:,l)
+                w∂ = view(w∂k,:,l)
+                weights(utmp, ens.S[1,l], wd, w∂)
+        end
+        else
+                # Fill wdiag and w∂k
+                @inbounds for i=1:k
+                        utmp = component(T.U[i],i)
+                        for l=1:Ne
+                        wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3), l)
+                        w∂ = view(w∂k, (i-1)*(p+2)+1:i*(p+2), l)
+                        weights(utmp, ens.S[i,l], wd, w∂)
+                        end
+                end
+                # Fill woff
+                @inbounds for i=1:k-1
+                        utmp = component(T.U[end],i)
+                        for l=1:Ne
+                        wo = view(woff, (i-1)*(p+1)+1:i*(p+1),l)
+                        weights(utmp, ens.S[i,l], wo)
+                        end
+                end
+        end
+end
+end
 
 function weights(T::KRmap, ens::EnsembleState{k, Ne}, W::Weights) where {k, Ne}
         @assert T.p == W.p "Error value of p, can't return weights"

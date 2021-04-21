@@ -69,6 +69,36 @@ end
 """
 $(TYPEDSIGNATURES)
 
+Evaluate the function `h` for the different state vectors of the `X` at time `t`, and store the results in observation vectors of `X`.
+`X` is an EnsembleStateMeas that contains the states in the field `state` and the observations in the field `meas`.
+The code can run in serial or with multithreading.
+"""
+function observe(h::Function, X::EnsembleStateMeas, t::Float64; P::Parallel=serial)
+    Nx, Ny, Ne = size(X)
+    if typeof(P)==Serial
+        @inbounds for i=1:Ne
+        #x = view(X, Ny+1:Nypx, i)
+        x = view(X.state.S, :, i)
+        #y = view(X, 1:Ny, i)
+        y = view(X.meas.S, :, i)
+
+        y .= h(x, t)
+        end
+    elseif typeof(P)==Thread
+        @inbounds Threads.@threads for i=1:Ne
+        #x = view(X, Ny+1:Nypx, i)
+        x = view(X.state.S, :, i)
+        #y = view(X, 1:Ny, i)
+        y = view(X.meas.S, :, i)
+
+        y .= h(x, t)
+        end
+    end
+end
+
+"""
+$(TYPEDSIGNATURES)
+
 Apply the observation operator of the `StateSpace` `F` to the ensemble matrix `X` at time `t`.
 """
 observe(F::StateSpace, x::Array{Float64,1}, t::Float64) = F.h(x, t)

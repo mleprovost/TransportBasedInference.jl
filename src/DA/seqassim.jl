@@ -11,7 +11,8 @@ Ne = size(X)[end]
 
 step = ceil(Int, algo.Δtobs/algo.Δtdyn) # steps between observations
 statehist = Array{Float64,2}[]
-push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
+#push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
+push!(statehist, X.state.S)
 
 n0 = ceil(Int64, t0/algo.Δtobs) + 1
 Acycle = n0:n0+J-1
@@ -25,7 +26,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
 	prob = remake(prob; tspan=tspan)
 
-	prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	prob_func(prob,i,repeat) = ODEProblem(prob.f, X.state.S[:,i], prob.tspan)
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
@@ -33,7 +34,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 				dense = false, save_everystep=false);
 
 	@inbounds for i=1:Ne
-	    X[Ny+1:Ny+Nx, i] .= deepcopy(sim[i])
+	    X.state.S[:,i] .= deepcopy(sim[i])
 	end
 
 
@@ -41,14 +42,17 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
     ystar = data.yt[:,Acycle[i]]
 	# Replace at some point by realobserve(model.h, t0+i*model.Δtobs, ens)
 	# Perform inflation for each ensemble member
-	ϵx(X, Ny+1, Ny+Nx)
+	#ϵx(X, Ny+1, Ny+Nx)
+	ϵx(X.state.S) #changed to use EnsembleStateMeas
 
 	# Compute measurements
-	observe(F.h, X, t0+i*algo.Δtobs, Ny, Nx)
+	#observe(F.h, X, t0+i*algo.Δtobs, Ny, Nx)
+	observe(F.h, X, t0+i*algo.Δtobs) #changed to use EnsembleStateMeas
 
     # Generate posterior samples.
 	# Note that the additive inflation of the observation is applied within the sequential filter.
-    X = algo(X, ystar, t0+i*algo.Δtobs-t0)
+    #X = algo(X, ystar, t0+i*algo.Δtobs-t0)
+	X = algo(X, ystar)
 
 	# Filter state
 	if algo.isfiltered == true

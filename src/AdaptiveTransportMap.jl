@@ -25,6 +25,7 @@ using ColorTypes
 using LaTeXStrings
 using Distributed
 using DynamicalSystems
+using Roots
 
 include("tools/get.jl")
 include("tools/parallel.jl")

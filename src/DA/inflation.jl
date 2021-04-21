@@ -128,7 +128,7 @@ Apply the additive inflation `A` to the lines `start` to `final` of an ensemble 
 i.e. xⁱ -> xⁱ + ϵⁱ with ϵⁱ ∼ `A.α`.
 """
 function (A::AdditiveInflation)(X, start::Int64, final::Int64; laplace::Bool=false)
-    Ne = size(X,2)
+    Ne = size(X)[end]
     @assert A.Nx == final - start + 1 "final-start + 1 doesn't match the length of the additive noise"
     # @show X[start:final, 1]
     if laplace == false
@@ -152,7 +152,7 @@ end
 Apply the additive inflation `A` to an ensemble matrix `X`,
 i.e. xⁱ -> xⁱ + ϵⁱ with ϵⁱ ∼ `A.α`.
 """
-(A::AdditiveInflation)(X; laplace::Bool=false) = A(X, 1, size(X,1); laplace = laplace)
+(A::AdditiveInflation)(X; laplace::Bool=false) = A(X, 1, size(X)[1]; laplace = laplace)
 
 """
         (A::AdditiveInflation)(x::Array{Float64,1})
