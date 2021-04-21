@@ -64,9 +64,9 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Evaluate the transport map
 	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
 
-	# Rescale ystar
-	ystar .-= view(M.L.μ,1:Ny)
-	ystar ./= M.L.L.diag[1:Ny]
+	# # Rescale ystar
+	# ystar .-= view(M.L.μ,1:Ny)
+	# ystar ./= M.L.L.diag[1:Ny]
 
 	# Generate the posterior samples by partial inversion of the map
 	hybridinverse!(X, F, M, ystar; start = Ny+1, P = serial)
@@ -145,11 +145,11 @@ function (smf::FixedOrderStochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Evaluate the transport map
 	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
 
-	@show mean(evaluate(M, X; start = Ny+1); dims = 2)
-	@show cov(evaluate(M, X; start = Ny+1); dims = 2)
-	# Rescale ystar
-	ystar .-= view(M.L.μ,1:Ny)
-	ystar ./= M.L.L.diag[1:Ny]
+	# @show mean(evaluate(M, X; start = Ny+1); dims = 2)
+	# @show cov(evaluate(M, X; start = Ny+1); dims = 2)
+	# # Rescale ystar
+	# ystar .-= view(M.L.μ,1:Ny)
+	# ystar ./= M.L.L.diag[1:Ny]
 
 	# Generate the posterior samples by partial inversion of the map
 	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
