@@ -10,7 +10,7 @@ const myblue = RGBA{Float64}(74/255,144/255,226/255,1)
 """
         heatmap(M::HermiteMap; start::Int64=1, color, degree)
 
-Plot recipe for an `ExpandedFunction`. We can either plot
+Plot recipe for an `ExpandedFunction`.  We can either plot
 the number of occurences of each variable (columns) in each map component (rows) if `degree = false` (default behavior),
 or the maximum multi-index of the features identified for each variable (columns) in each map component (rows) if `degree = true`.
 """

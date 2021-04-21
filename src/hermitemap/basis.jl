@@ -49,7 +49,7 @@ end
 @propagate_inbounds Base.getindex(B::CstProHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
 
 function Base.show(io::IO, B::CstProHermite)
-    println(io,"Basis of "*string(B.m)*" functions: Constant -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
+    println(io,"Basis of "*string(B.m)*" functions: Constant, 0th -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
 end
 
 
@@ -60,7 +60,7 @@ end
 @propagate_inbounds Base.getindex(B::CstPhyHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledPhyHermite[i-1]
 
 function Base.show(io::IO, B::CstPhyHermite)
-    println(io,"Basis of "*string(B.m)*" functions: Constant -> "*string(B.m-2)*"th degree Physicist Hermite function")
+    println(io,"Basis of "*string(B.m)*" functions: Constant, 0th -> "*string(B.m-2)*"th degree Physicist Hermite function")
 end
 
 struct CstLinProHermite <: Basis
@@ -70,7 +70,7 @@ end
 @propagate_inbounds Base.getindex(B::CstLinProHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledProHermite[i-2]
 
 function Base.show(io::IO, B::CstLinProHermite)
-    println(io,"Basis of "*string(B.m)*" functions: Constant, Linear -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
+    println(io,"Basis of "*string(B.m)*" functions: Constant, Linear, 0th -> "*string(B.m-3)*"th degree Probabilistic Hermite function")
 end
 
 struct CstLinPhyHermite <: Basis
@@ -80,7 +80,7 @@ end
 @propagate_inbounds Base.getindex(B::CstLinPhyHermite, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledPhyHermite[i-2]
 
 function Base.show(io::IO, B::CstLinPhyHermite)
-    println(io,"Basis of "*string(B.m)*" functions: Constant, Linear -> "*string(B.m-2)*"th degree Physicist Hermite function")
+    println(io,"Basis of "*string(B.m)*" functions: Constant, Linear 0th -> "*string(B.m-3)*"th degree Physicist Hermite function")
 end
 
 

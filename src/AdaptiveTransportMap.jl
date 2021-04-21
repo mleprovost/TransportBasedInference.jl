@@ -23,8 +23,6 @@ using PlotUtils
 using RecipesBase
 using ColorTypes
 using LaTeXStrings
-using UnPack
-
 
 include("tools/get.jl")
 include("tools/parallel.jl")
@@ -110,6 +108,7 @@ include("hermitemap/greedyfit.jl")
 include("hermitemap/optimize.jl")
 
 include("hermitemap/hermitemap.jl")
+include("hermitemap/totalordermap.jl")
 include("hermitemap/stochmapfilter.jl")
 
 

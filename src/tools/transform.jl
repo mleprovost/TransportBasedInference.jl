@@ -24,6 +24,9 @@ struct LinearTransform
     diag::Bool
 end
 
+# Identity transformation
+LinearTransform(Nx::Int64) = LinearTransform(Nx, zeros(Nx), Diagonal(ones(Nx)), true)
+
 function LinearTransform(X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0)
     Nx, Ne = size(X)
     μ = mean(X; dims = 2)[:,1]

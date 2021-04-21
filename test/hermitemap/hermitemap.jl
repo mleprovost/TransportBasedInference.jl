@@ -397,12 +397,12 @@ end
 
 
 @testset "Test inversion of the Hermite Map I" begin
-    using Test
+
     Nx = 100
     m = 20
     Ne = 500
     Xprior = randn(Nx, Ne).*randn(Nx, Ne)
-    Xpost = deepcopy(Xprior) .+ 0.3*randn(Nx, Ne)
+    Xpost = deepcopy(Xprior) .+ randn(Nx, Ne)
 
     M = HermiteMap(m, Xprior; diag = true)
     optimize(M, Xprior, 5; withconstant = false)
@@ -421,7 +421,47 @@ end
     m = 20
     Ne = 500
     Xprior = randn(Nx, Ne).*randn(Nx, Ne)
-    Xpost = deepcopy(Xprior) .+ 0.2*randn(Nx, Ne)
+    Xpost = deepcopy(Xprior) .+ randn(Nx, Ne)
+
+    M = HermiteMap(m, Xprior; diag = true)
+    Ystar = deepcopy(Xpost[1:Ny,:])# + 0.05*randn(Ny,Ne);
+
+    M = HermiteMap(m, Xprior)
+    optimize(M, Xprior, 5; withconstant = false, start = Ny+1)
+
+    F = evaluate(M, Xpost; start = Ny+1)
+    inverse!(Xprior, F, M, Ystar; start = Ny+1, P = serial)
+
+    @test norm(evaluate(M, Xprior; start = Ny+1)-evaluate(M, Xpost; start = Ny+1))/norm(evaluate(M, Xpost; start = Ny+1))<1e-6
+
+    @test norm(Xprior[Ny+1:end,:] - Xpost[Ny+1:end,:])/norm(Xpost[Ny+1:end,:])<1e-6
+end
+
+@testset "Test hybrid inversion of the Hermite Map I" begin
+    Nx = 100
+    m = 20
+    Ne = 500
+    Xprior = randn(Nx, Ne).*randn(Nx, Ne)
+    Xpost = deepcopy(Xprior) .+ randn(Nx, Ne)
+
+    M = HermiteMap(m, Xprior; diag = true)
+    optimize(M, Xprior, 5; withconstant = false)
+
+    F = evaluate(M, Xprior)
+    hybridinverse!(Xpost, F, M)
+
+    @test norm(Xprior - Xpost)/norm(Xpost)<1e-6
+end
+
+
+@testset "Test hybrid inversion of the Hermite Map II" begin
+
+    Nx = 100
+    Ny = 50
+    m = 20
+    Ne = 500
+    Xprior = randn(Nx, Ne).*randn(Nx, Ne)
+    Xpost = deepcopy(Xprior) .+ randn(Nx, Ne)
 
     M = HermiteMap(m, Xprior; diag = true)
     Ystar = deepcopy(Xpost[1:Ny,:])# + 0.05*randn(Ny,Ne);

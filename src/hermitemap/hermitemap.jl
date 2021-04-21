@@ -33,10 +33,22 @@ end
 @propagate_inbounds Base.setindex!(M::HermiteMap, C::MapComponent, i::Int) = setindex!(M.C,C,i)
 # @propagate_inbounds Base.lastindex(M::HermiteMap) = M.Nx
 
-function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0, α::Float64 = αreg)
+function Base.show(io::IO, M::HermiteMap)
+        println(io,"Hermite map of dimension "*string(M.Nx)*":")
+        for i=1:M.Nx
+                show(io, M.C[i])
+        end
+end
+
+function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0, α::Float64 = αreg, b::String="CstProHermite")
         L = LinearTransform(X; diag = diag, factor = factor)
 
-        B = CstProHermite(m-2)
+        if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
+            B = eval(Symbol(b))(m)
+        else
+            error("Undefined basis")
+        end
+
         Nx = size(X,1)
         Nψ = 1
         coeff = zeros(Nψ)
