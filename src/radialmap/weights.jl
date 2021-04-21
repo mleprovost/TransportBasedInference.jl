@@ -280,7 +280,7 @@ end
 end
 
 
-function weights(T::KRmap, ens::EnsembleState{k, Ne}, W::Weights) where {k, Ne}
+function weights(T::KRmap, X::EnsembleState{k, Ne}, W::Weights) where {k, Ne}
         @assert T.p == W.p "Error value of p, can't return weights"
         @assert T.k == W.k "Error value of k, can't return weights"
         @assert T.k == k "Error value of k, can't return weights"
@@ -413,6 +413,67 @@ function weights(Vk::SparseUk, z::Array{Float64,1})
 end
 
 function weights(Vk::SparseUk, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
+        @get Vk (k, p)
+        # Determine the number of coefficients for each ( ncoeff)
+        noff, ndiag, n∂k = ncoeff(k, p)
+        if noff ==0
+        woff  = Float64[]
+        else
+        woff  = zeros(noff, Ne)
+        end
+        # The constant of the diagonal term is omitted
+        if ndiag ==0
+        wdiag = Float64[]
+        else
+        wdiag = zeros(ndiag, Ne)
+        end
+        if n∂k==0
+        w∂k = Float64[]
+        else
+        w∂k   = zeros(n∂k, Ne)
+        end
+
+        count = 0
+        # Fill off-diagonal components
+        @inbounds for i=1:k-1
+                pidx = p[i]
+                if pidx == -1
+                        # No weights to compute
+                elseif pidx == 0
+                        # Linear function
+                        for l=1:Ne
+                        wo = view(woff,count+1,l:l)
+                        weights(component(Vk,i), ens.S[i,l], wo)
+                        end
+                        count +=1
+                else
+                        for l=1:Ne
+                        # Linear term + pidx rbf functions
+                        wo = view(woff,count+1:count+pidx+1,l:l)
+                        weights(component(Vk,i), ens.S[i,l], wo)
+                        end
+                        count += deepcopy(pidx) + 1
+                end
+        end
+        @assert count == noff "The size is correct for the off-diagonal weights"
+
+        # Fill diagonal components
+        if p[k] ==-1
+                # No weights to compute
+        else
+                for l=1:Ne
+                # Affine function for p[k]=0
+                # Constant plus (p[k]+2) ψ functions for p[k]>0
+                wd = view(wdiag,:,l:l)
+                w∂ = view(w∂k,:,l:l)
+                weights(component(Vk,k), ens.S[k,l], wd, w∂, withconstant = false)
+                end
+        end
+        return woff, wdiag, w∂k
+end
+
+function weights(Vk::SparseUk, X)
+        Nx, Ne = size(X)
         @get Vk (k, p)
         # Determine the number of coefficients for each ( ncoeff)
         noff, ndiag, n∂k = ncoeff(k, p)
