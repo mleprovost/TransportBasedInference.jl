@@ -23,6 +23,8 @@ using PlotUtils
 using RecipesBase
 using ColorTypes
 using LaTeXStrings
+using Distributed
+using DynamicalSystems
 
 include("tools/get.jl")
 include("tools/parallel.jl")
