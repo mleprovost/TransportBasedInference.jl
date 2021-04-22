@@ -44,18 +44,18 @@ x0 = rand(model.π0) #TODO may need to put this x0 into prob
 data = generate_lorenz63(model, x0, Tf)
 
 #let's see if we can instantiate a TMap
-p = 3 #degree
+p = 2 #3 #degree
 γ = 2.0
-λ = 0.1
+λ = 0.0 #0.1
 δ = 1e-8
-κ = 10.0
+κ = 4.0 #10.0
 
 mapper = TMap(Nx, Ny, p, γ, λ, δ, κ, x -> x, ϵy, Δtdyn, Δtobs, false, false)
 
 
 ## aaah it worked! After much weeping and gnashing of teeth
 # need to make an ensemble now
-Ne = 500
+Ne = 200
 
 #generate initial conditions
 ens = EnsembleStateMeas(Nx, Ny, Ne)
@@ -66,6 +66,7 @@ ens.state.S .= rand(model.π0, Ne)
 nassim = ceil(Int64, (tf - t0)/Δtobs)
 Xassim = seqassim(F, data, nassim, model.ϵx, mapper, ens, model.Ny, model.Nx, t0)
 
+#TODO determine if parameters are specified correctly
 
 # we now have TMap <: SeqFilter, which will be a better starting point for
 # mfmapfilter than AdaptiveTransportMap. Figure out how to initialize...
