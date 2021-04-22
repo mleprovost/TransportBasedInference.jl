@@ -355,7 +355,7 @@ else
 end
 end
 
-function weights(T::KRmap, X::EnsembleState{k, Ne}, W::Weights) where {k, Ne}
+function weights(T::KRmap, ens::EnsembleState{k, Ne}, W::Weights) where {k, Ne}
         @assert T.p == W.p "Error value of p, can't return weights"
         @assert T.k == W.k "Error value of k, can't return weights"
         @assert T.k == k "Error value of k, can't return weights"

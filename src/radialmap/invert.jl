@@ -18,8 +18,8 @@ function bracket(f, a, b)
         end
         counter += 1
     end
-    return outa, outb
     @assert counter<=(Niter-1) "Maximal number of iterations reached"
+    return outa, outb
 end
 
 function invert_uk(u::uk, x, κ; z0::Real=0.0)
@@ -31,8 +31,11 @@ function invert_uk(u::uk, x, κ; z0::Real=0.0)
     return (x-u.ak[1])/u.ak[2]
     else
     zlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
+    #println(zlim)
     #Ensure that the zero is bracketed
     zlim = bracket(z->u(z)-x, zlim[1], zlim[2])
+    #println(zlim)
+    #println(u.(zlim) .- x)
     # Roots.Brent()
     return find_zero(z->u(z)-x, zlim, Roots.Brent())
     end

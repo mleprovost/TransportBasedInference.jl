@@ -190,6 +190,7 @@ zplus[1:Ny] = deepcopy(ystar)
 @inbounds for i=1:Ne
 zplus[Ny+1:end] = zeros(Nx)
 invert_S(T.S, view(Sval,:,i), ystar, zplus)
+
 ens.state.S[:,i] = deepcopy(zplus[Ny+1:end])
 end
 

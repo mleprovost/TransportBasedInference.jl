@@ -33,8 +33,8 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 	sim = solve(ensemble_prob, Tsit5(), EnsembleThreads(),trajectories = Ne,
 				dense = false, save_everystep=false);
 
-	@inbounds for i=1:Ne
-	    X.state.S[:,i] .= deepcopy(sim[i])
+	@inbounds for j=1:Ne
+	    X.state.S[:,j] .= deepcopy(sim[j])
 	end
 
 
@@ -56,13 +56,14 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 
 	# Filter state
 	if algo.isfiltered == true
-		for i=1:Ne
-			statei = view(X, Ny+1:Ny+Nx, i)
+		for k=1:Ne
+			statei = view(X, Ny+1:Ny+Nx, k)
 			statei .= algo.G(statei)
 		end
 	end
 
-    push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
+    push!(statehist, deepcopy(X.state.S))
+	println("Finished step $i of $(length(Acycle))")
 	end
 
 return statehist

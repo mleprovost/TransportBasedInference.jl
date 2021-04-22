@@ -30,8 +30,8 @@ h(x,t) = x
 F = StateSpace(lorenz63!, h)
 
 # Define additive noise
-σx = 1e-1
-σy = 4.0
+σx = 1e-2
+σy = 2.0
 
 ϵx = AdditiveInflation(Nx, zeros(Nx), σx) #added to the dynamics
 ϵy = AdditiveInflation(Ny, zeros(Ny), σy) #observation noise

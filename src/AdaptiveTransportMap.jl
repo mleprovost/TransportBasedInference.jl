@@ -43,6 +43,9 @@ include("tools/banana.jl")
 include("tools/mixture.jl")
 include("tools/view.jl")
 
+#need the ensemble first - maybe the file location should be moved?
+include("DA/ensemble.jl")
+
 # Tools for state-space model
 include("statespace/system.jl")
 
@@ -53,7 +56,6 @@ include("DA/gaspari.jl")
 include("DA/seqfilter.jl")
 include("DA/seqassim.jl")
 include("DA/postprocess.jl")
-include("DA/ensemble.jl")
 
 # Tools for EnKF
 include("enkf/senkf.jl")
