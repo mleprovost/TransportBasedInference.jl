@@ -2,6 +2,7 @@ export totalordermapcomponent, totalordermap
 
 
 function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = false, b::String = "CstProHermite")
+    @assert order >= 0 "Order should be positive"
     if b ∈ ["CstProHermite"; "CstPhyHermite"]
         B = MultiBasis(eval(Symbol(b))(order+2), Nx)
     elseif b ∈ ["CstLinProHermite"; "CstLinPhyHermite"]

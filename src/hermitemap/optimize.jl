@@ -49,6 +49,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
             mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
             error = res.minimum
+            @show error
 
             # Compute initial loss on training set
             # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)

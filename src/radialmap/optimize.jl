@@ -209,6 +209,32 @@ function run_optimization(S::KRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1, 
 	end
 end
 
+function run_optimization(S::KRmap, X; start::Int64=1, P::Parallel=serial)
+	Nx, Ne = size(Nx)
+	@get S (k, p, γ, λ, δ, κ)
+	# Compute centers and widths
+	center_std(S, X)
+
+	# Create weights
+	W = create_weights(S, X)
+
+	# Compute weights
+	weights(S, X, W)
+
+	# Optimize coefficients with multi-threading
+	if typeof(P)==Serial
+		@inbounds for i=start:k
+				xopt = optimize(S.U[i], W, λ, δ)
+		    	modify_a(xopt, S.U[i])
+		end
+	else
+		@inbounds Threads.@threads for i=start:k
+				xopt = optimize(S.U[i], W, λ, δ)
+				modify_a(xopt, S.U[i])
+		end
+	end
+end
+
 
 # This code is written for k>1
 function run_optimization_parallel(S::KRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1) where {Nx,Ne}
@@ -220,6 +246,37 @@ function run_optimization_parallel(S::KRmap, ens::EnsembleState{Nx, Ne}; start::
 	W = create_weights(S, ens)
 	# Compute weights
 	weights(S, ens, W)
+	# Optimize coefficients with Distributed
+	# X = SharedArray{Float64}(k*(p+1)+2,k)
+	# scoeffs = SharedArray{Int64}(k)
+	X = SharedArray{Float64}(k*(p+1)+2,k-start+1)
+	scoeffs = SharedArray{Int64}(k-start+1)
+	@sync @distributed for i=start:k
+		@inbounds begin
+		xopt = optimize(S.U[i], W, λ, δ)
+		scoeffs[i-start+1] = deepcopy(size(xopt,1))
+	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
+		end
+	end
+
+	# Run this part in serial
+	@inbounds for i=start:k
+		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
+	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
+    end
+end
+
+# This code is written for k>1
+function run_optimization_parallel(S::KRmap, X; start::Int64=1)
+	Nx, Ne = size(X)
+	@get S (k, p, γ, λ, δ, κ)
+	@assert k>1 "This code is not written for k=1"
+	# Compute centers and widths
+	center_std(S, X)
+	# Create weights
+	W = create_weights(S, X)
+	# Compute weights
+	weights(S, X, W)
 	# Optimize coefficients with Distributed
 	# X = SharedArray{Float64}(k*(p+1)+2,k)
 	# scoeffs = SharedArray{Int64}(k)

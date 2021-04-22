@@ -117,11 +117,22 @@ function (T::SparseTMap)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar, t; P::Parall
 	# First line contains the range of integer 1:Ny
 	# Second line contains the associated indice of each measurement
 	@inbounds for i=1:Ny
-		@show i
 		assimilate_scalar_obs(T, ens, T.idx[:,i], ystar[i], t; P = P)
 	end
 
 	return ens
+end
+
+function (T::SparseTMap)(X, ystar, t; P::Parallel = serial)
+	@assert Ny==size(ystar,1) "Wrong dimension of the observation"
+	# idx contains the dictionnary of the mapping
+	# First line contains the range of integer 1:Ny
+	# Second line contains the associated indice of each measurement
+	@inbounds for i=1:Ny
+		assimilate_scalar_obs(T, X, T.idx[:,i], ystar[i], t; P = P)
+	end
+
+	return X
 end
 
 ## Full map without local observation

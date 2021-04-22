@@ -64,9 +64,9 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Evaluate the transport map
 	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
 
-	# Rescale ystar
-	ystar .-= view(M.L.μ,1:Ny)
-	ystar ./= M.L.L.diag[1:Ny]
+	# # Rescale ystar
+	# ystar .-= view(M.L.μ,1:Ny)
+	# ystar ./= M.L.L.diag[1:Ny]
 
 	# Generate the posterior samples by partial inversion of the map
 	hybridinverse!(X, F, M, ystar; start = Ny+1, P = serial)
@@ -119,10 +119,13 @@ function (smf::FixedOrderStochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Perturbation of the measurements
 	smf.ϵy(X, 1, Ny)
 
+	L = LinearTransform(X; diag = true)
+	transform!(L, X)
+
 	M = totalordermap(X, 1)
 
-	optimize(M, X, nothing; withconstant = false, withqr = true,
-			 verbose = false, start = Ny+1, P = serial, hessprecond = true)
+	optimize(M, X, nothing; withconstant = false, withqr = false,
+			 verbose = false, start = Ny+1, P = serial, hessprecond = false)
 
 	# if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
 	# 	M = HermiteMap(40, X; diag = true, b = "CstLinProHermite")
@@ -142,15 +145,18 @@ function (smf::FixedOrderStochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# Evaluate the transport map
 	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
 
-	# Rescale ystar
-	ystar .-= view(M.L.μ,1:Ny)
-	ystar ./= M.L.L.diag[1:Ny]
+	# @show mean(evaluate(M, X; start = Ny+1); dims = 2)
+	# @show cov(evaluate(M, X; start = Ny+1); dims = 2)
+	# # Rescale ystar
+	# ystar .-= view(M.L.μ,1:Ny)
+	# ystar ./= M.L.L.diag[1:Ny]
 
 	# Generate the posterior samples by partial inversion of the map
-	hybridinverse!(X, F, M, ystar; start = Ny+1, P = serial)
+	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
 	# @show getcoeff(M[Nypx])
 	# @show "after inversion"
 	# @show norm(X)
+	itransform!(L, Xpost)
 	return X
 end
 
