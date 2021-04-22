@@ -10,7 +10,7 @@ using TransportMap
 δ = 1e-4
 κ = 5.0
 
-U = KRmap(4,2, γ=γ, λ=λ, δ=δ, κ=κ)
+U = RadialMap(4,2, γ=γ, λ=λ, δ=δ, κ=κ)
 @test size(U) == (4,2)
 
 @test U.γ==1.0
@@ -23,7 +23,7 @@ for i=1:4
 end
 
 
-U = KRmap(2,2)
+U = RadialMap(2,2)
 U.U[1].a[1] .= ones(2+3)
 U.U[2].a[1] .= 5*ones(2+1)
 U.U[2].a[2] .= ones(2+3)
@@ -55,7 +55,7 @@ end
     κ = 5.0
     # p = [[2];[-1; 1]; []
 
-    U = SparseKRmap(4,fill(2,4), γ=γ, λ=λ, δ=δ, κ=κ)
+    U = SparseRadialMap(4,fill(2,4), γ=γ, λ=λ, δ=δ, κ=κ)
     @test size(U) == (4,[fill(2,i) for i=1:4])
 
     @test U.γ==1.0
@@ -70,7 +70,7 @@ end
 
 @testset "Sparse Knothe-Rosenblatt map I" begin
     p = [Int64[-1], [0; -1], [2; 0; 1], [-1 ;2;-1; 0]]
-    U = SparseKRmap(4,p)
+    U = SparseRadialMap(4,p)
 
     for i=1:4
         @test U.p[i]==p[i]

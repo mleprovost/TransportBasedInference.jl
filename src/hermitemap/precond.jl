@@ -35,7 +35,7 @@ end
 ldiv!(x, P::InvPreconditioner, b) = copyto!(x, P.InvP * b)
 dot(A::Array, P::InvPreconditioner, B::Vector) = ldiv!(A, P.F, B)
 
-function precond!(P, coeff, S::Storage, C::MapComponent, X)
+function precond!(P, coeff, S::Storage, C::HermiteMapComponent, X)
     Nψ = C.Nψ
     NxX, Ne = size(X)
     @assert NxX == C.Nx "Wrong dimension of the sample X"
@@ -128,11 +128,11 @@ function precond!(P, coeff, S::Storage, C::MapComponent, X)
     return P
 end
 
-precond!(S::Storage, C::MapComponent, X) = (P, coeff) -> precond!(P, coeff, S, C, X)
+precond!(S::Storage, C::HermiteMapComponent, X) = (P, coeff) -> precond!(P, coeff, S, C, X)
 
 
 
-function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2})
+function diagprecond!(P, coeff, S::Storage, C::HermiteMapComponent, X::Array{Float64,2})
     Nψ = C.Nψ
     Nx = C.Nx
     NxX, Ne = size(X)
@@ -210,4 +210,4 @@ function diagprecond!(P, coeff, S::Storage, C::MapComponent, X::Array{Float64,2}
     return P
 end
 
-diagprecond!(S::Storage, C::MapComponent, X::Array{Float64,2}) = (P, coeff) -> diagprecond!(P, coeff, S, C, X)
+diagprecond!(S::Storage, C::HermiteMapComponent, X::Array{Float64,2}) = (P, coeff) -> diagprecond!(P, coeff, S, C, X)

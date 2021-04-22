@@ -15,7 +15,7 @@ import AdaptiveTransportMap: ncoeff
               1.13653076177397;
               0.6725837371023421;
              -1.3126095306624133]
-    C = MapComponent(m, Nx, idx, coeff; α = 1e-6);
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 1e-6);
 
     Ne = 100
 
@@ -77,7 +77,7 @@ end
     transform!(L, X);
 
     # For α = 0.0
-    C = MapComponent(m, Nx, idx, coeff; α = 0.0)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.0)
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -106,7 +106,7 @@ end
 
 
     # For α = 1.0
-    C = MapComponent(m, Nx, idx, coeff; α = 1.0)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 1.0)
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -164,7 +164,7 @@ end
     transform!(L, X);
 
     # For α = 0.0
-    C = MapComponent(m, Nx, idx, coeff; α = 0.0)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.0)
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -203,7 +203,7 @@ end
     @test norm(coeff - coeff0)<1e-5
 
     # For α = 1e-1
-    C = MapComponent(m, Nx, idx, coeff; α = 0.1)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.1)
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)

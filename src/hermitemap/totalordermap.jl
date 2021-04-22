@@ -20,7 +20,7 @@ function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = fa
     Nψ = size(idx, 1)
 
     f = ExpandedFunction(B, idx, zeros(Nψ))
-    return MapComponent(IntegratedFunction(f))
+    return HermiteMapComponent(IntegratedFunction(f))
 end
 
 function totalordermap(X::Array{Float64,2}, order::Int64; diag::Bool=true, factor::Float64 = 1.0, withconstant::Bool = false, b::String = "CstProHermite")
@@ -28,7 +28,7 @@ function totalordermap(X::Array{Float64,2}, order::Int64; diag::Bool=true, facto
     L = LinearTransform(X; diag = diag, factor = factor)
 
     Nx = size(X,1)
-    C = MapComponent[]
+    C = HermiteMapComponent[]
     @inbounds for i=1:Nx
         push!(C, totalordermapcomponent(i, order; withconstant = withconstant, b = b))
     end

@@ -39,30 +39,30 @@ function invert_uk(u::uk, x, κ; z0::Real=0.0)
 end
 
 # y is the observation of size ny
-function invert_S(S::KRmap, Sval, ystar, zplus)
-@get S (k, p, κ)
-ny = size(ystar,1)
-zplus[1:ny] = ystar
-# Recursive 1D root-finding
-# Start optimization from the a priori component
-@inbounds for i=ny+1:k
-Ui = S.U[i]
-uk_i = component(Ui, i)
-zplus[i] = invert_uk(uk_i, Sval[i] - off_diagonal(Ui, view(zplus,1:i-1)), κ)
-end
+function invert(S::RadialMap, Sval, ystar, zplus)
+    @get S (Nx, p, κ)
+    ny = size(ystar,1)
+    zplus[1:ny] = ystar
+    # Recursive 1D root-finding
+    # Start optimization from the a priori component
+    @inbounds for i=ny+1:Nx
+    Ui = S.U[i]
+    uk_i = component(Ui, i)
+    zplus[i] = invert_uk(uk_i, Sval[i] - off_diagonal(Ui, view(zplus,1:i-1)), κ)
+    end
 end
 
 # y is the observation of size ny
-function invert_S(S::SparseKRmap, Sval, ystar, zplus)
-@get S (k, p, κ)
-ny = size(ystar,1)
-zplus[1:ny] .= ystar
+function invert(S::SparseRadialMap, Sval, ystar, zplus)
+    @get S (Nx, p, κ)
+    ny = size(ystar,1)
+    zplus[1:ny] .= ystar
 
-# Recursive 1D root-finding
-# Start optimization from the a priori component
-@inbounds for i=ny+1:k
-Ui = S.U[i]
-uk_i = component(Ui, i)
-zplus[i] = invert_uk(uk_i, Sval[i] - off_diagonal(Ui, view(zplus,1:i-1)), κ)
-end
+    # Recursive 1D root-finding
+    # Start optimization from the a priori component
+    @inbounds for i=ny+1:Nx
+    Ui = S.U[i]
+    uk_i = component(Ui, i)
+    zplus[i] = invert_uk(uk_i, Sval[i] - off_diagonal(Ui, view(zplus,1:i-1)), κ)
+    end
 end

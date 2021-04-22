@@ -89,10 +89,10 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
 end
 
 
-inverse!(X, F, C::MapComponent, S::Storage) = inverse!(X, F, C.I, S)
+inverse!(X, F, C::HermiteMapComponent, S::Storage) = inverse!(X, F, C.I, S)
 
 
-function inverse!(X::Array{Float64,2}, F, L::LinMapComponent, S::Storage)
+function inverse!(X::Array{Float64,2}, F, L::LinHermiteMapComponent, S::Storage)
     # Pay attention that S is computed in the renormalized space for improve performance !!!
     transform!(L.L, X)
     inverse!(X, F, L.C, S)

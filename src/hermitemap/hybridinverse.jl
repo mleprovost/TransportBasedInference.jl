@@ -366,9 +366,9 @@ end
 #     @assert convergence == true "Inversion did not converge"
 # end
 
-hybridinverse!(X, F, C::MapComponent, S::Storage; P::Parallel = serial) = hybridinverse!(X, F, C.I, S; P = P)
+hybridinverse!(X, F, C::HermiteMapComponent, S::Storage; P::Parallel = serial) = hybridinverse!(X, F, C.I, S; P = P)
 
-function hybridinverse!(X::Array{Float64,2}, F, L::LinMapComponent, S::Storage; P::Parallel = serial)
+function hybridinverse!(X::Array{Float64,2}, F, L::LinHermiteMapComponent, S::Storage; P::Parallel = serial)
     # Pay attention that S is computed in the renormalized space for improve performance !!!
     transform!(L.L, X)
     hybridinverse!(X, F, L.C, S; P = P)

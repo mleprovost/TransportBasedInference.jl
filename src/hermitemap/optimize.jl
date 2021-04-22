@@ -1,7 +1,7 @@
 export optimize
 
 
-function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
+function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false,
                   maxpatience::Int64 = 10^5, verbose::Bool = false,
                   hessprecond = true, P::Parallel = serial)
@@ -124,7 +124,7 @@ function optimize(C::MapComponent, X, maxterms::Union{Nothing, Int64, String};
 end
 
 
-function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
+function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false, hessprecond::Bool = true)
 
     transform!(L.L, X)
@@ -134,5 +134,5 @@ function optimize(L::LinMapComponent, X::Array{Float64,2}, maxterms::Union{Nothi
 
     itransform!(L.L, X)
 
-    return LinMapComponent(L.L, C_opt), error
+    return LinHermiteMapComponent(L.L, C_opt), error
 end

@@ -2,10 +2,10 @@ export iterative
 
 # Efficient least-square solution for affine diagonal component
 # using least-square formulation
-function iterative(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
-    @get Vk (k,p)
+function iterative(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
+    @get C (Nx,p)
     # Compute weights
-    ψ_off, ψ_mono, _ = weights(Vk, ens)
+    ψ_off, ψ_mono, _ = weights(C, ens)
 
     # no = size(ψ_off,1)
     # nd = size(ψ_mono,1)
@@ -49,11 +49,11 @@ function iterative(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, 
     return x
 end
 
-function iterative(Vk::SparseUk, X, λ, δ)
+function iterative(C::SparseRadialMapComponent, X, λ, δ)
     Nx, Ne = size(X)
-    @get Vk (k,p)
+    @get C (Nx,p)
     # Compute weights
-    ψ_off, ψ_mono, _ = weights(Vk, X)
+    ψ_off, ψ_mono, _ = weights(C, X)
 
     # no = size(ψ_off,1)
     # nd = size(ψ_mono,1)

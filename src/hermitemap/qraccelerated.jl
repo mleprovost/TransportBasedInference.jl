@@ -65,7 +65,7 @@ function updateQRscaling(F::QRscaling, S::Storage)
     return F
 end
 
-function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
+function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent, X)
     # In this version, c̃oeff is expressed in the rescaled space
     NxX, Ne = size(X)
     m = C.m
@@ -145,12 +145,12 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
     end
 end
 
-qrnegative_log_likelihood(F::QRscaling, S::Storage, C::MapComponent, X) = (J̃, dJ̃, c̃oeff) -> qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F, S, C, X)
+qrnegative_log_likelihood(F::QRscaling, S::Storage, C::HermiteMapComponent, X) = (J̃, dJ̃, c̃oeff) -> qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F, S, C, X)
 
 # F.Uinv'*precond(c)*F.Uinv
 
 # qrprecond! expects c̃oeff to be expressed in the QR scpace
-function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
+function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent, X)
     Nψ = C.Nψ
     NxX, Ne = size(X)
     @assert NxX == C.Nx "Wrong dimension of the sample X"
@@ -250,11 +250,11 @@ function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
     P .+= 2*C.α*F.L2Uinv
 end
 
-# qrprecond!(S::Storage, C::MapComponent, X) = (P, c̃oeff) -> qrprecond!(P, c̃oeff, S, C, X)
+# qrprecond!(S::Storage, C::HermiteMapComponent, X) = (P, c̃oeff) -> qrprecond!(P, c̃oeff, S, C, X)
 #
 
 #
-# function fqrnegative_log_likelihood!(c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
+# function fqrnegative_log_likelihood!(c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent, X)
 #     # In this version, c̃oeff is expressed in the rescaled space
 #     NxX, Ne = size(X)
 #     m = C.m
@@ -302,9 +302,9 @@ end
 #     return J̃
 # end
 #
-# fqrnegative_log_likelihood(F::QRscaling, S::Storage, C::MapComponent, X) = (c̃oeff) -> fqrnegative_log_likelihood!(c̃oeff, F, S, C, X)
+# fqrnegative_log_likelihood(F::QRscaling, S::Storage, C::HermiteMapComponent, X) = (c̃oeff) -> fqrnegative_log_likelihood!(c̃oeff, F, S, C, X)
 #
-# function gqrnegative_log_likelihood!(dJ̃, c̃oeff, F::QRscaling, S::Storage, C::MapComponent, X)
+# function gqrnegative_log_likelihood!(dJ̃, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent, X)
 #     # In this version, c̃oeff is expressed in the rescaled space
 #     NxX, Ne = size(X)
 #     m = C.m
@@ -366,5 +366,5 @@ end
 #     nothing
 # end
 #
-# gqrnegative_log_likelihood(F::QRscaling, S::Storage, C::MapComponent, X) = (dJ̃, c̃oeff) -> gqrnegative_log_likelihood!(dJ̃, c̃oeff, F, S, C, X)
+# gqrnegative_log_likelihood(F::QRscaling, S::Storage, C::HermiteMapComponent, X) = (dJ̃, c̃oeff) -> gqrnegative_log_likelihood!(dJ̃, c̃oeff, F, S, C, X)
 #

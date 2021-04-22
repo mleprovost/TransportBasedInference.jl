@@ -1,5 +1,5 @@
 
-@testset "Verify evaluation of LinHermiteMapComponent" begin
+@testset "Verify evaluation of LinHermiteHermiteMapComponent" begin
 
     Nx = 2
     Ne = 500
@@ -16,8 +16,8 @@
 
         f = ExpandedFunction(B, idx, coeff)
         R = IntegratedFunction(f)
-        C = MapComponent(R)
-        L = LinMapComponent(X, C)
+        C = HermiteMapComponent(R)
+        L = LinHermiteMapComponent(X, C)
 
         X0 = deepcopy(X)
 
@@ -40,7 +40,7 @@
 end
 
 
-@testset "Test optimization for LinMapComponent when maxterms = nothing" begin
+@testset "Test optimization for LinHermiteMapComponent when maxterms = nothing" begin
     Nx = 2
 
     m = 20
@@ -57,14 +57,14 @@ end
           0.2691388018878241;
          -2.9879004455954723];
 
-    C = MapComponent(m, Nx, idx, coeff);
+    C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
     C_new, error_new = AdaptiveTransportMap.optimize(C, X, nothing; verbose = false);
 
     itransform!(L, X)
 
-    L = LinMapComponent(Xlin, Clin)
+    L = LinHermiteMapComponent(Xlin, Clin)
 
     L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, nothing; verbose = false);
 
@@ -75,7 +75,7 @@ end
 end
 
 
-@testset "Test optimization for LinMapComponent when maxterms is an integer" begin
+@testset "Test optimization for LinHermiteMapComponent when maxterms is an integer" begin
     Nx = 2
 
     m = 20
@@ -92,14 +92,14 @@ end
                 0.2691388018878241;
                -2.9879004455954723];
 
-    C = MapComponent(m, Nx, idx, coeff);
+    C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
     C_new, error_new = AdaptiveTransportMap.optimize(C, X, 4; verbose = false);
 
     itransform!(L, X)
 
-    L = LinMapComponent(Xlin, Clin)
+    L = LinHermiteMapComponent(Xlin, Clin)
 
     L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, 4; verbose = false);
 
@@ -110,7 +110,7 @@ end
 end
 
 
-@testset "Test optimization for LinMapComponent when maxterms is kfold" begin
+@testset "Test optimization for LinHermiteMapComponent when maxterms is kfold" begin
     Nx = 2
 
     m = 20
@@ -127,14 +127,14 @@ end
                 0.2691388018878241;
                -2.9879004455954723];
 
-    C = MapComponent(m, Nx, idx, coeff);
+    C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
     C_new, error_new = AdaptiveTransportMap.optimize(C, X, "kfold"; verbose = false);
 
     itransform!(L, X)
 
-    L = LinMapComponent(Xlin, Clin)
+    L = LinHermiteMapComponent(Xlin, Clin)
 
     L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, "kfold"; verbose = false);
 
@@ -144,7 +144,7 @@ end
     @test norm(X - Xlin)<1e-8
 end
 
-@testset "Test optimization for LinMapComponent when maxterms is split" begin
+@testset "Test optimization for LinHermiteMapComponent when maxterms is split" begin
     Nx = 2
 
     m = 20
@@ -161,14 +161,14 @@ end
                 0.2691388018878241;
                -2.9879004455954723];
 
-    C = MapComponent(m, Nx, idx, coeff);
+    C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
     C_new, error_new = AdaptiveTransportMap.optimize(C, X, "split"; verbose = false);
 
     itransform!(L, X)
 
-    L = LinMapComponent(Xlin, Clin)
+    L = LinHermiteMapComponent(Xlin, Clin)
 
     L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, "split"; verbose = false);
 

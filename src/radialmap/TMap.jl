@@ -3,7 +3,7 @@ export SparseTMap, assimilate_scalar_obs, TMap
 # Structure for the stochastic transport map
 struct SparseTMap<:SeqFilter
 	"Knothe-Rosenblatt rearrangement"
-	S::SparseKRmap
+	S::SparseRadialMap
 
 	"Distance matrix"
 	dist::Matrix
@@ -49,7 +49,7 @@ function SparseTMap(Nx, Ny, Ne, p::Array{Array{Int64,1}}, γ, λ, δ, κ,
                     G::Function, β, ϵy::AdditiveInflation,
 				    Δtdyn::Float64, Δtobs::Float64, isfiltered::Bool, idx::Array{Int64,2})
 	#Create the map with scalar assimlation of the data
-	S = SparseKRmap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+	S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
 	return SparseTMap(S, dist, dyn, G, β, ϵy, Δtdyn, Δtobs, isfiltered,  EnsembleState(Nx+1, Ne), idx)
 end
 
@@ -141,7 +141,7 @@ end
 # Structure for the stochastic transport map
 struct TMap<:SeqFilter
 	"Knothe-Rosenblatt rearrangement"
-	S::KRmap
+	S::RadialMap
 
     "Filter function"
     G::Function
@@ -165,7 +165,7 @@ end
 function TMap(Nx, Ny, p, γ, λ, δ, κ, G::Function,
 	ϵy::AdditiveInflation, Δtdyn::Float64, Δtobs::Float64, islocal::Bool, isfiltered::Bool)
 	#Create the map
-	S = KRmap(Nx+Ny, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+	S = RadialMap(Nx+Ny, p; γ = γ, λ = λ, δ =  δ, κ = κ)
 	return TMap(S, G, ϵy, Δtdyn, Δtobs, islocal, isfiltered)
 end
 

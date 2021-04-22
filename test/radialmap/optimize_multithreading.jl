@@ -5,7 +5,7 @@ using SpecialFunctions, ForwardDiff
 using TransportMap
 
 
-@testset "SparseKRmap Multi-threading test with optimization and evaluation of the resulting map" begin
+@testset "SparseRadialMap Multi-threading test with optimization and evaluation of the resulting map" begin
 
    ensemble = EnsembleState(Matrix([6.831108232125667   6.831108465893829  10.748176564682273  17.220877261555913;
       7.341399771164814   7.341399033871628  11.440770534993137  18.015116463525178;
@@ -30,9 +30,9 @@ using TransportMap
 
 
       order = [[-1], [1; 1], [-1; 1; 0], [-1; 1; 1; 0]]
-      T       = SparseKRmap(4, order; λ = 0.0)
-      Tserial = SparseKRmap(4, order; λ = 0.0)
-      Tthread = SparseKRmap(4, order; λ = 0.0)
+      T       = SparseRadialMap(4, order; λ = 0.0)
+      Tserial = SparseRadialMap(4, order; λ = 0.0)
+      Tthread = SparseRadialMap(4, order; λ = 0.0)
 
       # Run serial code
       @time run_optimization(T, ensemble; start = 2)

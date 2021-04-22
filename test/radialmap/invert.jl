@@ -58,7 +58,7 @@ end
     ens = EnsembleState(k, Ne)
     ens⁺ = EnsembleState(k, Ne)
     ens.S .= randn(k,Ne) .* randn(k,Ne)
-    S = KRmap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
+    S = RadialMap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
     run_optimization(S, ens);
 
 
@@ -86,8 +86,8 @@ end
     ens = EnsembleState(k, Ne)
     ens⁺ = EnsembleState(k, Ne)
     ens.S .= randn(k,Ne) .* randn(k,Ne)
-    Sserial = KRmap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
-    Sthread = KRmap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
+    Sserial = RadialMap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
+    Sthread = RadialMap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
     run_optimization(Sserial, ens; P = serial);
     run_optimization(Sthread, ens; P = thread);
 

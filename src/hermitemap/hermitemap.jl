@@ -20,10 +20,10 @@ struct HermiteMap
         m::Int64
         Nx::Int64
         L::LinearTransform
-        C::Array{MapComponent,1}
+        C::Array{HermiteMapComponent,1}
 end
 
-function HermiteMap(L::LinearTransform, C::Array{MapComponent,1})
+function HermiteMap(L::LinearTransform, C::Array{HermiteMapComponent,1})
         m = C[end].m
         Nx = C[end].Nx
 
@@ -31,7 +31,7 @@ function HermiteMap(L::LinearTransform, C::Array{MapComponent,1})
 end
 
 @propagate_inbounds Base.getindex(M::HermiteMap, i::Int) = getindex(M.C,i)
-@propagate_inbounds Base.setindex!(M::HermiteMap, C::MapComponent, i::Int) = setindex!(M.C,C,i)
+@propagate_inbounds Base.setindex!(M::HermiteMap, C::HermiteMapComponent, i::Int) = setindex!(M.C,C,i)
 
 function Base.show(io::IO, M::HermiteMap)
         println(io,"Hermite map of dimension "*string(M.Nx)*":")
@@ -52,12 +52,12 @@ function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Floa
         Nx = size(X,1)
         Nψ = 1
         coeff = zeros(Nψ)
-        C = MapComponent[]
+        C = HermiteMapComponent[]
         idx = zeros(Int, Nψ, Nx)
         @inbounds for i=1:Nx
                 MultiB = MultiBasis(B, i)
                 vidx = idx[:,1:i]
-                push!(C, MapComponent(IntegratedFunction(ExpandedFunction(MultiB, vidx, coeff)); α = α))
+                push!(C, HermiteMapComponent(IntegratedFunction(ExpandedFunction(MultiB, vidx, coeff)); α = α))
         end
 
         return HermiteMap(m, Nx, L, C)

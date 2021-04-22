@@ -17,7 +17,7 @@ using AdaptiveTransportMap: ncoeff
               0.2691388018878241;
              -2.9879004455954723];
 
-    C = MapComponent(m, Nx, idx, coeff);
+    C = HermiteMapComponent(m, Nx, idx, coeff);
     C0 = deepcopy(C)
 
     C_noqr, error_noqr = AdaptiveTransportMap.optimize(C, X, nothing; withqr = false, verbose = false);
@@ -53,7 +53,7 @@ end
     L = LinearTransform(X; diag = true)
     transform!(L, X);
 
-    C = MapComponent(m, Nx);
+    C = HermiteMapComponent(m, Nx);
 
     C_noqr, error_noqr = AdaptiveTransportMap.optimize(C, X, 4; withqr = false, verbose = false);
     C_qr, error_qr = AdaptiveTransportMap.optimize(C, X, 4; withqr = true, verbose = false);
@@ -61,7 +61,7 @@ end
 
     idx0 = getidx(C_noqr)
 
-    C0 = MapComponent(m, Nx, idx0, zeros(size(idx0,1)));
+    C0 = HermiteMapComponent(m, Nx, idx0, zeros(size(idx0,1)));
 
     S = Storage(C0.I.f, X)
     coeff0 = getcoeff(C0)
@@ -93,7 +93,7 @@ end
     L = LinearTransform(X; diag = true)
     transform!(L, X)
 
-    C = MapComponent(m, Nx)
+    C = HermiteMapComponent(m, Nx)
 
     n_folds = 5
     folds = kfolds(1:size(X,2), k = n_folds)
@@ -161,7 +161,7 @@ end
     L = LinearTransform(X; diag = true)
     transform!(L, X)
 
-    C = MapComponent(m, Nx)
+    C = HermiteMapComponent(m, Nx)
 
     nvalid = ceil(Int64, floor(0.2*size(X,2)))
     X_train = X[:,nvalid+1:end]
