@@ -97,16 +97,16 @@ end
 
 
 
-@testset "Weights of a Uk map" begin
-Vk = RadialMap(1, 0)
+@testset "Weights of a RadialMapComponent map" begin
+C = RadialMap(1, 0)
 
-woff, wdiag, w∂k = create_weights(Vk)
+woff, wdiag, w∂k = create_weights(C)
 # wdiag = zeros(2)
 # w∂k = zeros(1)
 # woff = zeros(0)
 
-# w, w∂k = weights(TransportMap.component(Vk.U[1],1), [2.0], w, w∂k)
-weights(TransportMap.component(Vk.U[1],1), 2.0, wdiag, w∂k)
+# w, w∂k = weights(TransportMap.component(C.U[1],1), [2.0], w, w∂k)
+weights(TransportMap.component(C.U[1],1), 2.0, wdiag, w∂k)
 
 @test size(wdiag,1) == 2
 @test size(w∂k, 1) == 1
@@ -116,11 +116,11 @@ weights(TransportMap.component(Vk.U[1],1), 2.0, wdiag, w∂k)
 @test w∂k   == [1.0]
 
 #
-Vk = RadialMap(1, 1)
+C = RadialMap(1, 1)
 
-woff, wdiag, w∂k = create_weights(Vk)
+woff, wdiag, w∂k = create_weights(C)
 
-weights(Vk, [2.0], woff,  wdiag, w∂k)
+weights(C, [2.0], woff,  wdiag, w∂k)
 #
 @test size(woff,1)==0
 @test size(wdiag,1) == 1+3
@@ -131,12 +131,12 @@ weights(Vk, [2.0], woff,  wdiag, w∂k)
 @test w∂k   == [ψ₀′(0.0, 1.0)(2.0); rbf(0.0, 1.0)(2.0); ψpp1′(0.0, 1.0)(2.0)]
 #
 #
-Vk = RadialMap(2, 0)
+C = RadialMap(2, 0)
 
-woff, wdiag, w∂k = create_weights(Vk)
+woff, wdiag, w∂k = create_weights(C)
 
 #
-weights(Vk, [-2.0; 2.0], woff, wdiag, w∂k)
+weights(C, [-2.0; 2.0], woff, wdiag, w∂k)
 #
 @test size(woff, 1) == 1
 @test size(wdiag,1) == 2+2
@@ -148,11 +148,11 @@ weights(Vk, [-2.0; 2.0], woff, wdiag, w∂k)
 @test woff == [-2.0]
 #
 #
-Vk = RadialMap(3, 2)
+C = RadialMap(3, 2)
 
-woff, wdiag, w∂k = create_weights(Vk)
+woff, wdiag, w∂k = create_weights(C)
 
-weights(Vk, [-2.0; 2.0; 5.0], woff, wdiag, w∂k)
+weights(C, [-2.0; 2.0; 5.0], woff, wdiag, w∂k)
 #
 @test size(woff,1) == 2*(2+1)
 @test size(wdiag,1) == 3*(2+3)
@@ -175,23 +175,23 @@ Ne = 50
 p=2
 
 ens = EnsembleState(Nx, Ne)
-Vk = RadialMap(Nx, p)
+C = RadialMap(Nx, p)
 
-W = create_weights(Vk, ens)
+W = create_weights(C, ens)
 
 woff  = deepcopy(W.woff)
 wdiag = deepcopy(W.wdiag)
 w∂k   = deepcopy(W.w∂k)
-weights(Vk, ens, woff, wdiag, w∂k)
+weights(C, ens, woff, wdiag, w∂k)
 
-weights(Vk, ens, W)
+weights(C, ens, W)
 
 @test woff  == W.woff
 @test wdiag == W.wdiag
 @test w∂k   == W.w∂k
 
-woval, wval, w∂kval = create_weights(Vk)
-weights(Vk, zeros(5), woval, wval, w∂kval)
+woval, wval, w∂kval = create_weights(C)
+weights(C, zeros(5), woval, wval, w∂kval)
 
 @test woff[:,1] == woval
 @test wdiag[:,1] == wval
@@ -199,59 +199,59 @@ weights(Vk, zeros(5), woval, wval, w∂kval)
 end
 
 
-@testset "Weights SparseUkMap I" begin
+@testset "Weights SparseRadialMapComponentMap I" begin
 ## k = 1 and p = -1
-Vk = SparseUk(1, [-1])
+C = SparseRadialMapComponent(1, [-1])
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==0
 @test nd ==0
 @test n∂ ==0
 
-wo, wd, w∂ = weights(Vk, [1.0])
+wo, wd, w∂ = weights(C, [1.0])
 @test wo == Float64[]
 @test wd == Float64[]
 @test w∂ == Float64[]
 
-## k = 1 and p = 0
-Vk = SparseUk(1, [0])
+## Nx = 1 and p = 0
+C = SparseRadialMapComponent(1, [0])
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==0
 @test nd ==1
 @test n∂ ==1
 
-wo, wd, w∂ = weights(Vk, [2.0])
+wo, wd, w∂ = weights(C, [2.0])
 @test wo == Float64[]
 @test wd == [2.0]
 @test w∂ == [1.0]
 
 
 z = randn(1,5)
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 @test wo == Float64[]
 @test wd == z
 @test w∂ == ones(1,5)
 
-## k = 1 and p = 2
-Vk = SparseUk(1, [2])
+## Nx = 1 and p = 2
+C = SparseRadialMapComponent(1, [2])
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==0
 @test nd ==2+2
 @test n∂ ==2+2
 
-wo, wd, w∂ = weights(Vk, [2.0])
+wo, wd, w∂ = weights(C, [2.0])
 @test wo == Float64[]
 @test wd == [ψ₀(0.0, 1.0)(2.0); ψj(0.0, 1.0)(2.0);ψj(0.0, 1.0)(2.0);ψpp1(0.0, 1.0)(2.0)]
 @test w∂ == [ψ₀′(0.0, 1.0)(2.0); rbf(0.0, 1.0)(2.0);rbf(0.0, 1.0)(2.0);ψpp1′(0.0, 1.0)(2.0)]
 
 z = randn(1,5)
 
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 @test wo == Float64[]
 
 for i=1:5
@@ -262,62 +262,62 @@ end
 
 end
 
-@testset "Weights SparseUk II" begin
+@testset "Weights SparseRadialMapComponent II" begin
 ## k=2 and p = [-1 -1]
-Vk = SparseUk(2, [-1; -1])
+C = SparseRadialMapComponent(2, [-1; -1])
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==0
 @test nd ==0
 @test n∂ ==0
 
 
-wo, wd, w∂ = weights(Vk, [1.0; 2.0])
+wo, wd, w∂ = weights(C, [1.0; 2.0])
 @test wo == Float64[]
 @test wd == Float64[]
 @test w∂ == Float64[]
 
-wo, wd, w∂ = weights(Vk, EnsembleState(randn(2,5)))
+wo, wd, w∂ = weights(C, EnsembleState(randn(2,5)))
 @test wo == Float64[]
 @test wd == Float64[]
 @test w∂ == Float64[]
 
 ## k = 2 and p = [-1 0]
-Vk = SparseUk(2, [-1; 0])
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+C = SparseRadialMapComponent(2, [-1; 0])
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==0
 @test nd ==1
 @test n∂ ==1
 
-wo, wd, w∂ = weights(Vk, [1.0; 2.0])
+wo, wd, w∂ = weights(C, [1.0; 2.0])
 @test wo == Float64[]
 @test wd == [2.0]
 @test w∂ == [1.0]
 
 z = deepcopy(randn(2, 5))
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 @test wo == Float64[]
 @test wd[1,:] == z[2,:]
 @test w∂[1,:] == ones(5)
 
 ## k = 2 and p = [-1 1]
-Vk = SparseUk(2, [-1; 1])
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+C = SparseRadialMapComponent(2, [-1; 1])
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==0
 @test nd ==3
 @test n∂ ==3
 
-wo, wd, w∂ = weights(Vk, [3.0; -2.0])
+wo, wd, w∂ = weights(C, [3.0; -2.0])
 @test wo == Float64[]
 @test wd == [ψ₀(0.0, 1.0)(-2.0); ψj(0.0, 1.0)(-2.0);ψpp1(0.0, 1.0)(-2.0)]
 @test w∂ == [ψ₀′(0.0, 1.0)(-2.0); rbf(0.0, 1.0)(-2.0);ψpp1′(0.0, 1.0)(-2.0)]
 
 z = randn(2,5)
 
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 @test wo == Float64[]
 
 for i=1:5
@@ -328,21 +328,21 @@ end
 
 ## k = 2 and p = [0 1]
 
-Vk = SparseUk(2, [0; 1])
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+C = SparseRadialMapComponent(2, [0; 1])
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==1
 @test nd ==3
 @test n∂ ==3
 
-wo, wd, w∂ = weights(Vk, [3.0; -2.0])
+wo, wd, w∂ = weights(C, [3.0; -2.0])
 @test wo == [3.0]
 @test wd == [ψ₀(0.0, 1.0)(-2.0); ψj(0.0, 1.0)(-2.0);ψpp1(0.0, 1.0)(-2.0)]
 @test w∂ == [ψ₀′(0.0, 1.0)(-2.0); rbf(0.0, 1.0)(-2.0);ψpp1′(0.0, 1.0)(-2.0)]
 
 z = randn(2,5)
 
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 
 
 for i=1:5
@@ -355,49 +355,49 @@ end
 
 ## k = 2 and p = [2 1]
 
-Vk = SparseUk(2, [2; 1])
-Vk.ξ[1] .= randn(2)
-Vk.ξ[2] .= randn(3)
-Vk.σ[1] .= rand(2)
-Vk.σ[2] .= rand(3)
+C = SparseRadialMapComponent(2, [2; 1])
+C.ξ[1] .= randn(2)
+C.ξ[2] .= randn(3)
+C.σ[1] .= rand(2)
+C.σ[2] .= rand(3)
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==3
 @test nd ==3
 @test n∂ ==3
 
-wo, wd, w∂ = weights(Vk, [3.0; -2.0])
-@test wo == [3.0; rbf(Vk.ξ[1][1], Vk.σ[1][1])(3.0); rbf(Vk.ξ[1][2], Vk.σ[1][2])(3.0)]
-@test wd == [ψ₀(Vk.ξ[2][1], Vk.σ[2][1])(-2.0); ψj(Vk.ξ[2][2], Vk.σ[2][2])(-2.0);ψpp1(Vk.ξ[2][3], Vk.σ[2][3])(-2.0)]
-@test w∂ == [ψ₀′(Vk.ξ[2][1], Vk.σ[2][1])(-2.0); rbf(Vk.ξ[2][2], Vk.σ[2][2])(-2.0);ψpp1′(Vk.ξ[2][3], Vk.σ[2][3])(-2.0)]
+wo, wd, w∂ = weights(C, [3.0; -2.0])
+@test wo == [3.0; rbf(C.ξ[1][1], C.σ[1][1])(3.0); rbf(C.ξ[1][2], C.σ[1][2])(3.0)]
+@test wd == [ψ₀(C.ξ[2][1], C.σ[2][1])(-2.0); ψj(C.ξ[2][2], C.σ[2][2])(-2.0);ψpp1(C.ξ[2][3], C.σ[2][3])(-2.0)]
+@test w∂ == [ψ₀′(C.ξ[2][1], C.σ[2][1])(-2.0); rbf(C.ξ[2][2], C.σ[2][2])(-2.0);ψpp1′(C.ξ[2][3], C.σ[2][3])(-2.0)]
 
 
 z = randn(2,5)
 
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 
 
 for i=1:5
     zi  = z[:,i]
-    @test norm(wo[:,i]  - [zi[1]; rbf(Vk.ξ[1][1], Vk.σ[1][1])(zi[1]); rbf(Vk.ξ[1][2], Vk.σ[1][2])(zi[1])])<1e-14
+    @test norm(wo[:,i]  - [zi[1]; rbf(C.ξ[1][1], C.σ[1][1])(zi[1]); rbf(C.ξ[1][2], C.σ[1][2])(zi[1])])<1e-14
 
-    @test norm(wd[:,i]  - [ψ₀(Vk.ξ[2][1], Vk.σ[2][1])(zi[2]); ψj(Vk.ξ[2][2], Vk.σ[2][2])(zi[2]);ψpp1(Vk.ξ[2][3], Vk.σ[2][3])(zi[2])])<1e-14
-    @test norm(w∂[:,i]  - [ψ₀′(Vk.ξ[2][1], Vk.σ[2][1])(zi[2]); rbf(Vk.ξ[2][2], Vk.σ[2][2])(zi[2]);ψpp1′(Vk.ξ[2][3], Vk.σ[2][3])(zi[2])])<1e-14
+    @test norm(wd[:,i]  - [ψ₀(C.ξ[2][1], C.σ[2][1])(zi[2]); ψj(C.ξ[2][2], C.σ[2][2])(zi[2]);ψpp1(C.ξ[2][3], C.σ[2][3])(zi[2])])<1e-14
+    @test norm(w∂[:,i]  - [ψ₀′(C.ξ[2][1], C.σ[2][1])(zi[2]); rbf(C.ξ[2][2], C.σ[2][2])(zi[2]);ψpp1′(C.ξ[2][3], C.σ[2][3])(zi[2])])<1e-14
 end
 
 
 ## k = 4 p = [-1 2 0 2]
 
-Vk = SparseUk(4, [-1; 2; 0; 2])
+C = SparseRadialMapComponent(4, [-1; 2; 0; 2])
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==3+1
 @test nd ==4
 @test n∂ ==4
 
-wo, wd, w∂ = weights(Vk, [-1.0; 4.0; 3.0; -2.0])
+wo, wd, w∂ = weights(C, [-1.0; 4.0; 3.0; -2.0])
 
 @test norm(wo - [4.0; rbf(0.0,1.0)(4.0); rbf(0.0,1.0)(4.0); 3.0])<1e-14
 @test norm(wd - [ψ₀(0.0, 1.0)(-2.0); ψj(0.0, 1.0)(-2.0); ψj(0.0, 1.0)(-2.0);ψpp1(0.0, 1.0)(-2.0)])<1e-14
@@ -405,7 +405,7 @@ wo, wd, w∂ = weights(Vk, [-1.0; 4.0; 3.0; -2.0])
 
 z = randn(4, 5)
 
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 for i=1:5
     zi  = z[:,i]
     @test norm(wo[:,i]  - [zi[2]; rbf(0.0,1.0)(zi[2]); rbf(0.0,1.0)(zi[2]); zi[3]])<1e-14
@@ -416,15 +416,15 @@ end
 
 ## k = 5 and p = [2 -1 0 -1 0]
 
-Vk = SparseUk(5, [2; -1; 0; -1; 0])
+C = SparseRadialMapComponent(5, [2; -1; 0; -1; 0])
 
-no, nd, n∂ = ncoeff(Vk.k, Vk.p)
+no, nd, n∂ = ncoeff(C.Nx, C.p)
 
 @test no ==3+1
 @test nd ==1
 @test n∂ ==1
 
-wo, wd, w∂ = weights(Vk, [-1.0; 4.0; 3.0; 5.0; -2.0])
+wo, wd, w∂ = weights(C, [-1.0; 4.0; 3.0; 5.0; -2.0])
 
 @test norm(wo - [-1.0; rbf(0.0,1.0)(-1.0); rbf(0.0,1.0)(-1.0); 3.0])<1e-14
 @test norm(wd - [-2.0])<1e-14
@@ -432,7 +432,7 @@ wo, wd, w∂ = weights(Vk, [-1.0; 4.0; 3.0; 5.0; -2.0])
 
 z = randn(5, 5)
 
-wo, wd, w∂ = weights(Vk, EnsembleState(z))
+wo, wd, w∂ = weights(C, EnsembleState(z))
 for i=1:5
     zi  = z[:,i]
     @test norm(wo[:,i]  - [zi[1]; rbf(0.0,1.0)(zi[1]); rbf(0.0,1.0)(zi[1]); zi[3]])<1e-14

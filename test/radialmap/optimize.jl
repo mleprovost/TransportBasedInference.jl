@@ -4,14 +4,14 @@ using LinearAlgebra, Statistics
 using SpecialFunctions, ForwardDiff
 using TransportMap
 
-@testset "Test optimization for k=1 and p=0" begin
-   k = 1
+@testset "Test optimization for Nx=1 and p=0" begin
+   Nx = 1
    Ne = 10
    p = 0
    γ = 2.0
 
 
-   ens = EnsembleState(k, Ne)
+   ens = EnsembleState(Nx, Ne)
    ens.S .=     reshape([-1.5438
       -1.5518
        0.8671
@@ -24,7 +24,7 @@ using TransportMap
        0.8199],1,Ne)
 
 
-   S = RadialMap(k, p; γ = γ);
+   S = RadialMap(Nx, p; γ = γ);
    W = create_weights(S, ens)
    center_std(S, ens);
    weights(S, ens, W)
@@ -47,19 +47,19 @@ using TransportMap
 
 end
 
-@testset "Test optimization for k=2 and p=0" begin
+@testset "Test optimization for Nx=2 and p=0" begin
 
 
-k = 2
+Nx = 2
 Ne = 10
 p = 0
 γ = 2.0
 λ = 0.0
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-@time S = RadialMap(k, p; γ = γ)
+@time S = RadialMap(Nx, p; γ = γ)
 
 center_std(S, ens);
 
@@ -84,16 +84,16 @@ xopt = optimize_ricardo(S.U[2], W, λ, δ)
 @test norm(xopt -[0.353742957402480; -0.512879943932609; 1.411791355362390 ])<1e-10
 end
 
-@testset "Test optimization for k=3 and p=0" begin
+@testset "Test optimization for Nx=3 and p=0" begin
 
-   k = 3
+   Nx = 3
    Ne = 10
    p = 0
    γ = 2.0
 
-   ens = EnsembleState(k, Ne)
+   ens = EnsembleState(Nx, Ne)
    ens.S .= [0.1733    0.2760    1.0093; 0.6163    0.4598  0.0510;0.8639   -0.2175   -0.4404;-1.4169    0.7961   -0.8485;0.2000   -1.5180   -0.2404;0.1958   -1.0749    0.6029;-0.1511   -3.0722   -1.5163;0.8928    0.5214   -0.0683;-0.3642   -0.9910    0.7824;-0.8262   -0.2531   -1.4207]';
-   S = RadialMap(k, p; γ = γ)
+   S = RadialMap(Nx, p; γ = γ)
    center_std(S, ens)
    W = create_weights(S, ens)
    weights(S, ens, W)
@@ -117,13 +117,13 @@ end
 end
 
 
-@testset "Test optimization for k=1 and p=3" begin
-   k = 1
+@testset "Test optimization for Nx=1 and p=3" begin
+   Nx = 1
    Ne = 10
    p = 3
    γ = 2.0
 
-   ens = EnsembleState(k, Ne)
+   ens = EnsembleState(Nx, Ne)
    ens.S .=     reshape([-1.5438
       -1.5518
        0.8671
@@ -136,7 +136,7 @@ end
        0.8199],1,Ne)
 
 
-   S = RadialMap(k, p; γ = γ);
+   S = RadialMap(Nx, p; γ = γ);
    W = create_weights(S, ens)
    center_std(S, ens);
    weights(S, ens, W)
@@ -161,19 +161,19 @@ end
 
 
 
-@testset "Test optimization for k=2 and p=2" begin
+@testset "Test optimization for Nx=2 and p=2" begin
 
 
-k = 2
+Nx = 2
 Ne = 10
 p = 2
 γ = 2.0
 λ = 0.0
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-@time S = RadialMap(k, p; γ = γ)
+@time S = RadialMap(Nx, p; γ = γ)
 
 center_std(S, ens);
 
@@ -349,7 +349,7 @@ x[no+1] = -dot(μψ[:,1], g_mono[:,1])-dot(μψ_off[:,1], g_off[:,1])
 x[no+2:nx] .= deepcopy(g_mono[:,1])
 
 
-if k>1
+if Nx>1
 x[1:no] .= deepcopy(g_off[:,1])
 end
 
@@ -370,18 +370,18 @@ end
 
  end
 
- @testset "Test optimization for k=2 and p=3" begin
+ @testset "Test optimization for Nx=2 and p=3" begin
 
 
- k = 2
+ Nx = 2
  Ne = 10
  p = 3
  γ = 2.0
 
- ens = EnsembleState(k, Ne)
+ ens = EnsembleState(Nx, Ne)
  ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
- @time S = RadialMap(k, p; γ = γ)
+ @time S = RadialMap(Nx, p; γ = γ)
 
  center_std(S, ens);
 
@@ -406,18 +406,18 @@ end
 end
 
 
-@testset "Test optimization for k=3 and p=3" begin
+@testset "Test optimization for Nx=3 and p=3" begin
 
 
-   k = 3
+   Nx = 3
    Ne = 10
    p = 3
    γ = 2.0
 
-   ens = EnsembleState(k, Ne)
+   ens = EnsembleState(Nx, Ne)
    ens.S .= [0.1733    0.2760    1.0093; 0.6163    0.4598  0.0510;0.8639   -0.2175   -0.4404;-1.4169    0.7961   -0.8485;0.2000   -1.5180   -0.2404;0.1958   -1.0749    0.6029;-0.1511   -3.0722   -1.5163;0.8928    0.5214   -0.0683;-0.3642   -0.9910    0.7824;-0.8262   -0.2531   -1.4207]';
 
-   @time S = RadialMap(k, p; γ = γ)
+   @time S = RadialMap(Nx, p; γ = γ)
 
    center_std(S, ens);
    W = create_weights(S, ens)
@@ -471,14 +471,14 @@ end
 
 ## Test optimization with SparseRadialMap
 
-@testset "Test optimization with SparseRadialMap k=1 and p=0" begin
+@testset "Test optimization with SparseRadialMap Nx=1 and p=0" begin
 
-k = 1
+Nx = 1
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .=     reshape([0.017374310426544
    0.735136768751132
   -0.984272698022620
@@ -490,7 +490,7 @@ ens.S .=     reshape([0.017374310426544
    0.028803259857213
   -0.614918061442867],1,Ne)
 
-  S = SparseRadialMap(k, [0]; γ = γ)
+  S = SparseRadialMap(Nx, [0]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[1], ens, S.λ, S.δ)
@@ -498,14 +498,14 @@ ens.S .=     reshape([0.017374310426544
 @test norm(xopt - [0.295725384806749; 1.871626642209824])<1e-14
 end
 
-@testset "Test optimization with SparseRadialMap k=1 and p=2" begin
+@testset "Test optimization with SparseRadialMap Nx=1 and p=2" begin
 
-k = 1
+Nx = 1
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .=     reshape([0.017374310426544
    0.735136768751132
   -0.984272698022620
@@ -517,7 +517,7 @@ ens.S .=     reshape([0.017374310426544
    0.028803259857213
   -0.614918061442867],1,Ne)
 
-  S = SparseRadialMap(k, [2]; γ = γ)
+  S = SparseRadialMap(Nx, [2]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[1], ens, S.λ, S.δ)
@@ -527,14 +527,14 @@ ens.S .=     reshape([0.017374310426544
 end
 
 
-@testset "Test optimization with SparseRadialMap k=2 and p=[0 0]" begin
+@testset "Test optimization with SparseRadialMap Nx=2 and p=[0 0]" begin
 
-k = 2
+Nx = 2
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  -0.737609918489704   0.413557038884469
    0.602049917255313   2.288861842327617
    1.099780136322616   0.087381084349074
@@ -546,7 +546,7 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
   -0.228309526653063   1.272982451997852
   -0.684323467801375   0.567990940582801]')
 
-  S = SparseRadialMap(k, [[-1], [0; 0]])
+  S = SparseRadialMap(Nx, [[-1], [0; 0]])
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[2], ens, S.λ, S.δ)
@@ -555,14 +555,14 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
 @test norm(xopt - [-0.350857378599181; -0.139765206111085; 0.877501808357206])<1e-14
 end
 
-@testset "Test optimization with SparseRadialMap k=2 and p=[0 1]" begin
+@testset "Test optimization with SparseRadialMap Nx=2 and p=[0 1]" begin
 
-k = 2
+Nx = 2
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  -0.737609918489704   0.413557038884469
    0.602049917255313   2.288861842327617
    1.099780136322616   0.087381084349074
@@ -574,7 +574,7 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
   -0.228309526653063   1.272982451997852
   -0.684323467801375   0.567990940582801]')
 
-  S = SparseRadialMap(k, [[-1], [0; 1]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [0; 1]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[2], ens, S.λ, S.δ)
@@ -586,14 +586,14 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
 end
 
 
-@testset "Test optimization with SparseRadialMap k=2 and p=[0 2]" begin
+@testset "Test optimization with SparseRadialMap Nx=2 and p=[0 2]" begin
 
-k = 2
+Nx = 2
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  -0.737609918489704   0.413557038884469
    0.602049917255313   2.288861842327617
    1.099780136322616   0.087381084349074
@@ -605,7 +605,7 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
   -0.228309526653063   1.272982451997852
   -0.684323467801375   0.567990940582801]')
 
-  S = SparseRadialMap(k, [[-1], [0; 2]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [0; 2]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[2], ens, S.λ, S.δ)
@@ -617,14 +617,14 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
    0.695142104297181])<1e-14
 end
 
-@testset "Test optimization with SparseRadialMap k=2 and p=[2 2]" begin
+@testset "Test optimization with SparseRadialMap Nx=2 and p=[2 2]" begin
 
-k = 2
+Nx = 2
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  -0.737609918489704   0.413557038884469
    0.602049917255313   2.288861842327617
    1.099780136322616   0.087381084349074
@@ -636,7 +636,7 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
   -0.228309526653063   1.272982451997852
   -0.684323467801375   0.567990940582801]')
 
-  S = SparseRadialMap(k, [[-1], [2; 2]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [2; 2]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[2], ens, S.λ, S.δ)
@@ -653,14 +653,14 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
 end
 
 
-@testset "Test optimization with SparseRadialMap k=2 and p=[2 0]" begin
+@testset "Test optimization with SparseRadialMap Nx=2 and p=[2 0]" begin
 
-k = 2
+Nx = 2
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  -0.737609918489704   0.413557038884469
    0.602049917255313   2.288861842327617
    1.099780136322616   0.087381084349074
@@ -672,7 +672,7 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
   -0.228309526653063   1.272982451997852
   -0.684323467801375   0.567990940582801]')
 
-  S = SparseRadialMap(k, [[-1], [2; 0]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [2; 0]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[2], ens, S.λ, S.δ)
@@ -683,14 +683,14 @@ ens.S .= Matrix([  -0.737609918489704   0.413557038884469
 end
 
 
-@testset "Test optimization with SparseRadialMap k=3 and p=[0 0 0]" begin
+@testset "Test optimization with SparseRadialMap Nx=3 and p=[0 0 0]" begin
 
-k = 3
+Nx = 3
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    1.121729788801830   0.216910057645809   1.225483370520654
   -0.015678780143914  -0.433156720743754   0.831025086529337
@@ -702,7 +702,7 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
   -2.003193706192794  -0.846920007816157   0.559462142237872
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
-  S = SparseRadialMap(k, [[-1], [-1; -1], [0; 0; 0]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [-1; -1], [0; 0; 0]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[3], ens, S.λ, S.δ)
@@ -711,14 +711,14 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
 
 end
 
-@testset "Test optimization with SparseRadialMap k=3 and p=[0 -1 0]" begin
+@testset "Test optimization with SparseRadialMap Nx=3 and p=[0 -1 0]" begin
 
-k = 3
+Nx = 3
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    1.121729788801830   0.216910057645809   1.225483370520654
   -0.015678780143914  -0.433156720743754   0.831025086529337
@@ -730,7 +730,7 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
   -2.003193706192794  -0.846920007816157   0.559462142237872
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
-  S = SparseRadialMap(k, [[-1], [-1; -1], [0; -1; 0]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [-1; -1], [0; -1; 0]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[3], ens, S.λ, S.δ)
@@ -739,14 +739,14 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
 
 end
 
-@testset "Test optimization with SparseRadialMap k=3 and p=[2 -1 0]" begin
+@testset "Test optimization with SparseRadialMap Nx=3 and p=[2 -1 0]" begin
 
-k = 3
+Nx = 3
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    1.121729788801830   0.216910057645809   1.225483370520654
   -0.015678780143914  -0.433156720743754   0.831025086529337
@@ -758,7 +758,7 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
   -2.003193706192794  -0.846920007816157   0.559462142237872
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
-  S = SparseRadialMap(k, [[-1], [-1; -1], [2; -1; 0]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [-1; -1], [2; -1; 0]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[3], ens, S.λ, S.δ)
@@ -771,14 +771,14 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
 
 end
 
-@testset "Test optimization with SparseRadialMap k=3 and p=[2 -1 2]" begin
+@testset "Test optimization with SparseRadialMap Nx=3 and p=[2 -1 2]" begin
 
-k = 3
+Nx = 3
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    1.121729788801830   0.216910057645809   1.225483370520654
   -0.015678780143914  -0.433156720743754   0.831025086529337
@@ -790,7 +790,7 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
   -2.003193706192794  -0.846920007816157   0.559462142237872
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
-  S = SparseRadialMap(k, [[-1], [-1; -1], [2; -1; 2]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [-1; -1], [2; -1; 2]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[3], ens, S.λ, S.δ)
@@ -807,14 +807,14 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
 end
 
 
-@testset "Test optimization with SparseRadialMap k=3 and p=[-1 -1 2]" begin
+@testset "Test optimization with SparseRadialMap Nx=3 and p=[-1 -1 2]" begin
 
-k = 3
+Nx = 3
 Ne = 10
 γ = 2.0
 
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    1.121729788801830   0.216910057645809   1.225483370520654
   -0.015678780143914  -0.433156720743754   0.831025086529337
@@ -826,7 +826,7 @@ ens.S .= Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
   -2.003193706192794  -0.846920007816157   0.559462142237872
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
-  S = SparseRadialMap(k, [[-1], [-1; -1], [-1; -1; 2]]; γ = γ)
+  S = SparseRadialMap(Nx, [[-1], [-1; -1], [-1; -1; 2]]; γ = γ)
   center_std(S, ens)
 
   xopt = optimize_ricardo(S.U[3], ens, S.λ, S.δ)

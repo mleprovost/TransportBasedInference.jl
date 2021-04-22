@@ -48,17 +48,17 @@ end
 end
 
 @testset "Invert S" begin
-    k = 100
+    Nx = 100
     Ne = 200
     p = 2
     γ = 2.0
     λ = 0.1
     δ = 1e-5
     κ = 10.0
-    ens = EnsembleState(k, Ne)
-    ens⁺ = EnsembleState(k, Ne)
-    ens.S .= randn(k,Ne) .* randn(k,Ne)
-    S = RadialMap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
+    ens = EnsembleState(Nx, Ne)
+    ens⁺ = EnsembleState(Nx, Ne)
+    ens.S .= randn(Nx,Ne) .* randn(Nx,Ne)
+    S = RadialMap(Nx, p, γ=γ, λ=λ, δ=δ, κ=κ)
     run_optimization(S, ens);
 
 
@@ -71,23 +71,23 @@ end
     invert_S(S, view(Sval,:,i), ystar, zplus)
     end
 
-    @test norm(S(ens⁺)[51:k,:] - Sval[51:k,:])<1e-8
+    @test norm(S(ens⁺)[51:Nx,:] - Sval[51:Nx,:])<1e-8
 end
 
 
 @testset "Invert S with Multi-threading" begin
-    k = 100
+    Nx = 100
     Ne = 200
     p = 2
     γ = 2.0
     λ = 0.1
     δ = 1e-5
     κ = 10.0
-    ens = EnsembleState(k, Ne)
-    ens⁺ = EnsembleState(k, Ne)
-    ens.S .= randn(k,Ne) .* randn(k,Ne)
-    Sserial = RadialMap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
-    Sthread = RadialMap(k, p, γ=γ, λ=λ, δ=δ, κ=κ)
+    ens = EnsembleState(Nx, Ne)
+    ens⁺ = EnsembleState(Nx, Ne)
+    ens.S .= randn(Nx,Ne) .* randn(Nx,Ne)
+    Sserial = RadialMap(Nx, p, γ=γ, λ=λ, δ=δ, κ=κ)
+    Sthread = RadialMap(Nx, p, γ=γ, λ=λ, δ=δ, κ=κ)
     run_optimization(Sserial, ens; P = serial);
     run_optimization(Sthread, ens; P = thread);
 
@@ -102,8 +102,8 @@ end
 
     end
 
-    @test norm(Sserial(ens⁺)[51:k,:] - Sval[51:k,:])<1e-8
-    @test norm(Sthread(ens⁺)[51:k,:] - Sval[51:k,:])<1e-8
+    @test norm(Sserial(ens⁺)[51:Nx,:] - Sval[51:Nx,:])<1e-8
+    @test norm(Sthread(ens⁺)[51:Nx,:] - Sval[51:Nx,:])<1e-8
 
 end
 

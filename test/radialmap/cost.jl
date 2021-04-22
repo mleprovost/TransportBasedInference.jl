@@ -6,12 +6,12 @@ using TransportMap
 
 
 @testset "Validate loss function I" begin
-    k = 1
+    Nx = 1
     Ne = 10
     p = 3
     γ = 2.0
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .=     reshape([-1.5438
        -1.5518
         0.8671
@@ -22,13 +22,13 @@ using TransportMap
         0.1354
         0.4178
         0.8199],1,Ne)
-    S = RadialMap(k, p; γ = γ);
+    S = RadialMap(Nx, p; γ = γ);
     center_std(S, ens);
 
     W = create_weights(S, ens)
     weights(S, ens, W)
 
-    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,k);
+    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,Nx);
     μψ = deepcopy(mean(ψ_mono, dims=2))
     σψ = deepcopy(std(ψ_mono, dims=2, corrected=false))
 
@@ -92,12 +92,12 @@ using TransportMap
 end
 
 @testset "Validate loss function II " begin
-    k = 1
+    Nx = 1
     Ne = 10
     p = 3
     γ = 2.0
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .=     reshape([-1.5438
        -1.5518
         0.8671
@@ -108,13 +108,13 @@ end
         0.1354
         0.4178
         0.8199],1,Ne)
-    S = RadialMap(k, p; γ = γ);
+    S = RadialMap(Nx, p; γ = γ);
     center_std(S, ens);
 
     W = create_weights(S, ens)
     weights(S, ens, W)
 
-    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,k);
+    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,Nx);
     μψ = deepcopy(mean(ψ_mono, dims=2))
     σψ = deepcopy(std(ψ_mono, dims=2, corrected=false))
 

@@ -29,8 +29,8 @@ U.U[2].a[1] .= 5*ones(2+1)
 U.U[2].a[2] .= ones(2+3)
 
 
-U11 = Uk(1,2, [zeros(4)], [ones(4)], [ones(2+3)])
-U22 = Uk(2,2, [zeros(2),zeros(4)], [ones(2), ones(4)], [5*ones(2+1), ones(2+3)])
+U11 = RadialMapComponent(1,2, [zeros(4)], [ones(4)], [ones(2+3)])
+U22 = RadialMapComponent(2,2, [zeros(2),zeros(4)], [ones(2), ones(4)], [5*ones(2+1), ones(2+3)])
 
 @test U([1.0; 1.0]) == [U11([1.0]); U22([1.0; 1.0])]
 
@@ -39,7 +39,7 @@ U22 = Uk(2,2, [zeros(2),zeros(4)], [ones(2), ones(4)], [5*ones(2+1), ones(2+3)])
 @test U([1.0; 2.0]) == [U11([1.0]); U22([1.0; 2.0])]
 
 
-U = Uk(2,2)
+U = RadialMapComponent(2,2)
 U.a[2] .= ones(5)
 
 @test ForwardDiff.gradient(x->U(x), [1.0;1.0])[2] == (ψ₀′(0.0, 1.0)(1.0)+ 2*rbf(0.0, 1.0)(1.0)+ψpp1′(0.0, 1.0)(1.0))

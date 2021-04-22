@@ -31,12 +31,12 @@ end
 
 @testset "Center and standard deviations of a sample for diagonal component I" begin
 
-    k = 1
+    Nx = 1
     Ne = 10
     p = 3
     γ = 3.0
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .=     reshape([-1.5438
        -1.5518
         0.8671
@@ -48,7 +48,7 @@ end
         0.4178
         0.8199],1,Ne)
 
-    S = Uk(k, p);
+    S = RadialMapComponent(Nx, p);
     TransportMap.sort!(ens, 2)
     center_std_diag(S, ens, γ)
 
@@ -59,12 +59,12 @@ end
 
 @testset "Center and standard deviations of a sample for diagonal component II" begin
 
-    k = 1
+    Nx = 1
     Ne = 10
     p = 6
     γ = 1.5
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .=     reshape([-1.5438
        -1.5518
         0.8671
@@ -76,7 +76,7 @@ end
         0.4178
         0.8199],1,Ne)
 
-    S = Uk(k, p);
+    S = RadialMapComponent(Nx, p);
     TransportMap.sort!(ens, 2)
     center_std_diag(S, ens, γ)
 
@@ -86,16 +86,16 @@ end
 end
 
 @testset "Center and standard deviations of a sample for diagonal component III" begin
-    k = 2
+    Nx = 2
     Ne = 10
     p = 1
     γ = 3.0
     λ = 0.0
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-    S = Uk(k, p)
+    S = RadialMapComponent(Nx, p)
     TransportMap.sort!(ens,2)
 
     center_std_diag(S, ens, γ)
@@ -108,16 +108,16 @@ end
 
 @testset "Center and standard deviations of a sample for off-diagonal component" begin
 
-k = 2
+Nx = 2
 Ne = 10
 p = 2
 γ = 3.0
 λ = 0.0
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-S = Uk(k, p)
+S = RadialMapComponent(Nx, p)
 TransportMap.sort!(ens, 2)
 center_std_diag(S, ens, γ)
 center_std_off(S, ens, γ)
@@ -134,16 +134,16 @@ end
 
 @testset "Center and standard deviations of a sample" begin
 
-k = 2
+Nx = 2
 Ne = 10
 p = 2
 γ = 3.0
 λ = 0.0
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-S = RadialMap(k, p; γ = γ)
+S = RadialMap(Nx, p; γ = γ)
 
 center_std(S, ens)
 
@@ -163,14 +163,14 @@ end
 
 ## Perform the same validation with a Sparse structure
 
-@testset "SparseUk: Center and standard deviations of a sample for diagonal component I" begin
+@testset "SparseRadialMapComponent: Center and standard deviations of a sample for diagonal component I" begin
 
-    k = 1
+    Nx = 1
     Ne = 10
     p = 3
     γ = 3.0
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .=     reshape([-1.5438
        -1.5518
         0.8671
@@ -182,7 +182,7 @@ end
         0.4178
         0.8199],1,Ne)
 
-    S = SparseUk(k, p);
+    S = SparseRadialMapComponent(Nx, p);
     TransportMap.sort!(ens, 2)
     center_std_diag(S, ens, γ)
 
@@ -192,14 +192,14 @@ end
 end
 
 
-@testset "SparseUk Center and standard deviations of a sample for diagonal component II" begin
+@testset "SparseRadialMapComponent Center and standard deviations of a sample for diagonal component II" begin
 
-    k = 1
+    Nx = 1
     Ne = 10
     p = 6
     γ = 1.5
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .=     reshape([-1.5438
        -1.5518
         0.8671
@@ -211,7 +211,7 @@ end
         0.4178
         0.8199],1,Ne)
 
-    S = SparseUk(k, p);
+    S = SparseRadialMapComponent(Nx, p);
     TransportMap.sort!(ens, 2)
     center_std_diag(S, ens, γ)
 
@@ -220,17 +220,17 @@ end
 
 end
 
-@testset "SparseUk Center and standard deviations of a sample for diagonal component III" begin
-    k = 2
+@testset "SparseRadialMapComponent Center and standard deviations of a sample for diagonal component III" begin
+    Nx = 2
     Ne = 10
     p = 1
     γ = 3.0
     λ = 0.0
 
-    ens = EnsembleState(k, Ne)
+    ens = EnsembleState(Nx, Ne)
     ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-    S = SparseUk(k, p)
+    S = SparseRadialMapComponent(Nx, p)
     TransportMap.sort!(ens,2)
 
     center_std_diag(S, ens, γ)
@@ -241,18 +241,18 @@ end
 
 
 
-@testset "SparseUk Center and standard deviations of a sample for off-diagonal component" begin
+@testset "SparseRadialMapComponent Center and standard deviations of a sample for off-diagonal component" begin
 
-k = 2
+Nx = 2
 Ne = 10
 p = 2
 γ = 3.0
 λ = 0.0
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-S = SparseUk(k, p)
+S = SparseRadialMapComponent(Nx, p)
 TransportMap.sort!(ens, 2)
 center_std_diag(S, ens, γ)
 center_std_off(S, ens, γ)
@@ -269,16 +269,16 @@ end
 
 @testset "Center and standard deviations of a sample" begin
 
-k = 2
+Nx = 2
 Ne = 10
 p = 2
 γ = 3.0
 λ = 0.0
 
-ens = EnsembleState(k, Ne)
+ens = EnsembleState(Nx, Ne)
 ens.S .= [-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]'
 
-S = SparseRadialMap(k, [p; p]; γ = γ, λ = λ)
+S = SparseRadialMap(Nx, [p; p]; γ = γ, λ = λ)
 
 center_std(S, ens)
 
