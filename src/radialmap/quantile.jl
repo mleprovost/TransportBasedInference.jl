@@ -1,15 +1,15 @@
 export quantile_ricardo, center_std_diag, center_std_off, center_std
 
-# Set ξ and σ for the diagonal entry, i.e. the last element of Vk
-function center_std_diag(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
-    @get Vk (k, p)
+# Set ξ and σ for the diagonal entry, i.e. the last element of C
+function center_std_diag(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::Float64)
+    @get C (Nx, p)
     @assert (p>0 && γ >0.0) || (p==0 && γ>=0.0) "Error scaling factor γ"
 
     # As long as he have p>1, we have in fact p+2 centers
     if p>0
-    ξ′ = view(Vk.ξ[end],:)
-    σ′ = view(Vk.σ[end],:)
-    tmp = view(X,k,:)
+    ξ′ = view(C.ξ[end],:)
+    σ′ = view(C.σ[end],:)
+    tmp = view(X,Nx,:)
     quant!(ξ′, tmp, collect(1:p+2)./(p+3), sorted=true, alpha=0.5, beta = 0.5)
 
     σ′[1] = ξ′[2]-ξ′[1]
@@ -43,9 +43,9 @@ function center_std_diag(Vk::Uk, X::EnsembleState, γ::Float64)
     end
 end
 
-# Set ξ and σ for the off-diagonal entries, i.e. i=1:k-1 entries of Vk
-function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
-    @get Vk (k, p)
+# Set ξ and σ for the off-diagonal entries, i.e. i=1:Nx-1 entries of C
+function center_std_off(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::Float64)
+    @get C (Nx, p)
     @assert (p>0 && γ >0.0) || (p==0 && γ>=0.0) "Error scaling factor γ"
 
     if p==0
@@ -53,10 +53,10 @@ function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
     elseif p==1 # only one rbf
         qq = zeros(3)
         p_range = [0.25;0.5;0.75]
-        for i=1:k-1
+        for i=1:Nx-1
             @inbounds begin
-            ξ = view(Vk.ξ[i],:)
-            σ = view(Vk.σ[i],:)
+            ξ = view(C.ξ[i],:)
+            σ = view(C.σ[i],:)
             tmp = view(X, i, :)
             quant!(qq, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
             ξ .= qq[2]
@@ -66,10 +66,10 @@ function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
         end
     elseif p==2
         p_range = collect(1.0:p)./(p+1.0)
-        for i=1:k-1
+        for i=1:Nx-1
             @inbounds begin
-            ξ = view(Vk.ξ[i],:)
-            σ = view(Vk.σ[i],:)
+            ξ = view(C.ξ[i],:)
+            σ = view(C.σ[i],:)
             tmp = view(X,i,:)
             quant!(ξ, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
             σ[1:2] .= (ξ[2]-ξ[1])*ones(2)
@@ -79,10 +79,10 @@ function center_std_off(Vk::Uk, X::AbstractMatrix{Float64}, γ::Float64)
 
     else
         p_range = collect(1.0:p)./(p+1.0)
-        for i=1:k-1
+        for i=1:Nx-1
             @inbounds begin
-            ξ = view(Vk.ξ[i],:)
-            σ = view(Vk.σ[i],:)
+            ξ = view(C.ξ[i],:)
+            σ = view(C.σ[i],:)
             tmp = view(X,i,:)
             quant!(ξ, tmp, p_range, sorted=true, alpha=0.5, beta = 0.5)
 
@@ -151,15 +151,15 @@ function center_std_off(Vk::Uk, X::EnsembleState, γ::Float64)
 end
 
 # Assume an unsorted array
-function center_std(T::KRmap, X::AbstractMatrix{Float64};start::Int64=1)
-    @get T (k, p, γ)
+function center_std(T::RadialMap, X::AbstractMatrix{Float64};start::Int64=1)
+    @get T (Nx, p, γ)
     if p>0
     Sens = deepcopy(X)
     sort!(Sens,2)
-    if k==1
+    if Nx==1
         center_std_diag(T.U[1], Sens, γ)
     else
-        for i=start:k
+        for i=start:Nx
             @inbounds begin
             center_std_diag(T.U[i], Sens, γ)
             center_std_off(T.U[i], Sens, γ)
@@ -192,21 +192,21 @@ end
 
 ## Define center_std for Sparse maps
 
-# Set ξ and σ for the diagonal entry, i.e. the last element of SparseVk
-function center_std_diag(Vk::SparseUk, X::AbstractMatrix{Float64}, γ::Float64)
-    @get Vk (k, p)
-    @assert (p[k]>0 && γ >0.0) || (p[k]==0 && γ>=0.0) "Error scaling factor γ"
+# Set ξ and σ for the diagonal entry, i.e. the last element of SparseC
+function center_std_diag(C::SparseRadialMapComponent, X::AbstractMatrix{Float64}, γ::Float64)
+    @get C (Nx, p)
+    @assert (p[Nx]>0 && γ >0.0) || (p[Nx]==0 && γ>=0.0) "Error scaling factor γ"
 
     # As long as he have p>1, we have in fact p+2 centers
-    if p[k]>0
-    ξ′ = view(Vk.ξ[end],:)
-    σ′ = view(Vk.σ[end],:)
-    tmp = view(X,k,:)
-    quant!(ξ′, tmp, collect(1:p[k]+2)./(p[k]+3), sorted=true, alpha=0.5, beta = 0.5)
+    if p[Nx]>0
+    ξ′ = view(C.ξ[end],:)
+    σ′ = view(C.σ[end],:)
+    tmp = view(X,Nx,:)
+    quant!(ξ′, tmp, collect(1:p[Nx]+2)./(p[Nx]+3), sorted=true, alpha=0.5, beta = 0.5)
 
     σ′[1] = ξ′[2]-ξ′[1]
     σ′[end] = ξ′[end]-ξ′[end-1]
-    for j=2:p[k]+1
+    for j=2:p[Nx]+1
     @inbounds σ′[j] = 0.5*(ξ′[j+1]-ξ′[j-1])
     end
     rmul!(σ′, γ)
@@ -215,16 +215,16 @@ function center_std_diag(Vk::SparseUk, X::AbstractMatrix{Float64}, γ::Float64)
 end
 
 
-# Set ξ and σ for the off-diagonal entries, i.e. i=1:k-1 entries of Vk
-function center_std_off(Vk::SparseUk, X::AbstractMatrix{Float64}, γ::Float64)
-    @get Vk (k, p)
+# Set ξ and σ for the off-diagonal entries, i.e. i=1:Nx-1 entries of C
+function center_std_off(C::SparseRadialMapComponent, X::AbstractMatrix{Float64}, γ::Float64)
+    @get C (Nx, p)
     @assert γ>=0.0 "Error scaling factor γ"
 
-    for i=1:k-1
+    for i=1:Nx-1
         pidx = p[i]
 
-        ξ = view(Vk.ξ[i],:)
-        σ = view(Vk.σ[i],:)
+        ξ = view(C.ξ[i],:)
+        σ = view(C.σ[i],:)
         tmp = view(X, i, :)
 
         # Testcase according to pidx
@@ -260,14 +260,14 @@ function center_std_off(Vk::SparseUk, X::AbstractMatrix{Float64}, γ::Float64)
 end
 
 # Assume an unsorted array
-function center_std(T::SparseKRmap, X::AbstractMatrix{Float64}; start::Int64=1)
-    @get T (k, p, γ)
+function center_std(T::SparseRadialMap, X::AbstractMatrix{Float64}; start::Int64=1)
+    @get T (Nx, p, γ)
     Sens = deepcopy(X)
     sort!(Sens,2)
-    if k==1 && !allequal(p[k], -1)
+    if Nx==1 && !allequal(p[Nx], -1)
         center_std_diag(T.U[1], Sens, γ)
     else
-        @inbounds for i=start:k
+        @inbounds for i=start:Nx
             if !allequal(p[i], -1)
             center_std_diag(T.U[i], Sens, γ)
             center_std_off(T.U[i], Sens, γ)

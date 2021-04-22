@@ -48,13 +48,13 @@ end
 
 function Base.show(io::IO, L::LHD)
 	if L.λ==0.0 && L.δ==0.0
-	println(io,"Cost function with Ne = $(L.k) samples")
+	println(io,"Cost function with Ne = $(L.Ne) samples")
 	elseif L.λ==0.0 && L.δ!=0.0
-	println(io,"Cost function with δ = $(L.δ) - regularized log barrier and Ne = $(L.k) samples")
+	println(io,"Cost function with δ = $(L.δ) - regularized log barrier and Ne = $(L.Ne) samples")
 	elseif L.λ!=0.0 && L.δ==0.0
-	println(io,"Cost function with λ = $(L.λ) L-2 regularization andNe = $(L.k) samples")
+	println(io,"Cost function with λ = $(L.λ) L-2 regularization andNe = $(L.Ne) samples")
 	else
-	println(io,"Cost function with λ = $(L.λ) L-2 regularization,  δ = $(L.δ) - regularized log barrier and Ne = $(L.k) samples")
+	println(io,"Cost function with λ = $(L.λ) L-2 regularization,  δ = $(L.δ) - regularized log barrier and Ne = $(L.Ne) samples")
 	end
 end
 

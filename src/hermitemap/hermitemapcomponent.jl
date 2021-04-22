@@ -1,9 +1,10 @@
-export  MapComponent,
+export  HermiteMapComponent,
         αreg,
-        EmptyMapComponent,
+        EmptyHermiteMapComponent,
         ncoeff,
         getcoeff,
         setcoeff!,
+        clearcoeff!,
         getidx,
         active_dim,
         evaluate!,
@@ -23,7 +24,7 @@ export  MapComponent,
         hess_negative_log_likelihood!
 
 
-struct MapComponent
+struct HermiteHermiteMapComponent
     m::Int64
     Nψ::Int64
     Nx::Int64
@@ -36,11 +37,11 @@ end
 # Define default regularization
 const αreg = 1.0e-6
 
-function MapComponent(I::IntegratedFunction; α::Float64=αreg)
-    return MapComponent(I.m, I.Nψ, I.Nx, I, α)
+function HermiteMapComponent(I::IntegratedFunction; α::Float64=αreg)
+    return HermiteMapComponent(I.m, I.Nψ, I.Nx, I, α)
 end
 
-function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg, b::String="CstProHermite")
+function HermiteMapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg, b::String="CstProHermite")
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
     if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
@@ -49,14 +50,14 @@ function MapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Flo
         error("Undefined basis")
     end
 
-    return MapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
+    return HermiteMapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
 end
 
-function MapComponent(f::ExpandedFunction; α::Float64 = αreg)
-    return MapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
+function HermiteMapComponent(f::ExpandedFunction; α::Float64 = αreg)
+    return HermiteMapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
-function MapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String="CstProHermite")
+function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String="CstProHermite")
     Nψ = 1
 
     # m is the dimension of the basis
@@ -71,43 +72,45 @@ function MapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String="CstPr
 
     f = ExpandedFunction(B, idx, coeff)
     I = IntegratedFunction(f)
-    return MapComponent(I; α = α)
+    return HermiteMapComponent(I; α = α)
 end
 
-function Base.show(io::IO, C::MapComponent)
+function Base.show(io::IO, C::HermiteMapComponent)
     println(io,"Map component of dimension "*string(C.Nx)*" with Nψ = "*string(C.Nψ)*" active features")
     # for i=1:B.m
     #     println(io, B[i])
     # end
 end
 
-ncoeff(C::MapComponent) = C.Nψ
-getcoeff(C::MapComponent)= C.I.f.coeff
+ncoeff(C::HermiteMapComponent) = C.Nψ
+getcoeff(C::HermiteMapComponent)= C.I.f.coeff
 
-function setcoeff!(C::MapComponent, coeff::Array{Float64,1})
+function setcoeff!(C::HermiteMapComponent, coeff::Array{Float64,1})
         @assert size(coeff,1) == C.Nψ "Wrong dimension of coeff"
         C.I.f.coeff .= coeff
 end
 
-getidx(C::MapComponent) = C.I.f.idx
+clearcoeff!(C::HermiteMapComponent) = fill!(C.I.f.coeff, 0.0)
 
-active_dim(C::MapComponent) = C.I.f.dim
+getidx(C::HermiteMapComponent) = C.I.f.idx
+
+active_dim(C::HermiteMapComponent) = C.I.f.dim
 
 ## Evaluate
-function evaluate!(out, C::MapComponent, X)
+function evaluate!(out, C::HermiteMapComponent, X)
     @assert C.Nx==size(X,1) "Wrong dimension of the sample"
     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
     return evaluate!(out, C.I, X)
 end
 
-evaluate(C::MapComponent, X::Array{Float64,2}) =
+evaluate(C::HermiteMapComponent, X::Array{Float64,2}) =
     evaluate!(zeros(size(X,2)), C, X)
 
-(C::MapComponent)(x::Array{Float64,1}) = evaluate(C, reshape(x, (size(x,1), 1)))
+(C::HermiteMapComponent)(x::Array{Float64,1}) = evaluate(C, reshape(x, (size(x,1), 1)))
 
 ## Compute log_pdf
 
-function log_pdf!(result, cache, C::MapComponent, X)
+function log_pdf!(result, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     @assert C.Nx == NxX "Wrong dimension of the sample"
     @assert size(result, 1) == Ne "Wrong dimension of the sample"
@@ -123,11 +126,11 @@ function log_pdf!(result, cache, C::MapComponent, X)
     return result
 end
 
-log_pdf(C::MapComponent, X) = log_pdf!(zeros(size(X,2)), zeros(size(X,2)), C, X)
+log_pdf(C::HermiteMapComponent, X) = log_pdf!(zeros(size(X,2)), zeros(size(X,2)), C, X)
 
 ## Compute grad_x_log_pdf
 
-function grad_x_log_pdf!(result, cache, C::MapComponent, X)
+function grad_x_log_pdf!(result, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     @assert C.Nx == NxX "Wrong dimension of the sample"
     @assert size(result) == (Ne, NxX) "Wrong dimension of the result"
@@ -145,11 +148,11 @@ function grad_x_log_pdf!(result, cache, C::MapComponent, X)
     return result
 end
 
-grad_x_log_pdf(C::MapComponent, X) = grad_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2)), C, X)
+grad_x_log_pdf(C::HermiteMapComponent, X) = grad_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2)), C, X)
 
 ## Compute hess_x_log_pdf
 
-function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
+function hess_x_log_pdf!(result, dcache, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     Nx = C.Nx
     @assert Nx == NxX "Wrong dimension of the sample"
@@ -198,7 +201,7 @@ function hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
     return result
 end
 
-hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
+hess_x_log_pdf(C::HermiteMapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
                                                      zeros(size(X,2), size(X,1)),
                                                      zeros(size(X,2)), C, X)
 
@@ -207,7 +210,7 @@ hess_x_log_pdf(C::MapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1),
 # This version outputs a result of size(Ne, active_dim(C), active_dim(C))
 
 
-function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
+function reduced_hess_x_log_pdf!(result, dcache, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     Nx = C.Nx
 
@@ -274,16 +277,16 @@ function reduced_hess_x_log_pdf!(result, dcache, cache, C::MapComponent, X)
 end
 
 
-reduced_hess_x_log_pdf(C::MapComponent, X) = reduced_hess_x_log_pdf!(zeros(size(X,2), length(active_dim(C)), length(active_dim(C))),
+reduced_hess_x_log_pdf(C::HermiteMapComponent, X) = reduced_hess_x_log_pdf!(zeros(size(X,2), length(active_dim(C)), length(active_dim(C))),
                                                 zeros(size(X,2), length(active_dim(C))), zeros(size(X,2)), C, X)
 
 
 
 ## negative_log_likelihood
 
-# function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, C::MapComponent{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
+# function negative_log_likelihood!(J, dJ, coeff, S::Storage{m, Nψ, k}, C::HermiteMapComponent{m, Nψ, k}, X::Array{Float64,2}) where {m, Nψ, k}
 
-function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
+function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     m = C.m
     Nx = C.Nx
@@ -386,10 +389,10 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::MapComponent, X)
     end
 end
 
-negative_log_likelihood(S::Storage, C::MapComponent, X) = (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, C, X)
+negative_log_likelihood(S::Storage, C::HermiteMapComponent, X) = (J, dJ, coeff) -> negative_log_likelihood!(J, dJ, coeff, S, C, X)
 
 
-function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComponent, X::Array{Float64,2})
+function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::HermiteMapComponent, X::Array{Float64,2})
     Nψ = C.Nψ
     Nx = C.Nx
 
@@ -517,5 +520,5 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::MapComp
 end
 
 
-hess_negative_log_likelihood!(S::Storage, C::MapComponent, X::Array{Float64,2}) =
+hess_negative_log_likelihood!(S::Storage, C::HermiteMapComponent, X::Array{Float64,2}) =
     (J, dJ, d2J, coeff) -> hess_negative_log_likelihood!(J, dJ, d2J, coeff, S, C, X)

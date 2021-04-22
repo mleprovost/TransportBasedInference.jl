@@ -1,14 +1,33 @@
 
 @testset "Verify that initial map is identity" begin
 
-  H = MapComponent(3, 2; α = 1e-6)
+  H = HermiteMapComponent(3, 2; α = 1e-6)
 
   x = randn(2,1)
   Hx = evaluate(H.I, x)
   @test abs(Hx[1] - x[2])<1e-10
 end
 
+@testset "Verify getcoeff, setcoeff!, clearcoeff!" begin
+  m = 5
+  Nx = 10
+  Nψ = 5
+  idx = rand(0:m, Nψ, Nx)
 
+  coeff = randn(Nψ)
+
+  M = HermiteMapComponent(m, Nx, idx, deepcopy(coeff))
+  @test norm(getcoeff(M) - coeff)<1e-12
+
+  coeff2 = randn(Nψ)
+  setcoeff!(M, deepcopy(coeff2))
+
+  @test norm(getcoeff(M) - coeff2)<1e-12
+
+  clearcoeff!(M)
+
+  @test norm(getcoeff(M) - zeros(Nψ))<1e-12
+end
 
 @testset "Verify loss function and its gradient" begin
 
@@ -37,7 +56,7 @@ end
       0.11855056306742319]
     f = ExpandedFunction(B, idx, coeff)
     R = IntegratedFunction(f)
-    H = MapComponent(R; α = 0.0)
+    H = HermiteMapComponent(R; α = 0.0)
     S = Storage(H.I.f, X);
 
    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
@@ -51,7 +70,7 @@ end
 
     # Verify with L-2 penalty term
 
-    H = MapComponent(R; α = 0.1)
+    H = HermiteMapComponent(R; α = 0.1)
     S = Storage(H.I.f, X);
 
     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
@@ -65,7 +84,7 @@ end
 end
 
 
-@testset "Verify evaluation of HermiteMapComponent" begin
+@testset "Verify evaluation of HermiteHermiteMapComponent" begin
 
   Nx = 2
   Ne = 500
@@ -100,7 +119,7 @@ end
     f = ExpandedFunction(B, idx, coeff)
     R = IntegratedFunction(f)
 
-    C = MapComponent(R)
+    C = HermiteMapComponent(R)
 
     # Test evaluate
     ψt = zeros(Ne)
@@ -142,7 +161,7 @@ end
        -1.420159186008486;
        -0.5361337327704369]
   f = ExpandedFunction(B, idx, coeff)
-  C = MapComponent(f)
+  C = HermiteMapComponent(f)
 
   @test norm(log_pdf(C, X) - [  -1.572509004118956
                                 -2.870725221050853
@@ -169,7 +188,7 @@ end
 
     coeff =  randn(size(idx,1))
 
-    C = MapComponent(m, Nx, idx, coeff)
+    C = HermiteMapComponent(m, Nx, idx, coeff)
 
     dxlogC  = grad_x_log_pdf(C, X)
     d2xlogC = hess_x_log_pdf(C, X)
@@ -217,7 +236,7 @@ end
 
     coeff =  randn(size(idx,1))
 
-    C = MapComponent(m, Nx, idx, coeff)
+    C = HermiteMapComponent(m, Nx, idx, coeff)
 
     dxlogC = grad_x_log_pdf(C, X)
     d2xlogC = hess_x_log_pdf(C, X)
@@ -265,7 +284,7 @@ end
 
       coeff =  randn(size(idx,1))
 
-      C = MapComponent(m, Nx, idx, coeff)
+      C = HermiteMapComponent(m, Nx, idx, coeff)
 
       dxlogC = grad_x_log_pdf(C, X)
       d2xlogC = hess_x_log_pdf(C, X)

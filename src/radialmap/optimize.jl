@@ -8,20 +8,20 @@ fast_mul(ψbis::Array{Float64,2}, Q, N::Int64, nx::Int64) = ([([ψbis zeros(size
 
 
 # Code to identify the coefficients
-function optimize(Vk::Uk, W::Weights, λ, δ)
-	# Vk and W can have different dimension
-	@assert Vk.p == W.p "Mismatch order p of the map"
-	k = Vk.k
+function optimize(C::RadialMapComponent, W::Weights, λ, δ)
+	# C and W can have different dimension
+	@assert C.p == W.p "Mismatch order p of the map"
+	Nx = C.Nx
 	@get W (p, Ne)
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,k)
+    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,Nx)
 
     no = size(ψ_off,1)
 	nd = size(ψ_mono,1)
     nx = size(ψ_off,1)+size(ψ_mono,1)+1
     nlog = size(dψ_mono,1)
 
-	@assert nd==nlog "Error size of the diag and ∂k weights"
+	@assert nd==nlog "Error size of the diag and ∂Nx weights"
 	@assert nx==no+nlog+1 "Error size of the weights"
 
 	# Cache for the solution
@@ -36,7 +36,7 @@ function optimize(Vk::Uk, W::Weights, λ, δ)
     ψ_mono ./= σψ
     dψ_mono ./= σψ
 
-    if k==1
+    if Nx==1
 		BLAS.gemm!('N', 'T', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
 		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
     else
@@ -81,13 +81,13 @@ function optimize(Vk::Uk, W::Weights, λ, δ)
 
     #Assemble reduced QR to solve least square problem
     #Approximate diagonal component
-	# for linear S_{k}^{2} (i.e., order 0 function), use closed
+	# for linear S_{Nx}^{2} (i.e., order 0 function), use closed
 	# form solution for linear monotone component
 	if p == 0
         @assert size(A)==(1,1) "Quadratic matrix should be a scalar."
 		g_mono = zeros(1,1)
 		# This equation is equation (A.9) Couplings for nonlinear ensemble filtering
-		# uk(z) = c + α z so α = 1/√κ*
+		# uNx(z) = c + α z so α = 1/√κ*
         g_mono[1,1] = sqrt(1/A[1,1])
 
 	# for nonlinear diagonal, use Newton solver for coefficients
@@ -100,11 +100,11 @@ function optimize(Vk::Uk, W::Weights, λ, δ)
 	end
 
 	if p==0
-		if k==1
+		if Nx==1
 			g_mono /= σψ[1,1]
 			# Compute constant term
 	        x[no+1] = deepcopy(-μψ*g_mono)[1,1]
-		elseif k==2
+		elseif Nx==2
 			g_off = zeros(no)
 			ψ = zeros(Ne+no)
 			BLAS.gemm!('T', 'N', 1.0, ψ_mono, g_mono, 1.0, view(ψ,1:Ne))
@@ -136,11 +136,11 @@ function optimize(Vk::Uk, W::Weights, λ, δ)
 			x[no+1] = -dot(μψ[:,1], g_mono[:,1])-dot(μψ_off[:,1], g_off[:,1])
 		end
 	else
-		if k==1
+		if Nx==1
 			g_mono ./= σψ[:,1]
 			# Compute constant term
 	        x[no+1] = deepcopy(-dot(μψ,g_mono))
-		elseif k==2
+		elseif Nx==2
 			g_off = zeros(no)
 			ψ = zeros(Ne+no)
 			BLAS.gemm!('T', 'N', 1.0, ψ_mono, g_mono, 1.0, view(ψ,1:Ne))
@@ -177,15 +177,15 @@ function optimize(Vk::Uk, W::Weights, λ, δ)
 	x[no+2:nx] .= deepcopy(g_mono[:,1])
 
 
-	if k>1
+	if Nx>1
 		x[1:no] .= deepcopy(g_off[:,1])
 	end
 	return x
 
 end
 
-function run_optimization(S::KRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
-	@get S (k, p, γ, λ, δ, κ)
+function run_optimization(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+	@get S (Nx, p, γ, λ, δ, κ)
 	# Compute centers and widths
 	center_std(S, ens)
 
@@ -197,21 +197,21 @@ function run_optimization(S::KRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1, 
 
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
-		@inbounds for i=start:k
+		@inbounds for i=start:Nx
 				xopt = optimize(S.U[i], W, λ, δ)
 		    	modify_a(xopt, S.U[i])
 		end
 	else
-		@inbounds Threads.@threads for i=start:k
+		@inbounds Threads.@threads for i=start:Nx
 				xopt = optimize(S.U[i], W, λ, δ)
 				modify_a(xopt, S.U[i])
 		end
 	end
 end
 
-function run_optimization(S::KRmap, X; start::Int64=1, P::Parallel=serial)
+function run_optimization(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	Nx, Ne = size(Nx)
-	@get S (k, p, γ, λ, δ, κ)
+	@get S (Nx, p, γ, λ, δ, κ)
 	# Compute centers and widths
 	center_std(S, X)
 
@@ -223,12 +223,12 @@ function run_optimization(S::KRmap, X; start::Int64=1, P::Parallel=serial)
 
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
-		@inbounds for i=start:k
+		@inbounds for i=start:Nx
 				xopt = optimize(S.U[i], W, λ, δ)
 		    	modify_a(xopt, S.U[i])
 		end
 	else
-		@inbounds Threads.@threads for i=start:k
+		@inbounds Threads.@threads for i=start:Nx
 				xopt = optimize(S.U[i], W, λ, δ)
 				modify_a(xopt, S.U[i])
 		end
@@ -236,10 +236,10 @@ function run_optimization(S::KRmap, X; start::Int64=1, P::Parallel=serial)
 end
 
 
-# This code is written for k>1
-function run_optimization_parallel(S::KRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1) where {Nx,Ne}
-	@get S (k, p, γ, λ, δ, κ)
-	@assert k>1 "This code is not written for k=1"
+# This code is written for Nx>1
+function run_optimization_parallel(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1) where {Nx,Ne}
+	@get S (Nx, p, γ, λ, δ, κ)
+	@assert Nx>1 "This code is not written for Nx=1"
 	# Compute centers and widths
 	center_std(S, ens)
 	# Create weights
@@ -247,11 +247,11 @@ function run_optimization_parallel(S::KRmap, ens::EnsembleState{Nx, Ne}; start::
 	# Compute weights
 	weights(S, ens, W)
 	# Optimize coefficients with Distributed
-	# X = SharedArray{Float64}(k*(p+1)+2,k)
-	# scoeffs = SharedArray{Int64}(k)
-	X = SharedArray{Float64}(k*(p+1)+2,k-start+1)
-	scoeffs = SharedArray{Int64}(k-start+1)
-	@sync @distributed for i=start:k
+	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
+	# scoeffs = SharedArray{Int64}(Nx)
+	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
+	scoeffs = SharedArray{Int64}(Nx-start+1)
+	@sync @distributed for i=start:Nx
 		@inbounds begin
 		xopt = optimize(S.U[i], W, λ, δ)
 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
@@ -260,17 +260,17 @@ function run_optimization_parallel(S::KRmap, ens::EnsembleState{Nx, Ne}; start::
 	end
 
 	# Run this part in serial
-	@inbounds for i=start:k
+	@inbounds for i=start:Nx
 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
 	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
     end
 end
 
-# This code is written for k>1
-function run_optimization_parallel(S::KRmap, X; start::Int64=1)
+# This code is written for Nx>1
+function run_optimization_parallel(S::RadialMap, X; start::Int64=1)
 	Nx, Ne = size(X)
-	@get S (k, p, γ, λ, δ, κ)
-	@assert k>1 "This code is not written for k=1"
+	@get S (Nx, p, γ, λ, δ, κ)
+	@assert Nx>1 "This code is not written for Nx=1"
 	# Compute centers and widths
 	center_std(S, X)
 	# Create weights
@@ -278,11 +278,11 @@ function run_optimization_parallel(S::KRmap, X; start::Int64=1)
 	# Compute weights
 	weights(S, X, W)
 	# Optimize coefficients with Distributed
-	# X = SharedArray{Float64}(k*(p+1)+2,k)
-	# scoeffs = SharedArray{Int64}(k)
-	X = SharedArray{Float64}(k*(p+1)+2,k-start+1)
-	scoeffs = SharedArray{Int64}(k-start+1)
-	@sync @distributed for i=start:k
+	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
+	# scoeffs = SharedArray{Int64}(Nx)
+	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
+	scoeffs = SharedArray{Int64}(Nx-start+1)
+	@sync @distributed for i=start:Nx
 		@inbounds begin
 		xopt = optimize(S.U[i], W, λ, δ)
 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
@@ -291,28 +291,28 @@ function run_optimization_parallel(S::KRmap, X; start::Int64=1)
 	end
 
 	# Run this part in serial
-	@inbounds for i=start:k
+	@inbounds for i=start:Nx
 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
 	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
     end
 end
 
 
-## Optimize for the weights with SparseUkMap
+## Optimize for the weights with SparseRadialMapComponentMap
 
 # Code to identify the coefficients
-function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
-	@get Vk (k,p)
+function optimize(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
+	@get C (Nx,p)
 
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = weights(Vk, ens)
+    ψ_off, ψ_mono, dψ_mono = weights(C, ens)
 
     no = size(ψ_off,1)
 	nd = size(ψ_mono,1)
     nx = size(ψ_off,1)+size(ψ_mono,1)+1
     nlog = size(dψ_mono,1)
 
-	@assert nd==nlog "Error size of the diag and ∂k weights"
+	@assert nd==nlog "Error size of the diag and ∂Nx weights"
 	@assert nx==no+nlog+1 "Error size of the weights"
 
 	# Cache for the solution
@@ -327,7 +327,7 @@ function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, N
     ψ_mono ./= σψ
     dψ_mono ./= σψ
 
-    if k==1
+    if Nx==1
 		BLAS.gemm!('N', 'T', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
 		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
     else
@@ -372,13 +372,13 @@ function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, N
 
     #Assemble reduced QR to solve least square problem
     #Approximate diagonal component
-	# for linear S_{k}^{2} (i.e., order 0 function), use closed
+	# for linear S_{Nx}^{2} (i.e., order 0 function), use closed
 	# form solution for linear monotone component
-	if p[k] == 0
+	if p[Nx] == 0
         @assert size(A)==(1,1) "Quadratic matrix should be a scalar."
 		g_mono = zeros(1,1)
 		# This equation is equation (A.9) Couplings for nonlinear ensemble filtering
-		# uk(z) = c + α z so α = 1/√κ*
+		# uNx(z) = c + α z so α = 1/√κ*
         g_mono[1,1] = sqrt(1/A[1,1])
 	# for nonlinear diagonal, use Newton solver for coefficients
 	else
@@ -389,8 +389,8 @@ function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, N
 		g_mono .+= δ
 	end
 
-	if p[k]==0
-		if k==1
+	if p[Nx]==0
+		if Nx==1
 			g_mono /= σψ[1,1]
 			# Compute constant term
 	        x[no+1] = deepcopy(-μψ*g_mono)[1,1]
@@ -411,7 +411,7 @@ function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, N
 			x[no+1] = -dot(μψ[:,1], g_mono[:,1])-dot(μψ_off[:,1], g_off[:,1])
 		end
 	else
-		if k==1
+		if Nx==1
 			g_mono ./= σψ[:,1]
 			# Compute constant term
 	        x[no+1] = deepcopy(-dot(μψ,g_mono))
@@ -439,7 +439,7 @@ function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, N
 	x[no+2:nx] .= deepcopy(g_mono[:,1])
 
 
-	if k>1
+	if Nx>1
 		x[1:no] .= deepcopy(g_off[:,1])
 	end
 	return x
@@ -447,22 +447,22 @@ function optimize(Vk::SparseUk, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, N
 end
 
 
-function run_optimization(S::SparseKRmap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
-	@get S (k, p, γ, λ, δ, κ)
+function run_optimization(S::SparseRadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+	@get S (Nx, p, γ, λ, δ, κ)
 	# Compute centers and widths
 	center_std(S, ens)
 
 	# Optimize coefficients
 	# Skip the identity components of the map
 	if typeof(P)==Serial
-		@inbounds for i=start:k
+		@inbounds for i=start:Nx
 			if !allequal(p[i], -1)
 					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
 					modify_a(xopt, S.U[i])
 			end
 		end
 	else
-		@inbounds Threads.@threads for i=start:k
+		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1)
 					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
 					modify_a(xopt, S.U[i])
@@ -517,9 +517,9 @@ end
 #
 #
 # # Code to identify the coefficients
-# function optimize_coeffs(Vk::Uk{k,p}, W::Weights{n, p, Ne}) where {k,p,n,Ne}
+# function optimize_coeffs(C::RadialMapComponent{Nx,p}, W::Weights{n, p, Ne}) where {Nx,p,n,Ne}
 #     # Compute weights
-#     wq, w∂ = rearrange_weights(W, k)
+#     wq, w∂ = rearrange_weights(W, Nx)
 #
 #     nx = size(wq,1)
 #     nlog = size(w∂,1)
@@ -549,7 +549,7 @@ end
 #     optimize!(model)
 #
 #     # Now replace identifed coefficients into a
-#     modify_a(value.(x), Vk)
+#     modify_a(value.(x), C)
 # end
 #
 #

@@ -22,7 +22,7 @@ using TransportMap
         0.1354
         0.4178
         0.8199],1,Ne)
-    S = KRmap(k, p; γ = γ);
+    S = RadialMap(k, p; γ = γ);
     center_std(S, ens);
 
     W = create_weights(S, ens)
@@ -108,7 +108,7 @@ end
         0.1354
         0.4178
         0.8199],1,Ne)
-    S = KRmap(k, p; γ = γ);
+    S = RadialMap(k, p; γ = γ);
     center_std(S, ens);
 
     W = create_weights(S, ens)

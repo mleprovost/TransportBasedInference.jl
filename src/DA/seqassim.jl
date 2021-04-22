@@ -21,7 +21,7 @@ tspan = (t0, t0 + algo.Δtobs)
 prob = ODEProblem(F.f, zeros(Nx), tspan)
 
 # Run particle filter
-@inbounds for i=1:length(Acycle)
+@showprogress for i=1:length(Acycle)
     # Forecast
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
 	prob = remake(prob; tspan=tspan)

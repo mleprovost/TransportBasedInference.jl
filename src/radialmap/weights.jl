@@ -5,7 +5,7 @@ export Weights, create_weights, weights, component,
 import Base: +, *, size
 
 struct Weights
-        k::Int64
+        Nx::Int64
         p::Union{Int64, Array{Int64,1}}
         Ne::Int64
         woff::Array{Float64,2}
@@ -14,39 +14,39 @@ struct Weights
 end
 
 function Base.show(io::IO, W::Weights)
-  println(io,"Weights for a transport map with k = $(W.k), p = $(W.p) and Ne = $(W.Ne)")
+  println(io,"Weights for a transport map with Nx = $(W.Nx), p = $(W.p) and Ne = $(W.Ne)")
 end
 
 
-function create_weights(T::KRmap)
-        k = T.k
+function create_weights(T::RadialMap)
+        Nx = T.Nx
         p = T.p
         if p==0
-                woff  = zeros(k-1)
-                wdiag = zeros(2*k)
-                w∂k   = zeros(k)
+                woff  = zeros(Nx-1)
+                wdiag = zeros(2*Nx)
+                w∂k   = zeros(Nx)
         else
-                woff  = zeros((k-1)*(p+1))
-                wdiag = zeros(k*(p+3))
-                w∂k   = zeros(k*(p+2))
+                woff  = zeros((Nx-1)*(p+1))
+                wdiag = zeros(Nx*(p+3))
+                w∂k   = zeros(Nx*(p+2))
         end
         return woff, wdiag, w∂k
 end
 
-function create_weights(T::KRmap, X::AbstractMatrix{Float64})
+function create_weights(T::RadialMap, X::AbstractMatrix{Float64})
         Nx, Ne = size(X)
-        k = T.k
+        Nx = T.Nx
         p = T.p
         if p==0
-                woff  = zeros(k-1, Ne)
-                wdiag = zeros(2*k, Ne)
-                w∂k   = zeros(k, Ne)
+                woff  = zeros(Nx-1, Ne)
+                wdiag = zeros(2*Nx, Ne)
+                w∂k   = zeros(Nx, Ne)
         else
-                woff  = zeros((k-1)*(p+1), Ne)
-                wdiag = zeros(k*(p+3), Ne)
-                w∂k   = zeros(k*(p+2), Ne)
+                woff  = zeros((Nx-1)*(p+1), Ne)
+                wdiag = zeros(Nx*(p+3), Ne)
+                w∂k   = zeros(Nx*(p+2), Ne)
         end
-        return Weights(k, p, Ne, woff, wdiag, w∂k)
+        return Weights(Nx, p, Ne, woff, wdiag, w∂k)
 end
 
 function create_weights(T::KRmap, X::EnsembleState)
@@ -67,7 +67,7 @@ end
 
 function weights(u::ui, z::Float64, woff)
         p = u.p
-        # Check that woff has the right size
+        # ChecNx that woff has the right size
         if p==-1
                 #No weights
         elseif p==0
@@ -193,40 +193,40 @@ function weights(u::uk, z::Float64, wdiag; withconstant::Bool = true)
         end
 end
 
-function weights(T::KRmap, z::Array{Float64,1}, woff::Array{Float64,1}, wdiag::Array{Float64,1}, w∂k::Array{Float64,1})
-        @get T (k, p)
+function weights(T::RadialMap, z::Array{Float64,1}, woff::Array{Float64,1}, wdiag::Array{Float64,1}, w∂k::Array{Float64,1})
+        @get T (Nx, p)
         if p==0
-                if k==1
+                if Nx==1
                 wd = view(wdiag,:)
-                w∂ = view(w∂k,k:k)
+                w∂ = view(w∂k,Nx:Nx)
                 weights(component(T.U[1],1), z[1], wd, w∂)
                 else
                 # Fill wdiag and w∂k
-                @inbounds for i=1:k
+                @inbounds for i=1:Nx
                         wd = view(wdiag,(i-1)*2+1:i*2)
                         w∂ = view(w∂k,i:i)
                         weights(component(T.U[i],i), z[i], wd, w∂)
                 end
                 # Fill woff
-                @inbounds for i=1:k-1
+                @inbounds for i=1:Nx-1
                         wo = view(woff,i:i)
                         weights(component(T.U[end],i), z[i], wo)
                 end
                 end
         else
-                if k==1
+                if Nx==1
                 wd = view(wdiag,:)
                 w∂ = view(w∂k,:)
                 weights(component(T.U[1],1), z[1], wd, w∂)
                 else
                         # Fill wdiag and w∂k
-                        @inbounds for i=1:k
+                        @inbounds for i=1:Nx
                                 wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3))
                                 w∂ = view(w∂k, (i-1)*(p+2)+1:i*(p+2))
                                 weights(component(T.U[i],i), z[i], wd, w∂)
                         end
                         # Fill woff
-                        @inbounds for i=1:k-1
+                        @inbounds for i=1:Nx-1
                                 wo = view(woff, (i-1)*(p+1)+1:i*(p+1))
                                 weights(component(T.U[end],i), z[i], wo)
                         end
@@ -235,11 +235,11 @@ function weights(T::KRmap, z::Array{Float64,1}, woff::Array{Float64,1}, wdiag::A
 end
 
 
-function weights(T::KRmap, X::AbstractMatrix{Float64}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2}) where {k, Ne}
-@assert T.k == k "Error in dimension of the ensemble and size of the KR map"
+function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2})
+@assert T.Nx == Nx "Error in dimension of the ensemble and size of the KR map"
 p = T.p
 if p==0
-        if k==1
+        if Nx==1
         utmp = component(T.U[1],1)
         @inbounds for l=1:Ne
                 wd = view(wdiag,:,l)
@@ -248,7 +248,7 @@ if p==0
         end
         else
         # Fill wdiag and w∂k
-        @inbounds for i=1:k
+        @inbounds for i=1:Nx
         utmp = component(T.U[i],i)
                 for l=1:Ne
                 wd = view(wdiag, (i-1)*2+1:i*2, l)
@@ -266,7 +266,7 @@ if p==0
         end
         end
 else
-        if k==1
+        if Nx==1
         utmp = component(T.U[1],1)
         @inbounds for l=1:Ne
                 wd = view(wdiag,:,l)
@@ -275,7 +275,7 @@ else
         end
         else
                 # Fill wdiag and w∂k
-                @inbounds for i=1:k
+                @inbounds for i=1:Nx
                         utmp = component(T.U[i],i)
                         for l=1:Ne
                         wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3), l)
@@ -284,7 +284,7 @@ else
                         end
                 end
                 # Fill woff
-                @inbounds for i=1:k-1
+                @inbounds for i=1:Nx-1
                         utmp = component(T.U[end],i)
                         for l=1:Ne
                         wo = view(woff, (i-1)*(p+1)+1:i*(p+1),l)
@@ -355,17 +355,18 @@ else
 end
 end
 
-function weights(T::KRmap, ens::EnsembleState{k, Ne}, W::Weights) where {k, Ne}
+function weights(T::RadialMap, X, W::Weights)
+        Nx, Ne = size(X)
         @assert T.p == W.p "Error value of p, can't return weights"
-        @assert T.k == W.k "Error value of k, can't return weights"
-        @assert T.k == k "Error value of k, can't return weights"
+        @assert T.Nx == W.Nx "Error value of Nx, can't return weights"
+        @assert T.Nx == Nx "Error value of Nx, can't return weights"
 
-        return weights(T, ens, W.woff, W.wdiag, W.w∂k)
+        return weights(T, X, W.woff, W.wdiag, W.w∂k)
 end
 
 # Extract the weights on
 function rearrange_weights(W::Weights, l::Int64)
-        @get W (k, p, Ne, woff, wdiag)
+        @get W (Nx, p, Ne, woff, wdiag)
         if p==0
                 if l==1
                         wquad = wdiag[1:2,:]
@@ -386,7 +387,7 @@ end
 # associated with the quadratic function, while w∂ will be associated with the log barrier function
 # rearrange_weights does not use the line of 1 in wdiag
 function rearrange_ricardo(W::Weights, l::Int64)
-        @get W (k, p, Ne, woff, wdiag, w∂k)
+        @get W (Nx, p, Ne, woff, wdiag, w∂k)
         if p==0
                 if l==1
                         wo = Float64[]
@@ -445,10 +446,10 @@ end
 
 # This function can be called directly into optimize_ricardo to get the right weights
 
-function weights(Vk::SparseUk, z::Array{Float64,1})
-        @get Vk (k, p)
+function weights(C::SparseRadialMapComponent, z::Array{Float64,1})
+        @get C (Nx, p)
         # Determine the number of coefficients for each ( ncoeff)
-        noff, ndiag, n∂k = ncoeff(k, p)
+        noff, ndiag, n∂k = ncoeff(Nx, p)
 
         woff  = zeros(noff)
         # The constant of the diagonal term is omitted
@@ -456,41 +457,41 @@ function weights(Vk::SparseUk, z::Array{Float64,1})
         w∂k   = zeros(n∂k)
         count = 0
         # Fill off-diagonal components
-        @inbounds for i=1:k-1
+        @inbounds for i=1:Nx-1
                 pidx = p[i]
                 if pidx == -1
                         # No weights to compute
                 elseif pidx == 0
                         # Linear function
                         wo = view(woff,count+1)
-                        weights(component(Vk,i), z[i], wo)
+                        weights(component(C,i), z[i], wo)
                         count +=1
                 else
                         # Linear term + pidx rbf functions
                         wo = view(woff,count+1:count+pidx+1)
-                        weights(component(Vk,i), z[i], wo)
+                        weights(component(C,i), z[i], wo)
                         count += deepcopy(pidx) + 1
                 end
         end
         @assert count == noff "The size is correct for the off-diagonal weights"
 
         # Fill diagonal components
-        if p[k] ==-1
+        if p[Nx] ==-1
                 # No weights to compute
         else
                 # Affine function for p[k]=0
                 # Constant plus (p[k]+2) ψ functions for p[k]>0
                 wd = view(wdiag,:)
                 w∂ = view(w∂k,:)
-                weights(component(Vk,k), z[k], wd, w∂,  withconstant = false)
+                weights(component(C,Nx), z[Nx], wd, w∂,  withconstant = false)
         end
         return woff, wdiag, w∂k
 end
 
-function weights(Vk::SparseUk, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
-        @get Vk (k, p)
+function weights(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
+        @get C (Nx, p)
         # Determine the number of coefficients for each ( ncoeff)
-        noff, ndiag, n∂k = ncoeff(k, p)
+        noff, ndiag, n∂k = ncoeff(Nx, p)
         if noff ==0
         woff  = Float64[]
         else
@@ -510,7 +511,7 @@ function weights(Vk::SparseUk, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
 
         count = 0
         # Fill off-diagonal components
-        @inbounds for i=1:k-1
+        @inbounds for i=1:Nx-1
                 pidx = p[i]
                 if pidx == -1
                         # No weights to compute
@@ -518,14 +519,14 @@ function weights(Vk::SparseUk, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
                         # Linear function
                         for l=1:Ne
                         wo = view(woff,count+1,l:l)
-                        weights(component(Vk,i), ens.S[i,l], wo)
+                        weights(component(C,i), ens.S[i,l], wo)
                         end
                         count +=1
                 else
                         for l=1:Ne
                         # Linear term + pidx rbf functions
                         wo = view(woff,count+1:count+pidx+1,l:l)
-                        weights(component(Vk,i), ens.S[i,l], wo)
+                        weights(component(C,i), ens.S[i,l], wo)
                         end
                         count += deepcopy(pidx) + 1
                 end
@@ -533,7 +534,7 @@ function weights(Vk::SparseUk, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
         @assert count == noff "The size is correct for the off-diagonal weights"
 
         # Fill diagonal components
-        if p[k] ==-1
+        if p[Nx] ==-1
                 # No weights to compute
         else
                 for l=1:Ne
@@ -541,17 +542,18 @@ function weights(Vk::SparseUk, ens::EnsembleState{Nx, Ne}) where {Nx, Ne}
                 # Constant plus (p[k]+2) ψ functions for p[k]>0
                 wd = view(wdiag,:,l:l)
                 w∂ = view(w∂k,:,l:l)
-                weights(component(Vk,k), ens.S[k,l], wd, w∂, withconstant = false)
+                weights(component(C,Nx), ens.S[Nx,l], wd, w∂, withconstant = false)
                 end
         end
         return woff, wdiag, w∂k
 end
 
-function weights(Vk::SparseUk, X)
-        Nx, Ne = size(X)
-        @get Vk (k, p)
+function weights(C::SparseRadialMapComponent, X)
+        NxX, Ne = size(X)
+        @get C (Nx, p)
+        @assert NxX == Nx
         # Determine the number of coefficients for each ( ncoeff)
-        noff, ndiag, n∂k = ncoeff(k, p)
+        noff, ndiag, n∂k = ncoeff(Nx, p)
         if noff ==0
         woff  = Float64[]
         else
@@ -571,7 +573,7 @@ function weights(Vk::SparseUk, X)
 
         count = 0
         # Fill off-diagonal components
-        @inbounds for i=1:k-1
+        @inbounds for i=1:Nx-1
                 pidx = p[i]
                 if pidx == -1
                         # No weights to compute
@@ -579,14 +581,14 @@ function weights(Vk::SparseUk, X)
                         # Linear function
                         for l=1:Ne
                         wo = view(woff,count+1,l:l)
-                        weights(component(Vk,i), ens.S[i,l], wo)
+                        weights(component(C,i), ens.S[i,l], wo)
                         end
                         count +=1
                 else
                         for l=1:Ne
                         # Linear term + pidx rbf functions
                         wo = view(woff,count+1:count+pidx+1,l:l)
-                        weights(component(Vk,i), ens.S[i,l], wo)
+                        weights(component(C,i), ens.S[i,l], wo)
                         end
                         count += deepcopy(pidx) + 1
                 end
@@ -594,15 +596,15 @@ function weights(Vk::SparseUk, X)
         @assert count == noff "The size is correct for the off-diagonal weights"
 
         # Fill diagonal components
-        if p[k] ==-1
+        if p[Nx] ==-1
                 # No weights to compute
         else
                 for l=1:Ne
-                # Affine function for p[k]=0
-                # Constant plus (p[k]+2) ψ functions for p[k]>0
+                # Affine function for p[Nx]=0
+                # Constant plus (p[Nx]+2) ψ functions for p[Nx]>0
                 wd = view(wdiag,:,l:l)
                 w∂ = view(w∂k,:,l:l)
-                weights(component(Vk,k), ens.S[k,l], wd, w∂, withconstant = false)
+                weights(component(C,Nx), ens.S[Nx,l], wd, w∂, withconstant = false)
                 end
         end
         return woff, wdiag, w∂k

@@ -98,7 +98,7 @@ end
 
 
 @testset "Weights of a Uk map" begin
-Vk = KRmap(1, 0)
+Vk = RadialMap(1, 0)
 
 woff, wdiag, w∂k = create_weights(Vk)
 # wdiag = zeros(2)
@@ -116,7 +116,7 @@ weights(TransportMap.component(Vk.U[1],1), 2.0, wdiag, w∂k)
 @test w∂k   == [1.0]
 
 #
-Vk = KRmap(1, 1)
+Vk = RadialMap(1, 1)
 
 woff, wdiag, w∂k = create_weights(Vk)
 
@@ -131,7 +131,7 @@ weights(Vk, [2.0], woff,  wdiag, w∂k)
 @test w∂k   == [ψ₀′(0.0, 1.0)(2.0); rbf(0.0, 1.0)(2.0); ψpp1′(0.0, 1.0)(2.0)]
 #
 #
-Vk = KRmap(2, 0)
+Vk = RadialMap(2, 0)
 
 woff, wdiag, w∂k = create_weights(Vk)
 
@@ -148,7 +148,7 @@ weights(Vk, [-2.0; 2.0], woff, wdiag, w∂k)
 @test woff == [-2.0]
 #
 #
-Vk = KRmap(3, 2)
+Vk = RadialMap(3, 2)
 
 woff, wdiag, w∂k = create_weights(Vk)
 
@@ -175,7 +175,7 @@ Ne = 50
 p=2
 
 ens = EnsembleState(Nx, Ne)
-Vk = KRmap(Nx, p)
+Vk = RadialMap(Nx, p)
 
 W = create_weights(Vk, ens)
 

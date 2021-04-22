@@ -54,7 +54,6 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	else
 		L = LinearTransform(X; diag = true)
 		M = HermiteMap(40, Ny+Nx, L, smf.M.C)
-		getcoeff(smf.M.C[6])
 		# M = HermiteMap(40, X; diag = true)
 		# Only optimize the existing coefficients of the basis
 		optimize(M, X, nothing; withconstant = false, withqr = true,
@@ -75,6 +74,8 @@ function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	# @show norm(X)
 	return X
 end
+
+
 
 struct FixedOrderStochMapFilter<:SeqFilter
 		"Filter function"
@@ -120,43 +121,20 @@ function (smf::FixedOrderStochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
 	smf.ϵy(X, 1, Ny)
 
 	L = LinearTransform(X; diag = true)
-	transform!(L, X)
+	M = HermiteMap(smf.M.m, smf.M.Nx, L, smf.M.C)
+	clearcoeff!(M)
 
-	M = totalordermap(X, 1)
+	M = totalordermap(X, 2; b = "CstLinProHermite")
 
-	optimize(M, X, nothing; withconstant = false, withqr = false,
-			 verbose = false, start = Ny+1, P = serial, hessprecond = false)
-
-	# if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
-	# 	M = HermiteMap(40, X; diag = true, b = "CstLinProHermite")
-	# 	# Perform a kfold optimization of the map
-	# 	optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-	# 		     verbose = false, start = Ny+1, P = serial, hessprecond = true)
-	# else
-	# 	L = LinearTransform(X; diag = true)
-	# 	M = HermiteMap(40, Ny+Nx, L, smf.M.C)
-	# 	getcoeff(smf.M.C[6])
-	# 	# M = HermiteMap(40, X; diag = true)
-	# 	# Only optimize the existing coefficients of the basis
-	# 	optimize(M, X, nothing; withconstant = false, withqr = true,
-	# 		   verbose = false, start = Ny+1, P = serial, hessprecond = true)
-	# end
+	optimize(M, X, nothing; withconstant = false, withqr = true,
+			 verbose = false, start = Ny+1, P = serial, hessprecond = true)
 
 	# Evaluate the transport map
 	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
 
-	# @show mean(evaluate(M, X; start = Ny+1); dims = 2)
-	# @show cov(evaluate(M, X; start = Ny+1); dims = 2)
-	# # Rescale ystar
-	# ystar .-= view(M.L.μ,1:Ny)
-	# ystar ./= M.L.L.diag[1:Ny]
-
 	# Generate the posterior samples by partial inversion of the map
-	inverse!(X, F, M, ystar; start = Ny+1, P = serial)
-	# @show getcoeff(M[Nypx])
-	# @show "after inversion"
-	# @show norm(X)
-	itransform!(L, Xpost)
+	hybridinverse!(X, F, M, ystar; start = Ny+1, P = serial)
+
 	return X
 end
 

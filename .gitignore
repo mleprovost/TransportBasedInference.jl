@@ -8,6 +8,7 @@
 *.aux
 *.svg
 .ipynb_checkpoints
+Manifest.toml
 
 # temporary matlab files
 *.m~

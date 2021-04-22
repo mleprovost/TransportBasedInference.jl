@@ -15,14 +15,14 @@
               1.41332   -0.918205;
               0.766647  -1.00445]';
     # Initialize map with zero coefficients
-    C_old = MapComponent(m, Nx; α = 1e-6);
+    C_old = HermiteMapComponent(m, Nx; α = 1e-6);
 
     setcoeff!(C_old, [1.5])
     reduced_margin = getreducedmargin(getidx(C_old))
     @show reduced_margin
     idx_new = vcat(getidx(C_old), reduced_margin)
 
-    C_new = MapComponent(m, Nx, idx_new, vcat(getcoeff(C_old), zeros(2)));
+    C_new = HermiteMapComponent(m, Nx, idx_new, vcat(getcoeff(C_old), zeros(2)));
 
     coeff_new, coeff_idx_added, idx_added = update_coeffs(C_old, C_new)
 
@@ -47,11 +47,11 @@ end
               1.41332   -0.918205;
               0.766647  -1.00445]';
     # Initialize map with zero coefficients
-    C_old = MapComponent(m, Nx, [0 0; 1 0; 2 0; 0 1; 0 2; 1 1], randn(6); α = 1e-6);
+    C_old = HermiteMapComponent(m, Nx, [0 0; 1 0; 2 0; 0 1; 0 2; 1 1], randn(6); α = 1e-6);
 
     reduced_margin = getreducedmargin(getidx(C_old))
     idx_new = vcat(getidx(C_old), reduced_margin)
-    C_new = MapComponent(m, Nx, idx_new, vcat(getcoeff(C_old), zeros(4)));
+    C_new = HermiteMapComponent(m, Nx, idx_new, vcat(getcoeff(C_old), zeros(4)));
     coeff_new, coeff_idx_added, idx_added = update_coeffs(C_old, C_new)
 
     @test norm(coeff_new - vcat(getcoeff(C_old), zeros(4)))<1e-8
@@ -64,11 +64,11 @@ end
     Nx = 3
     m = 5
     # Initialize map with zero coefficients
-    C_old = MapComponent(m, Nx, [0 0 0; 0 0 1; 0 0 2; 0 1 0; 0 2 0], randn(5); α = 1e-6);
+    C_old = HermiteMapComponent(m, Nx, [0 0 0; 0 0 1; 0 0 2; 0 1 0; 0 2 0], randn(5); α = 1e-6);
 
     reduced_margin = getreducedmargin(getidx(C_old))
     idx_new = vcat(getidx(C_old), reduced_margin)
-    C_new = MapComponent(m, Nx, idx_new, vcat(getcoeff(C_old), zeros(4)));
+    C_new = HermiteMapComponent(m, Nx, idx_new, vcat(getcoeff(C_old), zeros(4)));
     coeff_new, coeff_idx_added, idx_added = update_coeffs(C_old, C_new)
 
     @test norm(coeff_new - vcat(getcoeff(C_old), zeros(4)))<1e-8
@@ -92,7 +92,7 @@ end
               0.766647  -1.00445]';
     X = X
     # Initialize map with zero coefficients
-    C_old = MapComponent(m, Nx; α = 1e-6);
+    C_old = HermiteMapComponent(m, Nx; α = 1e-6);
 
     S = Storage(C_old.I.f, X)
 
@@ -112,7 +112,7 @@ end
 
     # Define updated map
     f_new = ExpandedFunction(C_old.I.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
-    C_new = MapComponent(f_new; α = 1e-6)
+    C_new = HermiteMapComponent(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(C_old, X, reduced_margin0, S)
 
     dJ_new = zeros(3)
@@ -159,7 +159,7 @@ end
          -1.420159186008486;
          -0.5361337327704369]
 
-    C_old = MapComponent(m, Nx, idx, coeff; α = 1e-6);
+    C_old = HermiteMapComponent(m, Nx, idx, coeff; α = 1e-6);
 
     S = Storage(C_old.I.f, X)
 
@@ -186,7 +186,7 @@ end
 
     # Define updated map
     f_new = ExpandedFunction(C_old.I.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
-    C_new = MapComponent(f_new; α = 1e-6)
+    C_new = HermiteMapComponent(f_new; α = 1e-6)
     idx_new, reduced_margin = update_component(C_old, X, reduced_margin0, S)
 
     dJ_new = zeros(10)

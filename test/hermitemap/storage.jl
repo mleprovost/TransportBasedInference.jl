@@ -33,7 +33,7 @@
       f = ExpandedFunction(B, idx, coeff)
       R = IntegratedFunction(f)
 
-      H = MapComponent(R; α = 1e-2)
+      H = HermiteMapComponent(R; α = 1e-2)
 
       S = Storage(H.I.f, X);
 

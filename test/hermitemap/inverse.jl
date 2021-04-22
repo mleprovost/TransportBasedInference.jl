@@ -34,7 +34,7 @@ using AdaptiveTransportMap: evaluate
     @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<2e-8
 end
 
-@testset "Test inverse HermiteMapComponent" begin
+@testset "Test inverse HermiteHermiteMapComponent" begin
 
     Ne = 200
     Nx = 3
@@ -45,7 +45,7 @@ end
 
     coeff = randn(Nψ)
 
-    C = MapComponent(20, Nx, idx, coeff)
+    C = HermiteMapComponent(20, Nx, idx, coeff)
 
     X = randn(Nx, Ne) .* randn(Nx, Ne)
 
@@ -66,7 +66,7 @@ end
     @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-5
 end
 
-@testset "Test inverse LinHermiteMapComponent" begin
+@testset "Test inverse LinHermiteHermiteMapComponent" begin
 
     Ne = 200
     Nx = 3
@@ -77,20 +77,20 @@ end
 
     coeff = randn(Nψ)
 
-    C = MapComponent(20, Nx, idx, coeff)
+    C = HermiteMapComponent(20, Nx, idx, coeff)
     X = randn(Nx, Ne) .* randn(Nx, Ne)
 
     X0 = deepcopy(X)
     Xmodified = deepcopy(X)
 
-    L = LinMapComponent(X, C)
+    L = LinHermiteMapComponent(X, C)
     F = evaluate(L, X)
 
     @test norm(X -X0)<1e-8
 
     Xmodified[end,:] .+= cos.(2*π*randn(Ne)) .* exp.(-randn(Ne).^2/2)
 
-    Lmodified = LinMapComponent(Xmodified, C)
+    Lmodified = LinHermiteMapComponent(Xmodified, C)
 
     @test norm(Xmodified[end,:]-X[end,:])>1e-6
 

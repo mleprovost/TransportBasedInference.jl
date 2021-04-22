@@ -126,7 +126,7 @@ end
     @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<2e-8
 end
 
-@testset "Test inverse HermiteMapComponent" begin
+@testset "Test inverse HermiteHermiteMapComponent" begin
 
     Ne = 200
     Nx = 3
@@ -137,7 +137,7 @@ end
 
     coeff = randn(Nψ)
 
-    C = MapComponent(20, Nx, idx, coeff)
+    C = HermiteMapComponent(20, Nx, idx, coeff)
 
     X = randn(Nx, Ne) .* randn(Nx, Ne)
 

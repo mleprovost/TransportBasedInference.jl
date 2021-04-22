@@ -46,7 +46,7 @@ end
 #
 #
 
-# We use separable maps Uk(z1,...,zk) = Σi=1,k-1 ui(z1,..,zi) + uk(z1,..,zk)
+# We use separable maps RadialMapComponent(z1,...,zk) = Σi=1,k-1 ui(z1,..,zi) + uk(z1,..,zk)
 # uk has a different structure from ui to ensure the monotonocity condition
 # of the triangular map
 struct ui <:SeparableFcn
@@ -116,7 +116,7 @@ end
 
 D(u::ui) =  z-> D!(u, z)
 
-#### Structure for the final component of Uk
+#### Structure for the final component of RadialMapComponent
 
 # uk(z) = c + Σj=0, p+1 ukj ψⱼ(z), p.36 Couplings for nonlinear ensemble filtering
 

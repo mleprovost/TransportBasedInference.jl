@@ -1,5 +1,30 @@
 import AdaptiveTransportMap: optimize
 
+@testset "Verify clearcoeff!" begin
+  m = 5
+  Nx = 10
+  Nψ = 5
+
+  coeff = randn(Nψ)
+
+  C = HermiteMapComponent[]
+
+  for i=1:Nx
+      idxi = rand(0:m, Nψ, i)
+      coeffi = randn(Nψ)
+      push!(C, HermiteMapComponent(m, i, deepcopy(idxi), deepcopy(coeffi)))
+  end
+
+  M = HermiteMap(m, Nx, LinearTransform(Nx), C)
+
+  clearcoeff!(M)
+
+  for i=1:Nx
+      @test norm(getcoeff(M.C[i]) - zeros(Nψ))<1e-12
+  end
+end
+
+
 @testset "Test evaluation of HermiteMap" begin
 
     Nx = 3
@@ -13,21 +38,21 @@ import AdaptiveTransportMap: optimize
     idx1   = reshape([0; 1; 2], (3,1))
     coeff1 = randn(3)
     MB1 = MultiBasis(B, 1)
-    H1 = MapComponent(IntegratedFunction(ExpandedFunction(MB1, idx1, coeff1)))
+    H1 = HermiteMapComponent(IntegratedFunction(ExpandedFunction(MB1, idx1, coeff1)))
 
     idx2   = reshape([0 0 ;0 1; 1 0; 2 0], (4,2))
     coeff2 = randn(4)
     MB2 = MultiBasis(B, 2)
-    H2 = MapComponent(IntegratedFunction(ExpandedFunction(MB2, idx2, coeff2)))
+    H2 = HermiteMapComponent(IntegratedFunction(ExpandedFunction(MB2, idx2, coeff2)))
 
 
     idx3   = reshape([0 0 0; 0 0 1; 0 1 0; 1 0 1], (4,3))
     coeff3 = randn(4)
     MB3 = MultiBasis(B, 3)
-    H3 = MapComponent(IntegratedFunction(ExpandedFunction(MB3, idx3, coeff3)))
+    H3 = HermiteMapComponent(IntegratedFunction(ExpandedFunction(MB3, idx3, coeff3)))
 
     L = LinearTransform(X; diag = true)
-    M = HermiteMap(L, MapComponent[H1; H2; H3])
+    M = HermiteMap(L, HermiteMapComponent[H1; H2; H3])
 
     out = zero(X)
     # Without rescaling of the variables
@@ -66,21 +91,21 @@ end
     idx1   = reshape([0; 1; 2], (3,1))
     coeff1 = randn(3)
     MB1 = MultiBasis(B, 1)
-    H1 = MapComponent(IntegratedFunction(ExpandedFunction(MB1, idx1, coeff1)))
+    H1 = HermiteMapComponent(IntegratedFunction(ExpandedFunction(MB1, idx1, coeff1)))
 
     idx2   = reshape([0 0 ;0 1; 1 0; 2 0], (4,2))
     coeff2 = randn(4)
     MB2 = MultiBasis(B, 2)
-    H2 = MapComponent(IntegratedFunction(ExpandedFunction(MB2, idx2, coeff2)))
+    H2 = HermiteMapComponent(IntegratedFunction(ExpandedFunction(MB2, idx2, coeff2)))
 
 
     idx3   = reshape([0 0 0; 0 0 1; 0 1 0; 1 0 1], (4,3))
     coeff3 = randn(4)
     MB3 = MultiBasis(B, 3)
-    H3 = MapComponent(IntegratedFunction(ExpandedFunction(MB3, idx3, coeff3)))
+    H3 = HermiteMapComponent(IntegratedFunction(ExpandedFunction(MB3, idx3, coeff3)))
 
     L = LinearTransform(X; diag = true)
-    M = HermiteMap(L, MapComponent[H1; H2; H3])
+    M = HermiteMap(L, HermiteMapComponent[H1; H2; H3])
 
     out = zero(X)
     out_thread = zero(X)
@@ -174,12 +199,12 @@ end
              -0.20935914261414929;
               8.116032140446544];
 
-    M[1] = MapComponent(m, 1,  idx1, coeff1)
+    M[1] = HermiteMapComponent(m, 1,  idx1, coeff1)
 
     idx2 = [ 0  0; 0 1; 1 0; 2 0];
     coeff2 = [2.995732886294909; -2.2624558703623903; -3.3791974895855486; 1.3808989978516617]
 
-    M[2] = MapComponent(m, 2,  idx2, coeff2);
+    M[2] = HermiteMapComponent(m, 2,  idx2, coeff2);
 
     @test norm(log_pdf(M, X) -   [-1.849644462509894;
                                   -1.239419791201162;
@@ -217,12 +242,12 @@ end
              -0.20935914261414929;
               8.116032140446544];
 
-    M[1] = MapComponent(m, 1,  idx1, coeff1)
+    M[1] = HermiteMapComponent(m, 1,  idx1, coeff1)
 
     idx2 = [ 0  0; 0 1; 1 0; 2 0];
     coeff2 = [2.995732886294909; -2.2624558703623903; -3.3791974895855486; 1.3808989978516617]
 
-    M[2] = MapComponent(m, 2,  idx2, coeff2);
+    M[2] = HermiteMapComponent(m, 2,  idx2, coeff2);
 
     @test norm(log_pdf(M, X) - [  -2.284420690193831;
                                   -1.113693643793066;
