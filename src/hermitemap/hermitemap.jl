@@ -1,4 +1,6 @@
 export  HermiteMap,
+        setcoeff!,
+        clearcoeff!,
         evaluate!,
         evaluate,
         log_pdf,
@@ -28,10 +30,8 @@ function HermiteMap(L::LinearTransform, C::Array{MapComponent,1})
         return HermiteMap(m, Nx, L, C)
 end
 
-# Base.size(M::HermiteMap) = M.Nx
 @propagate_inbounds Base.getindex(M::HermiteMap, i::Int) = getindex(M.C,i)
 @propagate_inbounds Base.setindex!(M::HermiteMap, C::MapComponent, i::Int) = setindex!(M.C,C,i)
-# @propagate_inbounds Base.lastindex(M::HermiteMap) = M.Nx
 
 function Base.show(io::IO, M::HermiteMap)
         println(io,"Hermite map of dimension "*string(M.Nx)*":")
@@ -63,6 +63,12 @@ function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Floa
         return HermiteMap(m, Nx, L, C)
 end
 
+# Set all the coefficients of the HermiteMap to zero
+function clearcoeff!(M::HermiteMap; start::Int64 = 1)
+        for i=start:M.Nx
+                clearcoeff!(M.C[i])
+        end
+end
 
 function evaluate!(out, M::HermiteMap, X; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
@@ -349,7 +355,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
 
         if typeof(P) <: Serial
         # We can skip the evaluation of the map on the observation components
-        @showprogress for i=start:Nx
+        for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)
@@ -388,7 +394,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
 
         if typeof(P) <: Serial
         # We can skip the evaluation of the map on the observation components
-        @showprogress for i=start:Nx
+        for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)

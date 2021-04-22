@@ -4,6 +4,7 @@ export  MapComponent,
         ncoeff,
         getcoeff,
         setcoeff!,
+        clearcoeff!,
         getidx,
         active_dim,
         evaluate!,
@@ -88,6 +89,8 @@ function setcoeff!(C::MapComponent, coeff::Array{Float64,1})
         @assert size(coeff,1) == C.Nψ "Wrong dimension of coeff"
         C.I.f.coeff .= coeff
 end
+
+clearcoeff!(C::MapComponent) = fill!(C.I.f.coeff, 0.0)
 
 getidx(C::MapComponent) = C.I.f.idx
 

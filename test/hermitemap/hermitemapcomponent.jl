@@ -8,7 +8,26 @@
   @test abs(Hx[1] - x[2])<1e-10
 end
 
+@testset "Verify getcoeff, setcoeff!, clearcoeff!" begin
+  m = 5
+  Nx = 10
+  Nψ = 5
+  idx = rand(0:m, Nψ, Nx)
 
+  coeff = randn(Nψ)
+
+  M = MapComponent(m, Nx, idx, deepcopy(coeff))
+  @test norm(getcoeff(M) - coeff)<1e-12
+
+  coeff2 = randn(Nψ)
+  setcoeff!(M, deepcopy(coeff2))
+
+  @test norm(getcoeff(M) - coeff2)<1e-12
+
+  clearcoeff!(M)
+
+  @test norm(getcoeff(M) - zeros(Nψ))<1e-12
+end
 
 @testset "Verify loss function and its gradient" begin
 

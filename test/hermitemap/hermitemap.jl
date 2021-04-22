@@ -1,5 +1,30 @@
 import AdaptiveTransportMap: optimize
 
+@testset "Verify clearcoeff!" begin
+  m = 5
+  Nx = 10
+  Nψ = 5
+
+  coeff = randn(Nψ)
+
+  C = MapComponent[]
+
+  for i=1:Nx
+      idxi = rand(0:m, Nψ, i)
+      coeffi = randn(Nψ)
+      push!(C, MapComponent(m, i, deepcopy(idxi), deepcopy(coeffi)))
+  end
+
+  M = HermiteMap(m, Nx, LinearTransform(Nx), C)
+
+  clearcoeff!(M)
+
+  for i=1:Nx
+      @test norm(getcoeff(M.C[i]) - zeros(Nψ))<1e-12
+  end
+end
+
+
 @testset "Test evaluation of HermiteMap" begin
 
     Nx = 3
