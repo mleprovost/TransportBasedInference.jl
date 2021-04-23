@@ -23,21 +23,25 @@
     U.U[2].a[1] .= 5*ones(2+1)
     U.U[2].a[2] .= ones(2+3)
 
+    x = randn()
+    y = randn(2)
+
 
     U11 = RadialMapComponent(1,2, [zeros(4)], [ones(4)], [ones(2+3)])
     U22 = RadialMapComponent(2,2, [zeros(2),zeros(4)], [ones(2), ones(4)], [5*ones(2+1), ones(2+3)])
 
-    @test U([1.0; 1.0]) == [U11([1.0]); U22([1.0; 1.0])]
-
-    @test U([2.0; 1.0]) == [U11([2.0]); U22([2.0; 1.0])]
-
-    @test U([1.0; 2.0]) == [U11([1.0]); U22([1.0; 2.0])]
+    @test isapprox(U([x; x]), [U11([x]); U22([x; x])], atol = 1e-10)
+    @test isapprox(U(y), [U11([y[1]]); U22(y)], atol = 1e-10)
 
 
     U = RadialMapComponent(2,2)
-    U.a[2] .= ones(5)
+    A = randn(8)
+    modify_a(A, U)
 
-    @test ForwardDiff.gradient(x->U(x), [1.0;1.0])[2] == (ψ₀′(0.0, 1.0)(1.0)+ 2*rbf(0.0, 1.0)(1.0)+ψpp1′(0.0, 1.0)(1.0))
+    Uprime = ForwardDiff.gradient(x->U(x), y)
+
+    @test isapprox(Uprime[1], U.a[1][1] + U.a[1][2]*rbf′(0.0, 1.0)(y[1]) + U.a[1][3]*rbf′(0.0, 1.0)(y[1]), atol = 1e-10)
+    @test isapprox(Uprime[2], 0.0*U.a[2][1] + U.a[2][2]*ψ₀′(0.0, 1.0)(y[2]) + U.a[2][3]*rbf(0.0, 1.0)(y[2]) + U.a[2][4]*rbf(0.0, 1.0)(y[2]) + U.a[2][5]*ψpp1′(0.0, 1.0)(y[2]), atol = 1e-10)
 end
 
 

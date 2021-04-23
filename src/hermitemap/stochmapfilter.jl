@@ -1,6 +1,6 @@
-export StochMapFilter, FixedOrderStochMapFilter
+export HermiteSMF, FixedHermiteSMF
 
-struct StochMapFilter<:SeqFilter
+struct HermiteSMF<:SeqFilter
 		"Filter function"
 		G::Function
 
@@ -29,11 +29,11 @@ struct StochMapFilter<:SeqFilter
 		isfiltered::Bool
 end
 
-function Base.show(io::IO, smf::StochMapFilter)
-	println(io,"Stochastic Map Filter with filtered = $(smf.isfiltered)")
+function Base.show(io::IO, smf::HermiteSMF)
+	println(io,"Hermite Stochastic Map Filter with filtered = $(smf.isfiltered)")
 end
 
-function (smf::StochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
+function (smf::HermiteSMF)(X, ystar::Array{Float64,1}, t::Float64)
 	Ny = smf.Ny
 	Nx = smf.Nx
 
@@ -77,7 +77,7 @@ end
 
 
 
-struct FixedOrderStochMapFilter<:SeqFilter
+struct FixedHermiteSMF<:SeqFilter
 		"Filter function"
 		G::Function
 
@@ -103,11 +103,11 @@ struct FixedOrderStochMapFilter<:SeqFilter
 		isfiltered::Bool
 end
 
-function Base.show(io::IO, smf::FixedOrderStochMapFilter)
-	println(io,"Fixed Order Stochastic Map Filter with filtered = $(smf.isfiltered)")
+function Base.show(io::IO, smf::FixedHermiteSMF)
+	println(io,"Fixed Order Hermite Stochastic Map Filter with filtered = $(smf.isfiltered)")
 end
 
-function (smf::FixedOrderStochMapFilter)(X, ystar::Array{Float64,1}, t::Float64)
+function (smf::FixedHermiteSMF)(X, ystar::Array{Float64,1}, t::Float64)
 	Ny = smf.Ny
 	Nx = smf.Nx
 

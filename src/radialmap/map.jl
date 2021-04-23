@@ -62,7 +62,9 @@ end
 
 # Evaluate the map RadialMapComponent at z = (z1,...,zNx)
 function (U::RadialMap)(X::AbstractMatrix{Float64}; start::Int64=1)
+        NxX, Ne = size(X)
         Nx = U.Nx
+        @assert NxX == Nx "Wrong dimension of the ensemble matrix"
         out = zeros(Nx-start+1,Ne)
         # out = SharedArray{Float64}(Nx-start+1,Ne)
                 @inbounds for i=1:Ne

@@ -65,13 +65,11 @@ return f
 end
 
 
-function Base.show(io::IO, U::RadialMapComponent)
-if U.Nx==1
-println(io,"$(U.Nx)-st component of a KR rearrangement of order p = $(U.p)")
-else
-println(io,"$(U.Nx)-th component of a KR rearrangement of order p = $(U.p)")
+function Base.show(io::IO, C::RadialMapComponent)
+        println(io,"Radial map component of dimension "*string(C.Nx)*" and order p = "*string(C.p))
 end
-end
+
+
 
 
 # Transform vector of coefficients to a form RadialMapComponent.a
@@ -102,6 +100,7 @@ function modify_a(A::Array{Float64,1}, C::RadialMapComponent)
                         # C.a[Nx] .= A[(Nx-1)*(p+1)+1:Nx*(p+1)+2]
                 end
         end
+        nothing
 end
 
 extract_a(C::RadialMapComponent) = vcat(C.a...)

@@ -1,5 +1,5 @@
 export ParamFcn, AddedParamFcn, reduction, null, Null, constant, Cst, linear, Lin, rbf, rbf′,
-        ψ₀, ψj, ψpp1, ψ₀′, ψⱼ′, ψpp1′
+        ψ₀, ψj, ψpp1, ψ₀′, ψpp1′
 
 import Base: +, *, show, zero, size, getindex, setindex!
 

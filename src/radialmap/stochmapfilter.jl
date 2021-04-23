@@ -1,24 +1,18 @@
-export SparseTMap, assimilate_scalar_obs, TMap
+export SparseRadialSMF, assimilate_scalar_obs, RadialSMF
 
 # Structure for the stochastic transport map
-struct SparseTMap<:SeqFilter
-	"Knothe-Rosenblatt rearrangement"
+struct SparseRadialSMF<:SeqFilter
+	"Filter function"
+	G::Function
+
+	"Inflation for the measurement noise distribution"
+	ϵy::AdditiveInflation
+
+	"Sparse radial map"
 	S::SparseRadialMap
 
 	"Distance matrix"
 	dist::Matrix
-
-	"State-space model"
-	F::StateSpace
-
-    "Filter function"
-    G::Function
-
-	"Multiplicative inflation"
-	β::Float64
-
-    "Inflation for the measurement noise distribution"
-    ϵy::AdditiveInflation
 
     "Time step dynamic"
     Δtdyn::Float64
@@ -26,35 +20,32 @@ struct SparseTMap<:SeqFilter
     "Time step observation"
     Δtobs::Float64
 
-    "Boolean: is state vector filtered"
-    isfiltered::Bool
-
-	# Define cache
-	"EnsembleState to hold the augmented state"
-	cache::Array{Float64,2}
-
 	"Index of measurement"
 	idx::Array{Int64,2}
 	# idx contains the dictionnary of the mapping
 	# First line contains the range of integer 1:Ny
 	# Second line contains the associated indice of each measurement
 
+	# Define cache
+	"Cache for the inference"
+	cache::Array{Float64,2}
 
-
+    "Boolean: is state vector filtered"
+    isfiltered::Bool
 end
 
 
-function SparseTMap(Nx, Ny, Ne, p::Array{Array{Int64,1}}, γ, λ, δ, κ,
-					dist::Matrix, F::StateSpace,
-                    G::Function, β, ϵy::AdditiveInflation,
-				    Δtdyn::Float64, Δtobs::Float64, isfiltered::Bool, idx::Array{Int64,2})
+function SparseRadialSMF(Nx, Ny, Ne, p::Array{Array{Int64,1}}, γ, λ, δ, κ,
+					dist::Matrix,
+                    G::Function, ϵy::AdditiveInflation,
+				    Δtdyn::Float64, Δtobs::Float64, idx::Array{Int64,2}, isfiltered::Bool)
 	#Create the map with scalar assimlation of the data
 	S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	return SparseTMap(S, dist, F, G, β, ϵy, Δtdyn, Δtobs, isfiltered,  zeros(Nx+1, Ne), idx)
+	return SparseRadialSMF(S, dist, F, G, β, ϵy, Δtdyn, Δtobs, isfiltered,  zeros(Nx+1, Ne), idx)
 end
 
 
-# function assimilate_scalar_obs(T::SparseTMap, ens::EnsembleStateMeas{Nx, Ny, Ne}, idx::Array{Int64,1}, y, t; P::Parallel=serial) where {Nx, Ny, Ne}
+# function assimilate_scalar_obs(T::SparseRadialSMF, ens::EnsembleStateMeas{Nx, Ny, Ne}, idx::Array{Int64,1}, y, t; P::Parallel=serial) where {Nx, Ny, Ne}
 #
 # idx1, idx2 = idx
 #
@@ -109,7 +100,7 @@ end
 # ens.state.S[perm,:] = T.ensa.S[2:Na,:];
 # end
 #
-# function (T::SparseTMap)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar, t; P::Parallel = serial) where {Nx, Ny, Ne}
+# function (T::SparseRadialSMF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar, t; P::Parallel = serial) where {Nx, Ny, Ne}
 # 	@assert Ny==size(ystar,1) "Wrong dimension of the observation"
 # 	# idx contains the dictionnary of the mapping
 # 	# First line contains the range of integer 1:Ny
@@ -121,7 +112,7 @@ end
 # 	return ens
 # end
 #
-# function (T::SparseTMap)(X, ystar, t; P::Parallel = serial)
+# function (T::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
 # 	@assert Ny==size(ystar,1) "Wrong dimension of the observation"
 # 	# idx contains the dictionnary of the mapping
 # 	# First line contains the range of integer 1:Ny
@@ -137,12 +128,13 @@ end
 #
 #
 # # Structure for the stochastic transport map
-# struct TMap<:SeqFilter
-# 	"Knothe-Rosenblatt rearrangement"
-# 	S::RadialMap
+# struct RadialSMF<:SeqFilter
 #
 #     "Filter function"
 #     G::Function
+
+	# 	"Knothe-Rosenblatt rearrangement"
+	# 	S::RadialMap
 #
 #     "Standard deviations of the measurement noise distribution"
 #     ϵy::AdditiveInflation
@@ -160,15 +152,15 @@ end
 # end
 #
 #
-# function TMap(Nx, Ny, p, γ, λ, δ, κ, G::Function,
+# function RadialSMF(Nx, Ny, p, γ, λ, δ, κ, G::Function,
 # 	ϵy::AdditiveInflation, Δtdyn::Float64, Δtobs::Float64, islocal::Bool, isfiltered::Bool)
 # 	#Create the map
 # 	S = RadialMap(Nx+Ny, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-# 	return TMap(S, G, ϵy, Δtdyn, Δtobs, islocal, isfiltered)
+# 	return RadialSMF(S, G, ϵy, Δtdyn, Δtobs, islocal, isfiltered)
 # end
 #
 #
-# function (T::TMap)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar) where {Nx, Ny, Ne}
+# function (T::RadialSMF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar) where {Nx, Ny, Ne}
 #
 # # Perturb each observation
 # T.ϵy(ens.meas)
@@ -201,7 +193,7 @@ end
 ################################################################################################################################################################
 
 #
-# function assimilate_scalar_obs(T::SparseTMap, ens::EnsembleStateMeas{Nx, Ny, Ne}, idx, y, t) where {Nx, Ny, Ne}
+# function assimilate_scalar_obs(T::SparseRadialSMF, ens::EnsembleStateMeas{Nx, Ny, Ne}, idx, y, t) where {Nx, Ny, Ne}
 # Na,_ = size(T.ensa)
 # @assert Na == Nx+1 "Wrong dimension for the augmented EnsembleStateMeas"
 #

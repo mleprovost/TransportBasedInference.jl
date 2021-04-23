@@ -1,4 +1,4 @@
-export bracket, invert_uk, invert_S
+export bracket, inverse_uk, inverse
 
 #Expands the range of valued searched geometrically until a root is bracketed
 # Julia's adaptation of zbrac Numerical Recipes in Fortran 77 p.345
@@ -22,7 +22,7 @@ function bracket(f, a, b)
     @assert counter<=(Niter-1) "Maximal number of iterations reached"
 end
 
-function invert_uk(u::uk, x, κ; z0::Real=0.0)
+function inverse_uk(u::uk, x, κ; z0::Real=0.0)
     if u.p==-1
     # Identity transformation
     return x
@@ -39,30 +39,30 @@ function invert_uk(u::uk, x, κ; z0::Real=0.0)
 end
 
 # y is the observation of size ny
-function invert(S::RadialMap, Sval, ystar, zplus)
+function inverse(x, F, S::RadialMap, ystar::AbstractVector{Float64})
     @get S (Nx, p, κ)
     ny = size(ystar,1)
-    zplus[1:ny] = ystar
+    x[1:ny] .= ystar
     # Recursive 1D root-finding
     # Start optimization from the a priori component
     @inbounds for i=ny+1:Nx
-    Ui = S.U[i]
-    uk_i = component(Ui, i)
-    zplus[i] = invert_uk(uk_i, Sval[i] - off_diagonal(Ui, view(zplus,1:i-1)), κ)
+        Ui = S.U[i]
+        uk_i = component(Ui, i)
+        x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
     end
 end
 
 # y is the observation of size ny
-function invert(S::SparseRadialMap, Sval, ystar, zplus)
+function inverse(x, F, S::SparseRadialMap, ystar::AbstractVector{Float64})
     @get S (Nx, p, κ)
     ny = size(ystar,1)
-    zplus[1:ny] .= ystar
+    x[1:ny] .= ystar
 
     # Recursive 1D root-finding
     # Start optimization from the a priori component
     @inbounds for i=ny+1:Nx
-    Ui = S.U[i]
-    uk_i = component(Ui, i)
-    zplus[i] = invert_uk(uk_i, Sval[i] - off_diagonal(Ui, view(zplus,1:i-1)), κ)
+        Ui = S.U[i]
+        uk_i = component(Ui, i)
+        x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
     end
 end

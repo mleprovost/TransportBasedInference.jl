@@ -12,33 +12,33 @@
     @test u(zlim[1])*u(zlim[2])<0.0
 
 end
-@testset "invert_uk p=-1" begin
+@testset "inverse_uk p=-1" begin
     u = uk(-1)
-    zopt = invert_uk(u,2.0,500.0)
+    zopt = inverse_uk(u,2.0,500.0)
     @test zopt == 2.0
     @test u(zopt) == 2.0
 end
 
-@testset "invert_uk p=0" begin
+@testset "inverse_uk p=0" begin
     u = uk(0)
     u.ak .= [1.0;2.0]
-    zopt = invert_uk(u,2.0,500.0)
+    zopt = inverse_uk(u,2.0,500.0)
     @test zopt ==(2.0-1.0)/2.0
     @test u(zopt) == 2.0
 end
 
-@testset "invert_uk p>0" begin
+@testset "inverse_uk p>0" begin
     u = uk(5)
     u.ξk .= sort!(randn(7))
     u.σk .= σscale(u.ξk,2.0)
     u.ak .= rand(8);
 
-    zopt = invert_uk(u,1.0,500.0)
+    zopt = inverse_uk(u,1.0,500.0)
     @test norm(u(zopt) -1.0)<1e-9
 
     # u = uk(5, randn(7), rand(7), [-0.5; rand(7)])
     #
-    # zopt = invert_uk(u,1.0;z0 = 0.1)
+    # zopt = inverse_uk(u,1.0;z0 = 0.1)
     # @test norm(u(zopt) -1.0)<1e-10
 end
 
@@ -50,23 +50,22 @@ end
     λ = 0.1
     δ = 1e-5
     κ = 10.0
-    ens = EnsembleState(Nx, Ne)
-    ens⁺ = EnsembleState(Nx, Ne)
-    ens.S .= randn(Nx,Ne) .* randn(Nx,Ne)
+
+    X = randn(Nx,Ne) .* randn(Nx,Ne)
+    Xpost = zero(X)
+
     S = RadialMap(Nx, p, γ=γ, λ=λ, δ=δ, κ=κ)
-    run_optimization(S, ens);
+    optimize(S, X);
 
-
-
-    Sval = S(ens)
+    F = S(X)
     # Truth is a weak pertrubation
-    ystar = ens.S[1:50,1] + 0.01*cos.(randn(50))
+    ystar = X[1:50,1] + 0.01*cos.(randn(50))
     for i=1:Ne
-    zplus = view(ens⁺.S,:,i)
-    invert_S(S, view(Sval,:,i), ystar, zplus)
+        col = view(Xpost,:,i)
+        inverse(col, view(F,:,i), S, ystar)
     end
 
-    @test norm(S(ens⁺)[51:Nx,:] - Sval[51:Nx,:])<1e-8
+    @test norm(S(Xpost)[51:Nx,:] - F[51:Nx,:])<1e-8
 end
 
 
@@ -78,27 +77,29 @@ end
     λ = 0.1
     δ = 1e-5
     κ = 10.0
-    ens = EnsembleState(Nx, Ne)
-    ens⁺ = EnsembleState(Nx, Ne)
-    ens.S .= randn(Nx,Ne) .* randn(Nx,Ne)
+
+    X = randn(Nx,Ne) .* randn(Nx,Ne)
+    Xserial = zero(X)
+    Xthread = zero(X)
     Sserial = RadialMap(Nx, p, γ=γ, λ=λ, δ=δ, κ=κ)
     Sthread = RadialMap(Nx, p, γ=γ, λ=λ, δ=δ, κ=κ)
-    run_optimization(Sserial, ens; P = serial);
-    run_optimization(Sthread, ens; P = thread);
+    optimize(Sserial, X; P = serial);
+    optimize(Sthread, X; P = thread);
 
-    Sval = Sserial(ens)
-    @test norm(Sserial(ens)-Sthread(ens))<1e-12
+    F = Sserial(X)
+    @test norm(Sserial(X)-Sthread(X))<1e-12
     # Truth is a weak pertrubation
-    ystar = ens.S[1:50,1] + 0.01*cos.(randn(50))
+    ystar = X[1:50,1] + 0.01*cos.(randn(50))
     Threads.@threads for i=1:Ne
-    zplus = view(ens⁺.S,:,i)
-    invert_S(Sserial, view(Sval,:,i), ystar, zplus)
-    invert_S(Sthread, view(Sval,:,i), ystar, zplus)
+        colserial = view(Xserial,:,i)
+        colthread = view(Xthread,:,i)
+        inverse(colserial, view(F,:,i), Sserial, ystar)
+        inverse(colthread, view(F,:,i), Sthread, ystar)
 
     end
 
-    @test norm(Sserial(ens⁺)[51:Nx,:] - Sval[51:Nx,:])<1e-8
-    @test norm(Sthread(ens⁺)[51:Nx,:] - Sval[51:Nx,:])<1e-8
+    @test norm(Sserial(Xserial)[51:Nx,:] - F[51:Nx,:])<1e-8
+    @test norm(Sthread(Xthread)[51:Nx,:] - F[51:Nx,:])<1e-8
 
 end
 

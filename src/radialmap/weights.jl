@@ -1,6 +1,6 @@
 export Weights, create_weights, weights, component,
         extract_a, modify_a, rearrange_weights,
-        rearrange_ricardo, ncoeff
+        rearrange, ncoeff
 
 import Base: +, *, size
 
@@ -245,7 +245,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                         end
                 end
                 # Fill woff
-                @inbounds  for i=1:k-1
+                @inbounds  for i=1:Nx-1
                         utmp = component(T.U[end],i)
                         for l=1:Ne
                         wo = view(woff,i:i,l)
@@ -315,7 +315,7 @@ end
 # This function extracts the right weights for the cost function, wquad will be the part of the weights
 # associated with the quadratic function, while w∂ will be associated with the log barrier function
 # rearrange_weights does not use the line of 1 in wdiag
-function rearrange_ricardo(W::Weights, l::Int64)
+function rearrange(W::Weights, l::Int64)
         @get W (Nx, p, Ne, woff, wdiag, w∂k)
         if p==0
                 if l==1
@@ -373,7 +373,7 @@ end
 
 
 
-# This function can be called directly into optimize_ricardo to get the right weights
+# This function can be called directly into optimize to get the right weights
 
 function weights(C::SparseRadialMapComponent, z::Array{Float64,1})
         @get C (Nx, p)

@@ -3,7 +3,7 @@ using Test
 using LinearAlgebra, Statistics
 using OrdinaryDiffEq
 using AdaptiveTransportMap
-using AdaptiveTransportMap: evaluate
+using AdaptiveTransportMap: evaluate, optimize
 using ForwardDiff
 using FastGaussQuadrature
 using SpecialFunctions
@@ -29,7 +29,7 @@ include("radialmap/cost.jl")
 include("radialmap/optimize.jl")
 include("radialmap/optimize_multithreading.jl")
 include("radialmap/iterativeoptimize.jl")
-include("radialmap/invert.jl")
+include("radialmap/inverse.jl")
 
 
 # Tools: double factorial, adaptive integration
@@ -68,17 +68,17 @@ include("radialmap/invert.jl")
 # include("hermitemap/storage.jl")
 
 # Test tools for HermiteMap component
-include("hermitemap/hermitemapcomponent.jl")
-include("hermitemap/linhermitemapcomponent.jl")
-
-# Test greedy procedure
-include("hermitemap/greedyfit.jl")
-
-# Test optimization of HermiteMap component
-include("hermitemap/qr.jl")
-# include("hermitemap/qraccelerated.jl")
-include("hermitemap/optimize.jl")
-
-include("hermitemap/inverse.jl")
-include("hermitemap/hybridinverse.jl")
-include("hermitemap/hermitemap.jl")
+# include("hermitemap/hermitemapcomponent.jl")
+# include("hermitemap/linhermitemapcomponent.jl")
+#
+# # Test greedy procedure
+# include("hermitemap/greedyfit.jl")
+#
+# # Test optimization of HermiteMap component
+# include("hermitemap/qr.jl")
+# # include("hermitemap/qraccelerated.jl")
+# include("hermitemap/optimize.jl")
+#
+# include("hermitemap/inverse.jl")
+# include("hermitemap/hybridinverse.jl")
+# include("hermitemap/hermitemap.jl")

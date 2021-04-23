@@ -78,20 +78,20 @@ end
     @test C(1.0) == 0.0
 
 
-    C.a[1][1] = 1.0
+    C.a[1][1] = 1.5
 
-    @test isapprox(C([x1;0.0;0.0]), x1, atol = 1e-10)
+    @test isapprox(C([x1;0.0;0.0]), 1.5*x1, atol = 1e-10)
 
     C.a[2][1] = 2.0
-    @test isapprox(C([x1;x2;0.0]), x1 + 2.0*x2, atol = 1e-10)
+    @test isapprox(C([x1;x2;0.0]), 1.5*x1 + 2.0*x2, atol = 1e-10)
 
     C.a[3][1] = 3.0
-    @test isapprox(C([x1; x2; x3]), 1.0*x1 + 2.0*x2 + 3.0, atol = 1e-10)
-    @test isapprox(C(x1), 1.0*x1+2.0*x1+3.0, atol = 1e-10)
+    @test isapprox(C([x1; x2; x3]), 1.5*x1 + 2.0*x2 + 3.0, atol = 1e-10)
+    @test isapprox(C(x1), 1.5*x1+2.0*x1+3.0, atol = 1e-10)
 
     C.a[3][2] = 4.0
-    @test isapprox(C([x1; x2; x3]), 1.0*x1 + 2.0*x2 + 3.0 + 4.0*x3, atol = 1e-10)
-    @test isapprox(C(x1), 1.0*x1+2.0*x1+3.0 + 4.0*x1, atol = 1e-10)
+    @test isapprox(C([x1; x2; x3]), 1.5*x1 + 2.0*x2 + 3.0 + 4.0*x3, atol = 1e-10)
+    @test isapprox(C(x1), 1.5*x1+2.0*x1+3.0 + 4.0*x1, atol = 1e-10)
 
 end
 
