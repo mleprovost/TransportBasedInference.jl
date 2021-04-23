@@ -17,14 +17,14 @@ struct SparseRadialSMF<:SeqFilter
 	"State dimension"
 	Nx::Int64
 
-	"Distance matrix"
-	dist::Array{Float64,2}
-
     "Time step dynamic"
     Δtdyn::Float64
 
     "Time step observation"
     Δtobs::Float64
+
+	"Distance matrix"
+	dist::Array{Float64,2}
 
 	"Index of measurement"
 	idx::Array{Int64,2}
@@ -42,13 +42,15 @@ end
 
 
 function SparseRadialSMF(G::Function, ϵy::AdditiveInflation,
-						 p::Array{Array{Int64,1}}, γ, λ, δ, κ,
-						 Ny, Nx,
+						 p::Array{Array{Int64,1},1}, γ, λ, δ, κ,
+						 Ny, Nx, Ne,
 				         Δtdyn::Float64, Δtobs::Float64,
-						 idx::Array{Int64,2}; isfiltered::Bool = false)
+						 dist::Array{Float64,2}, idx::Array{Int64,2};
+						 isfiltered::Bool = false)
 	#Create the map with scalar assimlation of the data
-	S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	return SparseRadialSMF(G, ϵy, S, Ny, Nx, dist, Δtdyn, Δtobs, idx, zeros(Nx+1, Ne), isfiltered)
+	# S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+	S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+	return SparseRadialSMF(G, ϵy, S, Ny, Nx, Δtdyn, Δtobs, dist, idx, zeros(Nx+1, Ne), isfiltered)
 end
 
 
@@ -58,6 +60,7 @@ function (smf::SparseRadialSMF)(X, ystar, t, idx::Array{Int64,1}; P::Parallel=se
 	Nx = smf.Nx
 	Ny = smf.Ny
 	Na = Nx+1
+	NxX, Ne = size(X)
 	cache = smf.cache
 	# We add a +1 such that the scalar observation will remain the first entry
 	perm = sortperm(view(smf.dist,:,idx2))
@@ -72,12 +75,12 @@ function (smf::SparseRadialSMF)(X, ystar, t, idx::Array{Int64,1}; P::Parallel=se
 	if typeof(P) <: Serial
 		@inbounds for i=1:Ne
 			col = view(cache,:,i)
-			inverse(col, view(F,:,i), T.S, ystar)
+			inverse(col, view(F,:,i), smf.S, ystar)
 		end
 	elseif typeof(P) <: Thread
 		@inbounds Threads.@threads for i=1:Ne
 			col = view(cache,:,i)
-			inverse(col, view(F,:,i), T.S, ystar)
+			inverse(col, view(F,:,i), smf.S, ystar)
 		end
 	end
 
@@ -96,17 +99,42 @@ end
 # 	return ens
 # end
 #
-# function (T::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
-# 	@assert Ny==size(ystar,1) "Wrong dimension of the observation"
+# function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
+# 	Ny = smf.Ny
+# 	@assert smf.Ny==size(ystar,1) "Wrong dimension of the observation"
 # 	# idx contains the dictionnary of the mapping
 # 	# First line contains the range of integer 1:Ny
 # 	# Second line contains the associated indice of each measurement
 # 	@inbounds for i=1:Ny
-# 		assimilate_scalar_obs(T, X, T.idx[:,i], ystar[i], t; P = P)
+# 		smf(X, ystar[i], t, smf.idx[:,i]; P = P)
 # 	end
 #
 # 	return X
 # end
+
+# Without localization of the observations
+function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
+	Ny = smf.Ny
+	@assert smf.Ny==size(ystar,1) "Wrong dimension of the observation"
+
+	# Perturbation of the measurements
+	smf.ϵy(X, 1, Ny)
+
+	optimize(smf.S, X; start = Ny+1)
+
+	# Evaluate the transport map
+	F = evaluate(smf.S, X; start = Ny+1)
+
+	@view(X[1:Ny,:]) .= ystar
+	# Generate the posterior samples by partial inversion of the map
+
+	@inbounds for i=1:Ne
+		col = view(X,:,i)
+		Fi = view(F,:,i)
+		inverse(col, Fi, smf.S; start = Ny+1)
+	end
+	return X
+end
 #
 # ## Full map without local observation
 #

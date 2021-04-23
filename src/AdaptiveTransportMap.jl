@@ -3,6 +3,7 @@ module AdaptiveTransportMap
 using ColorTypes
 using Distributions
 using DocStringExtensions
+using ForwardDiff
 using IterativeSolvers
 using LaTeXStrings
 using LinearAlgebra
@@ -57,6 +58,7 @@ include("enkf/etkf.jl")
 
 # Tools for lorenz63
 include("lorenz63/lorenz63.jl")
+include("lorenz63/metric_lorenz.jl")
 
 # Tools for lorenz96
 include("lorenz96/lorenz96.jl")

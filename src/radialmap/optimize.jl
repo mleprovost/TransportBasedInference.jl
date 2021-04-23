@@ -199,13 +199,13 @@ function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-		    	modify_a(xopt, S.U[i])
+				xopt = optimize(S.C[i], W, λ, δ)
+		    	modify_a(xopt, S.C[i])
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-				modify_a(xopt, S.U[i])
+				xopt = optimize(S.C[i], W, λ, δ)
+				modify_a(xopt, S.C[i])
 		end
 	end
 end
@@ -229,7 +229,7 @@ end
 # 	scoeffs = SharedArray{Int64}(Nx-start+1)
 # 	@sync @distributed for i=start:Nx
 # 		@inbounds begin
-# 		xopt = optimize(S.U[i], W, λ, δ)
+# 		xopt = optimize(S.C[i], W, λ, δ)
 # 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
 # 	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
 # 		end
@@ -237,8 +237,8 @@ end
 #
 # 	# Run this part in serial
 # 	@inbounds for i=start:Nx
-# 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
-# 	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
+# 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.C[i])
+# 	# @inbounds modify_a(X[1:scoeffs[i],i], S.C[i])
 #     end
 # end
 
@@ -409,15 +409,15 @@ function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.U[i], X[1:i,:], λ, δ)
-					modify_a(xopt, S.U[i])
+					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
+					modify_a(xopt, S.C[i])
 			end
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.U[i], X[1:i,:], λ, δ)
-					modify_a(xopt, S.U[i])
+					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
+					modify_a(xopt, S.C[i])
 			end
 		end
 	end

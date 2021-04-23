@@ -25,35 +25,35 @@ end
 function inverse_uk(u::uk, x, κ; z0::Real=0.0)
     if u.p==-1
     # Identity transformation
-    return x
+        return x
     elseif u.p==0
     # Solve u(z)= az + b = x for z
-    return (x-u.ak[1])/u.ak[2]
+        return (x-u.ak[1])/u.ak[2]
     else
-    zlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
-    #Ensure that the zero is bracketed
-    zlim = bracket(z->u(z)-x, zlim[1], zlim[2])
-    # Roots.Brent()
-    return find_zero(z->u(z)-x, zlim, Roots.Brent())
+        zlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
+        #Ensure that the zero is bracketed
+        zlim = bracket(z->u(z)-x, zlim[1], zlim[2])
+        # Roots.Brent()
+        return find_zero(z->u(z)-x, zlim, Roots.Brent())
     end
 end
 
 # y is the observation of size ny
-function inverse(x, F, S::RadialMap, ystar::AbstractVector{Float64})
+function inverse(x, F, S::RadialMap, ystar)
     @get S (Nx, p, κ)
     ny = size(ystar,1)
     x[1:ny] .= ystar
     # Recursive 1D root-finding
     # Start optimization from the a priori component
     @inbounds for i=ny+1:Nx
-        Ui = S.U[i]
+        Ui = S.C[i]
         uk_i = component(Ui, i)
         x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
     end
 end
 
 # y is the observation of size ny
-function inverse(x, F, S::SparseRadialMap, ystar::AbstractVector{Float64})
+function inverse(x, F, S::SparseRadialMap, ystar)
     @get S (Nx, p, κ)
     ny = size(ystar,1)
     x[1:ny] .= ystar
@@ -61,7 +61,7 @@ function inverse(x, F, S::SparseRadialMap, ystar::AbstractVector{Float64})
     # Recursive 1D root-finding
     # Start optimization from the a priori component
     @inbounds for i=ny+1:Nx
-        Ui = S.U[i]
+        Ui = S.C[i]
         uk_i = component(Ui, i)
         x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
     end

@@ -184,36 +184,36 @@ function weights(T::RadialMap, z::Array{Float64,1}, woff::Array{Float64,1}, wdia
                 if Nx==1
                 wd = view(wdiag,:)
                 w∂ = view(w∂k,Nx:Nx)
-                weights(component(T.U[1],1), z[1], wd, w∂)
+                weights(component(T.C[1],1), z[1], wd, w∂)
                 else
                 # Fill wdiag and w∂k
                 @inbounds for i=1:Nx
                         wd = view(wdiag,(i-1)*2+1:i*2)
                         w∂ = view(w∂k,i:i)
-                        weights(component(T.U[i],i), z[i], wd, w∂)
+                        weights(component(T.C[i],i), z[i], wd, w∂)
                 end
                 # Fill woff
                 @inbounds for i=1:Nx-1
                         wo = view(woff,i:i)
-                        weights(component(T.U[end],i), z[i], wo)
+                        weights(component(T.C[end],i), z[i], wo)
                 end
                 end
         else
                 if Nx==1
                 wd = view(wdiag,:)
                 w∂ = view(w∂k,:)
-                weights(component(T.U[1],1), z[1], wd, w∂)
+                weights(component(T.C[1],1), z[1], wd, w∂)
                 else
                         # Fill wdiag and w∂k
                         @inbounds for i=1:Nx
                                 wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3))
                                 w∂ = view(w∂k, (i-1)*(p+2)+1:i*(p+2))
-                                weights(component(T.U[i],i), z[i], wd, w∂)
+                                weights(component(T.C[i],i), z[i], wd, w∂)
                         end
                         # Fill woff
                         @inbounds for i=1:Nx-1
                                 wo = view(woff, (i-1)*(p+1)+1:i*(p+1))
-                                weights(component(T.U[end],i), z[i], wo)
+                                weights(component(T.C[end],i), z[i], wo)
                         end
                 end
         end
@@ -228,7 +228,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
 
         if p==0
                 if Nx==1
-                utmp = component(T.U[1],1)
+                utmp = component(T.C[1],1)
                 @inbounds for l=1:Ne
                         wd = view(wdiag,:,l)
                         w∂ = view(w∂k,1:1,l)
@@ -237,7 +237,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                 else
                 # Fill wdiag and w∂k
                 @inbounds for i=1:Nx
-                utmp = component(T.U[i],i)
+                utmp = component(T.C[i],i)
                         for l=1:Ne
                         wd = view(wdiag, (i-1)*2+1:i*2, l)
                         w∂ = view(w∂k,i:i,l)
@@ -246,7 +246,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                 end
                 # Fill woff
                 @inbounds  for i=1:Nx-1
-                        utmp = component(T.U[end],i)
+                        utmp = component(T.C[end],i)
                         for l=1:Ne
                         wo = view(woff,i:i,l)
                         weights(utmp, X[i,l], wo)
@@ -255,7 +255,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                 end
         else
                 if Nx==1
-                utmp = component(T.U[1],1)
+                utmp = component(T.C[1],1)
                 @inbounds for l=1:Ne
                         wd = view(wdiag,:,l)
                         w∂ = view(w∂k,:,l)
@@ -264,7 +264,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                 else
                         # Fill wdiag and w∂k
                         @inbounds for i=1:Nx
-                                utmp = component(T.U[i],i)
+                                utmp = component(T.C[i],i)
                                 for l=1:Ne
                                 wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3), l)
                                 w∂ = view(w∂k, (i-1)*(p+2)+1:i*(p+2), l)
@@ -273,7 +273,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                         end
                         # Fill woff
                         @inbounds for i=1:Nx-1
-                                utmp = component(T.U[end],i)
+                                utmp = component(T.C[end],i)
                                 for l=1:Ne
                                 wo = view(woff, (i-1)*(p+1)+1:i*(p+1),l)
                                 weights(utmp, X[i,l], wo)

@@ -85,12 +85,12 @@ function center_std(T::RadialMap, X::AbstractMatrix{Float64};start::Int64=1)
     Xsort = deepcopy(X)
     sort!(Xsort; dims = 2)
     if Nx==1
-        center_std_diag(T.U[1], Xsort, γ)
+        center_std_diag(T.C[1], Xsort, γ)
     else
         for i=start:Nx
             @inbounds begin
-            center_std_diag(T.U[i], Xsort, γ)
-            center_std_off(T.U[i], Xsort, γ)
+            center_std_diag(T.C[i], Xsort, γ)
+            center_std_off(T.C[i], Xsort, γ)
             end
         end
     end
@@ -175,12 +175,12 @@ function center_std(T::SparseRadialMap, X::AbstractMatrix{Float64}; start::Int64
     @assert NxX == Nx "Wrong dimension of the ensemble matrix"
     Xsort = sort(X; dims = 2)
     if Nx==1 && !allequal(p[Nx], -1)
-        center_std_diag(T.U[1], Xsort, γ)
+        center_std_diag(T.C[1], Xsort, γ)
     else
         @inbounds for i=start:Nx
             if !allequal(p[i], -1)
-            center_std_diag(T.U[i], Xsort, γ)
-            center_std_off(T.U[i], Xsort, γ)
+            center_std_diag(T.C[i], Xsort, γ)
+            center_std_off(T.C[i], Xsort, γ)
             end
         end
     end

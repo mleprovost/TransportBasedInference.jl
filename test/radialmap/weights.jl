@@ -108,17 +108,17 @@ end
 
 
 @testset "Weights of a RadialMapComponent map" begin
-    C = RadialMap(1, 0)
+    M = RadialMap(1, 0)
     x = randn()
     y = randn(3)
 
-    woff, wdiag, w∂k = create_weights(C)
+    woff, wdiag, w∂k = create_weights(M)
     # wdiag = zeros(2)
     # w∂k = zeros(1)
     # woff = zeros(0)
 
     # w, w∂k = weights(TransportMap.component(C.U[1],1), [2.0], w, w∂k)
-    weights(AdaptiveTransportMap.component(C.U[1],1), x, wdiag, w∂k)
+    weights(AdaptiveTransportMap.component(M.C[1],1), x, wdiag, w∂k)
 
     @test size(wdiag,1) == 2
     @test size(w∂k, 1) == 1
@@ -128,11 +128,11 @@ end
     @test w∂k   == [1.0]
 
     #
-    C = RadialMap(1, 1)
+    M = RadialMap(1, 1)
 
-    woff, wdiag, w∂k = create_weights(C)
+    woff, wdiag, w∂k = create_weights(M)
 
-    weights(C, [x], woff,  wdiag, w∂k)
+    weights(M, [x], woff,  wdiag, w∂k)
     #
     @test size(woff,1)==0
     @test size(wdiag,1) == 1+3
@@ -143,12 +143,12 @@ end
     @test isapprox(w∂k, [ψ₀′(0.0, 1.0)(x); rbf(0.0, 1.0)(x); ψpp1′(0.0, 1.0)(x)], atol = 1e-10)
     #
     #
-    C = RadialMap(2, 0)
+    M = RadialMap(2, 0)
 
-    woff, wdiag, w∂k = create_weights(C)
+    woff, wdiag, w∂k = create_weights(M)
 
     #
-    weights(C, y[1:2], woff, wdiag, w∂k)
+    weights(M, y[1:2], woff, wdiag, w∂k)
     #
     @test size(woff, 1) == 1
     @test size(wdiag,1) == 2+2
@@ -160,11 +160,11 @@ end
     @test isapprox(woff, [y[1]], atol = 1e-10)
     #
     #
-    C = RadialMap(3, 2)
+    M = RadialMap(3, 2)
 
-    woff, wdiag, w∂k = create_weights(C)
+    woff, wdiag, w∂k = create_weights(M)
 
-    weights(C, y, woff, wdiag, w∂k)
+    weights(M, y, woff, wdiag, w∂k)
     #
     @test size(woff,1) == 2*(2+1)
     @test size(wdiag,1) == 3*(2+3)
@@ -189,24 +189,24 @@ end
     p = 2
 
     X = randn(Nx, Ne) .* randn(Nx, Ne)
-    C = RadialMap(Nx, p)
+    M = RadialMap(Nx, p)
 
-    W = create_weights(C, X)
+    W = create_weights(M, X)
 
     woff  = zero(W.woff)
     wdiag = zero(W.wdiag)
     w∂k   = zero(W.w∂k)
-    weights(C, X, woff, wdiag, w∂k)
+    weights(M, X, woff, wdiag, w∂k)
 
-    weights(C, X, W)
+    weights(M, X, W)
 
     @test isapprox(woff, W.woff, atol = 1e-10)
     @test isapprox(wdiag, W.wdiag, atol = 1e-10)
     @test isapprox(w∂k, W.w∂k, atol = 1e-10)
 
-    woval, wval, w∂kval = create_weights(C)
-    weights(C, zeros(Nx), woval, wval, w∂kval)
-    weights(C, zeros(Nx,Ne), woff, wdiag, w∂k)
+    woval, wval, w∂kval = create_weights(M)
+    weights(M, zeros(Nx), woval, wval, w∂kval)
+    weights(M, zeros(Nx,Ne), woff, wdiag, w∂k)
 
 
     @test woff[:,1] == woval

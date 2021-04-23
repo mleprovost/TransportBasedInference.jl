@@ -250,7 +250,7 @@ function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent
     P .+= 2*C.α*F.L2Uinv
 end
 
-# qrprecond!(S::Storage, C::HermiteMapComponent, X) = (P, c̃oeff) -> qrprecond!(P, c̃oeff, S, C, X)
+qrprecond!(S::Storage, C::HermiteMapComponent, X) = (P, c̃oeff) -> qrprecond!(P, c̃oeff, S, C, X)
 #
 
 #
