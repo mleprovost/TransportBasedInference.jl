@@ -1,4 +1,4 @@
-export SparseRadialSMF, assimilate_scalar_obs, RadialSMF
+export SparseRadialSMF, RadialSMF, assimilate_scalar_obs
 
 # Structure for the stochastic transport map
 struct SparseRadialSMF<:SeqFilter
@@ -11,8 +11,14 @@ struct SparseRadialSMF<:SeqFilter
 	"Sparse radial map"
 	S::SparseRadialMap
 
+	"Observation dimension"
+	Ny::Int64
+
+	"State dimension"
+	Nx::Int64
+
 	"Distance matrix"
-	dist::Matrix
+	dist::Array{Float64,2}
 
     "Time step dynamic"
     Δtdyn::Float64
@@ -35,70 +41,48 @@ struct SparseRadialSMF<:SeqFilter
 end
 
 
-function SparseRadialSMF(Nx, Ny, Ne, p::Array{Array{Int64,1}}, γ, λ, δ, κ,
-					dist::Matrix,
-                    G::Function, ϵy::AdditiveInflation,
-				    Δtdyn::Float64, Δtobs::Float64, idx::Array{Int64,2}, isfiltered::Bool)
+function SparseRadialSMF(G::Function, ϵy::AdditiveInflation,
+						 p::Array{Array{Int64,1}}, γ, λ, δ, κ,
+						 Ny, Nx,
+				         Δtdyn::Float64, Δtobs::Float64,
+						 idx::Array{Int64,2}; isfiltered::Bool = false)
 	#Create the map with scalar assimlation of the data
 	S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	return SparseRadialSMF(S, dist, F, G, β, ϵy, Δtdyn, Δtobs, isfiltered,  zeros(Nx+1, Ne), idx)
+	return SparseRadialSMF(G, ϵy, S, Ny, Nx, dist, Δtdyn, Δtobs, idx, zeros(Nx+1, Ne), isfiltered)
 end
 
 
-# function assimilate_scalar_obs(T::SparseRadialSMF, ens::EnsembleStateMeas{Nx, Ny, Ne}, idx::Array{Int64,1}, y, t; P::Parallel=serial) where {Nx, Ny, Ne}
-#
-# idx1, idx2 = idx
-#
-# Na = Nx+1
-# # We add a +1 such that the scalar observation will remain the first entry
-# perm = sortperm(view(T.dist,:,idx2))
-#
-# ensinfl = deepcopy(ens.state)
-#
-# # Apply the multiplicative inflation
-# Aβ = MultiplicativeInflation(T.β)
-# Aβ(ensinfl)
-#
-#
-# # Generate samples from local likelihood
-# @inbounds for i=1:Ne
-# 	col = view(ensinfl.S,:,i)
-# 	T.ensa.S[1,i] = T.dyn.h(t, col)[idx1] + T.ϵy.m[idx1] + dot(T.ϵy.σ[idx1,:], randn(Ny))
-# end
-#
-#
-# T.ensa.S[2:Na,:] .= deepcopy(ensinfl.S[perm,:])
-#
-# #Run optimization
-# @time run_optimization(T.S, T.ensa; start = 2, P = P)
-#
-# #Generate local-likelihood samples with uninflated samples
-# @time @inbounds for i=1:Ne
-# 	col = view(ens.state.S,:,i)
-# 	T.ensa.S[1,i] = T.dyn.h(t, col)[idx1] + T.ϵy.m[idx1] + dot(T.ϵy.σ[idx1,:], randn(Ny))
-# end
-#
-# T.ensa.S[2:Na,:] .= ens.state.S[perm,:]
-#
-# Sval = T.S(T.ensa)
-# # @show Sval[:,1]
-#
-# # T.ensa.S[:,1]
-#
-# if typeof(P)==Serial
-# 	@inbounds for i=1:Ne
-# 		zplus = view(T.ensa.S,:,i)
-# 		invert_S(T.S, view(Sval,:,i), y, zplus)
-# 	end
-# else
-# 	@inbounds Threads.@threads for i=1:Ne
-# 		zplus = view(T.ensa.S,:,i)
-# 		invert_S(T.S, view(Sval,:,i), y, zplus)
-# 	end
-# end
-#
-# ens.state.S[perm,:] = T.ensa.S[2:Na,:];
-# end
+
+function (smf::SparseRadialSMF)(X, ystar, t, idx::Array{Int64,1}; P::Parallel=serial)
+	idx1, idx2 = idx
+	Nx = smf.Nx
+	Ny = smf.Ny
+	Na = Nx+1
+	cache = smf.cache
+	# We add a +1 such that the scalar observation will remain the first entry
+	perm = sortperm(view(smf.dist,:,idx2))
+
+	#Run optimization
+	optimize(smf.S, smf.cache; start = 2, P = P)
+
+	smf.cache[2:Na,:] .= X[perm,:]
+
+	F = smf.S(cache)
+
+	if typeof(P) <: Serial
+		@inbounds for i=1:Ne
+			col = view(cache,:,i)
+			inverse(col, view(F,:,i), T.S, ystar)
+		end
+	elseif typeof(P) <: Thread
+		@inbounds Threads.@threads for i=1:Ne
+			col = view(cache,:,i)
+			inverse(col, view(F,:,i), T.S, ystar)
+		end
+	end
+
+	@views X[perm,:] .= cache[2:Na,:]
+end
 #
 # function (T::SparseRadialSMF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar, t; P::Parallel = serial) where {Nx, Ny, Ne}
 # 	@assert Ny==size(ystar,1) "Wrong dimension of the observation"
