@@ -184,34 +184,35 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 
 end
 
-function run_optimization(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
-	@get S (Nx, p, γ, λ, δ, κ)
-	# Compute centers and widths
-	center_std(S, ens)
-
-	# Create weights
-	W = create_weights(S, ens)
-
-	# Compute weights
-	weights(S, ens, W)
-
-	# Optimize coefficients with multi-threading
-	if typeof(P)==Serial
-		@inbounds for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-		    	modify_a(xopt, S.U[i])
-		end
-	else
-		@inbounds Threads.@threads for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-				modify_a(xopt, S.U[i])
-		end
-	end
-end
+# function run_optimization(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+# 	@get S (Nx, p, γ, λ, δ, κ)
+# 	# Compute centers and widths
+# 	center_std(S, ens)
+#
+# 	# Create weights
+# 	W = create_weights(S, ens)
+#
+# 	# Compute weights
+# 	weights(S, ens, W)
+#
+# 	# Optimize coefficients with multi-threading
+# 	if typeof(P)==Serial
+# 		@inbounds for i=start:Nx
+# 				xopt = optimize(S.U[i], W, λ, δ)
+# 		    	modify_a(xopt, S.U[i])
+# 		end
+# 	else
+# 		@inbounds Threads.@threads for i=start:Nx
+# 				xopt = optimize(S.U[i], W, λ, δ)
+# 				modify_a(xopt, S.U[i])
+# 		end
+# 	end
+# end
 
 function run_optimization(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
-	Nx, Ne = size(Nx)
+	NxX, Ne = size(Nx)
 	@get S (Nx, p, γ, λ, δ, κ)
+	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
 	# Compute centers and widths
 	center_std(S, X)
 
@@ -237,75 +238,224 @@ end
 
 
 # This code is written for Nx>1
-function run_optimization_parallel(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1) where {Nx,Ne}
-	@get S (Nx, p, γ, λ, δ, κ)
-	@assert Nx>1 "This code is not written for Nx=1"
-	# Compute centers and widths
-	center_std(S, ens)
-	# Create weights
-	W = create_weights(S, ens)
-	# Compute weights
-	weights(S, ens, W)
-	# Optimize coefficients with Distributed
-	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
-	# scoeffs = SharedArray{Int64}(Nx)
-	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
-	scoeffs = SharedArray{Int64}(Nx-start+1)
-	@sync @distributed for i=start:Nx
-		@inbounds begin
-		xopt = optimize(S.U[i], W, λ, δ)
-		scoeffs[i-start+1] = deepcopy(size(xopt,1))
-	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
-		end
-	end
-
-	# Run this part in serial
-	@inbounds for i=start:Nx
-		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
-	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
-    end
-end
+# function run_optimization_parallel(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1) where {Nx,Ne}
+# 	@get S (Nx, p, γ, λ, δ, κ)
+# 	@assert Nx>1 "This code is not written for Nx=1"
+# 	# Compute centers and widths
+# 	center_std(S, ens)
+# 	# Create weights
+# 	W = create_weights(S, ens)
+# 	# Compute weights
+# 	weights(S, ens, W)
+# 	# Optimize coefficients with Distributed
+# 	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
+# 	# scoeffs = SharedArray{Int64}(Nx)
+# 	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
+# 	scoeffs = SharedArray{Int64}(Nx-start+1)
+# 	@sync @distributed for i=start:Nx
+# 		@inbounds begin
+# 		xopt = optimize(S.U[i], W, λ, δ)
+# 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
+# 	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
+# 		end
+# 	end
+#
+# 	# Run this part in serial
+# 	@inbounds for i=start:Nx
+# 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
+# 	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
+#     end
+# end
 
 # This code is written for Nx>1
-function run_optimization_parallel(S::RadialMap, X; start::Int64=1)
-	Nx, Ne = size(X)
-	@get S (Nx, p, γ, λ, δ, κ)
-	@assert Nx>1 "This code is not written for Nx=1"
-	# Compute centers and widths
-	center_std(S, X)
-	# Create weights
-	W = create_weights(S, X)
-	# Compute weights
-	weights(S, X, W)
-	# Optimize coefficients with Distributed
-	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
-	# scoeffs = SharedArray{Int64}(Nx)
-	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
-	scoeffs = SharedArray{Int64}(Nx-start+1)
-	@sync @distributed for i=start:Nx
-		@inbounds begin
-		xopt = optimize(S.U[i], W, λ, δ)
-		scoeffs[i-start+1] = deepcopy(size(xopt,1))
-	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
-		end
-	end
-
-	# Run this part in serial
-	@inbounds for i=start:Nx
-		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
-	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
-    end
-end
+# function run_optimization_parallel(S::RadialMap, X; start::Int64=1)
+# 	Nx, Ne = size(X)
+# 	@get S (Nx, p, γ, λ, δ, κ)
+# 	@assert Nx>1 "This code is not written for Nx=1"
+# 	# Compute centers and widths
+# 	center_std(S, X)
+# 	# Create weights
+# 	W = create_weights(S, X)
+# 	# Compute weights
+# 	weights(S, X, W)
+# 	# Optimize coefficients with Distributed
+# 	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
+# 	# scoeffs = SharedArray{Int64}(Nx)
+# 	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
+# 	scoeffs = SharedArray{Int64}(Nx-start+1)
+# 	@sync @distributed for i=start:Nx
+# 		@inbounds begin
+# 		xopt = optimize(S.U[i], W, λ, δ)
+# 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
+# 	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
+# 		end
+# 	end
+#
+# 	# Run this part in serial
+# 	@inbounds for i=start:Nx
+# 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
+# 	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
+#     end
+# end
 
 
 ## Optimize for the weights with SparseRadialMapComponentMap
 
 # Code to identify the coefficients
-function optimize(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
+
+# function optimize(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
+# 	@get C (Nx,p)
+#
+# 	# Compute weights
+#     ψ_off, ψ_mono, dψ_mono = weights(C, ens)
+#
+#     no = size(ψ_off,1)
+# 	nd = size(ψ_mono,1)
+#     nx = size(ψ_off,1)+size(ψ_mono,1)+1
+#     nlog = size(dψ_mono,1)
+#
+# 	@assert nd==nlog "Error size of the diag and ∂Nx weights"
+# 	@assert nx==no+nlog+1 "Error size of the weights"
+#
+# 	# Cache for the solution
+# 	A = zeros(nd,nd)
+# 	x = zeros(nx)
+#
+#     # Normalize monotone basis functions
+#     μψ = deepcopy(mean(ψ_mono, dims=2))
+#     σψ = deepcopy(std(ψ_mono, dims=2, corrected=false))
+#
+#     ψ_mono .-= μψ
+#     ψ_mono ./= σψ
+#     dψ_mono ./= σψ
+#
+#     if Nx==1
+# 		BLAS.gemm!('N', 'T', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
+# 		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
+#     else
+#
+#         #Normalize off-diagonal covariates
+#         μψ_off = deepcopy(mean(ψ_off, dims = 2))
+#         σψ_off = deepcopy(std(ψ_off, dims = 2, corrected = false))
+#         ψ_off .-= μψ_off
+#         ψ_off ./= σψ_off
+#
+# 		#Assemble reduced QR to solve least square problem
+# 		Asqrt = zero(ψ_mono)
+#
+# 		ψ_aug = zeros(Ne+no,no)
+# 		ψ_X = view(ψ_aug,1:Ne,1:no)
+# 		ψ_X .= ψ_off'
+#
+# 		ψ_λ = view(ψ_aug,Ne+1:Ne+no,1:no)
+# 		ψ_λ .= Matrix(√λ*I, no, no)
+#
+# 		# ψ_aug .= vcat(ψ_off', Matrix(√λ*I, no, no))
+#
+# 		# F = zeros(Ne+no,no)
+# 		# F .= vcat(ψ_off', Matrix(√λ*I, no, no))
+# 		# The slowest line of the code
+# 		# @time qr!(F)
+# 		# @show F
+# 	    F = qr(ψ_aug)
+# 		# ψ_aug = 0.0
+# 		# @show size(F.R)
+#
+# 	    # @time Q1 .= Matrix(F.Q)[1:Ne,1:no]
+# 		# @show size(F.Q)
+# 		# @time Q1 = view(F.Q, 1:Ne, 1:no)
+# 		# @time Q1 .= (F.Q*Matrix(I,Ne+no,Ne+no))[1:Ne, 1:no]
+# 		# Speed-up proposed in https://discourse.julialang.org/t/extract-submatrix-from-qr-factor-is-slow-julia-1-4/36582/4
+# 	    # @time Asqrt .= ψ_mono - (ψ_mono*Q1)*Q1'
+# 		Asqrt .= ψ_mono - fast_mul(ψ_mono, F.Q, Ne, no)
+# 		BLAS.gemm!('N', 'T', 1/Ne, Asqrt, Asqrt, 1.0, A)
+# 		# Asqrt = 0.0
+# 	end
+#
+#     #Assemble reduced QR to solve least square problem
+#     #Approximate diagonal component
+# 	# for linear S_{Nx}^{2} (i.e., order 0 function), use closed
+# 	# form solution for linear monotone component
+# 	if p[Nx] == 0
+#         @assert size(A)==(1,1) "Quadratic matrix should be a scalar."
+# 		g_mono = zeros(1,1)
+# 		# This equation is equation (A.9) Couplings for nonlinear ensemble filtering
+# 		# uNx(z) = c + α z so α = 1/√κ*
+#         g_mono[1,1] = sqrt(1/A[1,1])
+# 	# for nonlinear diagonal, use Newton solver for coefficients
+# 	else
+# 		g_mono = ones(nd)
+# 		# Construct loss function, the convention is flipped inside the solver
+# 		Lhd = LHD(A, Matrix(dψ_mono'), λ, δ)
+# 		g_mono,_,_,_ = projected_newton(g_mono, Lhd, "TrueHessian")
+# 		g_mono .+= δ
+# 	end
+#
+# 	if p[Nx]==0
+# 		if Nx==1
+# 			g_mono /= σψ[1,1]
+# 			# Compute constant term
+# 	        x[no+1] = deepcopy(-μψ*g_mono)[1,1]
+# 		else
+# 			g_off = zeros(no)
+# 			ψ = zeros(Ne+no)
+# 			BLAS.gemm!('T', 'N', 1.0, ψ_mono, g_mono, 1.0, view(ψ,1:Ne))
+# 		    # g_off = -F.R\((Q1'*ψ_mono'*g_mono)[:,1])
+# 			g_off.= F.R\((F.Q'*ψ)[1:no])
+# 			rmul!(g_off, -1.0)
+# 			# F = 0.0
+# 		    # g_off = -F.R\((Q1'*ψ_mono'*g_mono)[:,1])
+# 		    # Rescale coefficients
+# 		    g_mono ./= σψ[:,1]
+#
+# 		    g_off ./= σψ_off[:,1]
+# 		    # Compute and store the constant term (expectation of selected terms)
+# 			x[no+1] = -dot(μψ[:,1], g_mono[:,1])-dot(μψ_off[:,1], g_off[:,1])
+# 		end
+# 	else
+# 		if Nx==1
+# 			g_mono ./= σψ[:,1]
+# 			# Compute constant term
+# 	        x[no+1] = deepcopy(-dot(μψ,g_mono))
+# 		else
+# 			g_off = zeros(no)
+# 			ψ = zeros(Ne+no)
+# 			BLAS.gemm!('T', 'N', 1.0, ψ_mono, g_mono, 1.0, view(ψ,1:Ne))
+#
+# 		    # @time g_off = -F.R\((Q1'*ψ_mono'*g_mono)[:,1])
+# 			# This speciific form saves a lot of computational time
+# 			# @time g_off.= F.R\((F.Q'*[ψ_mono'*g_mono; zeros(no)])[1:no])
+# 			g_off.= F.R\((F.Q'*ψ)[1:no])
+# 			rmul!(g_off, -1.0)
+# 			# F = 0.0
+# 		    # Rescale coefficients
+# 		    g_mono ./= σψ[:,1]
+# 		    g_off ./= σψ_off[:,1]
+# 		    # Compute and store the constant term (expectation of selected terms)
+# 			x[no+1] = -dot(μψ[:,1], g_mono[:,1])-dot(μψ_off[:,1], g_off[:,1])
+# 		end
+# 	end
+#
+#
+# 	# Coefficients of the diagonal except the constant
+# 	x[no+2:nx] .= deepcopy(g_mono[:,1])
+#
+#
+# 	if Nx>1
+# 		x[1:no] .= deepcopy(g_off[:,1])
+# 	end
+# 	return x
+#
+# end
+
+function optimize(C::SparseRadialMapComponent, X, λ, δ)
+	NxX, Ne = size(X)
 	@get C (Nx,p)
 
+	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = weights(C, ens)
+    ψ_off, ψ_mono, dψ_mono = weights(C, X)
 
     no = size(ψ_off,1)
 	nd = size(ψ_mono,1)
@@ -447,24 +597,52 @@ function optimize(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, �
 end
 
 
-function run_optimization(S::SparseRadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+# function run_optimization(S::SparseRadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+# 	@get S (Nx, p, γ, λ, δ, κ)
+# 	# Compute centers and widths
+# 	center_std(S, ens)
+#
+# 	# Optimize coefficients
+# 	# Skip the identity components of the map
+# 	if typeof(P)==Serial
+# 		@inbounds for i=start:Nx
+# 			if !allequal(p[i], -1)
+# 					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
+# 					modify_a(xopt, S.U[i])
+# 			end
+# 		end
+# 	else
+# 		@inbounds Threads.@threads for i=start:Nx
+# 			if !allequal(p[i], -1)
+# 					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
+# 					modify_a(xopt, S.U[i])
+# 			end
+# 		end
+# 	end
+# end
+
+function run_optimization(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
+	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
+
+	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
 	# Compute centers and widths
-	center_std(S, ens)
+	center_std(S, X)
 
 	# Optimize coefficients
 	# Skip the identity components of the map
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
+					xopt = optimize(S.U[i], EnsembleState(X[1:i,:]), λ, δ)
 					modify_a(xopt, S.U[i])
 			end
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
+					xopt = optimize(S.U[i], EnsembleState(X[1:i,:]), λ, δ)
 					modify_a(xopt, S.U[i])
 			end
 		end

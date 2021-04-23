@@ -1,54 +1,47 @@
-using Test
 
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap
+@testset "radial map" begin
+    γ = 1.0
+    λ = 0.2
+    δ = 1e-4
+    κ = 5.0
 
-@testset "Knothe-Rosenblatt map" begin
-γ = 1.0
-λ = 0.2
-δ = 1e-4
-κ = 5.0
+    U = RadialMap(4,2, γ=γ, λ=λ, δ=δ, κ=κ)
+    @test size(U) == (4,2)
 
-U = RadialMap(4,2, γ=γ, λ=λ, δ=δ, κ=κ)
-@test size(U) == (4,2)
+    @test U.γ==1.0
+    @test U.λ==0.2
+    @test U.δ==1e-4
+    @test U.κ==5.0
 
-@test U.γ==1.0
-@test U.λ==0.2
-@test U.δ==1e-4
-@test U.κ==5.0
+    for i=1:4
+        @test size(U.U[i]) ==(i,2)
+    end
 
-for i=1:4
-    @test size(U.U[i]) ==(i,2)
+
+    U = RadialMap(2,2)
+    U.U[1].a[1] .= ones(2+3)
+    U.U[2].a[1] .= 5*ones(2+1)
+    U.U[2].a[2] .= ones(2+3)
+
+
+    U11 = RadialMapComponent(1,2, [zeros(4)], [ones(4)], [ones(2+3)])
+    U22 = RadialMapComponent(2,2, [zeros(2),zeros(4)], [ones(2), ones(4)], [5*ones(2+1), ones(2+3)])
+
+    @test U([1.0; 1.0]) == [U11([1.0]); U22([1.0; 1.0])]
+
+    @test U([2.0; 1.0]) == [U11([2.0]); U22([2.0; 1.0])]
+
+    @test U([1.0; 2.0]) == [U11([1.0]); U22([1.0; 2.0])]
+
+
+    U = RadialMapComponent(2,2)
+    U.a[2] .= ones(5)
+
+    @test ForwardDiff.gradient(x->U(x), [1.0;1.0])[2] == (ψ₀′(0.0, 1.0)(1.0)+ 2*rbf(0.0, 1.0)(1.0)+ψpp1′(0.0, 1.0)(1.0))
 end
 
 
-U = RadialMap(2,2)
-U.U[1].a[1] .= ones(2+3)
-U.U[2].a[1] .= 5*ones(2+1)
-U.U[2].a[2] .= ones(2+3)
-
-
-U11 = RadialMapComponent(1,2, [zeros(4)], [ones(4)], [ones(2+3)])
-U22 = RadialMapComponent(2,2, [zeros(2),zeros(4)], [ones(2), ones(4)], [5*ones(2+1), ones(2+3)])
-
-@test U([1.0; 1.0]) == [U11([1.0]); U22([1.0; 1.0])]
-
-@test U([2.0; 1.0]) == [U11([2.0]); U22([2.0; 1.0])]
-
-@test U([1.0; 2.0]) == [U11([1.0]); U22([1.0; 2.0])]
-
-
-U = RadialMapComponent(2,2)
-U.a[2] .= ones(5)
-
-@test ForwardDiff.gradient(x->U(x), [1.0;1.0])[2] == (ψ₀′(0.0, 1.0)(1.0)+ 2*rbf(0.0, 1.0)(1.0)+ψpp1′(0.0, 1.0)(1.0))
-
-
-end
-
-
-@testset "Sparse Knothe-Rosenblatt map I" begin
+@testset "Sparse radial map I" begin
     γ = 1.0
     λ = 0.2
     δ = 1e-4
@@ -68,7 +61,7 @@ end
     end
 end
 
-@testset "Sparse Knothe-Rosenblatt map I" begin
+@testset "Sparse radial map II" begin
     p = [Int64[-1], [0; -1], [2; 0; 1], [-1 ;2;-1; 0]]
     U = SparseRadialMap(4,p)
 

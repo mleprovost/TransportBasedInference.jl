@@ -1,8 +1,3 @@
-using Test
-
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap
 
 @testset "Test optimization for Nx=1 and p=0" begin
    Nx = 1

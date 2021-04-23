@@ -1,8 +1,3 @@
-using Test
-
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap
 
 @testset "Bracket root" begin
     u = uk(3)

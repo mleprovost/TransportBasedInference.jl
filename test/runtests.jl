@@ -17,6 +17,21 @@ using Cubature
 using FiniteDiff
 using Random
 
+
+include("radialmap/function.jl")
+include("radialmap/separablecomponent.jl")
+include("radialmap/mapcomponent.jl")
+include("radialmap/sparsemapcomponent.jl")
+include("radialmap/map.jl")
+include("radialmap/weights.jl")
+include("radialmap/quantile.jl")
+include("radialmap/cost.jl")
+include("radialmap/optimize.jl")
+include("radialmap/optimize_multithreading.jl")
+include("radialmap/iterativeoptimize.jl")
+include("radialmap/invert.jl")
+
+
 # Tools: double factorial, adaptive integration
 # include("tools/tools.jl")
 # include("tools/normal.jl")

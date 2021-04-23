@@ -1,9 +1,3 @@
-using Test
-
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap
-
 
 @testset "Validate loss function I" begin
     Nx = 1

@@ -1,10 +1,3 @@
-using Test
-
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap, IterativeSolvers
-
-
 
 @testset "Test optimization with iterative solver" begin
     # Test 1

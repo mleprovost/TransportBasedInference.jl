@@ -1,9 +1,3 @@
-using Test
-
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap
-
 
 @testset "SparseRadialMap Multi-threading test with optimization and evaluation of the resulting map" begin
 

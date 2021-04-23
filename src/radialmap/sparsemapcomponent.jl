@@ -1,11 +1,11 @@
-Nxexport SparseRadialMapComponent, component, construct, evaluate, off_diagonal, set_id
+export SparseRadialMapComponent, component, construct, evaluate, off_diagonal, set_id
 
-#### Structure for the k-th component SparseRadialMapComponent of the lower triangular map U
+#### Structure for the Nx-th component SparseRadialMapComponent of the lower triangular map U
 
 # For now RadialMapComponent = Σi=1,k ui(k)
 
 # The last array for ξ, σ and a will be of size p+2, p+2, p+3 versus p, p, p+1
-# for the components i=1,...,k-1
+# for the components i=1,...,Nx-1
 
 struct SparseRadialMapComponent
         Nx::Int64
