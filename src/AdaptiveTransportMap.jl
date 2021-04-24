@@ -1,31 +1,28 @@
 module AdaptiveTransportMap
 
-using DocStringExtensions
-using LinearAlgebra
-using OrdinaryDiffEq
-using SpecialFunctions
-using ProgressMeter
-using BenchmarkTools
-using ForwardDiff
-using JLD
-using Polynomials
-using Distributions
-using QuadGK
-using TensorOperations
-using LoopVectorization
-using Optim
-using NLsolve
-using LineSearches
-using MLDataUtils
-using ThreadPools
-using Statistics
-using PlotUtils
-using RecipesBase
 using ColorTypes
+using Distributions
+using DocStringExtensions
+using ForwardDiff
+using IterativeSolvers
 using LaTeXStrings
-using Distributed
-using DynamicalSystems
+using LinearAlgebra
+using LineSearches
+using LoopVectorization
+using MLDataUtils
+using NLsolve
+using Optim
+using OrdinaryDiffEq
+using PlotUtils
+using Polynomials
+using ProgressMeter
+using QuadGK
+using RecipesBase
 using Roots
+using SpecialFunctions
+using Statistics
+using TensorOperations
+using ThreadPools
 
 include("tools/get.jl")
 include("tools/parallel.jl")
@@ -50,6 +47,7 @@ include("DA/ensemble.jl")
 include("statespace/system.jl")
 
 # Tools for data assimilation
+include("DA/ensemble.jl")
 include("DA/inflation.jl")
 include("DA/model.jl")
 include("DA/gaspari.jl")
@@ -63,6 +61,7 @@ include("enkf/etkf.jl")
 
 # Tools for lorenz63
 include("lorenz63/lorenz63.jl")
+include("lorenz63/metric_lorenz.jl")
 
 # Tools for lorenz96
 include("lorenz96/lorenz96.jl")
@@ -129,9 +128,8 @@ include("radialmap/cost.jl")
 include("radialmap/solver.jl")
 include("radialmap/optimize.jl")
 include("radialmap/iterativeoptimize.jl")
-include("radialmap/invert.jl")
-include("radialmap/TMap.jl")
-
+include("radialmap/inverse.jl")
+include("radialmap/stochmapfilter.jl")
 
 include("tools/plot_recipes.jl")
 

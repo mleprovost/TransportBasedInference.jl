@@ -76,7 +76,7 @@ function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String
 end
 
 function Base.show(io::IO, C::HermiteMapComponent)
-    println(io,"Map component of dimension "*string(C.Nx)*" with Nψ = "*string(C.Nψ)*" active features")
+    println(io,"Hermite map component of dimension "*string(C.Nx)*" with Nψ = "*string(C.Nψ)*" active features")
     # for i=1:B.m
     #     println(io, B[i])
     # end

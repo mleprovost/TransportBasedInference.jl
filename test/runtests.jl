@@ -3,7 +3,7 @@ using Test
 using LinearAlgebra, Statistics
 using OrdinaryDiffEq
 using AdaptiveTransportMap
-using AdaptiveTransportMap: evaluate
+using AdaptiveTransportMap: evaluate, optimize
 using ForwardDiff
 using FastGaussQuadrature
 using SpecialFunctions
@@ -17,40 +17,56 @@ using Cubature
 using FiniteDiff
 using Random
 
-# Tools: double factorial, adaptive integration
-# include("tools/tools.jl")
-# include("tools/normal.jl")
-# include("tools/transform.jl")
-#
-# # Tools for data assimilation
-# include("DA/inflation.jl")
-#
-#
-# # Tools for state-space models
-# include("statespace/system.jl")
-#
-#
-# # Functions to manage margins
-# include("margin/reducedmargin.jl")
-# include("margin/totalorder.jl")
-#
-# include("hermitefunction/phypolyhermite.jl")
-# include("hermitefunction/propolyhermite.jl")
-#
-# include("hermitefunction/phyhermite.jl")
-# include("hermitefunction/prohermite.jl")
-#
-# # Test tools for Basis, MultiBasis, ExpandedFunction
-# include("hermitemap/rectifier.jl")
-# include("hermitemap/basis.jl")
-# include("hermitemap/expandedfunction.jl")
-# include("hermitemap/reduced.jl")
-# include("hermitemap/expandedfunction2.jl")
-# include("hermitemap/multifunction.jl")
-#
-# # Test tools for integrated function
-# include("hermitemap/integratedfunction.jl")
-# include("hermitemap/storage.jl")
+# Test for Radial Maps
+include("radialmap/function.jl")
+include("radialmap/separablecomponent.jl")
+include("radialmap/mapcomponent.jl")
+include("radialmap/sparsemapcomponent.jl")
+include("radialmap/map.jl")
+include("radialmap/weights.jl")
+include("radialmap/quantile.jl")
+include("radialmap/cost.jl")
+include("radialmap/optimize.jl")
+include("radialmap/optimize_multithreading.jl")
+include("radialmap/iterativeoptimize.jl")
+include("radialmap/inverse.jl")
+
+
+# Test for Tools
+include("tools/tools.jl")
+include("tools/normal.jl")
+include("tools/transform.jl")
+
+# Tools for data assimilation
+include("DA/inflation.jl")
+
+
+# Tools for state-space models
+include("statespace/system.jl")
+
+
+# Functions to manage margins
+include("margin/reducedmargin.jl")
+include("margin/totalorder.jl")
+
+# Test for Hermite polynomials and functions
+include("hermitefunction/phypolyhermite.jl")
+include("hermitefunction/propolyhermite.jl")
+
+include("hermitefunction/phyhermite.jl")
+include("hermitefunction/prohermite.jl")
+
+# Test tools for Basis, MultiBasis, ExpandedFunction
+include("hermitemap/rectifier.jl")
+include("hermitemap/basis.jl")
+include("hermitemap/expandedfunction.jl")
+include("hermitemap/reduced.jl")
+include("hermitemap/expandedfunction2.jl")
+include("hermitemap/multifunction.jl")
+
+# Test tools for integrated function
+include("hermitemap/integratedfunction.jl")
+include("hermitemap/storage.jl")
 
 # Test tools for HermiteMap component
 include("hermitemap/hermitemapcomponent.jl")

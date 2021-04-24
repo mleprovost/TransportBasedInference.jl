@@ -1,13 +1,7 @@
-using Test
-
-using LinearAlgebra, Statistics
-using SpecialFunctions, ForwardDiff
-using TransportMap
-
 
 @testset "SparseRadialMap Multi-threading test with optimization and evaluation of the resulting map" begin
 
-   ensemble = EnsembleState(Matrix([6.831108232125667   6.831108465893829  10.748176564682273  17.220877261555913;
+      X = Matrix([6.831108232125667   6.831108465893829  10.748176564682273  17.220877261555913;
       7.341399771164814   7.341399033871628  11.440770534993137  18.015116463525178;
       6.877822405336048   6.877822863906546  10.793381797612751  17.379545045967195;
       6.971116690210811   6.971117274254750  10.941318835214862  17.571340756941474;
@@ -26,7 +20,7 @@ using TransportMap
       7.406860218451342   7.406861450644357  11.470902695133232  18.293040279245396;
       7.308212626757207   7.308212927902813  11.381148951581917  17.962547003679237;
       7.519983057000856   7.519981781231936  11.597728250168640  18.407564589808729;
-      7.813106349722561   7.813107415959238  11.973288464744240  18.802480702520111]'))
+      7.813106349722561   7.813107415959238  11.973288464744240  18.802480702520111]')
 
 
       order = [[-1], [1; 1], [-1; 1; 0], [-1; 1; 1; 0]]
@@ -35,26 +29,26 @@ using TransportMap
       Tthread = SparseRadialMap(4, order; λ = 0.0)
 
       # Run serial code
-      @time run_optimization(T, ensemble; start = 2)
+      optimize(T, X; start = 2)
 
 
       # Run serial code
-      @time run_optimization(Tserial, ensemble; start = 2, P = serial)
+      optimize(Tserial, X; start = 2, P = serial)
 
       # Run multi-threading code
       @show Threads.nthreads()
-      @time run_optimization(Tthread, ensemble; start = 2, P = thread)
+      optimize(Tthread, X; start = 2, P = thread)
 
-      @test norm(T(ensemble.S[:,1]) -     [6.831108232125667;
+      @test norm(T(X[:,1]) -     [6.831108232125667;
                                          0.07966241537360474;
                                         -0.18141931240603526;
                                          -2.0970508045942893])<1e-8
 
-      @test norm(Tserial(ensemble.S[:,1]) -   [6.831108232125667;
+      @test norm(Tserial(X[:,1]) -   [6.831108232125667;
                                              0.07966241537360474;
                                             -0.18141931240603526;
                                              -2.0970508045942893])<1e-8
-      @test norm(Tthread(ensemble.S[:,1]) -   [6.831108232125667;
+      @test norm(Tthread(X[:,1]) -   [6.831108232125667;
                                              0.07966241537360474;
                                             -0.18141931240603526;
                                              -2.0970508045942893])<1e-8

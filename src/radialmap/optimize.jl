@@ -1,5 +1,4 @@
-export fast_mul, optimize, run_optimization, run_optimization_parallel,  optimize_coeffs,
-				solve_nonlinear
+export fast_mul, optimize, optimize_coeffs, solve_nonlinear
 
 
 # Function to speed-up ψ_mono*Q1'*Q1
@@ -14,7 +13,7 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 	Nx = C.Nx
 	@get W (p, Ne)
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = rearrange_ricardo(W,Nx)
+    ψ_off, ψ_mono, dψ_mono = rearrange(W,Nx)
 
     no = size(ψ_off,1)
 	nd = size(ψ_mono,1)
@@ -184,34 +183,10 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 
 end
 
-function run_optimization(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
+	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
-	# Compute centers and widths
-	center_std(S, ens)
-
-	# Create weights
-	W = create_weights(S, ens)
-
-	# Compute weights
-	weights(S, ens, W)
-
-	# Optimize coefficients with multi-threading
-	if typeof(P)==Serial
-		@inbounds for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-		    	modify_a(xopt, S.U[i])
-		end
-	else
-		@inbounds Threads.@threads for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-				modify_a(xopt, S.U[i])
-		end
-	end
-end
-
-function run_optimization(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
-	Nx, Ne = size(Nx)
-	@get S (Nx, p, γ, λ, δ, κ)
+	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
 	# Compute centers and widths
 	center_std(S, X)
 
@@ -224,88 +199,62 @@ function run_optimization(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-		    	modify_a(xopt, S.U[i])
+				xopt = optimize(S.C[i], W, λ, δ)
+		    	modify_a(xopt, S.C[i])
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
-				xopt = optimize(S.U[i], W, λ, δ)
-				modify_a(xopt, S.U[i])
+				xopt = optimize(S.C[i], W, λ, δ)
+				modify_a(xopt, S.C[i])
 		end
 	end
 end
 
 
 # This code is written for Nx>1
-function run_optimization_parallel(S::RadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1) where {Nx,Ne}
-	@get S (Nx, p, γ, λ, δ, κ)
-	@assert Nx>1 "This code is not written for Nx=1"
-	# Compute centers and widths
-	center_std(S, ens)
-	# Create weights
-	W = create_weights(S, ens)
-	# Compute weights
-	weights(S, ens, W)
-	# Optimize coefficients with Distributed
-	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
-	# scoeffs = SharedArray{Int64}(Nx)
-	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
-	scoeffs = SharedArray{Int64}(Nx-start+1)
-	@sync @distributed for i=start:Nx
-		@inbounds begin
-		xopt = optimize(S.U[i], W, λ, δ)
-		scoeffs[i-start+1] = deepcopy(size(xopt,1))
-	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
-		end
-	end
-
-	# Run this part in serial
-	@inbounds for i=start:Nx
-		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
-	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
-    end
-end
-
-# This code is written for Nx>1
-function run_optimization_parallel(S::RadialMap, X; start::Int64=1)
-	Nx, Ne = size(X)
-	@get S (Nx, p, γ, λ, δ, κ)
-	@assert Nx>1 "This code is not written for Nx=1"
-	# Compute centers and widths
-	center_std(S, X)
-	# Create weights
-	W = create_weights(S, X)
-	# Compute weights
-	weights(S, X, W)
-	# Optimize coefficients with Distributed
-	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
-	# scoeffs = SharedArray{Int64}(Nx)
-	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
-	scoeffs = SharedArray{Int64}(Nx-start+1)
-	@sync @distributed for i=start:Nx
-		@inbounds begin
-		xopt = optimize(S.U[i], W, λ, δ)
-		scoeffs[i-start+1] = deepcopy(size(xopt,1))
-	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
-		end
-	end
-
-	# Run this part in serial
-	@inbounds for i=start:Nx
-		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.U[i])
-	# @inbounds modify_a(X[1:scoeffs[i],i], S.U[i])
-    end
-end
+# function run_optimization_parallel(S::RadialMap, X; start::Int64=1)
+# 	Nx, Ne = size(X)
+# 	@get S (Nx, p, γ, λ, δ, κ)
+# 	@assert Nx>1 "This code is not written for Nx=1"
+# 	# Compute centers and widths
+# 	center_std(S, X)
+# 	# Create weights
+# 	W = create_weights(S, X)
+# 	# Compute weights
+# 	weights(S, X, W)
+# 	# Optimize coefficients with Distributed
+# 	# X = SharedArray{Float64}(Nx*(p+1)+2,Nx)
+# 	# scoeffs = SharedArray{Int64}(Nx)
+# 	X = SharedArray{Float64}(Nx*(p+1)+2,Nx-start+1)
+# 	scoeffs = SharedArray{Int64}(Nx-start+1)
+# 	@sync @distributed for i=start:Nx
+# 		@inbounds begin
+# 		xopt = optimize(S.C[i], W, λ, δ)
+# 		scoeffs[i-start+1] = deepcopy(size(xopt,1))
+# 	    X[1:size(xopt,1),i-start+1] .= deepcopy(xopt)
+# 		end
+# 	end
+#
+# 	# Run this part in serial
+# 	@inbounds for i=start:Nx
+# 		modify_a(X[1:scoeffs[i-start+1],i-start+1], S.C[i])
+# 	# @inbounds modify_a(X[1:scoeffs[i],i], S.C[i])
+#     end
+# end
 
 
 ## Optimize for the weights with SparseRadialMapComponentMap
 
 # Code to identify the coefficients
-function optimize(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, δ) where {Nx, Ne}
+
+function optimize(C::SparseRadialMapComponent, X, λ, δ)
+	NxX, Ne = size(X)
 	@get C (Nx,p)
 
+	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = weights(C, ens)
+    ψ_off, ψ_mono, dψ_mono = weights(C, X)
 
     no = size(ψ_off,1)
 	nd = size(ψ_mono,1)
@@ -446,41 +395,35 @@ function optimize(C::SparseRadialMapComponent, ens::EnsembleState{Nx, Ne}, λ, �
 
 end
 
-
-function run_optimization(S::SparseRadialMap, ens::EnsembleState{Nx, Ne}; start::Int64=1, P::Parallel=serial) where {Nx,Ne}
+function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
+	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
+
+	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
 	# Compute centers and widths
-	center_std(S, ens)
+	center_std(S, X)
 
 	# Optimize coefficients
 	# Skip the identity components of the map
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
-					modify_a(xopt, S.U[i])
+					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
+					modify_a(xopt, S.C[i])
 			end
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.U[i], EnsembleState(ens.S[1:i,:]), λ, δ)
-					modify_a(xopt, S.U[i])
+					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
+					modify_a(xopt, S.C[i])
 			end
 		end
 	end
 end
 
 
-
-
-
-
-
-
-#
-#
-#
 # function solve_nonlinear(dψ::Array{Float64,2}, A::Array{Float64,2}, λ, δ)
 #
 # 	n∂, Ne = size(dψ)
