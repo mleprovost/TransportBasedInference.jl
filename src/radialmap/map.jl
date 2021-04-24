@@ -1,4 +1,4 @@
-export RadialMap, evaluate, SparseRadialMap
+export RadialMap, evaluate!, evaluate, SparseRadialMap
 
 
 import Base: size, show
@@ -36,10 +36,9 @@ end
 size(M::RadialMap) = (M.Nx, M.p)
 
 # Evaluate the map RadialMapComponent at z = (z1,...,zNx)
-function (M::RadialMap)(z; start::Int64=1)
+function evaluate!(out, M::RadialMap, z::AbstractVector{Float64}; start::Int64=1)
         Nx = M.Nx
-        @assert Nx==size(z,1) "Incorrect length of the input vector"
-        out = zeros(Nx-start+1)
+        @assert Nx == size(z,1) "Incorrect length of the input vector"
 
         for i=start:Nx
         # @inbounds out[i] = M.C[i](z[1:i])
@@ -48,43 +47,26 @@ function (M::RadialMap)(z; start::Int64=1)
         return out
 end
 
-function evaluate!(out, M::RadialMap, z; start::Int64=1)
-        Nx = M.Nx
-        @assert Nx==size(z,1) "Incorrect length of the input vector"
-        out = zeros(Nx-start+1)
+evaluate(M::RadialMap, z::AbstractVector{Float64}; start::Int64=1) = evaluate!(zeros(M.Nx-start+1), M, z; start = start)
 
-        for i=start:Nx
-        # @inbounds out[i] = M.C[i](z[1:i])
-        @inbounds out[i] = M.C[i](view(z,1:i))
-        end
-        return out
-end
+(M::RadialMap)(z::AbstractVector{Float64}; start::Int64=1) =  evaluate(M, z; start = start)
 
-# Evaluate the map RadialMapComponent at z = (z1,...,zNx)
-function (M::RadialMap)(X::AbstractMatrix{Float64}; start::Int64=1)
-        NxX, Ne = size(X)
-        Nx = M.Nx
-        @assert NxX == Nx "Wrong dimension of the ensemble matrix"
-        out = zeros(Nx-start+1,Ne)
-        # out = SharedArray{Float64}(Nx-start+1,Ne)
-                @inbounds for i=1:Ne
-                col = view(X,:,i)
-                out[:,i] .= M(col, start=start)
-                end
-        return out
-end
-
-# Evaluate the map RadialMapComponent at z = (z1,...,zNx)
-function evaluate(M::RadialMap, X::AbstractMatrix{Float64}; start::Int64=1)
+# Evaluate in-place the RadialMap `M`
+function evaluate!(out, M::RadialMap, X::AbstractMatrix{Float64}; start::Int64=1)
         @get M (Nx, p)
-        out = zeros(Nx-start+1,Ne)
+        NxX, Ne = size(X)
+        @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
         @inbounds Threads.@threads for i=1:Ne
                 col = view(X,:,i)
-                out[:,i] .= M(col, start=start)
+                evaluate!(view(out,:,i), M, col; start =start)
+                # out[:,i] .= M(col, start=start)
         end
         return out
 end
 
+evaluate(M::RadialMap, X::AbstractMatrix{Float64}; start::Int64=1) = evaluate!(zero(size(X)), M, X; start = start)
+
+(M::RadialMap)(X::AbstractMatrix{Float64}; start::Int64=1) = evaluate(M::RadialMap, X::AbstractMatrix{Float64}; start = start)
 
 #### Sparse Structure for the lower triangular map M
 
@@ -130,45 +112,38 @@ end
 
 size(M::SparseRadialMap) = (M.Nx, M.p)
 
-# Evaluate the map Sparse RadialMapComponent at z = (z1,...,zNx)
-function (M::SparseRadialMap)(z::AbstractVector{Float64}; start::Int64=1)
+# Evaluate the map Sparse RadialMap at z = (z1,...,zNx)
+
+function evaluate!(out, M::SparseRadialMap, z::AbstractVector{Float64}; start::Int64=1)
         Nx = M.Nx
         @assert Nx==size(z,1) "Incorrect length of the input vector"
-        out = zeros(Nx-start+1)
         @inbounds for i=start:Nx
-        if allequal(M.C[i].p,-1)
-        out[i] = z[i]
-        else
-         out[i] = M.C[i](view(z,1:i))
-        end
+                if allequal(M.C[i].p,-1)
+                out[i] = z[i]
+                else
+                out[i] = M.C[i](view(z,1:i))
+                end
         end
         return out
 end
 
-# Evaluate the map Sparse RadialMapComponent at z = (z1,...,zNx)
-function (M::SparseRadialMap)(X::AbstractMatrix{Float64}; start::Int64=1)
-        Nx = M.Nx
-        NxX, Ne = size(X)
-        @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
-        out = zeros(Nx-start+1,Ne)
-        # out = SharedArray{Float64}(Nx-start+1,Ne)
-                @inbounds for i=1:Ne
-                col = view(X,:,i)
-                out[:,i] .= M(col, start=start)
-                end
-        return out
-end
+evaluate(M::SparseRadialMap, z::AbstractVector{Float64}; start::Int64=1) = evaluate!(zeros(M.Nx-start+1), M, z; start = start)
+
+(M::SparseRadialMap)(z::AbstractVector{Float64}; start::Int64=1) =  evaluate(M, z; start = start)
 
 # Evaluate the map SparseRadialMapComponent at z = (z1,...,zNx)
-function evaluate(M::SparseRadialMap, X::AbstractMatrix{Float64}; start::Int64=1)
+function evaluate!(out, M::SparseRadialMap, X::AbstractMatrix{Float64}; start::Int64=1)
         @get M (Nx, p)
         NxX, Ne = size(X)
         @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
-
-        out = zeros(Nx-start+1,Ne)
-        @inbounds Threads.@threads for i=1:Ne
-                        col = view(X,:,i)
-                        out[:,i] .= M(col, start=start)
+        @assert size(out) == (Nx, Ne) "Wrong dimension of the output matrix `out`"
+        @inbounds for i=1:Ne
+                col = view(X,:,i)
+                evaluate!(view(out,:,i), M, col; start = start)
         end
         return out
 end
+
+evaluate(M::SparseRadialMap, X::AbstractMatrix{Float64}; start::Int64=1) = evaluate!(zero(X), M, X; start = start)
+
+(M::SparseRadialMap)(X::AbstractMatrix{Float64}; start::Int64=1) =  evaluate(M, X; start = start)

@@ -1,4 +1,4 @@
-export bracket, inverse_uk, inverse
+export bracket, inverse_uk, inverse, inverse!
 
 #Expands the range of valued searched geometrically until a root is bracketed
 # Julia's adaptation of zbrac Numerical Recipes in Fortran 77 p.345
@@ -39,7 +39,7 @@ function inverse_uk(u::uk, x, κ; z0::Real=0.0)
 end
 
 # y is the observation of size ny
-function inverse(x, F, S::RadialMap, ystar)
+function inverse(x::AbstractVector{Float64}, F, S::RadialMap, ystar)
     @get S (Nx, p, κ)
     ny = size(ystar,1)
     x[1:ny] .= ystar
@@ -53,7 +53,7 @@ function inverse(x, F, S::RadialMap, ystar)
 end
 
 # y is the observation of size ny
-function inverse(x, F, S::SparseRadialMap, ystar)
+function inverse(x::AbstractVector{Float64}, F, S::SparseRadialMap, ystar)
     @get S (Nx, p, κ)
     ny = size(ystar,1)
     x[1:ny] .= ystar
@@ -64,5 +64,28 @@ function inverse(x, F, S::SparseRadialMap, ystar)
         Ui = S.C[i]
         uk_i = component(Ui, i)
         x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
+    end
+end
+
+function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVector{Float64}; start::Int64=1)
+    @get S (Nx, p, κ)
+    Nx = S.Nx
+    NxX, Ne = size(X)
+
+    Ny = size(ystar,1)
+    @assert NxX == Nx
+    @assert 1 <= Ny < Nx
+    @assert size(F) == (Nx, Ne)
+
+    @view(X[1:Ny,:]) .= ystar
+
+    # Recursive 1D root-finding
+    # Start optimization from the a priori component
+    @inbounds for i=Ny+1:Nx
+        Ui = S.C[i]
+        uk_i = component(Ui, i)
+        for j=1:Ne
+            X[i,j] = inverse_uk(uk_i, F[i,j] - off_diagonal(Ui, view(X,1:i-1,j)), κ)
+        end
     end
 end

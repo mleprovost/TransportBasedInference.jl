@@ -125,14 +125,10 @@ function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
 	# Evaluate the transport map
 	F = evaluate(smf.S, X; start = Ny+1)
 
-	@view(X[1:Ny,:]) .= ystar
 	# Generate the posterior samples by partial inversion of the map
 
-	@inbounds for i=1:Ne
-		col = view(X,:,i)
-		Fi = view(F,:,i)
-		inverse(col, Fi, smf.S; start = Ny+1)
-	end
+	inverse!(X, F, smf.S, ystar; start = Ny+1)
+
 	return X
 end
 #
