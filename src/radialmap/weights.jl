@@ -49,7 +49,7 @@ function create_weights(T::RadialMap, X::AbstractMatrix{Float64})
         return Weights(Nx, p, Ne, woff, wdiag, w∂k)
 end
 
-function create_weights(T::KRmap, X::EnsembleState)
+function create_weights(T::RadialMap, X::EnsembleState)
         Nx, Ne = size(X)
         k = T.k
         p = T.p
@@ -295,7 +295,7 @@ else
 end
 end
 
-function weights(T::KRmap, ens::EnsembleState{k,Ne}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2}) where {k, Ne}
+function weights(T::RadialMap, ens::EnsembleState{k,Ne}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2}) where {k, Ne}
 @assert T.k == k "Error in dimension of the ensemble and size of the KR map"
 p = T.p
 if p==0

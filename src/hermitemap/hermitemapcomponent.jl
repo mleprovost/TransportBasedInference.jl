@@ -24,7 +24,7 @@ export  HermiteMapComponent,
         hess_negative_log_likelihood!
 
 
-struct HermiteHermiteMapComponent
+struct HermiteMapComponent
     m::Int64
     Nψ::Int64
     Nx::Int64

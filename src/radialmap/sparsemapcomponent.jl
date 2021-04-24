@@ -1,4 +1,4 @@
-Nxexport SparseRadialMapComponent, component, construct, evaluate, off_diagonal, set_id
+export SparseRadialMapComponent, component, construct, evaluate, off_diagonal, set_id
 
 #### Structure for the k-th component SparseRadialMapComponent of the lower triangular map U
 
