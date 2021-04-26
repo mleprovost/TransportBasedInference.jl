@@ -59,8 +59,18 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         if hessprecond  == true
             precond = zeros(ncoeff(C), ncoeff(C))
             precond!(precond, coeff0, S, C, X)
-            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                                 Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+            precond_chol = cholesky(Symmetric(precond); check = false)
+
+            if issuccess(precond_chol) == true
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(precond), precond_chol)))
+            elseif cond(Diagonal(precond))<10^6 #try the diagonal preconditioner
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Diagonal(precond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10))
+            end
             # obj = Optim.only_fg!(negative_log_likelihood(S, C, X))
             # bfgsstate = Optim.initial_state(Optim.BFGS(P = precond), options, obj, coeff0)
             # res = Optim.optimize(obj, coeff0, Optim.BFGS(P = precond), bfgssstate)
@@ -82,13 +92,18 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
         if hessprecond == true
             qrprecond = zeros(ncoeff(C), ncoeff(C))
             qrprecond!(qrprecond, coeff0, F, S, C, X)
+            qrprecond_chol = cholesky(Symmetric(qrprecond); check = false)
 
-            res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                 Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
-            # obj = Optim.only_fg!(qrnegative_log_likelihood(S, C, X))
-            # bfgsstate = Optim.initial_state(Optim.BFGS(P = precond), options, obj, coeff0)
-            # res = Optim.optimize(obj, coeff0, Optim.BFGS(P = precond), bfgssstate)
-            # precond = InvPreconditioner(bfgsstate.invH)
+            if issuccess(qrprecond_chol) == true
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
+            elseif cond(Diagonal(qrprecond)) < 10^6
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
+            else # don't use any preconditioner
+                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                      Optim.LBFGS(; m = 10))
+            end
         else
             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                  Optim.LBFGS(; m = 10))
@@ -128,8 +143,18 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             if hessprecond == true
                 precond = zeros(ncoeff(C), ncoeff(C))
                 precond!(precond, coeff0, S, C, X)
-                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                      Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+                precond_chol = cholesky(Symmetric(precond); check = false)
+
+                if issuccess(precond_chol) == true
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(precond), precond_chol)))
+                elseif cond(Diagonal(precond)) < 10^6
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10, P = Diagonal(precond)))
+                else #no preconditioner
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10))
+                end
             else
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                       Optim.LBFGS(; m = 10))
@@ -150,8 +175,18 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
-                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
+                qrprecond_chol = cholesky(Symmetric(qrprecond); check = false)
+
+                if issuccess(qrprecond_chol) == true
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
+                elseif cond(Diagonal(qrprecond)) < 10^6
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
+                else
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10))
+                end
             else
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))
@@ -240,8 +275,20 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         if hessprecond == true
             precond = zeros(ncoeff(C), ncoeff(C))
             precond!(precond, coeff0, S, C, X)
-            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                                 Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+            precond_chol = cholesky(Symmetric(precond); check = false)
+
+            if issuccess(precond_chol) == true
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(precond), precond_chol)))
+            elseif cond(Diagonal(precond)) < 10^6
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Diagonal(precond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10))
+            end
+
+
         else
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                                  Optim.LBFGS(; m = 10))
@@ -259,11 +306,20 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
         # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
         if hessprecond == true
-        qrprecond = zeros(ncoeff(C), ncoeff(C))
-        qrprecond!(qrprecond, coeff0, F, S, C, X)
+            qrprecond = zeros(ncoeff(C), ncoeff(C))
+            qrprecond!(qrprecond, coeff0, F, S, C, X)
+            qrprecond_chol = cholesky(Symmetric(qrprecond); check = false)
 
-        res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                             Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
+            if issuccess(qrprecond_chol) == true
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
+            elseif cond(Diagonal(qrprecond)) < 10^6
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
+            else
+                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                     Optim.LBFGS(; m = 10))
+            end
         else
 
         res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
@@ -302,10 +358,20 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         if withqr == false
             coeff0 = getcoeff(C)
             if hessprecond == true
-            precond = zeros(ncoeff(C), ncoeff(C))
-            precond!(precond, coeff0, S, C, X)
-            res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                  Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+                precond = zeros(ncoeff(C), ncoeff(C))
+                precond!(precond, coeff0, S, C, X)
+                precond_chol = cholesky(Symmetric(precond); check = false)
+
+                if issuccess(precond_chol) == true
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(precond), precond_chol)))
+                elseif cond(Diagonal(precond)) < 10^6
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10, P = Diagonal(precond)))
+                else
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10))
+                end
             else
 
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
@@ -326,11 +392,20 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
+                qrprecond_chol = cholesky(Symmetric(qrprecond); check = false)
+
+                if issuccess(qrprecond_chol) == true
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
+                elseif cond(Diagonal(qrprecond_chol)) < 10^6
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
+                else
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10))
+                end
                 # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
                 # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-
-                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
             else
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))

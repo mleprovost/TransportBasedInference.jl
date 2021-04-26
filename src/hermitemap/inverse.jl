@@ -18,7 +18,7 @@ function functionalf!(F, xk, cache, cache_vander, ψoff, output, R::IntegratedFu
     end
 
     # quadgk!(integrand!, F, 0.0, 1.0)
-    quadgk!(integrand!, F, 0.0, 1.0; rtol = 1e-7)
+    quadgk!(integrand!, F, 0.0, 1.0)
     F .*= xk
     F .-= output
     nothing

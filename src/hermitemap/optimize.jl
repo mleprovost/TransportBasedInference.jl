@@ -19,11 +19,21 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
             if hessprecond == true
                 precond = zeros(ncoeff(C), ncoeff(C))
                 precond!(precond, coeff0, S, C, X)
-                res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
+                precond_chol = cholesky(Symmetric(precond); check = false)
+
+                if issuccess(precond_chol) == true
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(precond), precond_chol)))
+                elseif cond(Diagonal(precond)) < 10^6  #try the diagonal preconditioner
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10), P = Diagonal(precond))
+                else # don't use any preconditioner
+                    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
+                          Optim.LBFGS(; m = 10))
+                end
             else
                 res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 10))
+                      Optim.LBFGS(; m = 10))
             end
 
             setcoeff!(C, Optim.minimizer(res))
@@ -38,9 +48,18 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
             if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
                 qrprecond!(qrprecond, coeff0, F, S, C, X)
+                qrprecond_chol = cholesky(Symmetric(qrprecond); check = false)
 
-                res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-                                     Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
+                if issuccess(qrprecond_chol) == true
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
+                elseif cond(Diagonal(qrprecond_chol)) < 10^6
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
+                else
+                    res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
+                                         Optim.LBFGS(; m = 10))
+                end
             else
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))

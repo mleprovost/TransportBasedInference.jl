@@ -30,7 +30,7 @@ for b in Blist
 
     ψ = evaluate(R, X)
 
-    @test norm(ψ - ψt)<1e-10
+    @test norm(ψ - ψt)<5e-9
 
     # Test grad_x
     dψ = grad_x(R, X)
@@ -84,7 +84,7 @@ for b in Blist
         gdψt[i] = R.g(ForwardDiff.gradient(R.f, X[:,i])[end])
     end
 
-    @test norm(gdψ - gdψt) <1e-10
+    @test norm(gdψ - gdψt) <5e-9
 
     # Test grad_coeff_grad_xd
     dψ_xd_dc = grad_coeff_grad_xd(R, X)
@@ -99,7 +99,7 @@ for b in Blist
         end
     end
 
-    @test norm(dψ_xd_dc - dψ_xd_dct)<1e-10
+    @test norm(dψ_xd_dc - dψ_xd_dct)<5e-9
 
     # Test hess_coeff_grad_xd
     d2ψ_xd_dc = hess_coeff_grad_xd(R, X)
@@ -120,7 +120,7 @@ for b in Blist
         end
     end
 
-    @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<1e-10
+    @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<5e-9
 
 
 
@@ -134,7 +134,7 @@ for b in Blist
 
     intψ = integrate_xd(R, X)
 
-    @test norm(intψt - intψ)<1e-10
+    @test norm(intψt - intψ)<5e-9
 
 
     # Test grad_coeff_integrate_xd
@@ -179,7 +179,7 @@ for b in Blist
 
     d2cintψ = hess_coeff_integrate_xd(R, X)
 
-    @test norm(d2cintψt - d2cintψ)<1e-10
+    @test norm(d2cintψt - d2cintψ)<5e-9
 
     # Test grad_coeff
     dcRt = zeros(Ne, Nψ)
@@ -290,7 +290,7 @@ end
             gdψt[i] = R.g(ForwardDiff.gradient(R.f, X[:,i])[end])
         end
 
-        @test norm(gdψ - gdψt) <1e-10
+        @test norm(gdψ - gdψt) <5e-9
 
         # Test grad_coeff_grad_xd
         dψ_xd_dc = grad_coeff_grad_xd(R, X)
@@ -305,7 +305,7 @@ end
             end
         end
 
-        @test norm(dψ_xd_dc - dψ_xd_dct)<1e-10
+        @test norm(dψ_xd_dc - dψ_xd_dct)<5e-9
 
         # Test hess_coeff_grad_xd
         d2ψ_xd_dc = hess_coeff_grad_xd(R, X)
@@ -326,7 +326,7 @@ end
             end
         end
 
-        @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<1e-10
+        @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<5e-9
 
 
 
@@ -340,7 +340,7 @@ end
 
         intψ = integrate_xd(R, X)
 
-        @test norm(intψt - intψ)<1e-10
+        @test norm(intψt - intψ)<5e-9
 
 
         # Test grad_coeff_integrate_xd
@@ -385,7 +385,7 @@ end
 
         d2cintψ = hess_coeff_integrate_xd(R, X)
 
-        @test norm(d2cintψt - d2cintψ)<1e-10
+        @test norm(d2cintψt - d2cintψ)<5e-9
 
         # Test grad_coeff
         dcRt = zeros(Ne, Nψ)
@@ -515,7 +515,7 @@ end
             gdψt[i] = R.g(ForwardDiff.gradient(R.f, X[:,i])[end])
         end
 
-        @test norm(gdψ - gdψt) <1e-10
+        @test norm(gdψ - gdψt) <5e-9
 
         # Test grad_coeff_grad_xd
         dψ_xd_dc = grad_coeff_grad_xd(R, X)
@@ -530,7 +530,7 @@ end
             end
         end
 
-        @test norm(dψ_xd_dc - dψ_xd_dct)<1e-10
+        @test norm(dψ_xd_dc - dψ_xd_dct)<5e-9
 
         # Test hess_coeff_grad_xd
         d2ψ_xd_dc = hess_coeff_grad_xd(R, X)
@@ -551,7 +551,7 @@ end
             end
         end
 
-        @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<1e-10
+        @test norm(d2ψ_xd_dc - d2ψ_xd_dct)<5e-9
 
         # Test integrate_xd
         intψt = zeros(Ne)
@@ -563,7 +563,7 @@ end
 
         intψ = integrate_xd(R, X)
 
-        @test norm(intψt - intψ)<1e-10
+        @test norm(intψt - intψ)<5e-9
 
 
         # Test grad_coeff_integrate_xd
@@ -608,7 +608,7 @@ end
 
         d2cintψ = hess_coeff_integrate_xd(R, X)
 
-        @test norm(d2cintψt - d2cintψ)<1e-10
+        @test norm(d2cintψt - d2cintψ)<5e-9
 
         # Test grad_coeff
         dcRt = zeros(Ne, Nψ)
