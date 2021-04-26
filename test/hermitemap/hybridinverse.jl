@@ -126,7 +126,7 @@ end
     @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<2e-8
 end
 
-@testset "Test inverse HermiteHermiteMapComponent" begin
+@testset "Test hybridinverse HermiteMapComponent" begin
 
     Ne = 200
     Nx = 3
@@ -155,5 +155,9 @@ end
 
     @test norm(Xmodified[end,:] - X[end,:])<1e-5
 
+     # Check that the first entries are not modified
     @test norm(Xmodified[1:end-1,:] - X[1:end-1,:])<1e-5
+
+    # Verify the inversion
+    @test norm(evaluate(C.I, X) - evaluate(C.I, Xmodified))<1e-5
 end

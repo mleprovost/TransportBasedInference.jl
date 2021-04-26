@@ -564,27 +564,6 @@ function hybridinverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; app
         if apply_rescaling == true
             itransform!(M.L, X)
         end
-        # else P == thread
-        # There is a run-race problem, and the serial version is fast enough.
-        #         nthread = Threads.nthreads()
-        #         @time if nthread == 1
-        #                 idx_folds = 1:Ne
-        #         else
-        #                 q = div(Ne, nthread)
-        #                 r = rem(Ne, nthread)
-        #                 @assert Ne == q*nthread + r
-        #                 idx_folds = UnitRange{Int64}[i < nthread ? ((i-1)*q+1:i*q) : ((i-1)*q+1:i*q+r) for i in 1:nthread]
-        #         end
-        #
-        #         @inbounds Threads.@threads for idx in idx_folds
-        #                 for k = start:Nx
-        #                 Fk = view(F,k,idx)
-        #                 Xk = view(X,1:k,idx)
-        #                 Sk = Storage(M[k].I.f, Xk)
-        #                 inverse!(Xk, Fk, M[k], Sk)
-        #                 end
-        #         end
-        # end
 end
 
 function hybridinverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)

@@ -50,14 +50,14 @@ function (smf::HermiteSMF)(X, ystar::Array{Float64,1}, t::Float64)
 		M = HermiteMap(40, X; diag = true, b = "CstLinProHermite")
 		# Perform a kfold optimization of the map
 		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-			     verbose = false, start = Ny+1, P = serial, hessprecond = true)
+			     verbose = false, start = Ny+1, P = serial, hessprecond = false)
 	else
 		L = LinearTransform(X; diag = true)
 		M = HermiteMap(40, Ny+Nx, L, smf.M.C)
 		# M = HermiteMap(40, X; diag = true)
 		# Only optimize the existing coefficients of the basis
 		optimize(M, X, nothing; withconstant = false, withqr = true,
-			   verbose = false, start = Ny+1, P = serial, hessprecond = true)
+			   verbose = false, start = Ny+1, P = serial, hessprecond = false)
 	end
 
 	# Evaluate the transport map

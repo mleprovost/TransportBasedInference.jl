@@ -422,7 +422,6 @@ end
 
 
 @testset "Test inversion of the Hermite Map I" begin
-
     Nx = 100
     m = 20
     Ne = 500
@@ -436,6 +435,8 @@ end
     inverse!(Xpost, F, M)
 
     @test norm(Xprior - Xpost)/norm(Xpost)<1e-6
+    @test norm(Xprior - Xpost)<1e-6
+    @test norm(evaluate(M, Xprior) - evaluate(M, Xpost))<1e-6
 end
 
 
@@ -476,6 +477,8 @@ end
     hybridinverse!(Xpost, F, M)
 
     @test norm(Xprior - Xpost)/norm(Xpost)<1e-6
+    @test norm(Xprior - Xpost)<1e-6
+    @test norm(evaluate(M, Xprior) - evaluate(M, Xpost))<1e-6
 end
 
 

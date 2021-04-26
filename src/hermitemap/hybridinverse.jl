@@ -18,7 +18,7 @@ end
 # Combine Bisection and Newton method, this method has guaranteed convergence.
 # Convergence order should be between linear and quadratic
 # http://www.m-hikari.com/ams/ams-2017/ams-53-56-2017/p/hahmAMS53-56-2017.pdf
-function hybridsolver(f, g, out, a, b; ϵx = 1e-4, ϵf = 1e-4, niter = 100)
+function hybridsolver(f, g, out, a, b; ϵx = 1e-7, ϵf = 1e-7, niter = 100)
     dxold = abs(b-a)
     dx = dxold
     fout = f(out)
@@ -64,7 +64,7 @@ function hybridsolver(f, g, out, a, b; ϵx = 1e-4, ϵf = 1e-4, niter = 100)
     return out
 end
 
-function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵx = 1e-4, ϵf = 1e-4, P::Parallel = serial)
+function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵx = 1e-12, ϵf = 1e-12, P::Parallel = serial)
     Nψ = R.Nψ
     Nx = R.Nx
     NxX, Ne = size(X)
@@ -134,6 +134,7 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵ
     functionalf!(fout, xk, cache, cache_vander, S.ψoff, F, R)
     functionalg1D!(gout, xk, cache, cache_vander, S.ψoff, F, R)
     convergence = false
+
     @inbounds for j=1:niter
         @inbounds for i=1:Ne
             # Bisect if Newton out of range, or not decreasing fast enough.
@@ -160,7 +161,8 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵ
         end
         # Convergence criterion
         # if norm(xa - xk, Inf) < ϵx || norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
-        if norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
+        # if norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
+        if norm(fout) < ϵf
             convergence = true
             break
         end
@@ -178,7 +180,17 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵ
             end
         end
     end
+
     @assert convergence == true "Inversion did not converge"
+end
+
+hybridinverse!(X, F, C::HermiteMapComponent, S::Storage; P::Parallel = serial) = hybridinverse!(X, F, C.I, S; P = P)
+
+function hybridinverse!(X::Array{Float64,2}, F, L::LinHermiteMapComponent, S::Storage; P::Parallel = serial)
+    # Pay attention that S is computed in the renormalized space for improve performance !!!
+    transform!(L.L, X)
+    hybridinverse!(X, F, L.C, S; P = P)
+    itransform!(L.L, X)
 end
 
 # function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 100, ϵx = 1e-7, ϵf = 1e-7, P::Parallel = serial)
@@ -365,12 +377,3 @@ end
 #     end
 #     @assert convergence == true "Inversion did not converge"
 # end
-
-hybridinverse!(X, F, C::HermiteMapComponent, S::Storage; P::Parallel = serial) = hybridinverse!(X, F, C.I, S; P = P)
-
-function hybridinverse!(X::Array{Float64,2}, F, L::LinHermiteMapComponent, S::Storage; P::Parallel = serial)
-    # Pay attention that S is computed in the renormalized space for improve performance !!!
-    transform!(L.L, X)
-    hybridinverse!(X, F, L.C, S; P = P)
-    itransform!(L.L, X)
-end

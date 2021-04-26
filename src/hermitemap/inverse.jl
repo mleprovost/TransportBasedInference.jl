@@ -17,7 +17,8 @@ function functionalf!(F, xk, cache, cache_vander, ψoff, output, R::IntegratedFu
         # v .= R.g((repeated_grad_xk_basis(R.f,  t*xk) .* ψoff)*R.f.coeff)
     end
 
-    quadgk!(integrand!, F, 0.0, 1.0; rtol = 1e-3)
+    # quadgk!(integrand!, F, 0.0, 1.0)
+    quadgk!(integrand!, F, 0.0, 1.0; rtol = 1e-7)
     F .*= xk
     F .-= output
     nothing
@@ -85,6 +86,8 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
     if converged(result) == true
     # @assert converged(result) "Optimization hasn't converged"
         X[end,:] .= result.zero
+    else
+        println("Optimization hasn't converged")
     end
 end
 

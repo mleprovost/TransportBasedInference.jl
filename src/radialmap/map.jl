@@ -64,7 +64,7 @@ function evaluate!(out, M::RadialMap, X::AbstractMatrix{Float64}; start::Int64=1
         return out
 end
 
-evaluate(M::RadialMap, X::AbstractMatrix{Float64}; start::Int64=1) = evaluate!(zero(size(X)), M, X; start = start)
+evaluate(M::RadialMap, X::AbstractMatrix{Float64}; start::Int64=1) = evaluate!(zero(X), M, X; start = start)
 
 (M::RadialMap)(X::AbstractMatrix{Float64}; start::Int64=1) = evaluate(M::RadialMap, X::AbstractMatrix{Float64}; start = start)
 
