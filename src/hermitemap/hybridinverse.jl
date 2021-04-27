@@ -64,7 +64,7 @@ function hybridsolver(f, g, out, a, b; ϵx = 1e-7, ϵf = 1e-7, niter = 100)
     return out
 end
 
-function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵx = 1e-12, ϵf = 1e-12, P::Parallel = serial)
+function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵx = 1e-8, ϵf = 1e-8, P::Parallel = serial)
     Nψ = R.Nψ
     Nx = R.Nx
     NxX, Ne = size(X)

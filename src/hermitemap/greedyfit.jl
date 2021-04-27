@@ -1,8 +1,10 @@
 export greedyfit, update_component, update_coeffs
 
+"""
+$(TYPEDSIGNATURES)
 
-# function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, Xvalid::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
-
+An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
+"""
 function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant::Bool = false,
                    withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)
 
@@ -223,12 +225,13 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     return C, (train_error, valid_error)
 end
 
+"""
+$(TYPEDSIGNATURES)
 
-# function greedyfit(m::Int64, Nx::Int64, X::Array{Float64,2}, maxterms::Int64; maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
-
-
+An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the ensemble matrix `X`.
+"""
 function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false,
-                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)# where {m, Nψ, Nx}
+                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)
 
     @assert maxterms >=1 "maxterms should be >= 1"
     best_valid_error = Inf
@@ -414,10 +417,6 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             # Reverse to the non-QR space and update in-place the coefficients
             C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
-            # Compute initial loss on training set
-            # mul!(S.ψoffψd0, S.ψoffψd0, F.U)
-            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.U)
-
             # The computation is the non-QR space is slightly faster,
             # even if we prefer the QR form to optimize the coefficients
             push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
@@ -430,6 +429,68 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
     return C, train_error
 end
+
+function update_component(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage)
+    m = C.m
+    Nψ = C.Nψ
+    idx_old = getidx(C)
+
+    idx_new = vcat(idx_old, reduced_margin)
+
+    # Define updated map
+    f_new = ExpandedFunction(C.I.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
+    C_new = HermiteMapComponent(f_new; α = αreg)
+
+
+    # Set coefficients based on previous optimal solution
+    coeff_new, coeff_idx_added, idx_added = update_coeffs(C, C_new)
+
+    # Compute gradient after adding the new elements
+    S = update_storage(S, X, reduced_margin)
+    dJ = zero(coeff_new)
+    negative_log_likelihood!(nothing, dJ, coeff_new, S, C_new, X)
+
+    # Find function in the reduced margin most correlated with the residual
+    _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
+
+    opt_idx = idx_added[opt_dJ_coeff_idx,:]
+
+    # Update multi-indices and the reduced margins based on opt_idx
+    # reducedmargin_opt_coeff_idx = Bool[opt_idx == x for x in eachslice(reduced_margin; dims = 1)]
+
+    idx_new, reduced_margin = updatereducedmargin(idx_old, reduced_margin, opt_dJ_coeff_idx)
+
+    return idx_new, reduced_margin
+end
+
+function update_coeffs(Cold::HermiteMapComponent, Cnew::HermiteMapComponent)
+
+    Nψ = Cold.Nψ
+    idx_old = getidx(Cold)
+    idx_new = getidx(Cnew)
+
+    coeff_old = getcoeff(Cold)
+
+    # Declare vectors for new coefficients and to track added terms
+    Nψnew = Cnew.Nψ
+    coeff_new = zeros(Nψnew)
+    coeff_added = ones(Nψnew)
+
+    # Update coefficients
+    @inbounds for i = 1:Nψ
+        idx_i = Bool[idx_old[i,:] == x for x in eachslice(idx_new; dims = 1)]
+        coeff_new[idx_i] .= coeff_old[i]
+        coeff_added[idx_i] .= 0.0
+    end
+
+    # Find indices of added coefficients and corresponding multi-indices
+    coeff_idx_added = findall(coeff_added .> 0.0)
+    idx_added = idx_new[coeff_idx_added,:]
+
+    return coeff_new, coeff_idx_added, idx_added
+end
+
+
 # function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
 #
 #     @assert maxterms >=1 "maxterms should be >= 1"
@@ -578,63 +639,3 @@ end
 # end
 
 # function update_component(C::HermiteMapComponent{m, Nψ, Nx}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
-
-function update_component(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage)
-    m = C.m
-    Nψ = C.Nψ
-    idx_old = getidx(C)
-
-    idx_new = vcat(idx_old, reduced_margin)
-
-    # Define updated map
-    f_new = ExpandedFunction(C.I.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
-    C_new = HermiteMapComponent(f_new; α = αreg)
-
-
-    # Set coefficients based on previous optimal solution
-    coeff_new, coeff_idx_added, idx_added = update_coeffs(C, C_new)
-
-    # Compute gradient after adding the new elements
-    S = update_storage(S, X, reduced_margin)
-    dJ = zero(coeff_new)
-    negative_log_likelihood!(nothing, dJ, coeff_new, S, C_new, X)
-
-    # Find function in the reduced margin most correlated with the residual
-    _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
-
-    opt_idx = idx_added[opt_dJ_coeff_idx,:]
-
-    # Update multi-indices and the reduced margins based on opt_idx
-    # reducedmargin_opt_coeff_idx = Bool[opt_idx == x for x in eachslice(reduced_margin; dims = 1)]
-
-    idx_new, reduced_margin = updatereducedmargin(idx_old, reduced_margin, opt_dJ_coeff_idx)
-
-    return idx_new, reduced_margin
-end
-
-function update_coeffs(Cold::HermiteMapComponent, Cnew::HermiteMapComponent)
-
-    Nψ = Cold.Nψ
-    idx_old = getidx(Cold)
-    idx_new = getidx(Cnew)
-
-    coeff_old = getcoeff(Cold)
-
-    # Declare vectors for new coefficients and to track added terms
-    Nψnew = Cnew.Nψ
-    coeff_new = zeros(Nψnew)
-    coeff_added = ones(Nψnew)
-
-    # Update coefficients
-    @inbounds for i = 1:Nψ
-        idx_i = Bool[idx_old[i,:] == x for x in eachslice(idx_new; dims = 1)]
-        coeff_new[idx_i] .= coeff_old[i]
-        coeff_added[idx_i] .= 0.0
-    end
-
-    # Find indices of added coefficients and corresponding multi-indices
-    coeff_idx_added = findall(coeff_added .> 0.0)
-    idx_added = idx_new[coeff_idx_added,:]
-
-    return coeff_new, coeff_idx_added, idx_added
-end

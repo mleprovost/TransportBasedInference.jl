@@ -46,19 +46,19 @@ function (smf::HermiteSMF)(X, ystar::Array{Float64,1}, t::Float64)
 	# Perturbation of the measurements
 	smf.ϵy(X, 1, Ny)
 
-	if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
-		M = HermiteMap(40, X; diag = true, b = "CstLinProHermite")
+	# if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
+	M = HermiteMap(30, X; diag = true, b = "CstLinProHermite")
 		# Perform a kfold optimization of the map
-		optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-			     verbose = false, start = Ny+1, P = serial, hessprecond = false)
-	else
-		L = LinearTransform(X; diag = true)
-		M = HermiteMap(40, Ny+Nx, L, smf.M.C)
-		# M = HermiteMap(40, X; diag = true)
-		# Only optimize the existing coefficients of the basis
-		optimize(M, X, nothing; withconstant = false, withqr = true,
-			   verbose = false, start = Ny+1, P = serial, hessprecond = false)
-	end
+	optimize(M, X, "kfolds"; withconstant = false, withqr = true,
+		     verbose = false, start = Ny+1, P = serial, hessprecond = true)
+	# else
+	# 	L = LinearTransform(X; diag = true)
+	# 	M = HermiteMap(40, Ny+Nx, L, smf.M.C)
+	# 	# M = HermiteMap(40, X; diag = true)
+	# 	# Only optimize the existing coefficients of the basis
+	# 	optimize(M, X, nothing; withconstant = false, withqr = true,
+	# 		   verbose = false, start = Ny+1, P = serial, hessprecond = true)
+	# end
 
 	# Evaluate the transport map
 	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)

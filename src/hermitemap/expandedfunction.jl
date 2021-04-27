@@ -87,7 +87,9 @@ end
 
 active_dim(f::ExpandedFunction) = f.dim
 
+"""
 
+"""
 # alleval computes the evaluation, gradient and hessian of the function
 # use it for validatio since it is slower than the other array-based variants
 function alleval(f::ExpandedFunction, X)
