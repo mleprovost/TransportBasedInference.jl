@@ -5,6 +5,12 @@ struct SparseRadialSMF<:SeqFilter
 	"Filter function"
 	G::Function
 
+	"Observation operator"
+	h::Function
+
+	"Multiplicative inflation"
+	β::Float64
+
 	"Inflation for the measurement noise distribution"
 	ϵy::AdditiveInflation
 
@@ -38,53 +44,141 @@ struct SparseRadialSMF<:SeqFilter
 
     "Boolean: is state vector filtered"
     isfiltered::Bool
+
+	"Boolean: is assimilation localized"
+	islocalized::Bool
 end
 
 
-function SparseRadialSMF(G::Function, ϵy::AdditiveInflation,
+function SparseRadialSMF(G::Function, h::Function, β::Float64, ϵy::AdditiveInflation,
 						 p::Array{Array{Int64,1},1}, γ, λ, δ, κ,
 						 Ny, Nx, Ne,
 				         Δtdyn::Float64, Δtobs::Float64,
 						 dist::Array{Float64,2}, idx::Array{Int64,2};
-						 isfiltered::Bool = false)
+						 isfiltered::Bool = false, islocalized::Bool = true)
 	#Create the map with scalar assimlation of the data
-	# S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	return SparseRadialSMF(G, ϵy, S, Ny, Nx, Δtdyn, Δtobs, dist, idx, zeros(Nx+1, Ne), isfiltered)
+	if islocalized == true
+		S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+	else
+		S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+	end
+	return SparseRadialSMF(G, h, β, ϵy, S, Ny, Nx, Δtdyn, Δtobs, dist, idx,
+	                       zeros(Nx+1, Ne), isfiltered, islocalized)
 end
 
 
-
-function (smf::SparseRadialSMF)(X, ystar, t, idx::Array{Int64,1}; P::Parallel=serial)
+function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Parallel=serial)
 	idx1, idx2 = idx
 	Nx = smf.Nx
 	Ny = smf.Ny
 	Na = Nx+1
 	NxX, Ne = size(X)
 	cache = smf.cache
+	fill!(cache, 0.0)
 	# We add a +1 such that the scalar observation will remain the first entry
 	perm = sortperm(view(smf.dist,:,idx2))
+	# @show perm
 
+	Xinfl = deepcopy(X)
+	# @show Xinfl[4,:]
+
+
+	# Apply the multiplicative inflation
+	Aβ = MultiplicativeInflation(smf.β)
+	Aβ(Xinfl, Ny+1, Ny+Nx)
+	# @show Xinfl[4,:]
+
+
+	# Generate samples from local likelihood
+	@inbounds for i=1:Ne
+		col = view(Xinfl, Ny+1:Ny+Nx, i)
+		cache[1,i] = smf.h(col, t)[idx1] + smf.ϵy.m[idx1] + dot(smf.ϵy.σ[idx1,:], randn(Ny))
+	end
+
+	# @show cache[1,:]
+
+	cache[2:Na, :] .= deepcopy(Xinfl[Ny .+ perm,:])
+
+	# @show norm(cache[1,:])
+	# @show norm(cache[2,:])
+	# @show norm(cache[3,:])
+	# @show norm(cache[4,:])
+	#
+	# @show  cache[1,:]
+	# @show  cache[2,:]
+	# @show  cache[3,:]
+	# @show  cache[4,:]
+	# @show norm(cache)
 	#Run optimization
-	optimize(smf.S, smf.cache; start = 2, P = P)
+	Xopt = deepcopy(cache)
+	optimize(smf.S, Xopt; start = 2, P = P)
+	# @show smf.S.p
+	# @show smf.S[2].ξ
+	# @show smf.S[2].σ
+	# @show smf.S[2].a
+	#
+	# @show smf.S.p
+	# @show smf.S[3].ξ
+	# @show smf.S[3].σ
+	# @show smf.S[3].a
+	#
+	# @show smf.S.p
+	# @show smf.S[4].ξ
+	# @show smf.S[4].σ
+	# @show smf.S[4].a
+	# @show norm(cache)
 
-	smf.cache[2:Na,:] .= X[perm,:]
+	#Generate local-likelihood samples with uninflated samples
+	@inbounds for i=1:Ne
+		col = view(X, Ny+1:Ny+Nx, i)
+		cache[1,i] = smf.h(col, t)[idx1] + smf.ϵy.m[idx1] + dot(smf.ϵy.σ[idx1,:], randn(Ny))
+	end
 
-	F = smf.S(cache)
+	# @show cache[1,:]
+	cache[2:Na,:] .= X[Ny .+ perm,:]
+
+	Sx = smf.S(cache; start = 2)
+
+	# @show Sx
 
 	if typeof(P) <: Serial
 		@inbounds for i=1:Ne
 			col = view(cache,:,i)
-			inverse(col, view(F,:,i), smf.S, ystar)
+			inverse(col, view(Sx,:,i), smf.S, ystar)
 		end
 	elseif typeof(P) <: Thread
 		@inbounds Threads.@threads for i=1:Ne
 			col = view(cache,:,i)
-			inverse(col, view(F,:,i), smf.S, ystar)
+			inverse(col, view(Sx,:,i), smf.S, ystar)
 		end
 	end
 
-	@views X[perm,:] .= cache[2:Na,:]
+	X[Ny .+ perm,:] .= deepcopy(cache[2:Na,:])
+end
+
+# Without localization of the observations
+function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial, localized::Bool = true)
+	Ny = smf.Ny
+	@assert smf.Ny==size(ystar,1) "Wrong dimension of the observation"
+
+	if smf.islocalized == true
+		@inbounds for i=1:Ny
+			smf(X, ystar[i], t, smf.idx[:,i]; P = P)
+		end
+	else
+		# Perturbation of the measurements
+		smf.ϵy(X, 1, Ny)
+
+		optimize(smf.S, X; start = Ny+1)
+
+		# Evaluate the transport map
+		F = evaluate(smf.S, X; start = Ny+1)
+
+		# Generate the posterior samples by partial inversion of the map
+
+		inverse!(X, F, smf.S, ystar; start = Ny+1)
+	end
+	return X
 end
 #
 # function (T::SparseRadialSMF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar, t; P::Parallel = serial) where {Nx, Ny, Ne}
@@ -113,24 +207,24 @@ end
 # end
 
 # Without localization of the observations
-function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
-	Ny = smf.Ny
-	@assert smf.Ny==size(ystar,1) "Wrong dimension of the observation"
-
-	# Perturbation of the measurements
-	smf.ϵy(X, 1, Ny)
-
-	optimize(smf.S, X; start = Ny+1)
-
-	# Evaluate the transport map
-	F = evaluate(smf.S, X; start = Ny+1)
-
-	# Generate the posterior samples by partial inversion of the map
-
-	inverse!(X, F, smf.S, ystar; start = Ny+1)
-
-	return X
-end
+# function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial)
+# 	Ny = smf.Ny
+# 	@assert smf.Ny==size(ystar,1) "Wrong dimension of the observation"
+#
+# 	# Perturbation of the measurements
+# 	smf.ϵy(X, 1, Ny)
+#
+# 	optimize(smf.S, X; start = Ny+1)
+#
+# 	# Evaluate the transport map
+# 	F = evaluate(smf.S, X; start = Ny+1)
+#
+# 	# Generate the posterior samples by partial inversion of the map
+#
+# 	inverse!(X, F, smf.S, ystar; start = Ny+1)
+#
+# 	return X
+# end
 #
 # ## Full map without local observation
 #

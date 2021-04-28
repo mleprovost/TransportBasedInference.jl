@@ -32,6 +32,8 @@ with parameters (γ, λ, δ, κ) = ($(M.γ), $(M.λ), $(M.δ), $(M.κ))")
 
 end
 
+@propagate_inbounds Base.getindex(M::RadialMap, i::Int) = getindex(M.C,i)
+@propagate_inbounds Base.setindex!(M::RadialMap, C::RadialMapComponent, i::Int) = setindex!(M.C,C,i)
 
 size(M::RadialMap) = (M.Nx, M.p)
 

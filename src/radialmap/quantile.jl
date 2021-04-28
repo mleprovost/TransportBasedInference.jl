@@ -14,8 +14,8 @@ function center_std_diag(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::
 
     σ′[1] = ξ′[2]-ξ′[1]
     σ′[end] = ξ′[end]-ξ′[end-1]
-    for j=2:p+1
-    @inbounds σ′[j] = 0.5*(ξ′[j+1]-ξ′[j-1])
+    @inbounds for j=2:p+1
+     σ′[j] = 0.5*(ξ′[j+1]-ξ′[j-1])
     end
     rmul!(σ′, γ)
 
@@ -75,6 +75,7 @@ function center_std_off(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::F
         end
     end
 end
+
 
 # Assume an unsorted array
 function center_std(T::RadialMap, X::AbstractMatrix{Float64};start::Int64=1)

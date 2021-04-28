@@ -256,6 +256,10 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	# Compute weights
     ψ_off, ψ_mono, dψ_mono = weights(C, X)
 
+	# @show ψ_off
+	# @show ψ_mono[1,:]
+	# @show dψ_mono[1,:]
+
     no = size(ψ_off,1)
 	nd = size(ψ_mono,1)
     nx = size(ψ_off,1)+size(ψ_mono,1)+1
@@ -272,15 +276,20 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
     μψ = deepcopy(mean(ψ_mono, dims=2))
     σψ = deepcopy(std(ψ_mono, dims=2, corrected=false))
 
+	# @show μψ
+	# @show σψ
+
     ψ_mono .-= μψ
     ψ_mono ./= σψ
     dψ_mono ./= σψ
+
+	# @show ψ_mono[2,:]
+	# @show dψ_mono[2,:]
 
     if Nx==1
 		BLAS.gemm!('N', 'T', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
 		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
     else
-
         #Normalize off-diagonal covariates
         μψ_off = deepcopy(mean(ψ_off, dims = 2))
         σψ_off = deepcopy(std(ψ_off, dims = 2, corrected = false))
