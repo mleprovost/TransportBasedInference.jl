@@ -55,7 +55,7 @@ function iterative(C::SparseRadialMapComponent, X, λ, δ)
 
     @assert NxX  == Nx "Wrong dimension of the ensemble matrix `X`"
     # Compute weights
-    ψ_off, ψ_mono, _ = weights(C, X)
+    ψ_off, ψ_mono, _ = compute_weights(C, X)
 
     # no = size(ψ_off,1)
     # nd = size(ψ_mono,1)

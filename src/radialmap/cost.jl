@@ -52,7 +52,7 @@ function Base.show(io::IO, L::LHD)
 	elseif L.λ==0.0 && L.δ!=0.0
 	println(io,"Cost function with δ = $(L.δ) - regularized log barrier and Ne = $(L.Ne) samples")
 	elseif L.λ!=0.0 && L.δ==0.0
-	println(io,"Cost function with λ = $(L.λ) L-2 regularization andNe = $(L.Ne) samples")
+	println(io,"Cost function with λ = $(L.λ) L-2 regularization and Ne = $(L.Ne) samples")
 	else
 	println(io,"Cost function with λ = $(L.λ) L-2 regularization,  δ = $(L.δ) - regularized log barrier and Ne = $(L.Ne) samples")
 	end
@@ -66,7 +66,6 @@ function (Lhd::LHD)(x::Array{Float64,1}, inplace::Bool; noutput::Int64=3)
 	@inbounds for i=1:Lhd.Ne
 		Lhd.logdS[i] = log(Lhd.dS[i])
 	end
-
 
 	if inplace
 		# Compute gradient

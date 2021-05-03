@@ -10,9 +10,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
 
     best_valid_error = Inf
     patience = 0
-
-    options = Optim.Options()
-
+    
     train_error = Float64[]
     valid_error = Float64[]
 

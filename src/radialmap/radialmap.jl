@@ -103,6 +103,15 @@ function SparseRadialMap(Nx::Int64, p::Array{Int64,1}; γ::Float64=2.0, λ::Floa
         return SparseRadialMap(Nx, [fill(p[i],i) for i=1:Nx], C, γ, λ, δ, κ)
 end
 
+# function SparseRadialMap(Nx::Int64, p::Int64; γ::Float64=2.0, λ::Float64=0.1, δ::Float64=1e-8, κ::Float64=10.0)
+#         C = SparseRadialMapComponent[]
+#         for i=1:Nx
+#         @inbounds push!(C, SparseRadialMapComponent(i,p))
+#         end
+#         return SparseRadialMap(Nx, [fill(p,i) for i=1:Nx], C, γ, λ, δ, κ)
+# end
+
+
 function Base.show(io::IO, M::SparseRadialMap)
         println(io,"Sparse Radial Map of dimension Nx = $(M.Nx) and order p = $(M.p)
         with parameters (γ, λ, δ, κ) = ($(M.γ), $(M.λ), $(M.δ), $(M.κ))")

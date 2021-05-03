@@ -10,6 +10,7 @@ export SparseRadialMapComponent, component, construct, evaluate, off_diagonal, s
 struct SparseRadialMapComponent
         Nx::Int64
         p::Array{Int64,1}
+        activedim::Array{Int64, 1}
         ξ::Array{Array{Float64,1}, 1}
         σ::Array{Array{Float64,1}, 1}
         a::Array{Array{Float64,1}, 1}
@@ -17,27 +18,36 @@ struct SparseRadialMapComponent
         # Cache for evaluation of function, gradient and hessian on basis
 
         # Inner constructor
-        function SparseRadialMapComponent(Nx::Int64, p::Array{Int64,1}, ξ::Array{Array{Float64,1},1}, σ::Array{Array{Float64,1},1}, a::Array{Array{Float64,1},1})
+        function SparseRadialMapComponent(Nx::Int64, p::Array{Int64,1}, activedim::Array{Int64,1}, ξ::Array{Array{Float64,1},1}, σ::Array{Array{Float64,1},1}, a::Array{Array{Float64,1},1})
 
-        @assert size(ξ,1)==Nx "Size of ξ doesn't match the order of RadialMapComponent"
-        @assert size(σ,1)==Nx "Size of σ doesn't match the order of RadialMapComponent"
-        @assert size(a,1)==Nx "Size of a doesn't match the order of RadialMapComponent"
-                return new(Nx, p, ξ, σ, a)
+        @assert size(activedim,1) <= Nx "Size of activedim should be smaller than the order of SparseRadialMapComponent"
+        @assert size(ξ,1)==Nx "Size of ξ doesn't match the order of SparseRadialMapComponent"
+        @assert size(σ,1)==Nx "Size of σ doesn't match the order of SparseRadialMapComponent"
+        @assert size(a,1)==Nx "Size of a doesn't match the order of SparseRadialMapComponent"
+
+        # activedim = filter(x-> x != -1, p)
+                return new(Nx, p, activedim, ξ, σ, a)
         end
 end
 
 function SparseRadialMapComponent(Nx::Int64, p::Array{Int64,1})
         @assert Nx>=1 "Nx must be >0"
+        activedim = Int64[]
+        @inbounds for i=1:Nx
+                if p[i] != -1
+                        push!(activedim, copy(i))
+                end
+        end
 
         if Nx==1
                 if p[1]==-1
-                return SparseRadialMapComponent(Nx, p, [Float64[]], [Float64[]],  [Float64[]])
+                return SparseRadialMapComponent(Nx, p, activedim, [Float64[]], [Float64[]],  [Float64[]])
                 end
                 if p[1]==0
-                return SparseRadialMapComponent(Nx, p, [Float64[]], [Float64[]],  [zeros(2)])
+                return SparseRadialMapComponent(Nx, p, activedim, [Float64[]], [Float64[]],  [zeros(2)])
                 end
                 if p[1]>0
-                return SparseRadialMapComponent(Nx, p, [zeros(p[1]+2)], [ones(p[1]+2)], [zeros(p[1]+3)])
+                return SparseRadialMapComponent(Nx, p, activedim, [zeros(p[1]+2)], [ones(p[1]+2)], [zeros(p[1]+3)])
                 end
 
         else # Nx>1
@@ -80,7 +90,7 @@ function SparseRadialMapComponent(Nx::Int64, p::Array{Int64,1})
                         push!(σ, ones(p[end]+2))
                         push!(a, zeros(p[end]+3))
                 end
-                return SparseRadialMapComponent(Nx, p, ξ, σ, a)
+                return SparseRadialMapComponent(Nx, p, activedim, ξ, σ, a)
         end
 end
 
@@ -174,7 +184,7 @@ function (C::SparseRadialMapComponent)(z::T) where {T<:Real}
 
         out = uk(p[Nx], C.ξ[Nx], C.σ[Nx], C.a[Nx])(z)
         if Nx>1
-                for i=1:Nx-1
+                for i in intersect(1:Nx-1, C.activedim)
                 @inbounds out += ui(p[i], C.ξ[i], C.σ[i], C.a[i])(z)
                 end
         end
@@ -193,7 +203,7 @@ function (C::SparseRadialMapComponent)(z)
         end
 
         if Nx>1
-                @inbounds for idx=1:Nx-1
+                @inbounds for idx in intersect(1:Nx-1, C.activedim)
                 pidx = p[idx]
 
                 if pidx==-1
@@ -216,7 +226,7 @@ function off_diagonal(C::SparseRadialMapComponent, z)
         @assert size(z,1)<=Nx  "The vector z has more components than RadialMapComponent"
         out = 0.0
         if Nx>1
-        @inbounds for idx=1:Nx-1
+        @inbounds for idx in intersect(1:Nx-1, C.activedim)
                         pidx = p[idx]
                         if pidx==-1
                                 # No computation

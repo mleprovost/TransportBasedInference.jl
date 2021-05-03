@@ -77,17 +77,12 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 	fill!(cache, 0.0)
 	# We add a +1 such that the scalar observation will remain the first entry
 	perm = sortperm(view(smf.dist,:,idx2))
-	# @show perm
 
-	Xinfl = deepcopy(X)
-	# @show Xinfl[4,:]
-
+	Xinfl = copy(X)
 
 	# Apply the multiplicative inflation
 	Aβ = MultiplicativeInflation(smf.β)
 	Aβ(Xinfl, Ny+1, Ny+Nx)
-	# @show Xinfl[4,:]
-
 
 	# Generate samples from local likelihood
 	@inbounds for i=1:Ne
@@ -95,38 +90,9 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 		cache[1,i] = smf.h(col, t)[idx1] + smf.ϵy.m[idx1] + dot(smf.ϵy.σ[idx1,:], randn(Ny))
 	end
 
-	# @show cache[1,:]
+	@view(cache[2:Na, :]) .= Xinfl[Ny .+ perm,:]
 
-	cache[2:Na, :] .= deepcopy(Xinfl[Ny .+ perm,:])
-
-	# @show norm(cache[1,:])
-	# @show norm(cache[2,:])
-	# @show norm(cache[3,:])
-	# @show norm(cache[4,:])
-	#
-	# @show  cache[1,:]
-	# @show  cache[2,:]
-	# @show  cache[3,:]
-	# @show  cache[4,:]
-	# @show norm(cache)
-	#Run optimization
-	Xopt = deepcopy(cache)
-	optimize(smf.S, Xopt; start = 2, P = P)
-	# @show smf.S.p
-	# @show smf.S[2].ξ
-	# @show smf.S[2].σ
-	# @show smf.S[2].a
-	#
-	# @show smf.S.p
-	# @show smf.S[3].ξ
-	# @show smf.S[3].σ
-	# @show smf.S[3].a
-	#
-	# @show smf.S.p
-	# @show smf.S[4].ξ
-	# @show smf.S[4].σ
-	# @show smf.S[4].a
-	# @show norm(cache)
+	optimize(smf.S, cache; start = 2, P = P)
 
 	#Generate local-likelihood samples with uninflated samples
 	@inbounds for i=1:Ne
@@ -134,12 +100,9 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 		cache[1,i] = smf.h(col, t)[idx1] + smf.ϵy.m[idx1] + dot(smf.ϵy.σ[idx1,:], randn(Ny))
 	end
 
-	# @show cache[1,:]
-	cache[2:Na,:] .= X[Ny .+ perm,:]
+	@view(cache[2:Na,:]) .= X[Ny .+ perm,:]
 
 	Sx = smf.S(cache; start = 2)
-
-	# @show Sx
 
 	if typeof(P) <: Serial
 		@inbounds for i=1:Ne
@@ -153,7 +116,7 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 		end
 	end
 
-	X[Ny .+ perm,:] .= deepcopy(cache[2:Na,:])
+	@view(X[Ny .+ perm,:]) .= cache[2:Na,:]
 end
 
 # Without localization of the observations

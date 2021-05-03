@@ -1,4 +1,4 @@
-export Weights, create_weights, weights, component,
+export Weights, create_weights, compute_weights, component,
         extract_a, modify_a, rearrange_weights,
         rearrange, ncoeff
 
@@ -50,7 +50,7 @@ function create_weights(T::RadialMap, X::AbstractMatrix{Float64})
         return Weights(Nx, p, Ne, woff, wdiag, w∂k)
 end
 
-function weights(u::ui, z::Float64, woff)
+function compute_weights(u::ui, z::Float64, woff)
         p = u.p
         # ChecNx that woff has the right size
         if p==-1
@@ -70,7 +70,7 @@ function weights(u::ui, z::Float64, woff)
 end
 
 
-function weights(u::uk, z::Float64, wdiag, w∂k; withconstant::Bool = true)
+function compute_weights(u::uk, z::Float64, wdiag, w∂k; withconstant::Bool = true)
         p = u.p
         # Check that wdiag and w∂k have the right size
         if withconstant == true
@@ -133,7 +133,7 @@ function weights(u::uk, z::Float64, wdiag, w∂k; withconstant::Bool = true)
         # wdiag, w∂k
 end
 
-function weights(u::uk, z::Float64, wdiag; withconstant::Bool = true)
+function compute_weights(u::uk, z::Float64, wdiag; withconstant::Bool = true)
         p = u.p
         # Check that wdiag and w∂k have the right size
         if withconstant ==true
@@ -178,7 +178,7 @@ function weights(u::uk, z::Float64, wdiag; withconstant::Bool = true)
         end
 end
 
-function weights(T::RadialMap, z::Array{Float64,1}, woff::Array{Float64,1}, wdiag::Array{Float64,1}, w∂k::Array{Float64,1})
+function compute_weights(T::RadialMap, z::Array{Float64,1}, woff::Array{Float64,1}, wdiag::Array{Float64,1}, w∂k::Array{Float64,1})
         @get T (Nx, p)
         if p==0
                 if Nx==1
@@ -190,37 +190,37 @@ function weights(T::RadialMap, z::Array{Float64,1}, woff::Array{Float64,1}, wdia
                 @inbounds for i=1:Nx
                         wd = view(wdiag,(i-1)*2+1:i*2)
                         w∂ = view(w∂k,i:i)
-                        weights(component(T.C[i],i), z[i], wd, w∂)
+                       compute_weights(component(T.C[i],i), z[i], wd, w∂)
                 end
                 # Fill woff
                 @inbounds for i=1:Nx-1
                         wo = view(woff,i:i)
-                        weights(component(T.C[end],i), z[i], wo)
+                       compute_weights(component(T.C[end],i), z[i], wo)
                 end
                 end
         else
                 if Nx==1
                 wd = view(wdiag,:)
                 w∂ = view(w∂k,:)
-                weights(component(T.C[1],1), z[1], wd, w∂)
+               compute_weights(component(T.C[1],1), z[1], wd, w∂)
                 else
                         # Fill wdiag and w∂k
                         @inbounds for i=1:Nx
                                 wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3))
                                 w∂ = view(w∂k, (i-1)*(p+2)+1:i*(p+2))
-                                weights(component(T.C[i],i), z[i], wd, w∂)
+                               compute_weights(component(T.C[i],i), z[i], wd, w∂)
                         end
                         # Fill woff
                         @inbounds for i=1:Nx-1
                                 wo = view(woff, (i-1)*(p+1)+1:i*(p+1))
-                                weights(component(T.C[end],i), z[i], wo)
+                               compute_weights(component(T.C[end],i), z[i], wo)
                         end
                 end
         end
 end
 
 
-function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2})
+function compute_weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2}, wdiag::Array{Float64,2}, w∂k::Array{Float64,2})
         NxX, Ne = size(X)
         @get T (Nx, p)
 
@@ -232,7 +232,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                 @inbounds for l=1:Ne
                         wd = view(wdiag,:,l)
                         w∂ = view(w∂k,1:1,l)
-                        weights(utmp, X[1,l], wd, w∂)
+                       compute_weights(utmp, X[1,l], wd, w∂)
                 end
                 else
                 # Fill wdiag and w∂k
@@ -241,7 +241,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                         for l=1:Ne
                         wd = view(wdiag, (i-1)*2+1:i*2, l)
                         w∂ = view(w∂k,i:i,l)
-                        weights(utmp, X[i,l], wd, w∂)
+                       compute_weights(utmp, X[i,l], wd, w∂)
                         end
                 end
                 # Fill woff
@@ -249,7 +249,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                         utmp = component(T.C[end],i)
                         for l=1:Ne
                         wo = view(woff,i:i,l)
-                        weights(utmp, X[i,l], wo)
+                       compute_weights(utmp, X[i,l], wo)
                         end
                 end
                 end
@@ -259,7 +259,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                 @inbounds for l=1:Ne
                         wd = view(wdiag,:,l)
                         w∂ = view(w∂k,:,l)
-                        weights(utmp, X[1,l], wd, w∂)
+                       compute_weights(utmp, X[1,l], wd, w∂)
                 end
                 else
                         # Fill wdiag and w∂k
@@ -268,7 +268,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                                 for l=1:Ne
                                 wd = view(wdiag, (i-1)*(p+3)+1:i*(p+3), l)
                                 w∂ = view(w∂k, (i-1)*(p+2)+1:i*(p+2), l)
-                                weights(utmp, X[i,l], wd, w∂)
+                               compute_weights(utmp, X[i,l], wd, w∂)
                                 end
                         end
                         # Fill woff
@@ -276,7 +276,7 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
                                 utmp = component(T.C[end],i)
                                 for l=1:Ne
                                 wo = view(woff, (i-1)*(p+1)+1:i*(p+1),l)
-                                weights(utmp, X[i,l], wo)
+                               compute_weights(utmp, X[i,l], wo)
                                 end
                         end
                 end
@@ -284,13 +284,13 @@ function weights(T::RadialMap, X::AbstractMatrix{Float64}, woff::Array{Float64,2
 end
 
 
-function weights(T::RadialMap, X, W::Weights)
+function compute_weights(T::RadialMap, X, W::Weights)
         Nx, Ne = size(X)
         @assert T.p == W.p "Error value of p, can't return weights"
         @assert T.Nx == W.Nx "Error value of Nx, can't return weights"
         @assert T.Nx == Nx "Error value of Nx, can't return weights"
 
-        return weights(T, X, W.woff, W.wdiag, W.w∂k)
+        return compute_weights(T, X, W.woff, W.wdiag, W.w∂k)
 end
 
 # Extract the weights on
@@ -375,7 +375,7 @@ end
 
 # This function can be called directly into optimize to get the right weights
 
-function weights(C::SparseRadialMapComponent, z::Array{Float64,1})
+function compute_weights(C::SparseRadialMapComponent, z::Array{Float64,1})
         @get C (Nx, p)
         # Determine the number of coefficients for each ( ncoeff)
         noff, ndiag, n∂k = ncoeff(Nx, p)
@@ -393,12 +393,12 @@ function weights(C::SparseRadialMapComponent, z::Array{Float64,1})
                 elseif pidx == 0
                         # Linear function
                         wo = view(woff,count+1)
-                        weights(component(C,i), z[i], wo)
+                       compute_weights(component(C,i), z[i], wo)
                         count +=1
                 else
                         # Linear term + pidx rbf functions
                         wo = view(woff,count+1:count+pidx+1)
-                        weights(component(C,i), z[i], wo)
+                       compute_weights(component(C,i), z[i], wo)
                         count += deepcopy(pidx) + 1
                 end
         end
@@ -412,12 +412,12 @@ function weights(C::SparseRadialMapComponent, z::Array{Float64,1})
                 # Constant plus (p[k]+2) ψ functions for p[k]>0
                 wd = view(wdiag,:)
                 w∂ = view(w∂k,:)
-                weights(component(C,Nx), z[Nx], wd, w∂,  withconstant = false)
+               compute_weights(component(C,Nx), z[Nx], wd, w∂,  withconstant = false)
         end
         return woff, wdiag, w∂k
 end
 
-function weights(C::SparseRadialMapComponent, X::AbstractMatrix{Float64})
+function compute_weights(C::SparseRadialMapComponent, X::AbstractMatrix{Float64})
         NxX, Ne = size(X)
         @get C (Nx, p)
         @assert NxX == Nx
@@ -450,14 +450,14 @@ function weights(C::SparseRadialMapComponent, X::AbstractMatrix{Float64})
                         # Linear function
                         for l=1:Ne
                         wo = view(woff,count+1,l:l)
-                        weights(component(C,i), X[i,l], wo)
+                       compute_weights(component(C,i), X[i,l], wo)
                         end
                         count +=1
                 else
                         for l=1:Ne
                         # Linear term + pidx rbf functions
                         wo = view(woff,count+1:count+pidx+1,l:l)
-                        weights(component(C,i), X[i,l], wo)
+                       compute_weights(component(C,i), X[i,l], wo)
                         end
                         count += deepcopy(pidx) + 1
                 end
@@ -473,7 +473,7 @@ function weights(C::SparseRadialMapComponent, X::AbstractMatrix{Float64})
                 # Constant plus (p[Nx]+2) ψ functions for p[Nx]>0
                 wd = view(wdiag,:,l:l)
                 w∂ = view(w∂k,:,l:l)
-                weights(component(C,Nx), X[Nx,l], wd, w∂, withconstant = false)
+               compute_weights(component(C,Nx), X[Nx,l], wd, w∂, withconstant = false)
                 end
         end
         return woff, wdiag, w∂k

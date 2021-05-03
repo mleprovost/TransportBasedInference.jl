@@ -4,14 +4,14 @@
 
     um1 = ui(-1)
     woff = Float64[]
-    weights(um1, 2.0, woff)
+    compute_weights(um1, 2.0, woff)
     @test woff ==Float64[]
 
     u4 = ui(0, zeros(0), ones(0), [0.0])
 
     woff = zeros(1)
 
-    weights(u4, 2.0, woff)
+    compute_weights(u4, 2.0, woff)
     @test woff[1]==2.0
 
 
@@ -19,7 +19,7 @@
 
     woff = zeros(3)
 
-    weights(u4, x, woff)
+    compute_weights(u4, x, woff)
     @test isapprox(woff[1], x, atol = 1e-10)
     @test isapprox(woff[2], rbf(0.0, 1.0)(x), atol = 1e-10)
     @test isapprox(woff[3], rbf(0.0, 1.0)(x), atol = 1e-10)
@@ -32,7 +32,7 @@
     u4.σi[2] = 2.0
 
 
-    weights(u4, x, woff)
+    compute_weights(u4, x, woff)
     @test isapprox(woff[1], x, atol = 1e-10)
     @test isapprox(woff[2], rbf(-5.0, 5.0)(x), atol = 1e-10)
     @test isapprox(woff[3], rbf(2.0, 2.0)(x), atol = 1e-10)
@@ -44,14 +44,14 @@ end
     um1 = uk(-1)
     wdiag = Float64[]
     w∂k = Float64[]
-    weights(um1, 2.0, wdiag, w∂k)
+    compute_weights(um1, 2.0, wdiag, w∂k)
     @test wdiag ==Float64[]
     @test w∂k ==Float64[]
 
     u1 = uk(0)
     wdiag = zeros(2)
     w∂k = zeros(1)
-    weights(u1, 2.0, wdiag, w∂k)
+    compute_weights(u1, 2.0, wdiag, w∂k)
     @test wdiag == [1.0; 2.0]
     @test w∂k[1] === 1.0
 
@@ -59,7 +59,7 @@ end
     wdiag = zeros(2)
     w∂k = zeros(1)
 
-    weights(u4, 2.0, wdiag, w∂k)
+    compute_weights(u4, 2.0, wdiag, w∂k)
 
     @test wdiag == [1.0; 2.0]
     @test w∂k[1] === 1.0
@@ -68,7 +68,7 @@ end
     wdiag = zeros(3+3)
     w∂k = zeros(3+2)
 
-    weights(u4, x, wdiag, w∂k)
+    compute_weights(u4, x, wdiag, w∂k)
     @test size(wdiag,1)== 3+3
     @test size(w∂k,1)== 3+2
     @test norm(wdiag - [1.0;
@@ -92,7 +92,7 @@ end
     u4.ξk .= [-1.0; 2.0; -3.0; 4.0; -5.0]
     u4.σk .= [1.0; 2.0; 3.0; 4.0; 5.0]
 
-    weights(u4, x, wdiag, w∂k)
+    compute_weights(u4, x, wdiag, w∂k)
     @test size(wdiag,1)== 3+3
     @test size(w∂k,1)== 3+2
 
@@ -117,8 +117,8 @@ end
     # w∂k = zeros(1)
     # woff = zeros(0)
 
-    # w, w∂k = weights(TransportMap.component(C.U[1],1), [2.0], w, w∂k)
-    weights(AdaptiveTransportMap.component(M.C[1],1), x, wdiag, w∂k)
+    # w, w∂k = compute_weights(TransportMap.component(C.U[1],1), [2.0], w, w∂k)
+    compute_weights(AdaptiveTransportMap.component(M.C[1],1), x, wdiag, w∂k)
 
     @test size(wdiag,1) == 2
     @test size(w∂k, 1) == 1
@@ -132,7 +132,7 @@ end
 
     woff, wdiag, w∂k = create_weights(M)
 
-    weights(M, [x], woff,  wdiag, w∂k)
+    compute_weights(M, [x], woff,  wdiag, w∂k)
     #
     @test size(woff,1)==0
     @test size(wdiag,1) == 1+3
@@ -148,7 +148,7 @@ end
     woff, wdiag, w∂k = create_weights(M)
 
     #
-    weights(M, y[1:2], woff, wdiag, w∂k)
+    compute_weights(M, y[1:2], woff, wdiag, w∂k)
     #
     @test size(woff, 1) == 1
     @test size(wdiag,1) == 2+2
@@ -164,7 +164,7 @@ end
 
     woff, wdiag, w∂k = create_weights(M)
 
-    weights(M, y, woff, wdiag, w∂k)
+    compute_weights(M, y, woff, wdiag, w∂k)
     #
     @test size(woff,1) == 2*(2+1)
     @test size(wdiag,1) == 3*(2+3)
@@ -196,17 +196,17 @@ end
     woff  = zero(W.woff)
     wdiag = zero(W.wdiag)
     w∂k   = zero(W.w∂k)
-    weights(M, X, woff, wdiag, w∂k)
+    compute_weights(M, X, woff, wdiag, w∂k)
 
-    weights(M, X, W)
+    compute_weights(M, X, W)
 
     @test isapprox(woff, W.woff, atol = 1e-10)
     @test isapprox(wdiag, W.wdiag, atol = 1e-10)
     @test isapprox(w∂k, W.w∂k, atol = 1e-10)
 
     woval, wval, w∂kval = create_weights(M)
-    weights(M, zeros(Nx), woval, wval, w∂kval)
-    weights(M, zeros(Nx,Ne), woff, wdiag, w∂k)
+    compute_weights(M, zeros(Nx), woval, wval, w∂kval)
+    compute_weights(M, zeros(Nx,Ne), woff, wdiag, w∂k)
 
 
     @test woff[:,1] == woval
@@ -227,7 +227,7 @@ end
     @test nd ==0
     @test n∂ ==0
 
-    wo, wd, w∂ = weights(C, [x])
+    wo, wd, w∂ = compute_weights(C, [x])
     @test wo == Float64[]
     @test wd == Float64[]
     @test w∂ == Float64[]
@@ -241,14 +241,14 @@ end
     @test nd ==1
     @test n∂ ==1
 
-    wo, wd, w∂ = weights(C, [x])
+    wo, wd, w∂ = compute_weights(C, [x])
     @test wo == Float64[]
     @test isapprox(wd, [x], atol = 1e-10)
     @test w∂ == [1.0]
 
 
     z = randn(1,5)
-    wo, wd, w∂ = weights(C, z)
+    wo, wd, w∂ = compute_weights(C, z)
     @test wo == Float64[]
     @test isapprox(wd, z, atol = 1e-10)
     @test w∂ == ones(1,5)
@@ -262,14 +262,14 @@ end
     @test nd ==2+2
     @test n∂ ==2+2
 
-    wo, wd, w∂ = weights(C, [x])
+    wo, wd, w∂ = compute_weights(C, [x])
     @test wo == Float64[]
     @test isapprox(wd, [ψ₀(0.0, 1.0)(x); ψj(0.0, 1.0)(x);ψj(0.0, 1.0)(x);ψpp1(0.0, 1.0)(x)], atol = 1e-10)
     @test isapprox(w∂, [ψ₀′(0.0, 1.0)(x); rbf(0.0, 1.0)(x);rbf(0.0, 1.0)(x);ψpp1′(0.0, 1.0)(x)], atol = 1e-10)
 
     z = randn(1,5)
 
-    wo, wd, w∂ = weights(C, z)
+    wo, wd, w∂ = compute_weights(C, z)
     @test wo == Float64[]
 
     for i=1:5
@@ -292,12 +292,12 @@ end
     @test n∂ ==0
 
 
-    wo, wd, w∂ = weights(C, [1.0; 2.0])
+    wo, wd, w∂ = compute_weights(C, [1.0; 2.0])
     @test wo == Float64[]
     @test wd == Float64[]
     @test w∂ == Float64[]
 
-    wo, wd, w∂ = weights(C, randn(2,5))
+    wo, wd, w∂ = compute_weights(C, randn(2,5))
     @test wo == Float64[]
     @test wd == Float64[]
     @test w∂ == Float64[]
@@ -310,13 +310,13 @@ end
     @test nd ==1
     @test n∂ ==1
 
-    wo, wd, w∂ = weights(C, y)
+    wo, wd, w∂ = compute_weights(C, y)
     @test wo == Float64[]
     @test wd == [y[2]]
     @test w∂ == [1.0]
 
     z = randn(2, 5)
-    wo, wd, w∂ = weights(C, deepcopy(z))
+    wo, wd, w∂ = compute_weights(C, deepcopy(z))
     @test wo == Float64[]
     @test isapprox(wd[1,:], z[2,:], atol = 1e-10)
     @test isapprox(w∂[1,:], ones(5), atol = 1e-10)
@@ -329,14 +329,14 @@ end
     @test nd ==3
     @test n∂ ==3
 
-    wo, wd, w∂ = weights(C, y)
+    wo, wd, w∂ = compute_weights(C, y)
     @test wo == Float64[]
     @test isapprox(wd, [ψ₀(0.0, 1.0)(y[2]); ψj(0.0, 1.0)(y[2]);ψpp1(0.0, 1.0)(y[2])], atol = 1e-10)
     @test isapprox(w∂, [ψ₀′(0.0, 1.0)(y[2]); rbf(0.0, 1.0)(y[2]);ψpp1′(0.0, 1.0)(y[2])], atol = 1e-10)
 
     z = randn(2,5)
 
-    wo, wd, w∂ = weights(C, z)
+    wo, wd, w∂ = compute_weights(C, z)
     @test wo == Float64[]
 
     for i=1:5
@@ -354,14 +354,14 @@ end
     @test nd ==3
     @test n∂ ==3
 
-    wo, wd, w∂ = weights(C, y)
+    wo, wd, w∂ = compute_weights(C, y)
     @test isapprox(wo, [y[1]], atol = 1e-10)
     @test isapprox(wd, [ψ₀(0.0, 1.0)(y[2]); ψj(0.0, 1.0)(y[2]);ψpp1(0.0, 1.0)(y[2])], atol = 1e-10)
     @test isapprox(w∂, [ψ₀′(0.0, 1.0)(y[2]); rbf(0.0, 1.0)(y[2]);ψpp1′(0.0, 1.0)(y[2])], atol = 1e-10)
 
     z = randn(2,5)
 
-    wo, wd, w∂ = weights(C, deepcopy(z))
+    wo, wd, w∂ = compute_weights(C, deepcopy(z))
 
 
     for i=1:5
@@ -386,7 +386,7 @@ end
     @test nd ==3
     @test n∂ ==3
 
-    wo, wd, w∂ = weights(C, y)
+    wo, wd, w∂ = compute_weights(C, y)
     @test isapprox(wo, [y[1]; rbf(C.ξ[1][1], C.σ[1][1])(y[1]); rbf(C.ξ[1][2], C.σ[1][2])(y[1])], atol = 1e-10)
     @test isapprox(wd, [ψ₀(C.ξ[2][1], C.σ[2][1])(y[2]); ψj(C.ξ[2][2], C.σ[2][2])(y[2]);
                  ψpp1(C.ξ[2][3], C.σ[2][3])(y[2])], atol = 1e-10)
@@ -396,7 +396,7 @@ end
 
     z = randn(2,5)
 
-    wo, wd, w∂ = weights(C, deepcopy(z))
+    wo, wd, w∂ = compute_weights(C, deepcopy(z))
 
 
     for i=1:5
@@ -420,7 +420,7 @@ end
 
     y = randn(4)
 
-    wo, wd, w∂ = weights(C, deepcopy(y))
+    wo, wd, w∂ = compute_weights(C, deepcopy(y))
 
     @test norm(wo - [y[2]; rbf(0.0,1.0)(y[2]); rbf(0.0,1.0)(y[2]); y[3]])<1e-14
     @test norm(wd - [ψ₀(0.0, 1.0)(y[4]); ψj(0.0, 1.0)(y[4]); ψj(0.0, 1.0)(y[4]);ψpp1(0.0, 1.0)(y[4])])<1e-14
@@ -428,7 +428,7 @@ end
 
     z = randn(4, 5)
 
-    wo, wd, w∂ = weights(C, deepcopy(z))
+    wo, wd, w∂ = compute_weights(C, deepcopy(z))
     for i=1:5
         zi  = z[:,i]
         @test norm(wo[:,i]  - [zi[2]; rbf(0.0,1.0)(zi[2]); rbf(0.0,1.0)(zi[2]); zi[3]])<1e-14
@@ -448,7 +448,7 @@ end
     @test n∂ ==1
 
     y = randn(5)
-    wo, wd, w∂ = weights(C, y)
+    wo, wd, w∂ = compute_weights(C, y)
 
     @test norm(wo - [y[1]; rbf(0.0,1.0)(y[1]); rbf(0.0,1.0)(y[1]); y[3]])<1e-14
     @test norm(wd - [y[5]])<1e-14
@@ -456,7 +456,7 @@ end
 
     z = randn(5, 10)
 
-    wo, wd, w∂ = weights(C, z)
+    wo, wd, w∂ = compute_weights(C, z)
     for i=1:10
         zi  = z[:,i]
         @test norm(wo[:,i]  - [zi[1]; rbf(0.0,1.0)(zi[1]); rbf(0.0,1.0)(zi[1]); zi[3]])<1e-14

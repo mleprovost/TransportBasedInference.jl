@@ -19,7 +19,7 @@
     center_std(S, X);
 
     W = create_weights(S, X)
-    weights(S, X, W)
+   compute_weights(S, X, W)
 
     ψ_off, ψ_mono, dψ_mono = rearrange(W,Nx);
     μψ = deepcopy(mean(ψ_mono, dims=2))
@@ -105,7 +105,7 @@ end
     center_std(S, X);
 
     W = create_weights(S, X)
-    weights(S, X, W)
+   compute_weights(S, X, W)
 
     ψ_off, ψ_mono, dψ_mono = rearrange(W, Nx);
     μψ = deepcopy(mean(ψ_mono, dims=2))

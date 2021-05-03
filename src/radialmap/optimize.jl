@@ -39,7 +39,6 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 		BLAS.gemm!('N', 'T', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
 		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
     else
-
         #Normalize off-diagonal covariates
         μψ_off = deepcopy(mean(ψ_off, dims = 2))
         σψ_off = deepcopy(std(ψ_off, dims = 2, corrected = false))
@@ -57,20 +56,9 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 		ψ_λ .= Matrix(√λ*I, no, no)
 
 		# ψ_aug .= vcat(ψ_off', Matrix(√λ*I, no, no))
-
-		# F = zeros(Ne+no,no)
-		# F .= vcat(ψ_off', Matrix(√λ*I, no, no))
 		# The slowest line of the code
 		# @time qr!(F)
-		# @show F
 	    F = qr(ψ_aug)
-		# ψ_aug = 0.0
-		# @show size(F.R)
-
-	    # @time Q1 .= Matrix(F.Q)[1:Ne,1:no]
-		# @show size(F.Q)
-		# @time Q1 = view(F.Q, 1:Ne, 1:no)
-		# @time Q1 .= (F.Q*Matrix(I,Ne+no,Ne+no))[1:Ne, 1:no]
 		# Speed-up proposed in https://discourse.julialang.org/t/extract-submatrix-from-qr-factor-is-slow-julia-1-4/36582/4
 	    # @time Asqrt .= ψ_mono - (ψ_mono*Q1)*Q1'
 		Asqrt .= ψ_mono - fast_mul(ψ_mono, F.Q, Ne, no)
@@ -194,7 +182,7 @@ function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	W = create_weights(S, X)
 
 	# Compute weights
-	weights(S, X, W)
+	compute_weights(S, X, W)
 
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
@@ -254,7 +242,7 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
 
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = weights(C, X)
+    ψ_off, ψ_mono, dψ_mono = compute_weights(C, X)
 
 	# @show ψ_off
 	# @show ψ_mono[1,:]
@@ -312,7 +300,6 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		# F .= vcat(ψ_off', Matrix(√λ*I, no, no))
 		# The slowest line of the code
 		# @time qr!(F)
-		# @show F
 	    F = qr(ψ_aug)
 		# ψ_aug = 0.0
 		# @show size(F.R)

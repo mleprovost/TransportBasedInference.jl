@@ -6,6 +6,7 @@
 
     @test C.Nx == 1
     @test C.p == [-1]
+    @test C.activedim == Int64[]
     @test size(C.ξ, 1)==1
     @test size(C.ξ[1], 1)==0
 
@@ -25,6 +26,7 @@ end
 
     @test C.Nx == 1
     @test C.p == [0]
+    @test C.activedim == Int64[1]
     @test size(C.ξ, 1)==1
     @test size(C.ξ[1], 1)==0
 
@@ -45,6 +47,7 @@ end
 
     @test C.Nx == 1
     @test C.p == [1]
+    @test C.activedim == Int64[1]
 
     @test size(C.ξ,1) ==1
     @test size(C.ξ[1],1) ==1+2
@@ -76,6 +79,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [-1; -1 ; -1]
+    @test C.activedim == Int64[]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -106,6 +110,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [0 ; 0 ; 0]
+    @test C.activedim == collect(1:3)
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -152,6 +157,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [2;2;2]
+    @test C.activedim == collect(1:3)
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -213,6 +219,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [-1; 0; -1]
+    @test C.activedim == Int64[2]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -261,6 +268,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [1; 0; -1]
+    @test C.activedim == [1; 2]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -311,6 +319,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [-1; 0; 0]
+    @test C.activedim == [2; 3]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -361,6 +370,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [2; -1; 1]
+    @test C.activedim == [1; 3]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -411,6 +421,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [2; -1; 2]
+    @test C.activedim == [1; 3]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3
@@ -463,6 +474,7 @@ end
 
     @test C.Nx == 3
     @test C.p == [2; 2; -1]
+    @test C.activedim == [1; 2]
 
     @test size(C.ξ,1)==3
     @test size(C.σ,1)==3

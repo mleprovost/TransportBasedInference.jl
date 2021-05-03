@@ -127,11 +127,11 @@ function evaluate(C::RadialMapComponent, z::Array{T,1}) where {T<:Real}
                 wd = zeros(p+3)
                 #Off diagonal component
                 for i=1:Nx-1
-                        weights(component(C, i), z[i], wo)
+                        compute_weights(component(C, i), z[i], wo)
                         basis[(i-1)*(p+1)+1:i*(p+1)] .= deepcopy(wo)
                 end
                 # Diagonal component
-                weights(component(C, Nx), z[Nx], wd)
+                compute_weights(component(C, Nx), z[Nx], wd)
                 basis[(Nx-1)*(p+1)+1:Nx*(p+1)+2] .= deepcopy(wd)
         end
         return basis

@@ -125,6 +125,7 @@ include("radialmap/cost.jl")
 include("radialmap/solver.jl")
 include("radialmap/optimize.jl")
 include("radialmap/iterativeoptimize.jl")
+include("radialmap/greedyfit.jl")
 include("radialmap/inverse.jl")
 include("radialmap/stochmapfilter.jl")
 

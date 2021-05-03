@@ -21,7 +21,7 @@
    S = RadialMap(Nx, p; γ = γ);
    W = create_weights(S, X)
    center_std(S, X);
-   weights(S, X, W)
+  compute_weights(S, X, W)
 
    # With λ = δ = 0.0
 
@@ -55,7 +55,7 @@ end
 
     center_std(S, X)
     W = create_weights(S, X)
-    weights(S, X, W)
+   compute_weights(S, X, W)
 
     # With λ = δ = 0.0
 
@@ -86,7 +86,7 @@ end
    S = RadialMap(Nx, p; γ = γ)
    center_std(S, X)
    W = create_weights(S, X)
-   weights(S, X, W)
+  compute_weights(S, X, W)
 
    # With λ = δ = 0.0
    λ = 0.0
@@ -128,7 +128,7 @@ end
    S = RadialMap(Nx, p; γ = γ)
    W = create_weights(S, X)
    center_std(S, X)
-   weights(S, X, W)
+  compute_weights(S, X, W)
 
    # With λ = δ = 0.0
    λ = 0.0
@@ -166,7 +166,7 @@ end
     center_std(S, X);
 
     W = create_weights(S, X)
-    weights(S, X, W)
+   compute_weights(S, X, W)
     λ = 0.0
     δ = 0.0
 
@@ -375,7 +375,7 @@ end
      center_std(S, X);
 
      W = create_weights(S, X)
-     weights(S, X, W)
+    compute_weights(S, X, W)
 
 
      # With λ = δ = 0.0
@@ -417,7 +417,7 @@ end
 
      center_std(S, X);
      W = create_weights(S, X)
-     weights(S, X, W)
+    compute_weights(S, X, W)
 
 
      # With λ = δ = 0.0
