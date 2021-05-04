@@ -20,7 +20,7 @@
 
    S = RadialMap(Nx, p; γ = γ);
    W = create_weights(S, X)
-   center_std(S, X);
+   center_std!(S, X);
   compute_weights(S, X, W)
 
    # With λ = δ = 0.0
@@ -53,7 +53,7 @@ end
 
     @time S = RadialMap(Nx, p; γ = γ)
 
-    center_std(S, X)
+    center_std!(S, X)
     W = create_weights(S, X)
    compute_weights(S, X, W)
 
@@ -84,7 +84,7 @@ end
 
    X = Matrix([0.1733    0.2760    1.0093; 0.6163    0.4598  0.0510;0.8639   -0.2175   -0.4404;-1.4169    0.7961   -0.8485;0.2000   -1.5180   -0.2404;0.1958   -1.0749    0.6029;-0.1511   -3.0722   -1.5163;0.8928    0.5214   -0.0683;-0.3642   -0.9910    0.7824;-0.8262   -0.2531   -1.4207]')
    S = RadialMap(Nx, p; γ = γ)
-   center_std(S, X)
+   center_std!(S, X)
    W = create_weights(S, X)
   compute_weights(S, X, W)
 
@@ -127,7 +127,7 @@ end
 
    S = RadialMap(Nx, p; γ = γ)
    W = create_weights(S, X)
-   center_std(S, X)
+   center_std!(S, X)
   compute_weights(S, X, W)
 
    # With λ = δ = 0.0
@@ -163,7 +163,7 @@ end
 
     @time S = RadialMap(Nx, p; γ = γ)
 
-    center_std(S, X);
+    center_std!(S, X);
 
     W = create_weights(S, X)
    compute_weights(S, X, W)
@@ -372,7 +372,7 @@ end
 
      S = RadialMap(Nx, p; γ = γ)
 
-     center_std(S, X);
+     center_std!(S, X);
 
      W = create_weights(S, X)
     compute_weights(S, X, W)
@@ -415,7 +415,7 @@ end
 
      @time S = RadialMap(Nx, p; γ = γ)
 
-     center_std(S, X);
+     center_std!(S, X);
      W = create_weights(S, X)
     compute_weights(S, X, W)
 
@@ -485,7 +485,7 @@ end
       -0.614918061442867],1,Ne)
 
       S = SparseRadialMap(Nx, [0]; γ = γ)
-      center_std(S, X)
+      center_std!(S, X)
 
       xopt = optimize(S.C[1], X, S.λ, S.δ)
 
@@ -511,7 +511,7 @@ end
       -0.614918061442867],1,Ne)
 
       S = SparseRadialMap(Nx, [2]; γ = γ)
-      center_std(S, X)
+      center_std!(S, X)
 
       xopt = optimize(S.C[1], X, S.λ, S.δ)
 
@@ -538,7 +538,7 @@ end
       -0.684323467801375   0.567990940582801]')
 
       S = SparseRadialMap(Nx, [[-1], [0; 0]])
-      center_std(S, X)
+      center_std!(S, X)
 
       xopt = optimize(S.C[2], X, S.λ, S.δ)
 
@@ -564,7 +564,7 @@ end
           -0.684323467801375   0.567990940582801]')
 
     S = SparseRadialMap(Nx, [[-1], [0; 1]]; γ = γ)
-    center_std(S, X)
+    center_std!(S, X)
 
     xopt = optimize(S.C[2], X, S.λ, S.δ)
 
@@ -595,7 +595,7 @@ X = Matrix([  -0.737609918489704   0.413557038884469
   -0.684323467801375   0.567990940582801]')
 
   S = SparseRadialMap(Nx, [[-1], [0; 2]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[2], X, S.λ, S.δ)
 
@@ -626,7 +626,7 @@ X = Matrix([  -0.737609918489704   0.413557038884469
   -0.684323467801375   0.567990940582801]')
 
   S = SparseRadialMap(Nx, [[-1], [2; 2]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[2], X, S.λ, S.δ)
 
@@ -662,7 +662,7 @@ X = Matrix([  -0.737609918489704   0.413557038884469
   -0.684323467801375   0.567990940582801]')
 
   S = SparseRadialMap(Nx, [[-1], [2; 0]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[2], X, S.λ, S.δ)
 
@@ -692,7 +692,7 @@ X = Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
   S = SparseRadialMap(Nx, [[-1], [-1; -1], [0; 0; 0]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[3], X, S.λ, S.δ)
 
@@ -720,7 +720,7 @@ X = Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
   S = SparseRadialMap(Nx, [[-1], [-1; -1], [0; -1; 0]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[3], X, S.λ, S.δ)
 
@@ -748,7 +748,7 @@ X = Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
   S = SparseRadialMap(Nx, [[-1], [-1; -1], [2; -1; 0]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[3], X, S.λ, S.δ)
 
@@ -780,7 +780,7 @@ X = Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
   S = SparseRadialMap(Nx, [[-1], [-1; -1], [2; -1; 2]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[3], X, S.λ, S.δ)
 
@@ -816,7 +816,7 @@ X = Matrix([  0.375413787969851  -0.991365932946799   2.278410854329425
    0.277688627801369   1.179218444917551   0.729724225819224]')
 
   S = SparseRadialMap(Nx, [[-1], [-1; -1], [-1; -1; 2]]; γ = γ)
-  center_std(S, X)
+  center_std!(S, X)
 
   xopt = optimize(S.C[3], X, S.λ, S.δ)
 

@@ -90,7 +90,7 @@ function (Lhd::LHD)(x::Array{Float64,1}, inplace::Bool; noutput::Int64=3)
 
 		elseif noutput == 2
 			# Compute gradient
-			for i=1:Lhd.Ne
+			@inbounds for i=1:Lhd.Ne
 				Lhd.dψ_dS[i,:] .= Lhd.dψ[i,:]/Lhd.dS[i]
 			end
 

@@ -363,7 +363,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
     end
 
 
-    # Formatting to use with Optim.jl
+    # Formatting for Optim.jl
     if dJ != nothing
         reshape_cacheintegral = reshape(S.cache_integral[Ne+1:end], (Ne, Nψ))
         fill!(dJ, 0.0)

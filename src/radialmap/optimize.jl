@@ -176,7 +176,7 @@ function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	@get S (Nx, p, γ, λ, δ, κ)
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
 	# Compute centers and widths
-	center_std(S, X)
+	center_std!(S, X)
 
 	# Create weights
 	W = create_weights(S, X)
@@ -205,7 +205,7 @@ end
 # 	@get S (Nx, p, γ, λ, δ, κ)
 # 	@assert Nx>1 "This code is not written for Nx=1"
 # 	# Compute centers and widths
-# 	center_std(S, X)
+# 	center_std!(S, X)
 # 	# Create weights
 # 	W = create_weights(S, X)
 # 	# Compute weights
@@ -398,7 +398,7 @@ function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
 
 	# Compute centers and widths
-	center_std(S, X)
+	center_std!(S, X)
 
 	# Optimize coefficients
 	# Skip the identity components of the map
