@@ -13,6 +13,7 @@ using MLDataUtils
 using NLsolve
 using Optim
 using OrdinaryDiffEq
+using OrthoMatchingPursuit
 using PlotUtils
 using Polynomials
 using ProgressMeter

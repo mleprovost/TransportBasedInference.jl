@@ -36,7 +36,7 @@
 
     C = RadialMapComponent(2,2)
     A = randn(8)
-    modify_a(A, C)
+    modify_a!(A, C)
 
     Cprime = ForwardDiff.gradient(x->C(x), y)
 

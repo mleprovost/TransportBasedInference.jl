@@ -10,7 +10,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
 
     best_valid_error = Inf
     patience = 0
-    
+
     train_error = Float64[]
     valid_error = Float64[]
 
@@ -128,7 +128,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     reduced_margin = getreducedmargin(getidx(C))
 
     while  ncoeff(C) <= maxterms-1
-        idx_new, reduced_margin = update_component(C, X, reduced_margin, S)
+        idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
 
         # Update storage with the new feature
         S = update_storage(S, X, idx_new[end:end,:])
@@ -347,7 +347,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     reduced_margin = getreducedmargin(getidx(C))
 
     while ncoeff(C) <= maxterms-1
-        idx_new, reduced_margin = update_component(C, X, reduced_margin, S)
+        idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
 
         # Update storage with the new feature
         S = update_storage(S, X, idx_new[end:end,:])
@@ -428,7 +428,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     return C, train_error
 end
 
-function update_component(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage)
+function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage)
     m = C.m
     Nψ = C.Nψ
     idx_old = getidx(C)
@@ -577,7 +577,7 @@ end
 #     reduced_margin = getreducedmargin(getidx(C))
 #
 #     while ncoeff(C) <= maxterms-1
-#         idx_new, reduced_margin = update_component(C, X, reduced_margin, S)
+#         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
 #
 #         # Update storage with the new feature
 #         S = update_storage(S, X, idx_new[end:end,:])
@@ -585,7 +585,7 @@ end
 #         # Update C
 #         C = HermiteMapComponent(IntegratedFunction(S.f); α = C.α)
 #
-#         idx_new, reduced_margin = update_component(C, X, reduced_margin, S)
+#         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
 #
 #         # Update storage with the new feature
 #         S = update_storage(S, X, idx_new[end:end,:])
@@ -636,4 +636,4 @@ end
 #     return C, train_error
 # end
 
-# function update_component(C::HermiteMapComponent{m, Nψ, Nx}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
+# function update_component!(C::HermiteMapComponent{m, Nψ, Nx}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}

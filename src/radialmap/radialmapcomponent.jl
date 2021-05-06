@@ -73,7 +73,7 @@ end
 
 
 # Transform vector of coefficients to a form RadialMapComponent.a
-function modify_a(A::Array{Float64,1}, C::RadialMapComponent)
+function modify_a!(A::Array{Float64,1}, C::RadialMapComponent)
         @get C (Nx, p)
         if Nx==1
                 C.a[1] .= A

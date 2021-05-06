@@ -113,7 +113,7 @@ end
     # Define updated map
     f_new = ExpandedFunction(C_old.I.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
     C_new = HermiteMapComponent(f_new; α = 1e-6)
-    idx_new, reduced_margin = update_component(C_old, X, reduced_margin0, S)
+    idx_new, reduced_margin = update_component!(C_old, X, reduced_margin0, S)
 
     dJ_new = zeros(3)
     J_new = 0.0
@@ -187,7 +187,7 @@ end
     # Define updated map
     f_new = ExpandedFunction(C_old.I.f.B, idx_new0, vcat(getcoeff(C_old), zeros(size(reduced_margin0,1))))
     C_new = HermiteMapComponent(f_new; α = 1e-6)
-    idx_new, reduced_margin = update_component(C_old, X, reduced_margin0, S)
+    idx_new, reduced_margin = update_component!(C_old, X, reduced_margin0, S)
 
     dJ_new = zeros(10)
     J_new = 0.0
