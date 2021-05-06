@@ -36,7 +36,7 @@ function LHD(A::Array{Float64,2}, dψ::Array{Float64,2}, λ::Float64, δ::Float6
 	Ne = size(dψ, 1)
 
 	# Add L-2 regularization
-	A .+= Matrix((λ/Ne)*I, nb, nb)
+	A += (λ/Ne)*I
 
 	b = zeros(nb)
 	b .= sum(A, dims=2)[:,1]
@@ -59,62 +59,62 @@ function Base.show(io::IO, L::LHD)
 end
 
 # Function to compute the cost, gradient and loss
-function (Lhd::LHD)(x::Array{Float64,1}, inplace::Bool; noutput::Int64=3)
-	Lhd.dS .= Lhd.dψ*x
-	Lhd.dS .+= Lhd.δ*sum(Lhd.dψ, dims = 2)[:,1]
+function (lhd::LHD)(x::Array{Float64,1}, inplace::Bool; noutput::Int64=3)
+	lhd.dS .= lhd.dψ*x
+	lhd.dS .+= lhd.δ*sum(lhd.dψ, dims = 2)[:,1]
 
-	@inbounds for i=1:Lhd.Ne
-		Lhd.logdS[i] = log(Lhd.dS[i])
+	@inbounds for i=1:lhd.Ne
+		lhd.logdS[i] = log(lhd.dS[i])
 	end
 
 	if inplace
 		# Compute gradient
-		@inbounds for i=1:Lhd.Ne
-			Lhd.dψ_dS[i,:] .= Lhd.dψ[i,:]/Lhd.dS[i]
+		@inbounds for i=1:lhd.Ne
+			lhd.dψ_dS[i,:] .= lhd.dψ[i,:]/lhd.dS[i]
 		end
 
 		# Return objective
-		Lhd.J .= 0.5*dot(x, Lhd.A*x) - sum(Lhd.logdS,dims = 1)[1]*(1/Lhd.Ne) + dot(x,Lhd.b)
+		lhd.J .= 0.5*dot(x, lhd.A*x) - sum(lhd.logdS,dims = 1)[1]*(1/lhd.Ne) + dot(x,lhd.b)
 
 		# Return gradient
-		Lhd.G .= Lhd.A*x - sum(Lhd.dψ_dS, dims = 1)[1,:]*(1/Lhd.Ne) + Lhd.b
+		lhd.G .= lhd.A*x - sum(lhd.dψ_dS, dims = 1)[1,:]*(1/lhd.Ne) + lhd.b
 
 		# Return hessian
-		Lhd.H .= Lhd.A + BLAS.gemm('T', 'N', 1/Lhd.Ne, Lhd.dψ_dS, Lhd.dψ_dS)
+		lhd.H .= lhd.A + BLAS.gemm('T', 'N', 1/lhd.Ne, lhd.dψ_dS, lhd.dψ_dS)
 
 	else
 		if noutput == 1
 			# Return objective
-			J = 0.5*dot(x, Lhd.A*x) - sum(Lhd.logdS,dims = 1)[1]*(1/Lhd.Ne) + dot(x,Lhd.b)
+			J = 0.5*dot(x, lhd.A*x) - sum(lhd.logdS,dims = 1)[1]*(1/lhd.Ne) + dot(x,lhd.b)
 		return J
 
 		elseif noutput == 2
 			# Compute gradient
-			@inbounds for i=1:Lhd.Ne
-				Lhd.dψ_dS[i,:] .= Lhd.dψ[i,:]/Lhd.dS[i]
+			@inbounds for i=1:lhd.Ne
+				lhd.dψ_dS[i,:] .= lhd.dψ[i,:]/lhd.dS[i]
 			end
 
 			# Return objective
-			J = 0.5*dot(x, Lhd.A*x) - sum(Lhd.logdS,dims = 1)[1]*(1/Lhd.Ne) + dot(x,Lhd.b)
+			J = 0.5*dot(x, lhd.A*x) - sum(lhd.logdS,dims = 1)[1]*(1/lhd.Ne) + dot(x,lhd.b)
 
 			# Return gradient
-			G = Lhd.A*x - sum(Lhd.dψ_dS, dims = 1)[1,:]*(1/Lhd.Ne) + Lhd.b
+			G = lhd.A*x - sum(lhd.dψ_dS, dims = 1)[1,:]*(1/lhd.Ne) + lhd.b
 			return J,G
 
 		elseif noutput == 3
 			# Compute gradient
-			@inbounds for i=1:Lhd.Ne
-				Lhd.dψ_dS[i,:] .= Lhd.dψ[i,:]/Lhd.dS[i]
+			@inbounds for i=1:lhd.Ne
+				lhd.dψ_dS[i,:] .= lhd.dψ[i,:]/lhd.dS[i]
 			end
 
 			# Return objective
-			J = 0.5*dot(x, Lhd.A*x) - sum(Lhd.logdS,dims = 1)[1]*(1/Lhd.Ne) + dot(x,Lhd.b)
+			J = 0.5*dot(x, lhd.A*x) - sum(lhd.logdS,dims = 1)[1]*(1/lhd.Ne) + dot(x,lhd.b)
 
 			# Return gradient
-			G = Lhd.A*x - sum(Lhd.dψ_dS, dims = 1)[1,:]*(1/Lhd.Ne) + Lhd.b
+			G = lhd.A*x - sum(lhd.dψ_dS, dims = 1)[1,:]*(1/lhd.Ne) + lhd.b
 
 			# Return hessian
-			H = Lhd.A + BLAS.gemm('T', 'N', 1/Lhd.Ne, Lhd.dψ_dS, Lhd.dψ_dS)
+			H = lhd.A + BLAS.gemm('T', 'N', 1/lhd.Ne, lhd.dψ_dS, lhd.dψ_dS)
 
 			return J,G,H
 		end

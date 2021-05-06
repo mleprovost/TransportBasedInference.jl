@@ -76,17 +76,17 @@ for i=1:n
     @assert sign(x0[i])==1.0 "Initial conditions are not feasible"
 end
 
-x = deepcopy(x0)
+x = copy(x0)
 Lhd(x, true)
 @get Lhd (G,H)
 
-Jold = deepcopy(Lhd.J[1])
-J = deepcopy(Lhd.J[1])
+Jold =copy(Lhd.J[1])
+J = copy(Lhd.J[1])
 
 norm_PG0 = norm(projectGradient(x, G))
 tol_G = norm_PG0*rtol_G
 
-norm_PG = deepcopy((norm_PG0))
+norm_PG = copy((norm_PG0))
 rδJ = rtol_J + 1
 it = 0
 
@@ -103,14 +103,14 @@ while (rδJ > rtol_J) && (norm_PG > tol_G) && (it<itmax)
     Idx= Int64[]
     @inbounds for i=1:n
         if x[i] <= ϵk && G[i] >0.0
-        push!(Idx, deepcopy(i))
+        push!(Idx, copy(i))
         end
     end
 
     if isempty(Idx)==false
         z .= zeros(n)
-        for i in Idx
-            @inbounds z[i] = deepcopy(H[i,i])
+        @inbounds for i in Idx
+            z[i] = copy(H[i,i])
         end
         # h .= deepcopy(diag(H))
         # z .= zeros(n)
@@ -122,14 +122,14 @@ while (rδJ > rtol_J) && (norm_PG > tol_G) && (it<itmax)
 
     # Switch according to search direction
     if type =="TrueHessian"
-    p .= deepcopy(G)
+    p .= copy(G)
     # Perform in-place Cholesky decomposition and store H\G into p
     LAPACK.posv!('U', H, p)
     elseif type =="ModifHessian"
         itmax = 100
         # Try if the TrueHessian technique works
         if isposdef(H)
-            p .= deepcopy(G)
+            p .= copy(G)
             # Perform in-place Cholesky decomposition and store H\G into p
             LAPACK.posv!('U', H, p)
         else
@@ -143,19 +143,19 @@ while (rδJ > rtol_J) && (norm_PG > tol_G) && (it<itmax)
             # EH = eigen(Symmetric(H))
             EH = eigen(H)
             for i=1:size(EH.values,1)
-                @inbounds EH.values[i] = deepcopy( 1/(max(1e-8, abs(EH.values[i]))) )
+                @inbounds EH.values[i] = copy( 1/(max(1e-8, abs(EH.values[i]))) )
             end
 
             # p .= deepcopy(G)
             mul!(p, EH.vectors', G)
             p .*= EH.values
-            mul!(p, EH.vectors, deepcopy(p))
+            mul!(p, EH.vectors, copy(p))
 
             # p .= deepcopy(EH.vectors*( EH.values .* (EH.vectors'*G)))
         end
     elseif type =="Gradient"
     itmax = 1000
-    p = deepcopy(G)
+    p = copy(G)
 
     else
     error("Method not implemented yet")
@@ -166,17 +166,17 @@ while (rδJ > rtol_J) && (norm_PG > tol_G) && (it<itmax)
     # @show α
 
     # Update the estimate
-    x .= deepcopy(max.(0.0, x - α*p))
+    x .= copy(max.(0.0, x - α*p))
     # @show x
     Lhd(x, true)
     @get Lhd (G,H)
-    J = deepcopy(Lhd.J[1])
+    J = copy(Lhd.J[1])
 
     # Convergence criteria
     rδJ = abs(J-Jold)/abs(Jold)
     # @show rδJ
-    Jold = deepcopy(J)
-    norm_PG = deepcopy(norm(projectGradient(x,G)))
+    Jold = copy(J)
+    norm_PG = copy(norm(projectGradient(x,G)))
     it +=1
 end
 
