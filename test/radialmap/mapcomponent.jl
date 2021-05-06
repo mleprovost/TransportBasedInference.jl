@@ -243,11 +243,11 @@ end
     @test C.Nx == 1
     @test C.p == 0
 
-    modify_a!([1.0;2.0], C)
+    modify_a!(C, [1.0;2.0])
     @test extract_a(C) == [1.0; 2.0]
 
     C = RadialMapComponent(1, 3)
-    modify_a!([1.0;2.0; 3.0; 4.0; 5.0; 6.0], C)
+    modify_a!(C, [1.0;2.0; 3.0; 4.0; 5.0; 6.0])
     @test extract_a(C) == [1.0;2.0; 3.0; 4.0; 5.0; 6.0]
 
 
@@ -255,7 +255,7 @@ end
     A = collect(1.0:1.0:11.0)
     C = RadialMapComponent(3, 2)
 
-    modify_a!(A, C)
+    modify_a!(C, A)
     @test  extract_a(C) == A
 
     C = RadialMapComponent(3, 2)
@@ -278,7 +278,7 @@ end
 
     @test extract_a(C)==collect(1.0:4.0)
 
-    modify_a!(collect(5.0:8.0), C)
+    modify_a!(C, collect(5.0:8.0))
 
     @test extract_a(C)==collect(5.0:8.0)
 end

@@ -1,4 +1,4 @@
-export RadialMapComponent, component, construct, evaluate, off_diagonal
+export RadialMapComponent, component, construct, evaluate, modify_a!, off_diagonal
 
 #### Structure for the k-th component RadialMapComponent of the lower triangular map U
 
@@ -73,7 +73,7 @@ end
 
 
 # Transform vector of coefficients to a form RadialMapComponent.a
-function modify_a!(A::Array{Float64,1}, C::RadialMapComponent)
+function modify_a!(C::RadialMapComponent, A::Array{Float64,1})
         @get C (Nx, p)
         if Nx==1
                 C.a[1] .= A

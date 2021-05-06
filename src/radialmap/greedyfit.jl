@@ -51,15 +51,19 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
         μψ_off = mean(ψ_off, dims = 2)
         # σψ_off = std(ψ_off, dims = 2, corrected = false)
         σψ_off = norm.(eachslice(ψ_off; dims = 1))
-
+        @show size(σψ_off)
         ψ_offscaled .-= μψ_off
         ψ_offscaled ./= σψ_off
     end
 
     # rhs = -ψ_diag x_diag
     rhs = zeros(Ne)
-    mul!(rhs, ψdiag, -view(x_diag,2:end))
-    rhs .-= x_diag[1]
+    @show size(ψ_diag)
+    @show size(x_diag)
+    ψ_diag'*x_diag[2:n_diag+1]
+    mul!(rhs, ψ_diag', x_diag[2:n_diag+1])
+    rhs .+= x_diag[1]
+    rmul!(rhs, -1.0)
 
     # Create updatable QR factorization
     # For the greedy optimization, we don't use a L2 regularization λ||x||^2,
@@ -88,15 +92,16 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
     budget = min(maxfamily, Nx-1)
     count = 0
     # Compute the norm of the different candidate features
-    sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(p+1)+1:i*(p+1)))^2, candidate)
+    sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(p+1)+1:i*(p+1)))^2, candidates)
     cache = zeros(Ne)
     for i=1:budget
         # Compute the gradient of the different basis (use the unscaled basis evaluations)
-        mul!(rhs, ψdiag, -view(x_diag,2:end))
-        rhs .-= x_diag[1]
+        mul!(rhs, ψ_diag', view(x_diag,2:n_diag+1))
+        rhs .+= x_diag[1]
+        rmul!(rhs, -1.0)
         gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
 
-        _, new_dim = findmax(map(i-> norm(view(dJ, (i-1)*(p+1)+1:i*(p+1)))^2/sqnormfeatures[i], candidate))
+        _, new_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
         push!(offdims, copy(new_dim))
 
         # Update storage in C
@@ -106,8 +111,11 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
         # The centers and widths have already been computed in Cfull
         copy!(C.ξ[new_dim], Cfull.ξ[new_dim])
         copy!(C.σ[new_dim], Cfull.σ[new_dim])
-
+        copy!(C.a[new_dim], zeros(p+1))
+        @show C.ξ
+        @show C.σ
         # Then update qr, then do change of variables
+        # updateqrfactUnblocked!(F, view(ψ_offscaled,:))
         x_opt = optimize(C, X, λ, δ)
         modify_a!(C, x_opt)
 
@@ -119,14 +127,13 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
         # for (j, offdimj) in enumerate(offdims)
         #     x_off[(j-1)*(p+1)+1:i*(p+1)))] .= copy(x_opt[])
         # end
-        filter!(x-> x!= new_dim, candidate)
+        filter!(x-> x!= new_dim, candidates)
     end
 end
 
 function gradient_off!(dJ::AbstractVector{Float64}, cache::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_off, rhs, Ne::Int64)
     fill!(dJ, 0.0)
-    cache .= ψ_off*x_off
-    cache .-= rhs
+    cache .= ψ_off'*x_off - rhs
     dJ .= (1/Ne)*ψ_off*cache
 end
 
@@ -135,8 +142,8 @@ gradient_off!(dJ::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_of
 
 
 function update_component!(C::SparseRadialMapComponent, p::Int64, new_dim::Int64)
-    @assert C.Nx >= newdim
-    if newdim == C.Nx
+    @assert new_dim <= C.Nx
+    if new_dim == C.Nx
         if p == -1
             C.p[new_dim] = p
             C.ξ[new_dim] = Float64[]

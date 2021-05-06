@@ -125,7 +125,7 @@ end
 end
 
 # Transform vector of coefficients to a form SparseRadialMapComponent.a
-function modify_a!(A::Array{Float64,1}, C::SparseRadialMapComponent)
+function modify_a!(C::SparseRadialMapComponent, A::Array{Float64,1})
         @assert size(A,1)==size(extract_a(C),1) "A doesn't match the size of C"
         @get C (Nx, p)
                 count = 0

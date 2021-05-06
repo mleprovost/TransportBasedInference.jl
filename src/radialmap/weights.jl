@@ -1,5 +1,5 @@
 export Weights, create_weights, compute_weights, component,
-        extract_a, modify_a!, rearrange_weights,
+        extract_a, rearrange_weights,
         rearrange, ncoeff
 
 import Base: +, *, size
