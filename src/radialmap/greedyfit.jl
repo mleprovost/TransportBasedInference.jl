@@ -13,16 +13,15 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
     order[end] = p
     C = SparseRadialMapComponent(Nx, order)
 
-    center_std!(C, X; γ = γ)
+    center_std!(C, Xsort; γ = γ)
     x_diag = optimize(C, X, λ, δ)
-    modify_a!(x_diag, C)
-
+    modify_a!(C, x_diag)
 
     # Create a radial map with order p for all the entries
     Cfull = SparseRadialMapComponent(Nx, p)
 
     # Compute centers and widths
-    center_std!(Cfull, Xsort)
+    center_std!(Cfull, Xsort; γ = γ)
 
     ### Evaluate the different basis
 
@@ -51,15 +50,12 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
         μψ_off = mean(ψ_off, dims = 2)
         # σψ_off = std(ψ_off, dims = 2, corrected = false)
         σψ_off = norm.(eachslice(ψ_off; dims = 1))
-        @show size(σψ_off)
         ψ_offscaled .-= μψ_off
         ψ_offscaled ./= σψ_off
     end
 
     # rhs = -ψ_diag x_diag
     rhs = zeros(Ne)
-    @show size(ψ_diag)
-    @show size(x_diag)
     ψ_diag'*x_diag[2:n_diag+1]
     mul!(rhs, ψ_diag', x_diag[2:n_diag+1])
     rhs .+= x_diag[1]
@@ -81,15 +77,15 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
     x_off = zeros((p+1)*(Nx-1))
 
     # maxfmaily is the maximal number of
-    if p == 0
-        maxfamily = ceil(Int64, (sqrt(Ne)-(p+1))/(p+1))
-    elseif p > 0
-        maxfamily = ceil(Int64, (sqrt(Ne)-(p+3))/(p+1))
-    else
-        error("Wrong value for p")
-    end
+    # if p == 0
+    #     maxfamily = ceil(Int64, (sqrt(Ne)-(p+1))/(p+1))
+    # elseif p > 0
+    #     maxfamily = ceil(Int64, (sqrt(Ne)-(p+3))/(p+1))
+    # else
+    #     error("Wrong value for p")
+    # end
 
-    budget = min(maxfamily, Nx-1)
+    budget = min(maxterms, Nx-1)
     count = 0
     # Compute the norm of the different candidate features
     sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(p+1)+1:i*(p+1)))^2, candidates)
@@ -101,8 +97,15 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
         rmul!(rhs, -1.0)
         gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
 
-        _, new_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
+        _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
+        new_dim = candidates[max_dim]
         push!(offdims, copy(new_dim))
+
+        @show candidates
+        @show new_dim
+        @show offdims
+        @show C.activedim
+
 
         # Update storage in C
         update_component!(C, p, new_dim)
@@ -111,9 +114,7 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
         # The centers and widths have already been computed in Cfull
         copy!(C.ξ[new_dim], Cfull.ξ[new_dim])
         copy!(C.σ[new_dim], Cfull.σ[new_dim])
-        copy!(C.a[new_dim], zeros(p+1))
-        @show C.ξ
-        @show C.σ
+
         # Then update qr, then do change of variables
         # updateqrfactUnblocked!(F, view(ψ_offscaled,:))
         x_opt = optimize(C, X, λ, δ)
@@ -121,14 +122,16 @@ function greedyfit(Nx, p::Int64, X, maxterms::Int64, λ, δ, γ)
 
         # Make sure that active dim are in the right order when we affect coefficient.
         # For the split and kfold compute the training and validation losses.
-        copy!(x_diag, x_opt[end-nd+1:end])
+        copy!(x_diag, x_opt[end-n_diag:end])
 
+        for (j, offdimj) in enumerate(offdims)
+            copy!(view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), x_opt[(j-1)*(p+1)+1:j*(p+1)])
+        end
 
-        # for (j, offdimj) in enumerate(offdims)
-        #     x_off[(j-1)*(p+1)+1:i*(p+1)))] .= copy(x_opt[])
-        # end
         filter!(x-> x!= new_dim, candidates)
+        @show candidates
     end
+    return C
 end
 
 function gradient_off!(dJ::AbstractVector{Float64}, cache::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_off, rhs, Ne::Int64)
@@ -181,9 +184,9 @@ function update_component!(C::SparseRadialMapComponent, p::Int64, new_dim::Int64
             C.p[new_dim] = p
             push!(C.activedim, new_dim)
             sort!(C.activedim)
-            C.ξ[new_dim] = zeros(p+1)
-            C.σ[new_dim] = zeros(p+1)
-            C.a[new_dim] = zeros(p+2)
+            C.ξ[new_dim] = zeros(p)
+            C.σ[new_dim] = zeros(p)
+            C.a[new_dim] = zeros(p+1)
         end
     end
 end
