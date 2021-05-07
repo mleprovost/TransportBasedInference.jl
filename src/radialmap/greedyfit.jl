@@ -55,7 +55,6 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
         # rhs = -ψ_diag x_diag
         rhs = zeros(Ne)
-        ψ_diag'*x_diag[2:n_diag+1]
         mul!(rhs, ψ_diag', x_diag[2:n_diag+1])
         rhs .+= x_diag[1]
         rmul!(rhs, -1.0)
@@ -128,7 +127,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
                 tmp_diag .+= δ
             end
             cache .= ψ_diag*tmp_diag
-            
+
             tmp_off .= -F.R\(F.Q'*cache)
 
             # Rescale coefficients

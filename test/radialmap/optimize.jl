@@ -271,7 +271,9 @@ end
     #Assemble reduced QR to solve least square problem
     F = qr(vcat(ψ_off, Matrix(√λ*I, no, no)))
     Q1 = F.Q[1:Ne,1:no]
-    Asqrt = ψ_mono - Q1*(Q1'*ψ_mono)
+    # Asqrt = ψ_mono - Q1*(Q1'*ψ_mono)
+    Asqrt = ψ_mono - fast_mul(ψ_mono, F.Q, Ne, no)
+
     # A = (Asqrt*Asqrt')/Ne
     A = BLAS.gemm('T', 'N', 1/Ne, Asqrt, Asqrt)
 

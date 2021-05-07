@@ -1,9 +1,12 @@
 export fast_mul, optimize, optimize_coeffs, solve_nonlinear
 
 
-# Function to speed-up ψ_mono*Q1'*Q1
-fast_mul(ψbis::Array{Float64,2}, Q, N::Int64, nx::Int64) = ([([ψbis zeros(size(ψbis,1), nx)] * Q)[axes(ψbis,1), 1:nx] zeros(size(ψbis,1), N)] * Q')[axes(ψbis,1), 1:N]
+# Function to speed-up ψ_diag*Q1'*Q1
+# fast_mul(ψbis::Array{Float64,2}, Q, N::Int64, nx::Int64) = ([([ψbis zeros(size(ψbis,1), nx)] * Q)[axes(ψbis,1), 1:nx] zeros(size(ψbis,1), N)] * Q')[axes(ψbis,1), 1:N]
 
+# Function to speed-up Q1*Q1'*ψ_diag
+
+fast_mul(ψ_diag::Array{Float64,2}, Q, N::Int64, n_off::Int64) = (Q*[(Q'*[ψ_diag; zeros(n_off, size(ψ_diag,2))])[1:n_off, axes(ψ_diag,2)]; zeros(N, size(ψ_diag,2))])[1:N, axes(ψ_diag,2)]
 
 
 # Code to identify the coefficients
@@ -13,12 +16,12 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 	Nx = C.Nx
 	@get W (p, Ne)
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = rearrange(W,Nx)
+    ψ_off, ψ_diag, dψ_diag = rearrange(W,Nx)
 
     no = size(ψ_off,2)
-	nd = size(ψ_mono,2)
-    nx = size(ψ_off,2)+size(ψ_mono,2)+1
-    nlog = size(dψ_mono,2)
+	nd = size(ψ_diag,2)
+    nx = size(ψ_off,2)+size(ψ_diag,2)+1
+    nlog = size(dψ_diag,2)
 
 	@assert nd==nlog "Error size of the diag and ∂Nx weights"
 	@assert nx==no+nlog+1 "Error size of the weights"
@@ -27,17 +30,17 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 	A = zeros(nd,nd)
 	x = zeros(nx)
 
-    # Normalize monotone basis functions
-    μψ = copy(mean(ψ_mono, dims=1))[1,:]
-    σψ = copy(std(ψ_mono, dims=1, corrected=false)[1,:])
+    # Normalize diagtone basis functions
+    μψ = copy(mean(ψ_diag, dims=1)[1,:])
+    σψ = copy(std(ψ_diag, dims=1, corrected=false)[1,:])
 
-    ψ_mono .-= μψ'
-    ψ_mono ./= σψ'
-    dψ_mono ./= σψ'
+    ψ_diag .-= μψ'
+    ψ_diag ./= σψ'
+    dψ_diag ./= σψ'
 
     if Nx==1
-		BLAS.gemm!('T', 'N', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
-		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
+		BLAS.gemm!('T', 'N', 1/Ne, ψ_diag, ψ_diag, 1.0, A)
+		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_diag, ψ_diag)
     else
         #Normalize off-diagonal covariates
         μψ_off = copy(mean(ψ_off, dims = 1)[1,:])
@@ -46,7 +49,7 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
         ψ_off ./= σψ_off'
 
 		#Assemble reduced QR to solve least square problem
-		Asqrt = zero(ψ_mono)
+		Asqrt = zero(ψ_diag)
 
 		ψ_aug = zeros(Ne+no,no)
 		ψ_X = view(ψ_aug,1:Ne,1:no)
@@ -56,11 +59,12 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 		@inbounds for i=1:no
 			ψ_aug[Ne+i,i] = √λ
 		end
+
 	    F = qr(ψ_aug)
 		# Speed-up proposed in https://discourse.julialang.org/t/extract-submatrix-from-qr-factor-is-slow-julia-1-4/36582/4
-		Q1 = Matrix(F.Q)[1:Ne,:]
-		Asqrt .= ψ_mono - Q1*Q1'*ψ_mono
-		# Asqrt .= ψ_mono - fast_mul(ψ_mono, F.Q, Ne, no)
+		# Q1 = Matrix(F.Q)[1:Ne,:]
+		# Asqrt .= ψ_diag - Q1*(Q1'*ψ_diag)
+		Asqrt .= ψ_diag - fast_mul(ψ_diag, F.Q, Ne, no)
 
 		BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, A)
 	end
@@ -68,48 +72,46 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
     #Assemble reduced QR to solve least square problem
     #Approximate diagonal component
 	# for linear S_{Nx}^{2} (i.e., order 0 function), use closed
-	# form solution for linear monotone component
+	# form solution for linear diagtone component
 	if p == 0
         @assert size(A)==(1,1) "Quadratic matrix should be a scalar."
-		g_mono = zeros(1)
+		tmp_diag = zeros(1)
 		# This equation is equation (A.9) Couplings for nonlinear ensemble filtering
 		# uNx(z) = c + α z so α = 1/√κ*
-        g_mono[1] = sqrt(1/A[1,1])
+        tmp_diag[1] = sqrt(1/A[1,1])
 
 	# for nonlinear diagonal, use Newton solver for coefficients
 	else
-		g_mono = ones(nd)
+		tmp_diag = ones(nd)
 		# Construct loss function, the convention is flipped inside the solver
-		lhd = LHD(A, dψ_mono, λ, δ)
-		g_mono,_,_,_ = projected_newton(g_mono, lhd, "TrueHessian")
-		g_mono .+= δ
+		lhd = LHD(A, dψ_diag, λ, δ)
+		tmp_diag,_,_,_ = projected_newton(tmp_diag, lhd, "TrueHessian")
+		tmp_diag .+= δ
 	end
 
 	if Nx==1
-		g_mono ./= σψ
-		x[no+1] = copy(-dot(μψ,g_mono))
+		tmp_diag ./= σψ
+		x[no+1] = -dot(μψ,tmp_diag)
 	else
-		g_off = zeros(no)
-		ψ = zeros(Ne+no)
-		view(ψ, 1:Ne) .= ψ_mono*g_mono
-
-		g_off.= F.R\((F.Q'*ψ)[1:no])
-		rmul!(g_off, -1.0)
+		tmp_off = zeros(no)
+		padded_diag = zeros(Ne+no)
+		view(padded_diag,1:Ne) .= ψ_diag*tmp_diag
+		tmp_off.= -F.R\((F.Q'*(padded_diag))[1:no])
 
 		# Rescale coefficients
-		g_mono ./= σψ
+		tmp_diag ./= σψ
 
-		g_off ./= σψ_off
+		tmp_off ./= σψ_off
 		# Compute and store the constant term (expectation of selected terms)
-		x[no+1] = -dot(μψ, g_mono)-dot(μψ_off, g_off)
+		x[no+1] = -dot(μψ, tmp_diag)-dot(μψ_off, tmp_off)
 	end
 
 	# Coefficients of the diagonal except the constant
-	x[no+2:nx] .= copy(g_mono)
+	x[no+2:nx] .= tmp_diag
 
 
 	if Nx>1
-		x[1:no] .= copy(g_off)
+		x[1:no] .= tmp_off
 	end
 	return x
 
@@ -153,12 +155,12 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
 
 	# Compute weights
-    ψ_off, ψ_mono, dψ_mono = compute_weights(C, X)
+    ψ_off, ψ_diag, dψ_diag = compute_weights(C, X)
 
     no = size(ψ_off,2)
-	nd = size(ψ_mono,2)
-    nx = size(ψ_off,2)+size(ψ_mono,2)+1
-    nlog = size(dψ_mono,2)
+	nd = size(ψ_diag,2)
+    nx = size(ψ_off,2)+size(ψ_diag,2)+1
+    nlog = size(dψ_diag,2)
 
 	@assert nd==nlog "Error size of the diag and ∂Nx weights"
 	@assert nx==no+nlog+1 "Error size of the weights"
@@ -167,29 +169,29 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	A = zeros(nd,nd)
 	x = zeros(nx)
 
-    # Normalize monotone basis functions
-	μψ = copy(mean(ψ_mono, dims=1))[1,:]
-    σψ = copy(std(ψ_mono, dims=1, corrected=false))[1,:]
+    # Normalize diagtone basis functions
+	μψ = copy(mean(ψ_diag, dims=1)[1,:])
+    σψ = copy(std(ψ_diag, dims=1, corrected=false)[1,:])
 
-	ψ_mono .-= μψ'
-    ψ_mono ./= σψ'
-    dψ_mono ./= σψ'
+	ψ_diag .-= μψ'
+    ψ_diag ./= σψ'
+    dψ_diag ./= σψ'
 
-	# @show ψ_mono[2,:]
-	# @show dψ_mono[2,:]
+	# @show ψ_diag[2,:]
+	# @show dψ_diag[2,:]
 
     if Nx==1 || no == 0
-		BLAS.gemm!('T', 'N', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
-		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
+		BLAS.gemm!('T', 'N', 1/Ne, ψ_diag, ψ_diag, 1.0, A)
+		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_diag, ψ_diag)
     else
         #Normalize off-diagonal covariates
-        μψ_off = copy(mean(ψ_off, dims = 1))[1,:]
-        σψ_off = copy(std(ψ_off, dims = 1, corrected = false))[1,:]
+        μψ_off = copy(mean(ψ_off, dims = 1)[1,:])
+        σψ_off = copy(std(ψ_off, dims = 1, corrected = false)[1,:])
         ψ_off .-= μψ_off'
         ψ_off ./= σψ_off'
 
 		#Assemble reduced QR to solve least square problem
-		Asqrt = zero(ψ_mono)
+		Asqrt = zero(ψ_diag)
 
 		ψ_aug = zeros(Ne+no,no)
 		ψ_X = view(ψ_aug,1:Ne,1:no)
@@ -200,10 +202,10 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		end
 
 		F = qr(ψ_aug)
-
-		Q1 = Matrix(F.Q)[1:Ne,:]
-		Asqrt .= ψ_mono - Q1*Q1'*ψ_mono
-		# Asqrt .= ψ_mono - fast_mul(ψ_mono, F.Q, Ne, no)
+		# Speed-up proposed in https://discourse.julialang.org/t/extract-submatrix-from-qr-factor-is-slow-julia-1-4/36582/4
+		# Q1 = Matrix(F.Q)[1:Ne,:]
+		# Asqrt .= ψ_diag - Q1*(Q1'*ψ_diag)
+		Asqrt .= ψ_diag - fast_mul(ψ_diag, F.Q, Ne, no)
 
 		BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, A)
 	end
@@ -211,47 +213,45 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
     #Assemble reduced QR to solve least square problem
     #Approximate diagonal component
 	# for linear S_{Nx}^{2} (i.e., order 0 function), use closed
-	# form solution for linear monotone component
+	# form solution for linear diagtone component
 	if p[Nx] == 0
         @assert size(A)==(1,1) "Quadratic matrix should be a scalar."
-		g_mono = zeros(1)
+		tmp_diag = zeros(1)
 		# This equation is equation (A.9) Couplings for nonlinear ensemble filtering
 		# uNx(z) = c + α z so α = 1/√κ*
-        g_mono[1] = sqrt(1/A[1,1])
+        tmp_diag[1] = sqrt(1/A[1,1])
 	# for nonlinear diagonal, use Newton solver for coefficients
 	else
-		g_mono = ones(nd)
+		tmp_diag = ones(nd)
 		# Construct loss function, the convention is flipped inside the solver
-		lhd = LHD(A, dψ_mono, λ, δ)
-		g_mono,_,_,_ = projected_newton(g_mono, lhd, "TrueHessian")
-		g_mono .+= δ
+		lhd = LHD(A, dψ_diag, λ, δ)
+		tmp_diag,_,_,_ = projected_newton(tmp_diag, lhd, "TrueHessian")
+		tmp_diag .+= δ
 	end
 
 	if Nx == 1 || no == 0
-		g_mono ./= σψ
-		x[no+1] = copy(-dot(μψ,g_mono))
+		tmp_diag ./= σψ
+		x[no+1] = -dot(μψ,tmp_diag)
 	else
-		g_off = zeros(no)
-		ψ = zeros(Ne+no)
-		view(ψ, 1:Ne) .= ψ_mono*g_mono
-
-		g_off.= F.R\((F.Q'*ψ)[1:no])
-		rmul!(g_off, -1.0)
+		tmp_off = zeros(no)
+		padded_diag = zeros(Ne+no)
+		view(padded_diag,1:Ne) .= ψ_diag*tmp_diag
+		tmp_off.= -F.R\((F.Q'*(padded_diag))[1:no])
 
 	    # Rescale coefficients
-	    g_mono ./= σψ
+	    tmp_diag ./= σψ
 
-	    g_off ./= σψ_off
+	    tmp_off ./= σψ_off
 	    # Compute and store the constant term (expectation of selected terms)
-		x[no+1] = -dot(μψ, g_mono)-dot(μψ_off, g_off)
+		x[no+1] = -dot(μψ, tmp_diag)-dot(μψ_off, tmp_off)
 	end
 
 	# Coefficients of the diagonal except the constant
-	x[no+2:nx] .= copy(g_mono)
+	x[no+2:nx] .= tmp_diag
 
 
 	if Nx>1 && no != 0
-		x[1:no] .= copy(g_off)
+		x[1:no] .= tmp_off
 	end
 	return x
 

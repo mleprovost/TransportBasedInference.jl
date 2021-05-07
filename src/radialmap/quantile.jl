@@ -15,7 +15,7 @@ function center_std_diag!(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ:
     σ′[1] = ξ′[2]-ξ′[1]
     σ′[end] = ξ′[end]-ξ′[end-1]
     @inbounds for j=2:p+1
-     σ′[j] = 0.5*(ξ′[j+1]-ξ′[j-1])
+        σ′[j] = 0.5*(ξ′[j+1]-ξ′[j-1])
     end
     rmul!(σ′, γ)
 
@@ -32,8 +32,7 @@ function center_std_off!(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::
     elseif p==1 # only one rbf
         qq = zeros(3)
         p_range = [0.25;0.5;0.75]
-        for i=1:Nx-1
-            @inbounds begin
+        @inbounds for i=1:Nx-1
             ξ = view(C.ξ[i],:)
             σ = view(C.σ[i],:)
             tmp = view(X, i, :)
@@ -41,25 +40,21 @@ function center_std_off!(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::
             ξ .= qq[2]
             σ .= (qq[3]-qq[1])*0.5
             rmul!(σ, γ)
-            end
         end
     elseif p==2
         p_range = collect(1.0:p)./(p+1.0)
-        for i=1:Nx-1
-            @inbounds begin
+        @inbounds for i=1:Nx-1
             ξ = view(C.ξ[i],:)
             σ = view(C.σ[i],:)
             tmp = view(X,i,:)
             quantile!(ξ, tmp, p_range; sorted=true, alpha = 0.5, beta = 0.5)
             σ[1:2] .= (ξ[2]-ξ[1])*ones(2)
             rmul!(σ, γ)
-            end
         end
 
     else
         p_range = collect(1.0:p)./(p+1.0)
-        for i=1:Nx-1
-            @inbounds begin
+        @inbounds for i=1:Nx-1
             ξ = view(C.ξ[i],:)
             σ = view(C.σ[i],:)
             tmp = view(X,i,:)
@@ -68,10 +63,9 @@ function center_std_off!(C::RadialMapComponent, X::AbstractMatrix{Float64}, γ::
             σ[1] = (ξ[2]-ξ[1])
             σ[end] = (ξ[end]-ξ[end-1])
             for j=2:p-1
-            @inbounds σ[j] = 0.5*(ξ[j+1]-ξ[j-1])
+                σ[j] = 0.5*(ξ[j+1]-ξ[j-1])
             end
             rmul!(σ, γ)
-            end
         end
     end
 end
@@ -88,11 +82,9 @@ function center_std!(T::RadialMap, X::AbstractMatrix{Float64};start::Int64=1)
     if Nx==1
         center_std_diag!(T.C[1], Xsort, γ)
     else
-        for i=start:Nx
-            @inbounds begin
+        @inbounds for i=start:Nx
             center_std_diag!(T.C[i], Xsort, γ)
             center_std_off!(T.C[i], Xsort, γ)
-            end
         end
     end
     end

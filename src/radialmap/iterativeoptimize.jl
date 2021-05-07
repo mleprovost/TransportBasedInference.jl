@@ -76,7 +76,7 @@ function iterative(C::SparseRadialMapComponent, X, λ, δ)
 
     # Normalize off-diagonal covariates
     σψ_off = std(ψ_off, dims = 1, corrected = false)[1,:]
-    ψ_off ./= σψ_off
+    ψ_off ./= σψ_off'
     # Solve for the off-diagonal coefficients and the constant
     # We can use dψ_mono since it contains only one
     ψ_at = hcat(ψ_off, ones(Ne))
@@ -94,7 +94,7 @@ function iterative(C::SparseRadialMapComponent, X, λ, δ)
     x[nx-1] *= -σψ
     x[nx-1] -= μψ
 
-    x[end] = √(Ne)/norm(ψ_at*(x[1:nx-1] .* vcat(σψ_off, 1.0)) .+ μψ + σψ*ψ_mono[1,:])
+    x[end] = √(Ne)/norm(ψ_at*(x[1:nx-1] .* vcat(σψ_off, 1.0)) .+ μψ + σψ*ψ_mono[:,1])
     x[1:nx-1] .*= x[end]
     return x
 end
