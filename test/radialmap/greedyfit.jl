@@ -40,3 +40,27 @@
         @test isapprox(dJ, dJautodiff, atol = 1e-10)
     end
 end
+
+@testset "Test greedyfit for a fixed number of family of features" begin
+
+    for Nx=1:5
+        Ne = 100
+
+        X = randn(Nx, Ne) .* randn(Nx, Ne)
+
+        λ = 0.0
+        δ = 1e-8
+        γ = 2.0
+
+        for order=0:3
+            for k=0:Nx-1
+                Cgreedy = greedyfit(Nx, order, deepcopy(X), k, λ, δ, γ)
+                C = SparseRadialMapComponent(Nx, Cgreedy.p)
+                center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
+                x_opt = optimize(C, X, λ, δ)
+                modify_a!(C, x_opt)
+                @test norm(Cgreedy.a - C.a)<1e-10
+            end
+        end
+    end
+end

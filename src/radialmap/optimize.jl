@@ -67,8 +67,7 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 		# Asqrt .= ψ_diag - Q1*(Q1'*ψ_diag)
 		Asqrt = zero(ψ_diag)
 		Asqrt .= ψ_diag - fast_mul(ψ_diag, F.Q, Ne, no)
-
-		BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, A)
+		A .= (1/Ne)*Asqrt'*Asqrt
 	end
 
     #Assemble reduced QR to solve least square problem
@@ -208,8 +207,7 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		# Asqrt .= ψ_diag - Q1*(Q1'*ψ_diag)
 		Asqrt = zero(ψ_diag)
 		Asqrt .= ψ_diag - fast_mul(ψ_diag, F.Q, Ne, no)
-
-		BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, A)
+		A .= (1/Ne)*Asqrt'*Asqrt
 	end
 
     #Assemble reduced QR to solve least square problem
@@ -227,6 +225,7 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		tmp_diag = ones(nd)
 		# Construct loss function, the convention is flipped inside the solver
 		lhd = LHD(A, dψ_diag, λ, δ)
+
 		tmp_diag,_,_,_ = projected_newton(tmp_diag, lhd, "TrueHessian")
 		tmp_diag .+= δ
 	end
@@ -239,7 +238,6 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		padded_diag = zeros(Ne+no)
 		view(padded_diag,1:Ne) .= ψ_diag*tmp_diag
 		tmp_off.= -F.R\((F.Q'*(padded_diag))[1:no])
-
 	    # Rescale coefficients
 	    tmp_diag ./= σψ
 

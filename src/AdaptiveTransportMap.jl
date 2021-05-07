@@ -24,6 +24,7 @@ using SpecialFunctions
 using Statistics
 using TensorOperations
 using ThreadPools
+using Permutations
 
 include("tools/get.jl")
 include("tools/parallel.jl")

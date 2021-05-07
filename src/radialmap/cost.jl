@@ -81,7 +81,6 @@ function (lhd::LHD)(x::Array{Float64,1}, inplace::Bool; noutput::Int64=3)
 
 		# Return hessian
 		lhd.H .= lhd.A + BLAS.gemm('T', 'N', 1/lhd.Ne, lhd.dψ_dS, lhd.dψ_dS)
-
 	else
 		if noutput == 1
 			# Return objective

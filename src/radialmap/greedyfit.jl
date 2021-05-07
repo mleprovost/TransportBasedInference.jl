@@ -17,7 +17,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
     x_diag = optimize(C, X, λ, δ)
     modify_a!(C, x_diag)
 
-    if Nx>1 || maxfamilies>0 
+    if Nx>1 || maxfamilies>0
 
         # Create a radial map with order p for all the entries
         Cfull = SparseRadialMapComponent(Nx, p)
@@ -34,11 +34,10 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
 
         Asqrt = zero(ψ_diag)
-        lhd = LHD(zeros(n_diag,n_diag), dψ_diag, λ, δ)
         # Normalize diagtone basis functions
         μψ = copy(mean(ψ_diag, dims=1)[1,:])
-        # σψ = std(ψ_diag, dims=2, corrected=false)[:,1]
-        σψ = copy(norm.(eachcol(ψ_diag)))
+        σψ = copy(std(ψ_diag, dims = 1, corrected = false)[1,:])
+        # σψ = copy(norm.(eachcol(ψ_diag)))
         ψ_diagscaled = copy(ψ_diag)
         dψ_diagscaled = copy(dψ_diag)
 
@@ -46,10 +45,15 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         ψ_diagscaled ./= σψ'
         dψ_diagscaled ./= σψ'
 
+        lhd = LHD(zeros(n_diag,n_diag), dψ_diagscaled, λ, δ)
+
+
         ψ_offscaled = copy(ψ_off)
         μψ_off = copy(mean(ψ_off, dims = 1)[1,:])
-        # σψ_off = std(ψ_off, dims = 2, corrected = false)
-        σψ_off = copy(norm.(eachcol(ψ_off)))
+        # σψ_off = copy(std(ψ_off, dims = 2, corrected = false)
+        # σψ_off = copy(norm.(eachcol(ψ_off)))
+        σψ_off = copy(std(ψ_off, dims = 1, corrected = false)[1,:])
+
         ψ_offscaled .-= μψ_off'
         ψ_offscaled ./= σψ_off'
 
@@ -108,32 +112,33 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
             else
                 F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(p+1)+1:new_dim*(p+1)))
             end
-
             Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (p+1)*size(offdims, 1))
-            BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, lhd.A)
+            lhd.A .= (1/Ne)*Asqrt'*Asqrt
 
             if C.p[Nx] == 0
                 @assert size(lhd.A)==(1,1) "Quadratic matrix should be a scalar."
+                tmp_diag = zeros(1)
                 # This equation is equation (A.9) Couplings for nonlinear ensemble filtering
                 # uNx(z) = c + α z so α = 1/√κ*
-                x_diag[2] = sqrt(1/lhd.A[1,1])
+                tmp_diag[1] = sqrt(1/lhd.A[1,1])
             else
                 # Update A and b of the loss function lhd
                 # Add L-2 regularization
                 fill!(x_diag, 1.0)
+
+                tmp_diag = ones(n_diag)
                 @inbounds for i=1:n_diag
                     lhd.A[i,i] += (λ/Ne)
                 end
                 # Update b coefficient
                 lhd.b .= δ*sum(lhd.A, dims=2)[:,1]
 
-                tmp_diag,_,_,_ = projected_newton(x_diag[2:end], lhd, "TrueHessian")
+                tmp_diag,_,_,_ = projected_newton(tmp_diag, lhd, "TrueHessian")
                 tmp_diag .+= δ
             end
 
-            cache .= ψ_diag*tmp_diag
+            cache .= ψ_diagscaled*tmp_diag
             tmp_off .= -F.R\((F.Q'*cache)[1:(p+1)*size(offdims, 1)])
-
             # Rescale coefficients
             for j=1:n_diag
                 x_diag[j+1] = tmp_diag[j]/σψ[j]
@@ -149,15 +154,19 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
             # Make sure that active dim are in the right order when we affect coefficient.
             # For the split and kfold compute the training and validation losses.
             fill!(x_offsparse, 0.0)
+            # Compute the inverse of the ordering permutation
             perm = sortperm(offdims)
 
             for (j, offdimj) in enumerate(offdims)
                 tmp_offj = tmp_off[(j-1)*(p+1)+1:j*(p+1)]
                 x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), tmp_offj)
                 view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)) .= tmp_offj
-                view(x_offsparse, (perm[j]-1)*(p+1)+1:perm[j]*(p+1)) .= tmp_offj
             end
 
+            for (j, offdimj) in enumerate(offdims)
+                tmp_offj = tmp_off[(perm[j]-1)*(p+1)+1:perm[j]*(p+1)]
+                view(x_offsparse, (j-1)*(p+1)+1:j*(p+1)) .= tmp_offj
+            end
             modify_a!(C, vcat(x_offsparse, x_diag))
             filter!(x-> x!= new_dim, candidates)
         end
