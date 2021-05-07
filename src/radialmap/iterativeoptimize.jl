@@ -59,7 +59,7 @@ function iterative(C::SparseRadialMapComponent, X, λ, δ)
 
     # no = size(ψ_off,1)
     # nd = size(ψ_mono,1)
-    nx = size(ψ_off,1)+size(ψ_mono,1)+1
+    nx = size(ψ_off,2)+size(ψ_mono,2)+1
     # nlog = size(dψ_mono,1)
 
     # @assert nd==nlog "Error size of the diag and ∂k weights"
@@ -69,22 +69,22 @@ function iterative(C::SparseRadialMapComponent, X, λ, δ)
     x = zeros(nx)
 
     # Normalize monotone basis functions
-    μψ = mean(ψ_mono, dims=2)[1,1]
-    σψ = std(ψ_mono, dims=2, corrected=false)[1,1]
+    μψ = mean(ψ_mono, dims=1)[1,1]
+    σψ = std(ψ_mono, dims=1, corrected=false)[1,1]
     ψ_mono .-= μψ
     ψ_mono ./= σψ
 
     # Normalize off-diagonal covariates
-    σψ_off = std(ψ_off, dims = 2, corrected = false)[:,1]
+    σψ_off = std(ψ_off, dims = 1, corrected = false)[1,:]
     ψ_off ./= σψ_off
     # Solve for the off-diagonal coefficients and the constant
     # We can use dψ_mono since it contains only one
-    ψ_at = hcat(ψ_off', ones(Ne))
+    ψ_at = hcat(ψ_off, ones(Ne))
 
     # Solve least-square problem
     # x[1:nx-1] = ψ_a' \ view(ψ_mono,1,:)
     x0 = view(x,1:nx-1)
-    lsmr!(x0, ψ_at, view(ψ_mono,1,:), λ = λ, atol = 1e-9, btol = 1e-9)
+    lsmr!(x0, ψ_at, view(ψ_mono,:,1), λ = λ, atol = 1e-9, btol = 1e-9)
     # lsmr!(x0, S, view(ψ_mono,1,:), λ = λ)
 
     @inbounds for i=1:nx-2

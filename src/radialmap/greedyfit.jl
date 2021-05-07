@@ -42,16 +42,16 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         ψ_diagscaled = copy(ψ_diag)
         dψ_diagscaled = copy(dψ_diag)
 
-        ψ_diagscaled .-= μψ
-        ψ_diagscaled ./= σψ
-        dψ_diagscaled ./= σψ
+        ψ_diagscaled .-= μψ'
+        ψ_diagscaled ./= σψ'
+        dψ_diagscaled ./= σψ'
 
         ψ_offscaled = copy(ψ_off)
         μψ_off = mean(ψ_off, dims = 1)[1,:]
         # σψ_off = std(ψ_off, dims = 2, corrected = false)
         σψ_off = norm.(eachslice(ψ_off; dims = 1))[1,:]
-        ψ_offscaled .-= μψ_off
-        ψ_offscaled ./= σψ_off
+        ψ_offscaled .-= μψ_off'
+        ψ_offscaled ./= σψ_off'
 
         # rhs = -ψ_diag x_diag
         rhs = zeros(Ne)
@@ -127,9 +127,8 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
                 tmp_diag,_,_,_ = projected_newton(x_diag[2:end], lhd, "TrueHessian")
                 tmp_diag .+= δ
             end
-
-            BLAS.gemm!('T', 'N', 1.0, ψ_diag, tmp_diag, 1.0, cache)
-
+            cache .= ψ_diag*tmp_diag
+            
             tmp_off .= -F.R\(F.Q'*cache)
 
             # Rescale coefficients

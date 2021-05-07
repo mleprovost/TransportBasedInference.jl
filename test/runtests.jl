@@ -28,7 +28,7 @@ include("radialmap/quantile.jl")
 include("radialmap/cost.jl")
 include("radialmap/optimize.jl")
 include("radialmap/optimize_multithreading.jl")
-include("radialmap/iterativeoptimize.jl")
+# include("radialmap/iterativeoptimize.jl")
 include("radialmap/inverse.jl")
 
 

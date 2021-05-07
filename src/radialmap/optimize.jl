@@ -86,7 +86,7 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 	end
 
 	if Nx==1
-		g_mono /= σψ[1]
+		g_mono ./= σψ
 		x[no+1] = copy(-dot(μψ,g_mono))
 	else
 		g_off = zeros(no)
@@ -178,7 +178,7 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	# @show ψ_mono[2,:]
 	# @show dψ_mono[2,:]
 
-    if Nx==1
+    if Nx==1 || no == 0
 		BLAS.gemm!('T', 'N', 1/Ne, ψ_mono, ψ_mono, 1.0, A)
 		# A .= BLAS.gemm('N', 'T', 1/Ne, ψ_mono, ψ_mono)
     else
@@ -227,8 +227,8 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		g_mono .+= δ
 	end
 
-	if Nx==1
-		g_mono /= σψ[1]
+	if Nx == 1 || no == 0
+		g_mono ./= σψ
 		x[no+1] = copy(-dot(μψ,g_mono))
 	else
 		g_off = zeros(no)
@@ -250,7 +250,7 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	x[no+2:nx] .= copy(g_mono)
 
 
-	if Nx>1
+	if Nx>1 && no != 0
 		x[1:no] .= copy(g_off)
 	end
 	return x
