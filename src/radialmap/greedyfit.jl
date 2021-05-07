@@ -36,9 +36,9 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         lhd = LHD(zeros(n_diag,n_diag), Matrix(dψ_diag'), λ, δ)
 
         # Normalize diagtone basis functions
-        μψ = mean(ψ_diag, dims=2)[:,1]
+        μψ = mean(ψ_diag, dims=1)[1,:]
         # σψ = std(ψ_diag, dims=2, corrected=false)[:,1]
-        σψ = norm.(eachslice(ψ_diag; dims = 1))[:,1]
+        σψ = norm.(eachslice(ψ_diag; dims = 1))[1,:]
         ψ_diagscaled = copy(ψ_diag)
         dψ_diagscaled = copy(dψ_diag)
 
@@ -47,9 +47,9 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         dψ_diagscaled ./= σψ
 
         ψ_offscaled = copy(ψ_off)
-        μψ_off = mean(ψ_off, dims = 2)[:,1]
+        μψ_off = mean(ψ_off, dims = 1)[1,:]
         # σψ_off = std(ψ_off, dims = 2, corrected = false)
-        σψ_off = norm.(eachslice(ψ_off; dims = 1))[:,1]
+        σψ_off = norm.(eachslice(ψ_off; dims = 1))[1,:]
         ψ_offscaled .-= μψ_off
         ψ_offscaled ./= σψ_off
 

@@ -209,9 +209,9 @@ end
     compute_weights(M, zeros(Nx,Ne), woff, wdiag, w∂k)
 
 
-    @test woff[:,1] == woval
-    @test wdiag[:,1] == wval
-    @test w∂k[:,1] == w∂kval
+    @test woff[1,:] == woval
+    @test wdiag[1,:] == wval
+    @test w∂k[1,:] == w∂kval
 end
 
 
@@ -249,9 +249,9 @@ end
 
     z = randn(1,5)
     wo, wd, w∂ = compute_weights(C, z)
-    @test wo == Float64[]
-    @test isapprox(wd, z, atol = 1e-10)
-    @test w∂ == ones(1,5)
+    @test wo == zeros(0,0)
+    @test isapprox(wd, z', atol = 1e-10)
+    @test w∂ == ones(5,1)
 
     ## Nx = 1 and p = 2
     C = SparseRadialMapComponent(1, [2])
@@ -270,15 +270,16 @@ end
     z = randn(1,5)
 
     wo, wd, w∂ = compute_weights(C, z)
-    @test wo == Float64[]
+    @test wo == zeros(0,0)
 
     for i=1:5
         zi  = z[1,i]
-        @test wd[:,i] == [ψ₀(0.0, 1.0)(zi); ψj(0.0, 1.0)(zi);ψj(0.0, 1.0)(zi);ψpp1(0.0, 1.0)(zi)]
-        @test w∂[:,i] == [ψ₀′(0.0, 1.0)(zi); rbf(0.0, 1.0)(zi);rbf(0.0, 1.0)(zi);ψpp1′(0.0, 1.0)(zi)]
+        @test wd[i,:] == [ψ₀(0.0, 1.0)(zi); ψj(0.0, 1.0)(zi);ψj(0.0, 1.0)(zi);ψpp1(0.0, 1.0)(zi)]
+        @test w∂[i,:] == [ψ₀′(0.0, 1.0)(zi); rbf(0.0, 1.0)(zi);rbf(0.0, 1.0)(zi);ψpp1′(0.0, 1.0)(zi)]
     end
 
 end
+
 
 @testset "Weights SparseRadialMapComponent II" begin
     ## k=2 and p = [-1 -1]
@@ -298,9 +299,9 @@ end
     @test w∂ == Float64[]
 
     wo, wd, w∂ = compute_weights(C, randn(2,5))
-    @test wo == Float64[]
-    @test wd == Float64[]
-    @test w∂ == Float64[]
+    @test wo == zeros(0, 0)
+    @test wd == zeros(0, 0)
+    @test w∂ == zeros(0, 0)
 
     ## k = 2 and p = [-1 0]
     C = SparseRadialMapComponent(2, [-1; 0])
@@ -317,9 +318,9 @@ end
 
     z = randn(2, 5)
     wo, wd, w∂ = compute_weights(C, deepcopy(z))
-    @test wo == Float64[]
-    @test isapprox(wd[1,:], z[2,:], atol = 1e-10)
-    @test isapprox(w∂[1,:], ones(5), atol = 1e-10)
+    @test wo == zeros(0,0)
+    @test isapprox(wd[:,1], z[2,:], atol = 1e-10)
+    @test isapprox(w∂[:,1], ones(5), atol = 1e-10)
 
     ## k = 2 and p = [-1 1]
     C = SparseRadialMapComponent(2, [-1; 1])
@@ -337,12 +338,12 @@ end
     z = randn(2,5)
 
     wo, wd, w∂ = compute_weights(C, z)
-    @test wo == Float64[]
+    @test wo == zeros(0,0)
 
     for i=1:5
         zi  = z[:,i]
-        @test wd[:,i] == [ψ₀(0.0, 1.0)(zi[2]); ψj(0.0, 1.0)(zi[2]);ψpp1(0.0, 1.0)(zi[2])]
-        @test w∂[:,i] == [ψ₀′(0.0, 1.0)(zi[2]); rbf(0.0, 1.0)(zi[2]);ψpp1′(0.0, 1.0)(zi[2])]
+        @test wd[i,:] == [ψ₀(0.0, 1.0)(zi[2]); ψj(0.0, 1.0)(zi[2]);ψpp1(0.0, 1.0)(zi[2])]
+        @test w∂[i,:] == [ψ₀′(0.0, 1.0)(zi[2]); rbf(0.0, 1.0)(zi[2]);ψpp1′(0.0, 1.0)(zi[2])]
     end
 
     ## k = 2 and p = [0 1]
@@ -366,10 +367,10 @@ end
 
     for i=1:5
         zi  = z[:,i]
-        @test norm(wo[:,i] - [zi[1]])<1e-10
+        @test norm(wo[i,:] - [zi[1]])<1e-10
 
-        @test norm(wd[:,i]  - [ψ₀(0.0, 1.0)(zi[2]); ψj(0.0, 1.0)(zi[2]);ψpp1(0.0, 1.0)(zi[2])])<1e-10
-        @test norm(w∂[:,i]  - [ψ₀′(0.0, 1.0)(zi[2]); rbf(0.0, 1.0)(zi[2]);ψpp1′(0.0, 1.0)(zi[2])])<1e-10
+        @test norm(wd[i,:]  - [ψ₀(0.0, 1.0)(zi[2]); ψj(0.0, 1.0)(zi[2]);ψpp1(0.0, 1.0)(zi[2])])<1e-10
+        @test norm(w∂[i,:]  - [ψ₀′(0.0, 1.0)(zi[2]); rbf(0.0, 1.0)(zi[2]);ψpp1′(0.0, 1.0)(zi[2])])<1e-10
     end
 
     # k = 2 and p = [2 1]
@@ -401,10 +402,10 @@ end
 
     for i=1:5
         zi  = z[:,i]
-        @test norm(wo[:,i]  - [zi[1]; rbf(C.ξ[1][1], C.σ[1][1])(zi[1]); rbf(C.ξ[1][2], C.σ[1][2])(zi[1])])<1e-14
+        @test norm(wo[i,:]  - [zi[1]; rbf(C.ξ[1][1], C.σ[1][1])(zi[1]); rbf(C.ξ[1][2], C.σ[1][2])(zi[1])])<1e-14
 
-        @test norm(wd[:,i]  - [ψ₀(C.ξ[2][1], C.σ[2][1])(zi[2]); ψj(C.ξ[2][2], C.σ[2][2])(zi[2]);ψpp1(C.ξ[2][3], C.σ[2][3])(zi[2])])<1e-14
-        @test norm(w∂[:,i]  - [ψ₀′(C.ξ[2][1], C.σ[2][1])(zi[2]); rbf(C.ξ[2][2], C.σ[2][2])(zi[2]);ψpp1′(C.ξ[2][3], C.σ[2][3])(zi[2])])<1e-14
+        @test norm(wd[i,:]  - [ψ₀(C.ξ[2][1], C.σ[2][1])(zi[2]); ψj(C.ξ[2][2], C.σ[2][2])(zi[2]);ψpp1(C.ξ[2][3], C.σ[2][3])(zi[2])])<1e-14
+        @test norm(w∂[i,:]  - [ψ₀′(C.ξ[2][1], C.σ[2][1])(zi[2]); rbf(C.ξ[2][2], C.σ[2][2])(zi[2]);ψpp1′(C.ξ[2][3], C.σ[2][3])(zi[2])])<1e-14
     end
 
 
@@ -431,10 +432,10 @@ end
     wo, wd, w∂ = compute_weights(C, deepcopy(z))
     for i=1:5
         zi  = z[:,i]
-        @test norm(wo[:,i]  - [zi[2]; rbf(0.0,1.0)(zi[2]); rbf(0.0,1.0)(zi[2]); zi[3]])<1e-14
+        @test norm(wo[i,:]  - [zi[2]; rbf(0.0,1.0)(zi[2]); rbf(0.0,1.0)(zi[2]); zi[3]])<1e-14
 
-        @test norm(wd[:,i]  - [ψ₀(0.0, 1.0)(zi[4]); ψj(0.0, 1.0)(zi[4]); ψj(0.0, 1.0)(zi[4]);ψpp1(0.0, 1.0)(zi[4])])<1e-14
-        @test norm(w∂[:,i]  - [ψ₀′(0.0, 1.0)(zi[4]); rbf(0.0, 1.0)(zi[4]); rbf(0.0, 1.0)(zi[4]);ψpp1′(0.0, 1.0)(zi[4])])<1e-14
+        @test norm(wd[i,:]  - [ψ₀(0.0, 1.0)(zi[4]); ψj(0.0, 1.0)(zi[4]); ψj(0.0, 1.0)(zi[4]);ψpp1(0.0, 1.0)(zi[4])])<1e-14
+        @test norm(w∂[i,:]  - [ψ₀′(0.0, 1.0)(zi[4]); rbf(0.0, 1.0)(zi[4]); rbf(0.0, 1.0)(zi[4]);ψpp1′(0.0, 1.0)(zi[4])])<1e-14
     end
 
     ## k = 5 and p = [2 -1 0 -1 0]
@@ -459,10 +460,10 @@ end
     wo, wd, w∂ = compute_weights(C, z)
     for i=1:10
         zi  = z[:,i]
-        @test norm(wo[:,i]  - [zi[1]; rbf(0.0,1.0)(zi[1]); rbf(0.0,1.0)(zi[1]); zi[3]])<1e-14
+        @test norm(wo[i,:]  - [zi[1]; rbf(0.0,1.0)(zi[1]); rbf(0.0,1.0)(zi[1]); zi[3]])<1e-14
 
-        @test norm(wd[:,i]  - [zi[5]])<1e-14
-        @test norm(w∂[:,i]  - [1.0])<1e-14
+        @test norm(wd[i,:]  - [zi[5]])<1e-14
+        @test norm(w∂[i,:]  - [1.0])<1e-14
     end
 
 end
