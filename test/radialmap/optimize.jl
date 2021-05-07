@@ -1,3 +1,35 @@
+@testset "Test fast_mul function" begin
+    n_off = 200
+    n_diag = 50
+    Ne = 500
+
+    ψ_off = randn(Ne, n_off)
+    ψ_diag = randn(Ne, n_off)
+    λ = 0.1
+    ψ_aug = vcat(ψ_off, Matrix(√λ*I, n_off, n_off))
+    F = qr(ψ_aug)
+    Q1 = Matrix(F.Q)[1:Ne,:]
+
+    out = fast_mul(deepcopy(ψ_diag), F.Q, Ne, n_off)
+
+    @test norm(out - Q1*Q1'*ψ_diag)<1e-10
+end
+
+@testset "Test fast_mul2 function" begin
+    n_off = 200
+    n_diag = 50
+    Ne = 500
+
+    ψ_off = randn(Ne, n_off)
+    ψ_diag = randn(Ne, n_off)
+    F = qr(ψ_off)
+    Q1 = Matrix(F.Q)[1:Ne,:]
+
+    out = fast_mul2(deepcopy(ψ_diag), F.Q, Ne, n_off)
+
+    @test norm(out - Q1*Q1'*ψ_diag)<1e-10
+end
+
 
 @testset "Test optimization for Nx=1 and p=0" begin
    Nx = 1

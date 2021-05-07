@@ -17,7 +17,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
     x_diag = optimize(C, X, λ, δ)
     modify_a!(C, x_diag)
 
-    if Nx>1
+    if Nx>1 || maxfamilies>0 
 
         # Create a radial map with order p for all the entries
         Cfull = SparseRadialMapComponent(Nx, p)
@@ -29,16 +29,16 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
         # Create weights
         ψ_off, ψ_diag, dψ_diag = compute_weights(Cfull, X)
-        n_off = size(ψ_off,1)
-        n_diag = size(ψ_diag,1)
+        n_off = size(ψ_off,2)
+        n_diag = size(ψ_diag,2)
+
 
         Asqrt = zero(ψ_diag)
-        lhd = LHD(zeros(n_diag,n_diag), Matrix(dψ_diag'), λ, δ)
-
+        lhd = LHD(zeros(n_diag,n_diag), dψ_diag, λ, δ)
         # Normalize diagtone basis functions
-        μψ = mean(ψ_diag, dims=1)[1,:]
+        μψ = copy(mean(ψ_diag, dims=1)[1,:])
         # σψ = std(ψ_diag, dims=2, corrected=false)[:,1]
-        σψ = norm.(eachslice(ψ_diag; dims = 1))[1,:]
+        σψ = copy(norm.(eachcol(ψ_diag)))
         ψ_diagscaled = copy(ψ_diag)
         dψ_diagscaled = copy(dψ_diag)
 
@@ -47,22 +47,22 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         dψ_diagscaled ./= σψ'
 
         ψ_offscaled = copy(ψ_off)
-        μψ_off = mean(ψ_off, dims = 1)[1,:]
+        μψ_off = copy(mean(ψ_off, dims = 1)[1,:])
         # σψ_off = std(ψ_off, dims = 2, corrected = false)
-        σψ_off = norm.(eachslice(ψ_off; dims = 1))[1,:]
+        σψ_off = copy(norm.(eachcol(ψ_off)))
         ψ_offscaled .-= μψ_off'
         ψ_offscaled ./= σψ_off'
 
         # rhs = -ψ_diag x_diag
         rhs = zeros(Ne)
-        mul!(rhs, ψ_diag', x_diag[2:n_diag+1])
+        mul!(rhs, ψ_diag, x_diag[2:n_diag+1])
         rhs .+= x_diag[1]
         rmul!(rhs, -1.0)
 
         # Create updatable QR factorization
         # For the greedy optimization, we don't use a L2 regularization λ||x||^2,
         # since we are already making a greedy selection of the features
-        # F = qrfactUnblocked(zeros(0,0))
+        F = qrfactUnblocked(zeros(0,0))
         # Off-diagonal coefficients will be permuted based on the greedy procedure
 
         candidates = collect(1:Nx-1)
@@ -73,6 +73,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         dJ = zeros((p+1)*(Nx-1))
 
         x_off = zeros((p+1)*(Nx-1))
+        x_offsparse = Float64[]
         tmp_off = Float64[]
 
         budget = min(maxfamilies, Nx-1)
@@ -81,7 +82,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         cache = zeros(Ne)
         @inbounds for i=1:budget
             # Compute the gradient of the different basis (use the unscaled basis evaluations)
-            mul!(rhs, ψ_diag', view(x_diag,2:n_diag+1))
+            mul!(rhs, ψ_diag, view(x_diag,2:n_diag+1))
             rhs .+= x_diag[1]
             rmul!(rhs, -1.0)
             gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
@@ -90,6 +91,8 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
             new_dim = candidates[max_dim]
             push!(offdims, copy(new_dim))
             tmp_off = vcat(tmp_off, zeros(p+1))
+            x_offsparse = vcat(x_offsparse, zeros(p+1))
+
 
             # Update storage in C
             update_component!(C, p, new_dim)
@@ -101,14 +104,13 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
             # Update qr factorization with the new family of features
             if i == 1
-                F = qrfactUnblocked(ψ_offscaled[(new_dim-1)*(p+1)+1:new_dim*(p+1),:])
+                F = qrfactUnblocked(ψ_offscaled[:,(new_dim-1)*(p+1)+1:new_dim*(p+1)])
             else
-                updateqrfactUnblocked!(F, view(ψ_offscaled,(new_dim-1)*(p+1)+1:new_dim*(p+1),:))
+                F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(p+1)+1:new_dim*(p+1)))
             end
-            @show size(F)
 
-            Asqrt .= ψ_diagscaled - fast_mul(ψ_diagscaled, F.Q, Ne, (p+1)*size(offdims, 1))
-            BLAS.gemm!('N', 'T', 1/Ne, Asqrt, Asqrt, 1.0, lhd.A)
+            Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (p+1)*size(offdims, 1))
+            BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, lhd.A)
 
             if C.p[Nx] == 0
                 @assert size(lhd.A)==(1,1) "Quadratic matrix should be a scalar."
@@ -119,36 +121,44 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
                 # Update A and b of the loss function lhd
                 # Add L-2 regularization
                 fill!(x_diag, 1.0)
-                lhd.A .+= (λ/Ne)*I
+                @inbounds for i=1:n_diag
+                    lhd.A[i,i] += (λ/Ne)
+                end
                 # Update b coefficient
                 lhd.b .= δ*sum(lhd.A, dims=2)[:,1]
 
                 tmp_diag,_,_,_ = projected_newton(x_diag[2:end], lhd, "TrueHessian")
                 tmp_diag .+= δ
             end
-            cache .= ψ_diag*tmp_diag
 
-            tmp_off .= -F.R\(F.Q'*cache)
+            cache .= ψ_diag*tmp_diag
+            tmp_off .= -F.R\((F.Q'*cache)[1:(p+1)*size(offdims, 1)])
 
             # Rescale coefficients
             for j=1:n_diag
                 x_diag[j+1] = tmp_diag[j]/σψ[j]
             end
 
-            tmp_off ./= σψ_off
+            for (j, offdimj) in enumerate(offdims)
+                tmp_off[(j-1)*(p+1)+1:j*(p+1)] ./= σψ_off[(offdimj-1)*(p+1)+1:offdimj*(p+1)]
+            end
 
             # Compute and store the constant term (expectation of selected terms)
-            x_diag[1] = -dot(μψ, x_diag[2:n_diag+1]) -dot(μψ_off, tmp_off)
+            x_diag[1] = -dot(μψ, x_diag[2:n_diag+1]) #-dot(μψ_off, tmp_off)
 
             # Make sure that active dim are in the right order when we affect coefficient.
             # For the split and kfold compute the training and validation losses.
+            fill!(x_offsparse, 0.0)
+            perm = sortperm(offdims)
 
             for (j, offdimj) in enumerate(offdims)
-                copy!(view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), tmp_off[(j-1)*(p+1)+1:j*(p+1)])
+                tmp_offj = tmp_off[(j-1)*(p+1)+1:j*(p+1)]
+                x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), tmp_offj)
+                view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)) .= tmp_offj
+                view(x_offsparse, (perm[j]-1)*(p+1)+1:perm[j]*(p+1)) .= tmp_offj
             end
 
-            modify_a!(C, vcat(x_off, x_diag))
-
+            modify_a!(C, vcat(x_offsparse, x_diag))
             filter!(x-> x!= new_dim, candidates)
         end
     end
@@ -157,8 +167,8 @@ end
 
 function gradient_off!(dJ::AbstractVector{Float64}, cache::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_off, rhs, Ne::Int64)
     fill!(dJ, 0.0)
-    cache .= ψ_off'*x_off - rhs
-    dJ .= (1/Ne)*ψ_off*cache
+    cache .= ψ_off*x_off - rhs
+    dJ .= (1/Ne)*ψ_off'*cache
 end
 
 gradient_off!(dJ::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_off, rhs, Ne::Int64) =

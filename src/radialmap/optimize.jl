@@ -1,12 +1,15 @@
-export fast_mul, optimize, optimize_coeffs, solve_nonlinear
+export fast_mul, fast_mul2, optimize, optimize_coeffs, solve_nonlinear
 
 
 # Function to speed-up ψ_diag*Q1'*Q1
 # fast_mul(ψbis::Array{Float64,2}, Q, N::Int64, nx::Int64) = ([([ψbis zeros(size(ψbis,1), nx)] * Q)[axes(ψbis,1), 1:nx] zeros(size(ψbis,1), N)] * Q')[axes(ψbis,1), 1:N]
 
 # Function to speed-up Q1*Q1'*ψ_diag
-
 fast_mul(ψ_diag::Array{Float64,2}, Q, N::Int64, n_off::Int64) = (Q*[(Q'*[ψ_diag; zeros(n_off, size(ψ_diag,2))])[1:n_off, axes(ψ_diag,2)]; zeros(N, size(ψ_diag,2))])[1:N, axes(ψ_diag,2)]
+
+# Version without the L2 regularization term, we assuem that N (number of samples) > n_off (number of off-diagonal features)
+fast_mul2(ψ_diag::Array{Float64,2}, Q, N::Int64, n_off::Int64) = Q*[(Q'*ψ_diag)[1:n_off, axes(ψ_diag,2)]; zeros(N-n_off, size(ψ_diag,2))]
+
 
 
 # Code to identify the coefficients
@@ -49,8 +52,6 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
         ψ_off ./= σψ_off'
 
 		#Assemble reduced QR to solve least square problem
-		Asqrt = zero(ψ_diag)
-
 		ψ_aug = zeros(Ne+no,no)
 		ψ_X = view(ψ_aug,1:Ne,1:no)
 		ψ_X .= ψ_off
@@ -64,6 +65,7 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 		# Speed-up proposed in https://discourse.julialang.org/t/extract-submatrix-from-qr-factor-is-slow-julia-1-4/36582/4
 		# Q1 = Matrix(F.Q)[1:Ne,:]
 		# Asqrt .= ψ_diag - Q1*(Q1'*ψ_diag)
+		Asqrt = zero(ψ_diag)
 		Asqrt .= ψ_diag - fast_mul(ψ_diag, F.Q, Ne, no)
 
 		BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, A)
@@ -191,7 +193,6 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
         ψ_off ./= σψ_off'
 
 		#Assemble reduced QR to solve least square problem
-		Asqrt = zero(ψ_diag)
 
 		ψ_aug = zeros(Ne+no,no)
 		ψ_X = view(ψ_aug,1:Ne,1:no)
@@ -205,6 +206,7 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		# Speed-up proposed in https://discourse.julialang.org/t/extract-submatrix-from-qr-factor-is-slow-julia-1-4/36582/4
 		# Q1 = Matrix(F.Q)[1:Ne,:]
 		# Asqrt .= ψ_diag - Q1*(Q1'*ψ_diag)
+		Asqrt = zero(ψ_diag)
 		Asqrt .= ψ_diag - fast_mul(ψ_diag, F.Q, Ne, no)
 
 		BLAS.gemm!('T', 'N', 1/Ne, Asqrt, Asqrt, 1.0, A)
