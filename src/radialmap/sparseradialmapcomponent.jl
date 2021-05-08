@@ -96,14 +96,8 @@ end
 
 SparseRadialMapComponent(Nx::Int64, p::Int64) = SparseRadialMapComponent(Nx, fill(p, Nx))
 
-
-
 function show(io::IO, C::SparseRadialMapComponent)
-if C.Nx==1
-println(io,"$(C.Nx)-st component of a Sparse KR rearrangement of order p = $(C.p)")
-else
-println(io,"$(C.Nx)-th component of a Sparse KR rearrangement of order p = $(C.p)")
-end
+    println(io,"Sparse radial map component of dimension "*string(C.Nx)*" and order p = $(C.p)")
 end
 
 function set_id(C::SparseRadialMapComponent)

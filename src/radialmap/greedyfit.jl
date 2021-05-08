@@ -6,21 +6,20 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
 """
-function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies::Int64, λ, δ, γ; maxpatience::Int64 = 10^5, verbose::Bool=true)
+function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Float64}, Xvalid::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool=true)
     train_error = Float64[]
     valid_error = Float64[]
 
     NxX, Ne = size(X)
     # The widths and centers are computed on the entire set.
     Xsort = deepcopy(sort(hcat(X, Xvalid); dims = 2))
-    @show size(Xsort)
-    @assert p > -1 "The order p of the features must be > 0"
+    @assert poff > -1 || pdiag > -1 "The order poff and pdiag of the features must be > 0"
     @assert λ == 0 "Greedy fit is only implemented for λ = 0"
     @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
 
     # Initialize a sparse radial map component C with only a diagonal term of order p
     order = fill(-1, Nx)
-    order[end] = p
+    order[end] = pdiag
     C = SparseRadialMapComponent(Nx, order)
 
     center_std!(C, Xsort; γ = γ)
@@ -39,7 +38,7 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
     if Nx>1 || maxfamilies>0
 
         # Create a radial map with order p for all the entries
-        Cfull = SparseRadialMapComponent(Nx, p)
+        Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Int64, Nx-1), pdiag))
 
         # Compute centers and widths
         center_std!(Cfull, Xsort; γ = γ)
@@ -92,9 +91,9 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
         offdims = Int64[]
 
         # Compute the gradient of the different basis
-        dJ = zeros((p+1)*(Nx-1))
+        dJ = zeros((poff+1)*(Nx-1))
 
-        x_off = zeros((p+1)*(Nx-1))
+        x_off = zeros((poff+1)*(Nx-1))
         x_offsparse = Float64[]
         tmp_off = Float64[]
         tmp_diag = zeros(n_diag)
@@ -102,7 +101,7 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
 
         budget = min(maxfamilies, Nx-1)
         # Compute the norm of the different candidate features
-        sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(p+1)+1:i*(p+1)))^2, candidates)
+        sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(poff+1)+1:i*(poff+1)))^2, candidates)
         cache = zeros(Ne)
         @inbounds for i=1:budget
             # Compute the gradient of the different basis (use the unscaled basis evaluations)
@@ -111,14 +110,14 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
             rmul!(rhs, -1.0)
             gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
 
-            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
+            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates))
             new_dim = candidates[max_dim]
             push!(offdims, copy(new_dim))
-            append!(tmp_off, zeros(p+1))
-            append!(x_offsparse, zeros(p+1))
+            append!(tmp_off, zeros(poff+1))
+            append!(x_offsparse, zeros(poff+1))
 
             # Update storage in C
-            update_component!(C, p, new_dim)
+            update_component!(C, poff, new_dim)
 
             # Compute center and std for this new family of features
             # The centers and widths have already been computed in Cfull
@@ -127,11 +126,11 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
 
             # Update qr factorization with the new family of features
             if i == 1
-                F = qrfactUnblocked(ψ_offscaled[:,(new_dim-1)*(p+1)+1:new_dim*(p+1)])
+                F = qrfactUnblocked(ψ_offscaled[:,(new_dim-1)*(poff+1)+1:new_dim*(poff+1)])
             else
-                F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(p+1)+1:new_dim*(p+1)))
+                F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(poff+1)+1:new_dim*(poff+1)))
             end
-            Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (p+1)*size(offdims, 1))
+            Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (poff+1)*size(offdims, 1))
             lhd.A .= (1/Ne)*Asqrt'*Asqrt
 
             if C.p[Nx] == 0
@@ -157,14 +156,15 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
             end
 
             cache .= ψ_diagscaled*tmp_diag
-            tmp_off .= -F.R\((F.Q'*cache)[1:(p+1)*size(offdims, 1)])
+            tmp_off .= -F.R\((F.Q'*cache)[1:(poff+1)*size(offdims, 1)])
             # Rescale coefficients
             for j=1:n_diag
+
                 x_diag[j+1] = tmp_diag[j]/σψ[j]
             end
 
             for (j, offdimj) in enumerate(offdims)
-                tmp_off[(j-1)*(p+1)+1:j*(p+1)] ./= σψ_off[(offdimj-1)*(p+1)+1:offdimj*(p+1)]
+                tmp_off[(j-1)*(poff+1)+1:j*(poff+1)] ./= σψ_off[(offdimj-1)*(poff+1)+1:offdimj*(poff+1)]
             end
 
             # Compute and store the constant term (expectation of selected terms)
@@ -177,14 +177,14 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
             perm = sortperm(offdims)
 
             for (j, offdimj) in enumerate(offdims)
-                tmp_offj = tmp_off[(j-1)*(p+1)+1:j*(p+1)]
-                x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), tmp_offj)
-                view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)) .= tmp_offj
+                tmp_offj = tmp_off[(j-1)*(poff+1)+1:j*(poff+1)]
+                x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(poff+1)+1:offdimj*(poff+1)), tmp_offj)
+                view(x_off, (offdimj-1)*(poff+1)+1:offdimj*(poff+1)) .= tmp_offj
             end
 
             for (j, offdimj) in enumerate(offdims)
-                tmp_offj = tmp_off[(perm[j]-1)*(p+1)+1:perm[j]*(p+1)]
-                view(x_offsparse, (j-1)*(p+1)+1:j*(p+1)) .= tmp_offj
+                tmp_offj = tmp_off[(perm[j]-1)*(poff+1)+1:perm[j]*(poff+1)]
+                view(x_offsparse, (j-1)*(poff+1)+1:j*(poff+1)) .= tmp_offj
             end
 
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
@@ -203,10 +203,12 @@ function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies:
         end
     end
     return C
-
-
-
 end
+
+greedyfit(Nx::Int64, p::Int64, X::AbstractMatrix{Float64}, Xvalid::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool=true) =
+          greedyfit(Nx, p, p, X, Xvalid, maxfamilies, λ, δ, γ; maxpatience = maxpatience, verbose = verbose)
+
+
 
 
 
@@ -215,11 +217,11 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the ensemble matrix `X`.
 """
-function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ, γ)
+function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64)
 
     NxX, Ne = size(X)
     Xsort = deepcopy(sort(X; dims = 2))
-    @assert p > -1 "The order p of the features must be > 0"
+    @assert poff > -1 || pdiag > -1 "The order poff and pdiag of the features must be > 0"
     @assert λ == 0 "Greedy fit is only implemented for λ = 0"
     @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
 
@@ -235,7 +237,7 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
     if Nx>1 || maxfamilies>0
 
         # Create a radial map with order p for all the entries
-        Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Nx-1), pdiag))
+        Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Int64, Nx-1), pdiag))
 
         # Compute centers and widths
         center_std!(Cfull, Xsort; γ = γ)
@@ -287,9 +289,9 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
         offdims = Int64[]
 
         # Compute the gradient of the different basis
-        dJ = zeros((p+1)*(Nx-1))
+        dJ = zeros((poff+1)*(Nx-1))
 
-        x_off = zeros((p+1)*(Nx-1))
+        x_off = zeros((poff+1)*(Nx-1))
         x_offsparse = Float64[]
         tmp_off = Float64[]
         tmp_diag = zeros(n_diag)
@@ -297,7 +299,7 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
 
         budget = min(maxfamilies, Nx-1)
         # Compute the norm of the different candidate features
-        sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(p+1)+1:i*(p+1)))^2, candidates)
+        sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(poff+1)+1:i*(poff+1)))^2, candidates)
         cache = zeros(Ne)
         @inbounds for i=1:budget
             # Compute the gradient of the different basis (use the unscaled basis evaluations)
@@ -306,14 +308,14 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
             rmul!(rhs, -1.0)
             gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
 
-            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
+            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates))
             new_dim = candidates[max_dim]
             push!(offdims, copy(new_dim))
-            append!(tmp_off, zeros(p+1))
-            append!(x_offsparse, zeros(p+1))
+            append!(tmp_off, zeros(poff+1))
+            append!(x_offsparse, zeros(poff+1))
 
             # Update storage in C
-            update_component!(C, p, new_dim)
+            update_component!(C, poff, new_dim)
 
             # Compute center and std for this new family of features
             # The centers and widths have already been computed in Cfull
@@ -322,11 +324,11 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
 
             # Update qr factorization with the new family of features
             if i == 1
-                F = qrfactUnblocked(ψ_offscaled[:,(new_dim-1)*(p+1)+1:new_dim*(p+1)])
+                F = qrfactUnblocked(ψ_offscaled[:,(new_dim-1)*(poff+1)+1:new_dim*(poff+1)])
             else
-                F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(p+1)+1:new_dim*(p+1)))
+                F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(poff+1)+1:new_dim*(poff+1)))
             end
-            Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (p+1)*size(offdims, 1))
+            Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (poff+1)*size(offdims, 1))
             lhd.A .= (1/Ne)*Asqrt'*Asqrt
 
             if C.p[Nx] == 0
@@ -352,14 +354,14 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
             end
 
             cache .= ψ_diagscaled*tmp_diag
-            tmp_off .= -F.R\((F.Q'*cache)[1:(p+1)*size(offdims, 1)])
+            tmp_off .= -F.R\((F.Q'*cache)[1:(poff+1)*size(offdims, 1)])
             # Rescale coefficients
             for j=1:n_diag
                 x_diag[j+1] = tmp_diag[j]/σψ[j]
             end
 
             for (j, offdimj) in enumerate(offdims)
-                tmp_off[(j-1)*(p+1)+1:j*(p+1)] ./= σψ_off[(offdimj-1)*(p+1)+1:offdimj*(p+1)]
+                tmp_off[(j-1)*(poff+1)+1:j*(poff+1)] ./= σψ_off[(offdimj-1)*(poff+1)+1:offdimj*(poff+1)]
             end
 
             # Compute and store the constant term (expectation of selected terms)
@@ -372,14 +374,14 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
             perm = sortperm(offdims)
 
             for (j, offdimj) in enumerate(offdims)
-                tmp_offj = tmp_off[(j-1)*(p+1)+1:j*(p+1)]
-                x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), tmp_offj)
-                view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)) .= tmp_offj
+                tmp_offj = tmp_off[(j-1)*(poff+1)+1:j*(poff+1)]
+                x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(poff+1)+1:offdimj*(poff+1)), tmp_offj)
+                view(x_off, (offdimj-1)*(poff+1)+1:offdimj*(poff+1)) .= tmp_offj
             end
 
             for (j, offdimj) in enumerate(offdims)
-                tmp_offj = tmp_off[(perm[j]-1)*(p+1)+1:perm[j]*(p+1)]
-                view(x_offsparse, (j-1)*(p+1)+1:j*(p+1)) .= tmp_offj
+                tmp_offj = tmp_off[(perm[j]-1)*(poff+1)+1:perm[j]*(poff+1)]
+                view(x_offsparse, (j-1)*(poff+1)+1:j*(poff+1)) .= tmp_offj
             end
 
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
@@ -390,6 +392,9 @@ function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ,
     end
     return C
 end
+
+greedyfit(Nx::Int64, p::Int64, X::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64) = greedyfit(Nx, p, p, X, maxfamilies, λ, δ, γ)
+
 
 function gradient_off!(dJ::AbstractVector{Float64}, cache::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_off, rhs, Ne::Int64)
     fill!(dJ, 0.0)

@@ -52,14 +52,16 @@ end
         δ = 1e-8
         γ = 2.0
 
-        for order=0:3
-            for k=0:Nx-1
-                Cgreedy = greedyfit(Nx, order, deepcopy(X), k, λ, δ, γ)
-                C = SparseRadialMapComponent(Nx, Cgreedy.p)
-                center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
-                x_opt = optimize(C, X, λ, δ)
-                modify_a!(C, x_opt)
-                @test norm(Cgreedy.a - C.a)<1e-10
+        for pdiag=0:3
+            for poff=0:3
+                for k=0:Nx-1
+                    Cgreedy = greedyfit(Nx, pdiag, poff, deepcopy(X), k, λ, δ, γ)
+                    C = SparseRadialMapComponent(Nx, Cgreedy.p)
+                    center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
+                    x_opt = optimize(C, X, λ, δ)
+                    modify_a!(C, x_opt)
+                    @test norm(Cgreedy.a - C.a)<1e-10
+                end
             end
         end
     end
