@@ -1,4 +1,4 @@
-export SparseRadialMapComponent, component, construct, evaluate, off_diagonal, set_id
+export SparseRadialMapComponent, component, construct, evaluate, negative_likelihood!, off_diagonal, set_id
 
 #### Structure for the Nx-th component SparseRadialMapComponent of the lower triangular map U
 
@@ -184,8 +184,8 @@ function (C::SparseRadialMapComponent)(z::T) where {T<:Real}
 
         out = uk(p[Nx], C.ξ[Nx], C.σ[Nx], C.a[Nx])(z)
         if Nx>1
-                for i in intersect(1:Nx-1, C.activedim)
-                @inbounds out += ui(p[i], C.ξ[i], C.σ[i], C.a[i])(z)
+                @inbounds for i in intersect(1:Nx-1, C.activedim)
+                        out += ui(p[i], C.ξ[i], C.σ[i], C.a[i])(z)
                 end
         end
         return out
@@ -193,26 +193,26 @@ end
 
 # Evaluate the map SparseRadialMapComponent at z = (z1,...,zNx)
 # Optimized with views
-function (C::SparseRadialMapComponent)(z)
+function (C::SparseRadialMapComponent)(z::AbstractVector{Float64})
         @get C (Nx, p)
         @assert size(z,1)<=Nx  "The vector z has more components than RadialMapComponent"
         if p[Nx]<1
-        out = uk(p[Nx], C.ξ[Nx], C.σ[Nx], C.a[Nx])(z[Nx])
+                out = uk(p[Nx], C.ξ[Nx], C.σ[Nx], C.a[Nx])(z[Nx])
         else
-        out = uk(p[Nx], view(C.ξ,Nx)[1], view(C.σ,Nx)[1], view(C.a,Nx)[1])(z[Nx])
+                out = uk(p[Nx], view(C.ξ,Nx)[1], view(C.σ,Nx)[1], view(C.a,Nx)[1])(z[Nx])
         end
 
         if Nx>1
                 @inbounds for idx in intersect(1:Nx-1, C.activedim)
-                pidx = p[idx]
+                        pidx = p[idx]
 
-                if pidx==-1
-                # ui(z) = 0.0 can skip this
-                elseif pidx==0
-                out += ui(pidx, C.ξ[idx], C.σ[idx], C.a[idx])(z[idx])
-                else
-                out += ui(pidx, view(C.ξ,idx)[1], view(C.σ,idx)[1], view(C.a,idx)[1])(z[idx])
-                end
+                        if pidx==-1
+                        # ui(z) = 0.0 can skip this
+                        elseif pidx==0
+                        out += ui(pidx, C.ξ[idx], C.σ[idx], C.a[idx])(z[idx])
+                        else
+                        out += ui(pidx, view(C.ξ,idx)[1], view(C.σ,idx)[1], view(C.a,idx)[1])(z[idx])
+                        end
                 end
         end
         return out

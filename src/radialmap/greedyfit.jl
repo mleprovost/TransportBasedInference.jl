@@ -1,15 +1,24 @@
 export greedyfit, gradient_off!, update_component!
 
-function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
+
+"""
+$(TYPEDSIGNATURES)
+
+An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
+"""
+function greedyfit(Nx::Int64, p::Int64, X, Xvalid, maxfamilies::Int64, λ, δ, γ; maxpatience::Int64 = 10^5, verbose::Bool=true)
+    train_error = Float64[]
+    valid_error = Float64[]
 
     NxX, Ne = size(X)
-    Xsort = deepcopy(sort(X; dims = 2))
+    # The widths and centers are computed on the entire set.
+    Xsort = deepcopy(sort(hcat(X, Xvalid); dims = 2))
     @assert p > -1 "The order p of the features must be > 0"
     @assert λ == 0 "Greedy fit is only implemented for λ = 0"
     @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
 
     # Initialize a sparse radial map component C with only a diagonal term of order p
-    order = -1*ones(Int64, Nx)
+    order = fill(-1, Nx)
     order[end] = p
     C = SparseRadialMapComponent(Nx, order)
 
@@ -25,7 +34,195 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         # Compute centers and widths
         center_std!(Cfull, Xsort; γ = γ)
 
-        ### Evaluate the different basis
+        # Create weights for the training and validation sets
+        ψ_off, ψ_diag, dψ_diag = compute_weights(Cfull, X)
+        ψ_offvalid, ψ_diagvalid, dψ_diagvalid = compute_weights(Cfull, Xvalid)
+
+        n_off = size(ψ_off,2)
+        n_diag = size(ψ_diag,2)
+
+
+        Asqrt = zero(ψ_diag)
+        # Normalize diagtone basis functions
+        μψ = copy(mean(ψ_diag, dims=1)[1,:])
+        σψ = copy(std(ψ_diag, dims = 1, corrected = false)[1,:])
+        # σψ = copy(norm.(eachcol(ψ_diag)))
+        ψ_diagscaled = copy(ψ_diag)
+        dψ_diagscaled = copy(dψ_diag)
+
+        ψ_diagscaled .-= μψ'
+        ψ_diagscaled ./= σψ'
+        dψ_diagscaled ./= σψ'
+
+        lhd = LHD(zeros(n_diag,n_diag), dψ_diagscaled, λ, δ)
+
+        ψ_offscaled = copy(ψ_off)
+        μψ_off = copy(mean(ψ_off, dims = 1)[1,:])
+        # σψ_off = copy(std(ψ_off, dims = 2, corrected = false)
+        # σψ_off = copy(norm.(eachcol(ψ_off)))
+        σψ_off = copy(std(ψ_off, dims = 1, corrected = false)[1,:])
+
+        ψ_offscaled .-= μψ_off'
+        ψ_offscaled ./= σψ_off'
+
+        # rhs = -ψ_diag x_diag
+        rhs = zeros(Ne)
+        mul!(rhs, ψ_diag, x_diag[2:n_diag+1])
+        rhs .+= x_diag[1]
+        rmul!(rhs, -1.0)
+
+        # Create updatable QR factorization
+        # For the greedy optimization, we don't use a L2 regularization λ||x||^2,
+        # since we are already making a greedy selection of the features
+        F = qrfactUnblocked(zeros(0,0))
+        # Off-diagonal coefficients will be permuted based on the greedy procedure
+
+        candidates = collect(1:Nx-1)
+        # Unordered off-diagonal active dimensions
+        offdims = Int64[]
+
+        # Compute the gradient of the different basis
+        dJ = zeros((p+1)*(Nx-1))
+
+        x_off = zeros((p+1)*(Nx-1))
+        x_offsparse = Float64[]
+        tmp_off = Float64[]
+        tmp_diag = zeros(n_diag)
+
+
+        budget = min(maxfamilies, Nx-1)
+        # Compute the norm of the different candidate features
+        sqnormfeatures = map(i-> norm(view(ψ_off, (i-1)*(p+1)+1:i*(p+1)))^2, candidates)
+        cache = zeros(Ne)
+        @inbounds for i=1:budget
+            # Compute the gradient of the different basis (use the unscaled basis evaluations)
+            mul!(rhs, ψ_diag, view(x_diag,2:n_diag+1))
+            rhs .+= x_diag[1]
+            rmul!(rhs, -1.0)
+            gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
+
+            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
+            new_dim = candidates[max_dim]
+            push!(offdims, copy(new_dim))
+            append!(tmp_off, zeros(p+1))
+            append!(x_offsparse, zeros(p+1))
+
+            # Update storage in C
+            update_component!(C, p, new_dim)
+
+            # Compute center and std for this new family of features
+            # The centers and widths have already been computed in Cfull
+            copy!(C.ξ[new_dim], Cfull.ξ[new_dim])
+            copy!(C.σ[new_dim], Cfull.σ[new_dim])
+
+            # Update qr factorization with the new family of features
+            if i == 1
+                F = qrfactUnblocked(ψ_offscaled[:,(new_dim-1)*(p+1)+1:new_dim*(p+1)])
+            else
+                F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(p+1)+1:new_dim*(p+1)))
+            end
+            Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (p+1)*size(offdims, 1))
+            lhd.A .= (1/Ne)*Asqrt'*Asqrt
+
+            if C.p[Nx] == 0
+                @assert size(lhd.A)==(1,1) "Quadratic matrix should be a scalar."
+                # This equation is equation (A.9) Couplings for nonlinear ensemble filtering
+                # uNx(z) = c + α z so α = 1/√κ*
+                fill!(tmp_diag, 1.0)
+                tmp_diag[1] = sqrt(1/lhd.A[1,1])
+            else
+                # Update A and b of the loss function lhd
+                # Add L-2 regularization
+
+                fill!(tmp_diag, 1.0)
+
+                @inbounds for i=1:n_diag
+                    lhd.A[i,i] += (λ/Ne)
+                end
+                # Update b coefficient
+                lhd.b .= δ*sum(lhd.A, dims=2)[:,1]
+
+                tmp_diag,_,_,_ = projected_newton(tmp_diag, lhd, "TrueHessian")
+                tmp_diag .+= δ
+            end
+
+            cache .= ψ_diagscaled*tmp_diag
+            tmp_off .= -F.R\((F.Q'*cache)[1:(p+1)*size(offdims, 1)])
+            # Rescale coefficients
+            for j=1:n_diag
+                x_diag[j+1] = tmp_diag[j]/σψ[j]
+            end
+
+            for (j, offdimj) in enumerate(offdims)
+                tmp_off[(j-1)*(p+1)+1:j*(p+1)] ./= σψ_off[(offdimj-1)*(p+1)+1:offdimj*(p+1)]
+            end
+
+            # Compute and store the constant term (expectation of selected terms)
+            x_diag[1] = -dot(μψ, x_diag[2:n_diag+1]) #-dot(μψ_off, tmp_off)
+
+            # Make sure that active dim are in the right order when we affect coefficient.
+            # For the split and kfold compute the training and validation losses.
+            fill!(x_offsparse, 0.0)
+            # Compute the permutation associated to offdims
+            perm = sortperm(offdims)
+
+            for (j, offdimj) in enumerate(offdims)
+                tmp_offj = tmp_off[(j-1)*(p+1)+1:j*(p+1)]
+                x_diag[1] -= dot(view(μψ_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)), tmp_offj)
+                view(x_off, (offdimj-1)*(p+1)+1:offdimj*(p+1)) .= tmp_offj
+            end
+
+            for (j, offdimj) in enumerate(offdims)
+                tmp_offj = tmp_off[(perm[j]-1)*(p+1)+1:perm[j]*(p+1)]
+                view(x_offsparse, (j-1)*(p+1)+1:j*(p+1)) .= tmp_offj
+            end
+
+            @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
+
+            modify_a!(C, vcat(x_offsparse, x_diag))
+            filter!(x-> x!= new_dim, candidates)
+        end
+    end
+    return C
+
+
+    if verbose == true
+        println(string(ncoeff(C))*" terms - Training error: "*
+        string(train_error[end])*", Validation error: "*string(valid_error[end]))
+    end
+end
+
+
+
+"""
+$(TYPEDSIGNATURES)
+
+An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the ensemble matrix `X`.
+"""
+function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
+
+    NxX, Ne = size(X)
+    Xsort = deepcopy(sort(X; dims = 2))
+    @assert p > -1 "The order p of the features must be > 0"
+    @assert λ == 0 "Greedy fit is only implemented for λ = 0"
+    @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
+
+    # Initialize a sparse radial map component C with only a diagonal term of order p
+    order = fill(-1, Nx)
+    order[end] = p
+    C = SparseRadialMapComponent(Nx, order)
+
+    center_std!(C, Xsort; γ = γ)
+    x_diag = optimize(C, X, λ, δ)
+    modify_a!(C, x_diag)
+
+    if Nx>1 || maxfamilies>0
+
+        # Create a radial map with order p for all the entries
+        Cfull = SparseRadialMapComponent(Nx, p)
+
+        # Compute centers and widths
+        center_std!(Cfull, Xsort; γ = γ)
 
         # Create weights
         ψ_off, ψ_diag, dψ_diag = compute_weights(Cfull, X)
@@ -79,6 +276,8 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
         x_off = zeros((p+1)*(Nx-1))
         x_offsparse = Float64[]
         tmp_off = Float64[]
+        tmp_diag = zeros(n_diag)
+
 
         budget = min(maxfamilies, Nx-1)
         # Compute the norm of the different candidate features
@@ -94,9 +293,8 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
             _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(p+1)+1:k*(p+1)))^2/sqnormfeatures[k], candidates))
             new_dim = candidates[max_dim]
             push!(offdims, copy(new_dim))
-            tmp_off = vcat(tmp_off, zeros(p+1))
-            x_offsparse = vcat(x_offsparse, zeros(p+1))
-
+            append!(tmp_off, zeros(p+1))
+            append!(x_offsparse, zeros(p+1))
 
             # Update storage in C
             update_component!(C, p, new_dim)
@@ -117,16 +315,16 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
             if C.p[Nx] == 0
                 @assert size(lhd.A)==(1,1) "Quadratic matrix should be a scalar."
-                tmp_diag = zeros(1)
                 # This equation is equation (A.9) Couplings for nonlinear ensemble filtering
                 # uNx(z) = c + α z so α = 1/√κ*
+                fill!(tmp_diag, 1.0)
                 tmp_diag[1] = sqrt(1/lhd.A[1,1])
             else
                 # Update A and b of the loss function lhd
                 # Add L-2 regularization
-                fill!(x_diag, 1.0)
 
-                tmp_diag = ones(n_diag)
+                fill!(tmp_diag, 1.0)
+
                 @inbounds for i=1:n_diag
                     lhd.A[i,i] += (λ/Ne)
                 end
@@ -154,7 +352,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
             # Make sure that active dim are in the right order when we affect coefficient.
             # For the split and kfold compute the training and validation losses.
             fill!(x_offsparse, 0.0)
-            # Compute the inverse of the ordering permutation
+            # Compute the permutation associated to offdims
             perm = sortperm(offdims)
 
             for (j, offdimj) in enumerate(offdims)
@@ -167,6 +365,9 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
                 tmp_offj = tmp_off[(perm[j]-1)*(p+1)+1:perm[j]*(p+1)]
                 view(x_offsparse, (j-1)*(p+1)+1:j*(p+1)) .= tmp_offj
             end
+
+            @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
+
             modify_a!(C, vcat(x_offsparse, x_diag))
             filter!(x-> x!= new_dim, candidates)
         end

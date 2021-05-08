@@ -83,7 +83,7 @@ end
 
     X = Matrix([-0.8544   -0.7938;0.3573    0.5410; 2.7485   -0.5591; -1.5130    1.9766; 0.4340    0.5447; -0.2298   -0.1379;-0.8271   0.6199;-0.8320   -0.0056;0.4979    1.1072;2.3156   -0.1856]')
 
-    @time S = RadialMap(Nx, p; γ = γ)
+     S = RadialMap(Nx, p; γ = γ)
 
     center_std!(S, X)
     W = create_weights(S, X)
@@ -193,7 +193,7 @@ end
                  -0.8271   0.6199;-0.8320   -0.0056;
                   0.4979    1.1072;2.3156   -0.1856]')
 
-    @time S = RadialMap(Nx, p; γ = γ)
+     S = RadialMap(Nx, p; γ = γ)
 
     center_std!(S, X);
 
@@ -446,7 +446,7 @@ end
                 -0.3642   -0.9910    0.7824;
                 -0.8262   -0.2531   -1.4207]')
 
-     @time S = RadialMap(Nx, p; γ = γ)
+      S = RadialMap(Nx, p; γ = γ)
 
      center_std!(S, X);
      W = create_weights(S, X)
