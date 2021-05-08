@@ -1,4 +1,4 @@
-export SparseRadialMapComponent, component, construct, evaluate, negative_likelihood!, off_diagonal, set_id
+export SparseRadialMapComponent, component, construct, evaluate, negative_likelihood, off_diagonal, set_id
 
 #### Structure for the Nx-th component SparseRadialMapComponent of the lower triangular map U
 
@@ -218,7 +218,6 @@ function (C::SparseRadialMapComponent)(z::AbstractVector{Float64})
         return out
 end
 
-
 # Evaluate the map C at z = (z1,...,zk)
 # Optimized with views
 function off_diagonal(C::SparseRadialMapComponent, z)
@@ -238,6 +237,32 @@ function off_diagonal(C::SparseRadialMapComponent, z)
                 end
         end
         return out
+end
+
+function D!(C::SparseRadialMapComponent, z::AbstractVector{Float64})
+        @get C (Nx, p)
+        @assert size(z,1) == Nx  "The vector z has more components than the SparseRadialMapComponent"
+        return D!(uk(p[Nx], C.ξ[Nx], C.σ[Nx], C.a[Nx]), z[Nx])
+end
+
+D(C::SparseRadialMapComponent) =  z-> D!(C, z)
+
+function negative_likelihood(C::SparseRadialMapComponent, X::AbstractMatrix{Float64})
+        @get C (Nx, p)
+        J = 0.0
+        NxX, Ne = size(X)
+
+        @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
+        ∂kC = D(C)
+        @inbounds for i=1:Ne
+                col = view(X,:,i)
+                # Quadratic term
+                J += 0.5*C(col)^2
+                # Log barrier term
+                J -= log(∂kC(col))
+        end
+        J *= 1/Ne
+        return J
 end
 
 function component(C::SparseRadialMapComponent, idx::Int64)

@@ -6,13 +6,14 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
 """
-function greedyfit(Nx::Int64, p::Int64, X, Xvalid, maxfamilies::Int64, λ, δ, γ; maxpatience::Int64 = 10^5, verbose::Bool=true)
+function greedyfit(Nx::Int64, pdiag::Int64, poff::Int64, X, Xvalid, maxfamilies::Int64, λ, δ, γ; maxpatience::Int64 = 10^5, verbose::Bool=true)
     train_error = Float64[]
     valid_error = Float64[]
 
     NxX, Ne = size(X)
     # The widths and centers are computed on the entire set.
     Xsort = deepcopy(sort(hcat(X, Xvalid); dims = 2))
+    @show size(Xsort)
     @assert p > -1 "The order p of the features must be > 0"
     @assert λ == 0 "Greedy fit is only implemented for λ = 0"
     @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
@@ -25,6 +26,15 @@ function greedyfit(Nx::Int64, p::Int64, X, Xvalid, maxfamilies::Int64, λ, δ, �
     center_std!(C, Xsort; γ = γ)
     x_diag = optimize(C, X, λ, δ)
     modify_a!(C, x_diag)
+
+    # Compute loss on training and validation sets
+    push!(train_error, copy(negative_likelihood(C, X)))
+    push!(valid_error, copy(negative_likelihood(C, Xvalid)))
+
+    if verbose == true
+        println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+        string(train_error[end])*", Validation error: "*string(valid_error[end]))
+    end
 
     if Nx>1 || maxfamilies>0
 
@@ -181,15 +191,21 @@ function greedyfit(Nx::Int64, p::Int64, X, Xvalid, maxfamilies::Int64, λ, δ, �
 
             modify_a!(C, vcat(x_offsparse, x_diag))
             filter!(x-> x!= new_dim, candidates)
+
+            # Compute loss on training and validation sets
+            push!(train_error, copy(negative_likelihood(C, X)))
+            push!(valid_error, copy(negative_likelihood(C, Xvalid)))
+
+            if verbose == true
+                println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+                string(train_error[end])*", Validation error: "*string(valid_error[end]))
+            end
         end
     end
     return C
 
 
-    if verbose == true
-        println(string(ncoeff(C))*" terms - Training error: "*
-        string(train_error[end])*", Validation error: "*string(valid_error[end]))
-    end
+
 end
 
 
@@ -199,7 +215,7 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the ensemble matrix `X`.
 """
-function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
+function greedyfit(Nx, pdiag::Int64, poff::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
     NxX, Ne = size(X)
     Xsort = deepcopy(sort(X; dims = 2))
@@ -209,7 +225,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
 
     # Initialize a sparse radial map component C with only a diagonal term of order p
     order = fill(-1, Nx)
-    order[end] = p
+    order[end] = pdiag
     C = SparseRadialMapComponent(Nx, order)
 
     center_std!(C, Xsort; γ = γ)
@@ -219,7 +235,7 @@ function greedyfit(Nx, p::Int64, X, maxfamilies::Int64, λ, δ, γ)
     if Nx>1 || maxfamilies>0
 
         # Create a radial map with order p for all the entries
-        Cfull = SparseRadialMapComponent(Nx, p)
+        Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Nx-1), pdiag))
 
         # Compute centers and widths
         center_std!(Cfull, Xsort; γ = γ)

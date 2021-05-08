@@ -26,16 +26,16 @@ function linesearch(x::Array{Float64,1}, G::Array{Float64,1},
     β = 2
 
     it = 0
-    Jx_α_lin = deepcopy(J)+1 # To enter the while loop
-    α = deepcopy(β)# The first iteration inside the while loop will be for α = 1
-    α_p = deepcopy(p)
+    Jx_α_lin = copy(J)+1 # To enter the while loop
+    α = copy(β)# The first iteration inside the while loop will be for α = 1
+    α_p = copy(p)
     x_α = zero(x)
     while (J<Jx_α_lin) && (it<itmax)
         α /= β
-        α_p .= deepcopy(p)
-        rmul!(α_p, deepcopy(α))
+        α_p .= copy(p)
+        rmul!(α_p, copy(α))
         x_α .= max.(0.0, x - α_p)
-        Jx_α = deepcopy(Lhd(x_α, false, noutput = 1))
+        Jx_α = copy(Lhd(x_α, false, noutput = 1))
         α_p[Idx] .= x[Idx] - x_α[Idx]
         Jx_α_lin = Jx_α + σ*dot(G, α_p)
         it += 1
@@ -154,11 +154,11 @@ while (rδJ > rtol_J) && (norm_PG > tol_G) && (it<itmax)
             # p .= deepcopy(EH.vectors*( EH.values .* (EH.vectors'*G)))
         end
     elseif type =="Gradient"
-    itmax = 1000
-    p = copy(G)
+        itmax = 1000
+        p = copy(G)
 
     else
-    error("Method not implemented yet")
+        error("Method not implemented yet")
     end
 
     # Perform line search

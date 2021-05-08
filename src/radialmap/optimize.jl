@@ -254,7 +254,6 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 		x[1:no] .= tmp_off
 	end
 	return x
-
 end
 
 function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
