@@ -1,4 +1,4 @@
-export SparseRadialMapComponent, component, construct, evaluate, negative_likelihood, off_diagonal, set_id
+export SparseRadialMapComponent, component, construct, clearcoeff!, evaluate, negative_likelihood, off_diagonal, set_id
 
 #### Structure for the Nx-th component SparseRadialMapComponent of the lower triangular map U
 
@@ -165,6 +165,12 @@ function modify_a!(C::SparseRadialMapComponent, A::Array{Float64,1})
                 end
         end
         @assert count == size(A,1) "Error in the assignment of the coefficients"
+end
+
+function clearcoeff!(C::SparseRadialMapComponent)
+        @inbounds for i in C.activedim
+                fill!(C.a[i], 0.0)
+        end
 end
 
 extract_a(C::SparseRadialMapComponent) = vcat(C.a...)

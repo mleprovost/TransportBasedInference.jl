@@ -1,18 +1,18 @@
 
-function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, pdiag::Union{Int64, Nothing}, maxfamilies::Union{Nothing, Int64, String},
+function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, pdiag::Union{Int64, Nothing}, maxfamiliesoff::Union{Nothing, Int64, String},
                   λ::Float64, δ::Float64, γ::Float64;
                   maxpatience::Int64 = 10^5, verbose::Bool = false)
     Nx = C.Nx
-
-    if typeof(maxfamilies) <: Nothing
+    # By default the diagonal component is selected
+    if typeof(maxfamiliesoff) <: Nothing
         x_opt = optimize(C, X, λ, δ)
         modify_a!(C, x_opt)
         error = negative_likelihood(C, X)
-    elseif typeof(maxfamilies) <: Int64
-        C, error =  greedyfit(Nx, poff, pdiag, X, maxfamilies, λ, δ, γ;
+    elseif typeof(maxfamiliesoff) <: Int64
+        C, error =  greedyfit(Nx, poff, pdiag, X, maxfamiliesoff, λ, δ, γ;
                               verbose = verbose)
 
-    elseif maxfamilies ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
+    elseif maxfamiliesoff ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
         # Define cross-validation splits of data
         n_folds = 5
         folds = kfolds(1:size(X,2), k = n_folds)
@@ -36,8 +36,6 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
                                  maxpatience = maxpatience, verbose  = verbose)
 
             # error[2] contains the history of the validation error
-            @show size(error[2])
-            @show size(valid_error)
             valid_error[:,i] .= copy(error[2])
         end
         # elseif typeof(P) <: Thread
@@ -56,17 +54,14 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
         # Find optimal numbers of terms
         mean_valid_error = mean(valid_error, dims  = 2)[:,1]
         _, opt_families = findmin(mean_valid_error)
-        
+        @show opt_families = opt_families
         # Run greedy fit up to opt_nterms on all the data
         C, error = greedyfit(Nx, poff, pdiag, X, opt_families, λ, γ, δ; verbose = verbose)
 
-    elseif maxfamilies ∈ ("split", "Split")
+    elseif maxfamiliesoff ∈ ("split", "Split")
         nvalid = ceil(Int64, floor(0.2*size(X,2)))
         X_train = X[:,nvalid+1:end]
         X_valid = X[:,1:nvalid]
-
-        # Set maximum patience for optimization
-        maxpatience = 20
 
         # Run greedy approximation
         maxfamily =  min(Nx-1, ceil(Int64, sqrt(size(X,2))))
