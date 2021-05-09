@@ -6,7 +6,9 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
 """
-function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Float64}, Xvalid::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool=true)
+function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Float64}, Xvalid::AbstractMatrix{Float64}, maxfamilies::Int64,
+                   λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool=false)
+
     train_error = Float64[]
     valid_error = Float64[]
 
@@ -36,6 +38,9 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
     end
 
     if Nx>1 || maxfamilies>0
+
+        best_valid_error = Inf
+        patience = 0
 
         # Create a radial map with order p for all the entries
         Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Int64, Nx-1), pdiag))
@@ -200,12 +205,27 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
                 println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
                 string(train_error[end])*", Validation error: "*string(valid_error[end]))
             end
+
+            # Update patience
+            if valid_error[end] >= best_valid_error
+                patience +=1
+            else
+                best_valid_error = copy(valid_error[end])
+                patience = 0
+            end
+
+            # Check if patience exceeded maximum patience
+            if patience >= maxpatience
+                break
+            end
         end
     end
-    return C
+    return C, (train_error, valid_error)
 end
 
-greedyfit(Nx::Int64, p::Int64, X::AbstractMatrix{Float64}, Xvalid::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool=true) =
+greedyfit(Nx::Int64, p::Int64, X::AbstractMatrix{Float64}, Xvalid::AbstractMatrix{Float64},
+          maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64;
+          maxpatience::Int64 = 10^5, verbose::Bool=false) =
           greedyfit(Nx, p, p, X, Xvalid, maxfamilies, λ, δ, γ; maxpatience = maxpatience, verbose = verbose)
 
 
@@ -217,10 +237,12 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `SparseRadialMapComponent` based on  the ensemble matrix `X`.
 """
-function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64)
+function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float64},
+                   maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool = false)
 
     NxX, Ne = size(X)
     Xsort = deepcopy(sort(X; dims = 2))
+    train_error = Float64[]
     @assert poff > -1 || pdiag > -1 "The order poff and pdiag of the features must be > 0"
     @assert λ == 0 "Greedy fit is only implemented for λ = 0"
     @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
@@ -233,8 +255,18 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
     center_std!(C, Xsort; γ = γ)
     x_diag = optimize(C, X, λ, δ)
     modify_a!(C, x_diag)
+    push!(train_error, copy(negative_likelihood(C, X)))
+
+    if verbose == true
+        # Compute loss on training and validation sets
+        println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+                string(train_error[end]))
+    end
 
     if Nx>1 || maxfamilies>0
+
+        best_train_error = Inf
+        patience = 0
 
         # Create a radial map with order p for all the entries
         Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Int64, Nx-1), pdiag))
@@ -387,13 +419,35 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
 
             modify_a!(C, vcat(x_offsparse, x_diag))
+            push!(train_error, copy(negative_likelihood(C, X)))
             filter!(x-> x!= new_dim, candidates)
+
+            if verbose == true
+                # Compute loss on training and validation sets
+                println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+                        string(train_error[end]))
+            end
+
+            # Update patience
+            if train_error[end] >= best_train_error
+                patience +=1
+            else
+                best_train_error = copy(train_error[end])
+                patience = 0
+            end
+
+            # Check if patience exceeded maximum patience
+            if patience >= maxpatience
+                break
+            end
         end
     end
-    return C
+    return C, train_error
 end
 
-greedyfit(Nx::Int64, p::Int64, X::AbstractMatrix{Float64}, maxfamilies::Int64, λ::Float64, δ::Float64, γ::Float64) = greedyfit(Nx, p, p, X, maxfamilies, λ, δ, γ)
+greedyfit(Nx::Int64, p::Int64, X::AbstractMatrix{Float64}, maxfamilies::Int64,
+          λ::Float64, δ::Float64, γ::Float64; maxpatience::Int64 = 10^5, verbose::Bool=false) =
+          greedyfit(Nx, p, p, X, maxfamilies, λ, δ, γ; maxpatience = maxpatience, verbose = verbose)
 
 
 function gradient_off!(dJ::AbstractVector{Float64}, cache::AbstractVector{Float64}, ψ_off::AbstractMatrix{Float64}, x_off, rhs, Ne::Int64)

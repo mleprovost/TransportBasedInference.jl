@@ -1,4 +1,4 @@
-export fast_mul, fast_mul2, optimize, optimize_coeffs, solve_nonlinear
+export fast_mul, fast_mul2, optimize, optimize_coeffs#, solve_nonlinear
 
 
 # Function to speed-up ψ_diag*Q1'*Q1
