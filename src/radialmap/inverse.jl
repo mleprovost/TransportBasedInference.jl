@@ -28,7 +28,7 @@ function inverse_uk(u::uk, x, κ; z0::Real=0.0)
         return x
     elseif u.p==0
     # Solve u(z)= az + b = x for z
-        return (x-u.ak[1])/u.ak[2]
+        return (x-u.coeffk[1])/u.coeffk[2]
     else
         zlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
         #Ensure that the zero is bracketed

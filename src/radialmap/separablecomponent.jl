@@ -53,24 +53,24 @@ struct ui <:SeparableFcn
         p::Int64
         ξi::Array{Float64,1}
         σi::Array{Float64,1}
-        ai::Array{Float64,1}
+        coeffi::Array{Float64,1}
         # f::Array{ParamFcn,1}
 
         # Inner constructor
-        function ui(p::Int64, ξi::Array{Float64, 1}, σi::Array{Float64, 1}, ai::Array{Float64, 1})
+        function ui(p::Int64, ξi::Array{Float64, 1}, σi::Array{Float64, 1}, coeffi::Array{Float64, 1})
 
                 if p==-1
                         # p==-1 , ui(z) = 0.0
                         @assert size(ξi,1)==0 "Size of ξi does not match the number of RBFs p"
                         @assert size(σi,1)==0 "Size of σi does not match the number of RBFs p"
-                        @assert size(ai,1)==0 "Size of ai does not match the number of RBFs p"
+                        @assert size(coeffi,1)==0 "Size of coeffi does not match the number of RBFs p"
                 else
                         # p==0 ui(z) = az, p>0 ui(z) = a1z + p rbfs
                         @assert size(ξi,1)==p "Size of ξi does not match the number of RBFs p"
                         @assert size(σi,1)==p "Size of σi does not match the number of RBFs p"
-                        @assert size(ai,1)==p+1 "Size of ai does not match the number of RBFs p"
+                        @assert size(coeffi,1)==p+1 "Size of coeffi does not match the number of RBFs p"
                 end
-                new(p, ξi, σi, ai)
+                new(p, ξi, σi, coeffi)
         end
 end
 
@@ -87,10 +87,10 @@ function (u::ui)(z::Real)
 if p==-1
         return 0.0
 else
-        out = u.ai[1]*z
+        out = u.coeffi[1]*z
         if p>0
                 @inbounds for j=1:p
-                out +=rbf(u.ξi[j], u.σi[j])(z)*u.ai[j+1]
+                out +=rbf(u.ξi[j], u.σi[j])(z)*u.coeffi[j+1]
                 end
         end
         return out
@@ -104,10 +104,10 @@ function D!(u::ui, z::Real)
 if p==-1
         return 0.0
 else
-        out = u.ai[1]
+        out = u.coeffi[1]
         if p>0
                 for j=1:p
-                @inbounds out +=rbf′(u.ξi[j], u.σi[j])(z)*u.ai[j+1]
+                @inbounds out +=rbf′(u.ξi[j], u.σi[j])(z)*u.coeffi[j+1]
                 end
         end
         return out
@@ -124,23 +124,23 @@ struct uk <:SeparableFcn
         p::Int64
         ξk::Array{Float64,1}
         σk::Array{Float64,1}
-        ak::Array{Float64,1}
+        coeffk::Array{Float64,1}
 
-        function uk(p::Int64, ξk::Array{Float64, 1}, σk::Array{Float64, 1}, ak::Array{Float64, 1})
+        function uk(p::Int64, ξk::Array{Float64, 1}, σk::Array{Float64, 1}, coeffk::Array{Float64, 1})
                 if p==-1
                 @assert size(ξk,1)==0 "Size of ξk doesn't match the number of RBFs p"
                 @assert size(σk,1)==0 "Size of σk doesn't match the number of RBFs p"
-                @assert size(ak,1)==0 "Size of ak doesn't match the number of RBFs p"
+                @assert size(coeffk,1)==0 "Size of coeffk doesn't match the number of RBFs p"
                 elseif p==0
                 @assert size(ξk,1)==0 "Size of ξk doesn't match the number of RBFs p"
                 @assert size(σk,1)==0 "Size of σk doesn't match the number of RBFs p"
-                @assert size(ak,1)==2 "Size of ak doesn't match the number of RBFs p"
+                @assert size(coeffk,1)==2 "Size of coeffk doesn't match the number of RBFs p"
                 else
                 @assert size(ξk,1)==p+2 "Size of ξk doesn't match the number of RBFs p"
                 @assert size(σk,1)==p+2 "Size of σk doesn't match the number of RBFs p"
-                @assert size(ak,1)==p+3 "Size of ak doesn't match the number of RBFs p"
+                @assert size(coeffk,1)==p+3 "Size of coeffk doesn't match the number of RBFs p"
                 end
-                return new(p, ξk, σk, ak)
+                return new(p, ξk, σk, coeffk)
         end
 end
 
@@ -164,15 +164,15 @@ function (u::uk)(z::T) where {T<:Real}
         if p==-1
                 return z
         elseif p==0
-                out = u.ak[1] + u.ak[2]*z
+                out = u.coeffk[1] + u.coeffk[2]*z
                 return out
         else
-                out = u.ak[1]
-                out +=ψ₀(u.ξk[1], u.σk[1])(z)*u.ak[2]
-                out +=ψpp1(u.ξk[p+2], u.σk[p+2])(z)*u.ak[p+3]
+                out = u.coeffk[1]
+                out +=ψ₀(u.ξk[1], u.σk[1])(z)*u.coeffk[2]
+                out +=ψpp1(u.ξk[p+2], u.σk[p+2])(z)*u.coeffk[p+3]
 
                 @inbounds for j=2:p+1
-                out +=ψj(u.ξk[j], u.σk[j])(z)*u.ak[j+1]
+                out +=ψj(u.ξk[j], u.σk[j])(z)*u.coeffk[j+1]
                 end
                 return out
         end
@@ -187,13 +187,13 @@ function D!(u::uk, z::Real)
                 return 1.0
         elseif p==0
         # Linear function
-                return u.ak[2]
+                return u.coeffk[2]
         else
-                out = ψ₀′(u.ξk[1], u.σk[1])(z)*u.ak[2]
-                out += ψpp1′(u.ξk[p+2], u.σk[p+2])(z)*u.ak[p+3]
+                out = ψ₀′(u.ξk[1], u.σk[1])(z)*u.coeffk[2]
+                out += ψpp1′(u.ξk[p+2], u.σk[p+2])(z)*u.coeffk[p+3]
 
                 @inbounds for j=2:p+1
-                out +=rbf(u.ξk[j], u.σk[j])(z)*u.ak[j+1]
+                out +=rbf(u.ξk[j], u.σk[j])(z)*u.coeffk[j+1]
                 end
                 return out
         end
@@ -209,12 +209,12 @@ function H!(u::uk, z::Real)
                 return 0.0
         else
                 # ψ₀'' = -rbf
-                out =rbf(u.ξk[1], u.σk[1])(z)*(-u.ak[2])
+                out =rbf(u.ξk[1], u.σk[1])(z)*(-u.coeffk[2])
                 # ψpp1′′
-                out +=rbf(u.ξk[p+2], u.σk[p+2])(z)*u.ak[p+3]
+                out +=rbf(u.ξk[p+2], u.σk[p+2])(z)*u.coeffk[p+3]
 
                 @inbounds for j=2:p+1
-                out +=rbf′(u.ξk[j], u.σk[j])(z)*u.ak[j+1]
+                out +=rbf′(u.ξk[j], u.σk[j])(z)*u.coeffk[j+1]
                 end
                 return out
         end

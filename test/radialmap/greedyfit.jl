@@ -23,7 +23,7 @@
         order = p*ones(Int64, Nx)
         Cfull = SparseRadialMapComponent(Nx, order)
         center_std!(Cfull, sort(X; dims = 2); γ = γ)
-        modify_a!(Cfull, coeff)
+        modifycoeff!(Cfull, coeff)
         ψ_off, ψ_diag, ψ_∂k = compute_weights(Cfull, X)
 
         J(x) = (1/(2*Ne))*norm((ψ_off*x) + ψ_diag*coeff_diag[2:end] .+ coeff_diag[1])^2
@@ -59,9 +59,9 @@ end
                     C = SparseRadialMapComponent(Nx, Cgreedy.p)
                     center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
                     x_opt = optimize(C, X, λ, δ)
-                    modify_a!(C, x_opt)
+                    modifycoeff!(C, x_opt)
                     @test isapprox(ϵgreedy[end], negative_likelihood(C, X), atol = 1e-10)
-                    @test norm(Cgreedy.a - C.a)<1e-10
+                    @test norm(Cgreedy.coeff - C.coeff)<1e-10
                 end
             end
         end
@@ -73,9 +73,9 @@ end
                     C = SparseRadialMapComponent(Nx, Cgreedy.p)
                     center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
                     x_opt = optimize(C, X, λ, δ)
-                    modify_a!(C, x_opt)
+                    modifycoeff!(C, x_opt)
                     @test isapprox(ϵgreedy[end], negative_likelihood(C, X), atol = 1e-10)
-                    @test norm(Cgreedy.a - C.a)<1e-10
+                    @test norm(Cgreedy.coeff - C.coeff)<1e-10
                 end
             end
         end

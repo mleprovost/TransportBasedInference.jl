@@ -18,18 +18,19 @@ using FiniteDiff
 using Random
 
 # Test for Radial Maps
-include("radialmap/function.jl")
-include("radialmap/separablecomponent.jl")
-include("radialmap/mapcomponent.jl")
-include("radialmap/sparsemapcomponent.jl")
-include("radialmap/map.jl")
-include("radialmap/weights.jl")
-include("radialmap/quantile.jl")
-include("radialmap/cost.jl")
-include("radialmap/optimize.jl")
-include("radialmap/optimize_multithreading.jl")
-include("radialmap/iterativeoptimize.jl")
-include("radialmap/inverse.jl")
+# include("radialmap/function.jl")
+# include("radialmap/separablecomponent.jl")
+# include("radialmap/mapcomponent.jl")
+# include("radialmap/sparsemapcomponent.jl")
+# include("radialmap/map.jl")
+# include("radialmap/weights.jl")
+# include("radialmap/quantile.jl")
+# include("radialmap/cost.jl")
+# include("radialmap/optimize.jl")
+# include("radialmap/optimize_multithreading.jl")
+include("radialmap/greedyfit.jl")
+# include("radialmap/iterativeoptimize.jl")
+# include("radialmap/inverse.jl")
 
 
 # # Test for Tools

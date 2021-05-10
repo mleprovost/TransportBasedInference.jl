@@ -1,4 +1,4 @@
-export RadialMapComponent, component, construct, evaluate, modify_a!, off_diagonal
+export RadialMapComponent, component, construct, evaluate, modifycoeff!, off_diagonal
 
 #### Structure for the k-th component RadialMapComponent of the lower triangular map U
 
@@ -12,17 +12,17 @@ struct RadialMapComponent
         p::Int64
         ξ::Array{Array{Float64,1}, 1}#{Union{Array{Float64,1}, 1}
         σ::Array{Array{Float64,1}, 1}
-        a::Array{Array{Float64,1}, 1}
+        coeff::Array{Array{Float64,1}, 1}
 
         # Cache for evaluation of function, gradient and hessian on basis
 
         # Inner constructor
-        function RadialMapComponent(Nx::Int64, p::Int64, ξ::Array{Array{Float64,1},1}, σ::Array{Array{Float64,1},1}, a::Array{Array{Float64,1},1})
+        function RadialMapComponent(Nx::Int64, p::Int64, ξ::Array{Array{Float64,1},1}, σ::Array{Array{Float64,1},1}, coeff::Array{Array{Float64,1},1})
 
         @assert size(ξ,1)==Nx "Size of ξ doesn't match the order of RadialMapComponent"
         @assert size(σ,1)==Nx "Size of σ doesn't match the order of RadialMapComponent"
-        @assert size(a,1)==Nx "Size of a doesn't match the order of RadialMapComponent"
-                return new(Nx, p, ξ, σ, a)
+        @assert size(coeff,1)==Nx "Size of coeff doesn't match the order of RadialMapComponent"
+                return new(Nx, p, ξ, σ, coeff)
         end
 end
 
@@ -72,44 +72,44 @@ end
 
 
 
-# Transform vector of coefficients to a form RadialMapComponent.a
-function modify_a!(C::RadialMapComponent, A::Array{Float64,1})
+# Transform vector of coefficients to a form RadialMapComponent.coeff
+function modifycoeff!(C::RadialMapComponent, A::Array{Float64,1})
         @get C (Nx, p)
         if Nx==1
-                C.a[1] .= A
-                # C.a[1] .= A
+                C.coeff[1] .= A
+                # C.coeff[1] .= A
         else
                 if p==0
                         for idx=1:Nx-1
-                        @inbounds C.a[idx] .= [A[idx]]
+                        @inbounds C.coeff[idx] .= [A[idx]]
                         end
-                        tmp_ak = view(C.a,Nx)[1]
+                        tmp_ak = view(C.coeff,Nx)[1]
                         tmp_ak .= view(A, Nx:Nx+1)
-                        # C.a[k] .= A[end-1:end]
-                        # C.a[k] .= A[end-1:end]
+                        # C.coeff[k] .= A[end-1:end]
+                        # C.coeff[k] .= A[end-1:end]
                 else
                         @inbounds  for idx=1:Nx-1
-                        tmp_ai = view(C.a, idx)[1]
+                        tmp_ai = view(C.coeff, idx)[1]
                         tmp_ai .= view(A, (idx-1)*(p+1)+1:idx*(p+1))
-                        # @inbounds C.a[idx] .= view(A, (idx-1)*(p+1)+1:idx*(p+1))
-                        # @inbounds C.a[idx] .= A[(idx-1)*(p+1)+1:idx*(p+1)]
+                        # @inbounds C.coeff[idx] .= view(A, (idx-1)*(p+1)+1:idx*(p+1))
+                        # @inbounds C.coeff[idx] .= A[(idx-1)*(p+1)+1:idx*(p+1)]
                         end
-                        tmp_ak  = view(C.a,Nx)[1]
+                        tmp_ak  = view(C.coeff,Nx)[1]
                         tmp_ak .= view(A, (Nx-1)*(p+1)+1:Nx*(p+1)+2)
-                        # C.a[k] .= view(A, (k-1)*(p+1)+1:k*(p+1)+2)
-                        # C.a[Nx] .= A[(Nx-1)*(p+1)+1:Nx*(p+1)+2]
+                        # C.coeff[k] .= view(A, (k-1)*(p+1)+1:k*(p+1)+2)
+                        # C.coeff[Nx] .= A[(Nx-1)*(p+1)+1:Nx*(p+1)+2]
                 end
         end
         nothing
 end
 
-extract_a(C::RadialMapComponent) = vcat(C.a...)
+extractcoeff(C::RadialMapComponent) = vcat(C.coeff...)
 
 
 function evaluate(C::RadialMapComponent, z::Array{T,1}) where {T<:Real}
         @get C (Nx, p)
         @assert Nx==size(z,1) "Wrong dimension of z"
-        A = extract_a(C)
+        A = extractcoeff(C)
 
         n = size(A,1)
         basis = zeros(n)
@@ -143,10 +143,10 @@ size(C::RadialMapComponent) = (C.Nx, C.p)
 # Evaluate the map RadialMapComponent at z = (x,...,x)
 function (C::RadialMapComponent)(z::T) where {T<:Real}
         @get C (Nx, p)
-        out = uk(p, C.ξ[Nx], C.σ[Nx], C.a[Nx])(z)
+        out = uk(p, C.ξ[Nx], C.σ[Nx], C.coeff[Nx])(z)
         if Nx>1
                 for i=1:Nx-1
-                @inbounds out += ui(p, C.ξ[i], C.σ[i], C.a[i])(z)
+                @inbounds out += ui(p, C.ξ[i], C.σ[i], C.coeff[i])(z)
                 end
         end
         return out
@@ -158,19 +158,19 @@ function (C::RadialMapComponent)(z)
         @get C (Nx, p)
         @assert size(z,1)<=Nx  "The vector z has more components than RadialMapComponent"
         if p==0
-        out = uk(p, C.ξ[Nx], C.σ[Nx], C.a[Nx])(z[end])
+        out = uk(p, C.ξ[Nx], C.σ[Nx], C.coeff[Nx])(z[end])
         else
-        out = uk(p, view(C.ξ,Nx)[1], view(C.σ,Nx)[1], view(C.a,Nx)[1])(z[end])
+        out = uk(p, view(C.ξ,Nx)[1], view(C.σ,Nx)[1], view(C.coeff,Nx)[1])(z[end])
         end
 
         if Nx>1
                 if p==0
                 for i=1:Nx-1
-                @inbounds out += ui(p, C.ξ[i], C.σ[i], C.a[i])(z[i])
+                @inbounds out += ui(p, C.ξ[i], C.σ[i], C.coeff[i])(z[i])
                 end
                 else
                 for i=1:Nx-1
-                @inbounds out += ui(p, view(C.ξ,i)[1], view(C.σ,i)[1], view(C.a,i)[1])(z[i])
+                @inbounds out += ui(p, view(C.ξ,i)[1], view(C.σ,i)[1], view(C.coeff,i)[1])(z[i])
                 end
                 end
         end
@@ -187,11 +187,11 @@ function off_diagonal(C::RadialMapComponent, z)
         if Nx>1
                 if p==0
                 for i=1:Nx-1
-                @inbounds out += ui(p, C.ξ[i], C.σ[i], C.a[i])(z[i])
+                @inbounds out += ui(p, C.ξ[i], C.σ[i], C.coeff[i])(z[i])
                 end
                 else
                 for i=1:Nx-1
-                @inbounds out += ui(p, view(C.ξ,i)[1], view(C.σ,i)[1], view(C.a,i)[1])(z[i])
+                @inbounds out += ui(p, view(C.ξ,i)[1], view(C.σ,i)[1], view(C.coeff,i)[1])(z[i])
                 end
                 end
         end
@@ -203,15 +203,15 @@ function component(C::RadialMapComponent, idx::Int64)
         @assert Nx>= idx "Can't access this component idx>Nx"
         if p==0
                 if idx==Nx
-                        return uk(p, C.ξ[idx], C.σ[idx], C.a[idx])
+                        return uk(p, C.ξ[idx], C.σ[idx], C.coeff[idx])
                 else
-                        return ui(p, C.ξ[idx], C.σ[idx], C.a[idx])
+                        return ui(p, C.ξ[idx], C.σ[idx], C.coeff[idx])
                 end
         else
                 if idx==Nx
-                        return uk(p, view(C.ξ,idx)[1], view(C.σ,idx)[1], view(C.a,idx)[1])
+                        return uk(p, view(C.ξ,idx)[1], view(C.σ,idx)[1], view(C.coeff,idx)[1])
                 else
-                        return ui(p, view(C.ξ,idx)[1], view(C.σ,idx)[1], view(C.a,idx)[1])
+                        return ui(p, view(C.ξ,idx)[1], view(C.σ,idx)[1], view(C.coeff,idx)[1])
                 end
         end
 end
@@ -220,7 +220,7 @@ end
 
 
 # Compute the last component uk of RadialMapComponent
-# uk(C::RadialMapComponent{k,p}) where {k, p} = uk(k,p, C.ξ[k], C.σ[k], C.a[k])
+# uk(C::RadialMapComponent{k,p}) where {k, p} = uk(k,p, C.ξ[k], C.σ[k], C.coeff[k])
 #
 #
 # ∇k(C::RadialMapComponent{k,p}) where {k, p} = ∇k(uk(C))
@@ -231,9 +231,9 @@ end
 #         f = separablefcn[]
 #         if k>1
 #                 for i=1:k-1
-#                 @inbounds push!(f, deepcopy(ui(p, C.ξ[i], C.σ[i], C.a[i])))
+#                 @inbounds push!(f, deepcopy(ui(p, C.ξ[i], C.σ[i], C.coeff[i])))
 #                 end
 #         end
-#         push!(f, deepcopy(uk(p, C.ξ[k], C.σ[k], C.a[k])))
+#         push!(f, deepcopy(uk(p, C.ξ[k], C.σ[k], C.coeff[k])))
 #         return f
 # end

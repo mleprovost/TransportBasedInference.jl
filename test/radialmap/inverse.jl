@@ -3,7 +3,7 @@
     u = uk(3)
     u.ξk .= sort!(randn(5))
     u.σk .= σscale(u.ξk,2.0)
-    u.ak .= rand(6);
+    u.coeffk .= rand(6);
     κ = 5.0
     xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 
@@ -21,7 +21,7 @@ end
 
 @testset "inverse_uk p=0" begin
     u = uk(0)
-    u.ak .= [1.0;2.0]
+    u.coeffk .= [1.0;2.0]
     zopt = inverse_uk(u,2.0,500.0)
     @test zopt ==(2.0-1.0)/2.0
     @test u(zopt) == 2.0
@@ -31,7 +31,7 @@ end
     u = uk(5)
     u.ξk .= sort!(randn(7))
     u.σk .= σscale(u.ξk,2.0)
-    u.ak .= rand(8);
+    u.coeffk .= rand(8);
 
     zopt = inverse_uk(u,1.0,500.0)
     @test norm(u(zopt) -1.0)<1e-9
@@ -111,7 +111,7 @@ end
 # u = uk(3)
 # u.ξk .= sort!(randn(5))
 # u.σk .= σscale(u.ξk,2.0)
-# u.ak .= rand(6);
+# u.coeffk .= rand(6);
 # κ = 5.0
 # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # zlim = bracket(u, xlim[1], xlim[2])
@@ -123,7 +123,7 @@ end
 # u = uk(3)
 # u.ξk .= sort!(randn(5))
 # u.σk .= σscale(u.ξk,2.0)
-# u.ak .= rand(6);
+# u.coeffk .= rand(6);
 # κ = 5.0
 # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # zlim = bracket(u, xlim[1], xlim[2])
@@ -136,7 +136,7 @@ end
 # u = uk(3)
 # u.ξk .= sort!(randn(5))
 # u.σk .= σscale(u.ξk,2.0)
-# u.ak .= rand(6);
+# u.coeffk .= rand(6);
 # κ = 5.0
 # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # zlim = bracket(u, xlim[1], xlim[2])
@@ -150,7 +150,7 @@ end
 # # u = uk(3)
 # # u.ξk .= sort!(randn(5))
 # # u.σk .= σscale(u.ξk,2.0)
-# # u.ak .= rand(6);
+# # u.coeffk .= rand(6);
 # # κ = 5.0
 # # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # # zlim = bracket(u, xlim[1], xlim[2])
@@ -163,7 +163,7 @@ end
 # u = uk(3)
 # u.ξk .= sort!(randn(5))
 # u.σk .= σscale(u.ξk,2.0)
-# u.ak .= rand(6);
+# u.coeffk .= rand(6);
 # κ = 5.0
 # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # zlim = bracket(u, xlim[1], xlim[2])
@@ -176,7 +176,7 @@ end
 # # u = uk(3)
 # # u.ξk .= sort!(randn(5))
 # # u.σk .= σscale(u.ξk,2.0)
-# # u.ak .= rand(6);
+# # u.coeffk .= rand(6);
 # # κ = 5.0
 # # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # # zlim = bracket(u, xlim[1], xlim[2])
@@ -189,7 +189,7 @@ end
 # # u = uk(3)
 # # u.ξk .= sort!(randn(5))
 # # u.σk .= σscale(u.ξk,2.0)
-# # u.ak .= rand(6);
+# # u.coeffk .= rand(6);
 # # κ = 5.0
 # # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # # zlim = bracket(u, xlim[1], xlim[2])
@@ -202,7 +202,7 @@ end
 # # u = uk(3)
 # # u.ξk .= sort!(randn(5))
 # # u.σk .= σscale(u.ξk,2.0)
-# # u.ak .= rand(6);
+# # u.coeffk .= rand(6);
 # # κ = 5.0
 # # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # # zlim = bracket(u, xlim[1], xlim[2])
@@ -215,7 +215,7 @@ end
 # # u = uk(3)
 # # u.ξk .= sort!(randn(5))
 # # u.σk .= σscale(u.ξk,2.0)
-# # u.ak .= rand(6);
+# # u.coeffk .= rand(6);
 # # κ = 5.0
 # # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # # zlim = bracket(u, xlim[1], xlim[2])
@@ -228,7 +228,7 @@ end
 # # u = uk(3)
 # # u.ξk .= sort!(randn(5))
 # # u.σk .= σscale(u.ξk,2.0)
-# # u.ak .= rand(6);
+# # u.coeffk .= rand(6);
 # # κ = 5.0
 # # xlim = (u.ξk[1]-κ*u.σk[1], u.ξk[end]+κ*u.σk[end])
 # # zlim = bracket(u, xlim[1], xlim[2])

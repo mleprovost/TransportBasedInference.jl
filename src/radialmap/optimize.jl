@@ -135,12 +135,12 @@ function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
 				xopt = optimize(S.C[i], W, λ, δ)
-		    	modify_a!(S.C[i], xopt)
+		    	modifycoeff!(S.C[i], xopt)
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
 				xopt = optimize(S.C[i], W, λ, δ)
-				modify_a!(S.C[i], xopt)
+				modifycoeff!(S.C[i], xopt)
 		end
 	end
 end
@@ -271,14 +271,14 @@ function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
 		@inbounds for i=start:Nx
 			if !allequal(p[i], -1)
 					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
-					modify_a!(S.C[i], xopt)
+					modifycoeff!(S.C[i], xopt)
 			end
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1)
 					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
-					modify_a!(S.C[i], xopt)
+					modifycoeff!(S.C[i], xopt)
 			end
 		end
 	end
@@ -353,7 +353,7 @@ end
 #     optimize!(model)
 #
 #     # Now replace identifed coefficients into a
-#     modify_a!(C, xopt)
+#     modifycoeff!(C, xopt)
 # end
 #
 #
@@ -410,7 +410,7 @@ end
 #
 # 	# Run this part in serial
 # 	@inbounds for i=start:Nx
-# 		modify_a!(S.C[i], X[1:scoeffs[i-start+1],i-start+1])
-# 	# @inbounds modify_a!(S.C[i], X[1:scoeffs[i],i])
+# 		modifycoeff!(S.C[i], X[1:scoeffs[i-start+1],i-start+1])
+# 	# @inbounds modifycoeff!(S.C[i], X[1:scoeffs[i],i])
 #     end
 # end

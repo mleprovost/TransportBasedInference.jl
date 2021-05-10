@@ -19,9 +19,9 @@
 
 
     M = RadialMap(2,2)
-    M.C[1].a[1] .= ones(2+3)
-    M.C[2].a[1] .= 5*ones(2+1)
-    M.C[2].a[2] .= ones(2+3)
+    M.C[1].coeff[1] .= ones(2+3)
+    M.C[2].coeff[1] .= 5*ones(2+1)
+    M.C[2].coeff[2] .= ones(2+3)
 
     x = randn()
     y = randn(2)
@@ -36,12 +36,12 @@
 
     C = RadialMapComponent(2,2)
     A = randn(8)
-    modify_a!(C, A)
+    modifycoeff!(C, A)
 
     Cprime = ForwardDiff.gradient(x->C(x), y)
 
-    @test isapprox(Cprime[1], C.a[1][1] + C.a[1][2]*rbf′(0.0, 1.0)(y[1]) + C.a[1][3]*rbf′(0.0, 1.0)(y[1]), atol = 1e-10)
-    @test isapprox(Cprime[2], 0.0*C.a[2][1] + C.a[2][2]*ψ₀′(0.0, 1.0)(y[2]) + C.a[2][3]*rbf(0.0, 1.0)(y[2]) + C.a[2][4]*rbf(0.0, 1.0)(y[2]) + C.a[2][5]*ψpp1′(0.0, 1.0)(y[2]), atol = 1e-10)
+    @test isapprox(Cprime[1], C.coeff[1][1] + C.coeff[1][2]*rbf′(0.0, 1.0)(y[1]) + C.coeff[1][3]*rbf′(0.0, 1.0)(y[1]), atol = 1e-10)
+    @test isapprox(Cprime[2], 0.0*C.coeff[2][1] + C.coeff[2][2]*ψ₀′(0.0, 1.0)(y[2]) + C.coeff[2][3]*rbf(0.0, 1.0)(y[2]) + C.coeff[2][4]*rbf(0.0, 1.0)(y[2]) + C.coeff[2][5]*ψpp1′(0.0, 1.0)(y[2]), atol = 1e-10)
 end
 
 
@@ -77,36 +77,36 @@ end
 
     @test M(z)[1]==z[1]
 
-    M.C[2].a[1] =randn(1)
+    M.C[2].coeff[1] =randn(1)
 
     M.C[3].ξ[1] = randn(2)
     M.C[3].σ[1] = rand(2)
-    M.C[3].a[1] = randn(3)
+    M.C[3].coeff[1] = randn(3)
 
     M(z)
-    M.C[3].a[2] = randn(1)
+    M.C[3].coeff[2] = randn(1)
 
     M.C[3].ξ[3] = randn(3)
     M.C[3].σ[3] = rand(3)
-    M.C[3].a[3] = randn(4)
+    M.C[3].coeff[3] = randn(4)
 
     M(z)
 
     M.C[4].ξ[2] = randn(2)
     M.C[4].σ[2] = rand(2)
-    M.C[4].a[2] = randn(3)
+    M.C[4].coeff[2] = randn(3)
 
-    M.C[4].a[4] = randn(2)
+    M.C[4].coeff[4] = randn(2)
 
-    @test norm(M(z)[2] - ( ui(p[2][1],Float64[],Float64[],M.C[2].a[1])(z[1]) + z[2]))<1e-12
+    @test norm(M(z)[2] - ( ui(p[2][1],Float64[],Float64[],M.C[2].coeff[1])(z[1]) + z[2]))<1e-12
 
-    @test norm(M(z)[3] -( ui(p[3][1],M.C[3].ξ[1],M.C[3].σ[1],M.C[3].a[1])(z[1])+
-                     ui(p[3][2],M.C[3].ξ[2],M.C[3].σ[2],M.C[3].a[2])(z[2])+
-                     uk(p[3][3],M.C[3].ξ[3],M.C[3].σ[3],M.C[3].a[3])(z[3])))<1e-12
+    @test norm(M(z)[3] -( ui(p[3][1],M.C[3].ξ[1],M.C[3].σ[1],M.C[3].coeff[1])(z[1])+
+                     ui(p[3][2],M.C[3].ξ[2],M.C[3].σ[2],M.C[3].coeff[2])(z[2])+
+                     uk(p[3][3],M.C[3].ξ[3],M.C[3].σ[3],M.C[3].coeff[3])(z[3])))<1e-12
 
 
 
-    @test norm(M(z)[4] -( ui(p[4][2],M.C[4].ξ[2],M.C[4].σ[2],M.C[4].a[2])(z[2])+
-                    uk(p[4][4],M.C[4].ξ[4],M.C[4].σ[4],M.C[4].a[4])(z[4])))<1e-12
+    @test norm(M(z)[4] -( ui(p[4][2],M.C[4].ξ[2],M.C[4].σ[2],M.C[4].coeff[2])(z[2])+
+                    uk(p[4][4],M.C[4].ξ[4],M.C[4].σ[4],M.C[4].coeff[4])(z[4])))<1e-12
 
 end

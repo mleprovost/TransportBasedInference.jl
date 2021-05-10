@@ -6,7 +6,7 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
     # By default the diagonal component is selected
     if typeof(maxfamiliesoff) <: Nothing
         x_opt = optimize(C, X, λ, δ)
-        modify_a!(C, x_opt)
+        modifycoeff!(C, x_opt)
         error = negative_likelihood(C, X)
     elseif typeof(maxfamiliesoff) <: Int64
         C, error =  greedyfit(Nx, poff, pdiag, X, maxfamiliesoff, λ, δ, γ;
@@ -53,8 +53,11 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
 
         # Find optimal numbers of terms
         mean_valid_error = mean(valid_error, dims  = 2)[:,1]
+        @show mean_valid_error
         _, opt_families = findmin(mean_valid_error)
-        @show opt_families = opt_families
+
+        @show opt_families = opt_families-1
+        opt_families = 1
         # Run greedy fit up to opt_nterms on all the data
         C, error = greedyfit(Nx, poff, pdiag, X, opt_families, λ, γ, δ; verbose = verbose)
 

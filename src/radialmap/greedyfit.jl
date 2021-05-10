@@ -26,7 +26,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
 
     center_std!(C, Xsort; γ = γ)
     x_diag = optimize(C, X, λ, δ)
-    modify_a!(C, x_diag)
+    modifycoeff!(C, x_diag)
 
     # Compute loss on training and validation sets
     push!(train_error, copy(negative_likelihood(C, X)))
@@ -202,7 +202,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
 
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
 
-            modify_a!(C, vcat(x_offsparse, x_diag))
+            modifycoeff!(C, vcat(x_offsparse, x_diag))
             filter!(x-> x!= new_dim, candidates)
 
             # Compute loss on training and validation sets
@@ -262,7 +262,8 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
 
     center_std!(C, Xsort; γ = γ)
     x_diag = optimize(C, X, λ, δ)
-    modify_a!(C, x_diag)
+    # @show x_diag
+    modifycoeff!(C, x_diag)
     push!(train_error, copy(negative_likelihood(C, X)))
 
     best_train_error = Inf
@@ -283,9 +284,6 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
     end
 
     if Nx>1 || maxfamiliesoff>0
-
-
-
         # Create a radial map with order p for all the entries
         Cfull = SparseRadialMapComponent(Nx, vcat(poff*ones(Int64, Nx-1), pdiag))
 
@@ -357,9 +355,11 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
             rhs .+= x_diag[1]
             rmul!(rhs, -1.0)
             gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
+            # @show dJ
 
             _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates))
             new_dim = candidates[max_dim]
+            # @show new_dim
             push!(offdims, copy(new_dim))
             append!(tmp_off, zeros(poff+1))
             append!(x_offsparse, zeros(poff+1))
@@ -378,9 +378,11 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
             else
                 F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(poff+1)+1:new_dim*(poff+1)))
             end
+            # @show ψ_diagscaled
             Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (poff+1)*size(offdims, 1))
+            # @show Asqrt
             lhd.A .= (1/Ne)*Asqrt'*Asqrt
-
+            # @show norm(lhd.A)
             if C.p[Nx] == 0
                 @assert size(lhd.A)==(1,1) "Quadratic matrix should be a scalar."
                 # This equation is equation (A.9) Couplings for nonlinear ensemble filtering
@@ -434,9 +436,12 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
                 view(x_offsparse, (j-1)*(poff+1)+1:j*(poff+1)) .= tmp_offj
             end
 
+            # @show x_off
+            # @show x_offsparse
+            # @show x_diag
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
 
-            modify_a!(C, vcat(x_offsparse, x_diag))
+            modifycoeff!(C, vcat(x_offsparse, x_diag))
             push!(train_error, copy(negative_likelihood(C, X)))
             filter!(x-> x!= new_dim, candidates)
 
@@ -485,42 +490,42 @@ function update_component!(C::SparseRadialMapComponent, p::Int64, new_dim::Int64
             C.p[new_dim] = p
             C.ξ[new_dim] = Float64[]
             C.σ[new_dim] = Float64[]
-            C.a[new_dim] = Float64[]
+            C.coeff[new_dim] = Float64[]
         elseif p == 0
             C.p[new_dim] = p
             push!(C.activedim, new_dim)
             sort!(C.activedim)
             C.ξ[new_dim] = zeros(p)
             C.σ[new_dim] = zeros(p)
-            C.a[new_dim] = zeros(p+2)
+            C.coeff[new_dim] = zeros(p+2)
         else
             C.p[new_dim] = p
             push!(C.activedim, new_dim)
             sort!(C.activedim)
             C.ξ[new_dim] = zeros(p+2)
             C.σ[new_dim] = zeros(p+2)
-            C.a[new_dim] = zeros(p+3)
+            C.coeff[new_dim] = zeros(p+3)
         end
     else
         if p == -1
             C.p[new_dim] = p
             C.ξ[new_dim] = Float64[]
             C.σ[new_dim] = Float64[]
-            C.a[new_dim] = Float64[]
+            C.coeff[new_dim] = Float64[]
         elseif p == 0
             C.p[new_dim] = p
             push!(C.activedim, new_dim)
             sort!(C.activedim)
             C.ξ[new_dim] = zeros(p)
             C.σ[new_dim] = zeros(p)
-            C.a[new_dim] = zeros(p+1)
+            C.coeff[new_dim] = zeros(p+1)
         else
             C.p[new_dim] = p
             push!(C.activedim, new_dim)
             sort!(C.activedim)
             C.ξ[new_dim] = zeros(p)
             C.σ[new_dim] = zeros(p)
-            C.a[new_dim] = zeros(p+1)
+            C.coeff[new_dim] = zeros(p+1)
         end
     end
 end
