@@ -29,6 +29,9 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
         valid_error = zeros(maxfamily+1, n_folds)
         # if typeof(P) <: Serial
         @inbounds for i=1:n_folds
+            if verbose == true
+                println("Fold "*string(i)*":")
+            end
             idx_train, idx_valid = folds[i]
 
             C, error = greedyfit(Nx, poff, pdiag, X[:,idx_train], X[:,idx_valid], maxfamily,
@@ -55,11 +58,14 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
         mean_valid_error = mean(valid_error, dims  = 2)[:,1]
         @show mean_valid_error
         _, opt_families = findmin(mean_valid_error)
+        # opt_families corresponds to the number of off-diagonal components
+        opt_families -= 1
 
-        @show opt_families = opt_families-1
-        opt_families = 1
+        if verbose == true
+            println("Optimization on the entire data set:")
+        end
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(Nx, poff, pdiag, X, opt_families, λ, γ, δ; verbose = verbose)
+        C, error = greedyfit(Nx, poff, pdiag, X, opt_families, λ, δ, γ; verbose = verbose)
 
     elseif maxfamiliesoff ∈ ("split", "Split")
         nvalid = ceil(Int64, floor(0.2*size(X,2)))

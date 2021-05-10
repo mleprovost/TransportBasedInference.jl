@@ -310,7 +310,6 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
 
         lhd = LHD(zeros(n_diag,n_diag), dψ_diagscaled, λ, δ)
 
-
         ψ_offscaled = copy(ψ_off)
         μψ_off = copy(mean(ψ_off, dims = 1)[1,:])
         # σψ_off = copy(std(ψ_off, dims = 2, corrected = false)
@@ -378,9 +377,8 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
             else
                 F = updateqrfactUnblocked!(F, view(ψ_offscaled,:,(new_dim-1)*(poff+1)+1:new_dim*(poff+1)))
             end
-            # @show ψ_diagscaled
+
             Asqrt .= ψ_diagscaled - fast_mul2(ψ_diagscaled, F.Q, Ne, (poff+1)*size(offdims, 1))
-            # @show Asqrt
             lhd.A .= (1/Ne)*Asqrt'*Asqrt
             # @show norm(lhd.A)
             if C.p[Nx] == 0
@@ -436,9 +434,6 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
                 view(x_offsparse, (j-1)*(poff+1)+1:j*(poff+1)) .= tmp_offj
             end
 
-            # @show x_off
-            # @show x_offsparse
-            # @show x_diag
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
 
             modifycoeff!(C, vcat(x_offsparse, x_diag))
