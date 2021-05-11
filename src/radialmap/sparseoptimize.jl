@@ -1,3 +1,4 @@
+export optimize
 
 function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, pdiag::Union{Int64, Nothing}, maxfamiliesoff::Union{Nothing, Int64, String},
                   λ::Float64, δ::Float64, γ::Float64;

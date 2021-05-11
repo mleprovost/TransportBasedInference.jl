@@ -47,6 +47,9 @@ struct SparseRadialSMF<:SeqFilter
 
 	"Boolean: is assimilation localized"
 	islocalized::Bool
+
+	"Boolean: is adaptive"
+	isadaptive::Bool
 end
 
 
@@ -55,7 +58,7 @@ function SparseRadialSMF(G::Function, h::Function, β::Float64, ϵy::AdditiveInf
 						 Ny, Nx, Ne,
 				         Δtdyn::Float64, Δtobs::Float64,
 						 dist::Array{Float64,2}, idx::Array{Int64,2};
-						 isfiltered::Bool = false, islocalized::Bool = true)
+						 isfiltered::Bool = false, islocalized::Bool = true, isadaptive::Bool = false)
 	#Create the map with scalar assimlation of the data
 	if islocalized == true
 		S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
@@ -63,7 +66,7 @@ function SparseRadialSMF(G::Function, h::Function, β::Float64, ϵy::AdditiveInf
 		S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
 	end
 	return SparseRadialSMF(G, h, β, ϵy, S, Ny, Nx, Δtdyn, Δtobs, dist, idx,
-	                       zeros(Nx+1, Ne), isfiltered, islocalized)
+	                       zeros(Nx+1, Ne), isfiltered, islocalized, isadaptive)
 end
 
 
@@ -91,8 +94,12 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 	end
 
 	@view(cache[2:Na, :]) .= Xinfl[Ny .+ perm,:]
-
-	optimize(smf.S, cache; start = 2, P = P)
+	if smf.isadaptive == true
+		Sgreedy = SparseRadialMap(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
+		optimize(Sgreedy, cache, 2, 0, "kfolds"; start = 2, verbose = true)
+	else
+		optimize(smf.S, cache, nothing; start = 2, P = P)
+	end
 
 	#Generate local-likelihood samples with uninflated samples
 	@inbounds for i=1:Ne
@@ -101,18 +108,35 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 	end
 
 	@view(cache[2:Na,:]) .= X[Ny .+ perm,:]
-
-	Sx = smf.S(cache; start = 2)
+	if smf.isadaptive == true
+		Sx = Sgreedy(cache; start = 2)
+	else
+		Sx = smf.S(cache; start = 2)
+	end
 
 	if typeof(P) <: Serial
-		@inbounds for i=1:Ne
-			col = view(cache,:,i)
-			inverse(col, view(Sx,:,i), smf.S, ystar)
+		if smf.isadaptive == true
+			@inbounds for i=1:Ne
+				col = view(cache,:,i)
+				inverse(col, view(Sx,:,i), Sgreedy, ystar)
+			end
+		else
+			@inbounds for i=1:Ne
+				col = view(cache,:,i)
+				inverse(col, view(Sx,:,i), smf.S, ystar)
+			end
 		end
 	elseif typeof(P) <: Thread
-		@inbounds Threads.@threads for i=1:Ne
-			col = view(cache,:,i)
-			inverse(col, view(Sx,:,i), smf.S, ystar)
+		if smf.isadaptive == true
+			@inbounds Threads.@threads for i=1:Ne
+				col = view(cache,:,i)
+				inverse(col, view(Sx,:,i), Sgreedy, ystar)
+			end
+		else
+			@inbounds Threads.@threads for i=1:Ne
+				col = view(cache,:,i)
+				inverse(col, view(Sx,:,i), smf.S, ystar)
+			end
 		end
 	end
 
@@ -132,7 +156,7 @@ function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial, localized::Bo
 		# Perturbation of the measurements
 		smf.ϵy(X, 1, Ny)
 
-		optimize(smf.S, X; start = Ny+1)
+		optimize(smf.S, X, nothing; start = Ny+1)
 
 		# Evaluate the transport map
 		F = evaluate(smf.S, X; start = Ny+1)
@@ -143,6 +167,34 @@ function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial, localized::Bo
 	end
 	return X
 end
+
+
+## Adaptive Sparse Radial Map filter
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #
 # function (T::SparseRadialSMF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar, t; P::Parallel = serial) where {Nx, Ny, Ne}
 # 	@assert Ny==size(ystar,1) "Wrong dimension of the observation"
