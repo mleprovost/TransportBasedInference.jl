@@ -58,8 +58,7 @@ end
                     Cgreedy, ϵgreedy = greedyfit(Nx, poff, pdiag, deepcopy(X), k, λ, δ, γ)
                     C = SparseRadialMapComponent(Nx, Cgreedy.p)
                     center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
-                    x_opt = optimize(C, X, λ, δ)
-                    modifycoeff!(C, x_opt)
+                    C, error = optimize(C, X, nothing, λ, δ)
                     @test isapprox(ϵgreedy[end], negative_likelihood(C, X), atol = 1e-10)
                     @test norm(Cgreedy.coeff - C.coeff)<1e-10
                 end
@@ -72,8 +71,7 @@ end
                     Cgreedy, ϵgreedy = greedyfit(Nx, poff, pdiag, deepcopy(X), k, λ, δ, γ)
                     C = SparseRadialMapComponent(Nx, Cgreedy.p)
                     center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
-                    x_opt = optimize(C, X, λ, δ)
-                    modifycoeff!(C, x_opt)
+                    C, error = optimize(C, X, nothing, λ, δ)
                     @test isapprox(ϵgreedy[end], negative_likelihood(C, X), atol = 1e-10)
                     @test norm(Cgreedy.coeff - C.coeff)<1e-10
                 end

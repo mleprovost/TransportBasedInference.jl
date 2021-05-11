@@ -29,15 +29,15 @@
       Tthread = SparseRadialMap(4, order; λ = 0.0)
 
       # Run serial code
-      optimize(T, X; start = 2)
+      optimize(T, X, nothing; start = 2)
 
 
       # Run serial code
-      optimize(Tserial, X; start = 2, P = serial)
+      optimize(Tserial, X, nothing; start = 2, P = serial)
 
       # Run multi-threading code
       @show Threads.nthreads()
-      optimize(Tthread, X; start = 2, P = thread)
+      optimize(Tthread, X, nothing; start = 2, P = thread)
 
       @test norm(T(X[:,1]) -     [6.831108232125667;
                                          0.07966241537360474;

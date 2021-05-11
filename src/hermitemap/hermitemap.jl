@@ -341,7 +341,7 @@ end
 
 ## Optimization function
 
-function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, Array{Int64,1}, String};
+function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx

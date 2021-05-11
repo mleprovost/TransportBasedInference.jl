@@ -193,7 +193,7 @@ end
 
 # Evaluate the map SparseRadialMapComponent at z = (z1,...,zNx)
 # Optimized with views
-function (C::SparseRadialMapComponent)(z::AbstractVector{Float64})
+function (C::SparseRadialMapComponent)(z)
         @get C (Nx, p)
         @assert size(z,1)<=Nx  "The vector z has more components than RadialMapComponent"
         if p[Nx]<1
@@ -247,7 +247,7 @@ end
 
 D(C::SparseRadialMapComponent) =  z-> D!(C, z)
 
-function negative_likelihood(C::SparseRadialMapComponent, X::AbstractMatrix{Float64})
+function negative_likelihood(C::Union{SparseRadialMapComponent, RadialMapComponent}, X::AbstractMatrix{Float64})
         @get C (Nx, p)
         J = 0.0
         NxX, Ne = size(X)

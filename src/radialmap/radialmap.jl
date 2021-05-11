@@ -88,8 +88,8 @@ end
 function SparseRadialMap(Nx::Int64, p::Array{Array{Int64,1}}; γ::Float64=2.0, λ::Float64=0.1, δ::Float64=1e-8, κ::Float64=10.0)
         @assert Nx==size(p,1) "Wrong dimension of the SparseRadialMap"
         C = SparseRadialMapComponent[]
-        for i=1:Nx
-        @inbounds push!(C, SparseRadialMapComponent(i,p[i]))
+        @inbounds  for i=1:Nx
+                push!(C, SparseRadialMapComponent(i,p[i]))
         end
         return SparseRadialMap(Nx, p, C, γ, λ, δ, κ)
 end
@@ -97,10 +97,18 @@ end
 function SparseRadialMap(Nx::Int64, p::Array{Int64,1}; γ::Float64=2.0, λ::Float64=0.1, δ::Float64=1e-8, κ::Float64=10.0)
         @assert Nx==size(p,1) "Wrong dimension of the SparseRadialMap"
         C = SparseRadialMapComponent[]
-        for i=1:Nx
-        @inbounds push!(C, SparseRadialMapComponent(i,p[i]))
+        @inbounds for i=1:Nx
+                push!(C, SparseRadialMapComponent(i,p[i]))
         end
         return SparseRadialMap(Nx, [fill(p[i],i) for i=1:Nx], C, γ, λ, δ, κ)
+end
+
+function SparseRadialMap(Nx::Int64, p::Int64; γ::Float64=2.0, λ::Float64=0.1, δ::Float64=1e-8, κ::Float64=10.0)
+        C = SparseRadialMapComponent[]
+        @inbounds for i=1:Nx
+                push!(C, SparseRadialMapComponent(i,p))
+        end
+        return SparseRadialMap(Nx, [fill(p,i) for i=1:Nx], C, γ, λ, δ, κ)
 end
 
 # function SparseRadialMap(Nx::Int64, p::Int64; γ::Float64=2.0, λ::Float64=0.1, δ::Float64=1e-8, κ::Float64=10.0)

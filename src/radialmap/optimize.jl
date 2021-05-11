@@ -114,7 +114,8 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 	if Nx>1
 		x[1:no] .= tmp_off
 	end
-	return x
+	modifycoeff!(C, x)
+	return C
 
 end
 
@@ -134,13 +135,11 @@ function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 	# Optimize coefficients with multi-threading
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
-				xopt = optimize(S.C[i], W, λ, δ)
-		    	modifycoeff!(S.C[i], xopt)
+				S.C[i] = optimize(S.C[i], W, λ, δ)
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
-				xopt = optimize(S.C[i], W, λ, δ)
-				modifycoeff!(S.C[i], xopt)
+				S.C[i] = optimize(S.C[i], W, λ, δ)
 		end
 	end
 end
@@ -149,7 +148,7 @@ end
 
 # Code to identify the coefficients
 
-function optimize(C::SparseRadialMapComponent, X, λ, δ)
+function optimize(C::SparseRadialMapComponent, X, maxfamilies::Nothing, λ, δ)
 	NxX, Ne = size(X)
 	@get C (Nx,p)
 
@@ -253,10 +252,13 @@ function optimize(C::SparseRadialMapComponent, X, λ, δ)
 	if Nx>1 && no != 0
 		x[1:no] .= tmp_off
 	end
-	return x
+
+	modifycoeff!(C, x)
+	error = negative_likelihood(C, X)
+	return C, error
 end
 
-function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
+function optimize(S::SparseRadialMap, X, maxfamilies::Nothing; start::Int64=1, P::Parallel=serial)
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
 
@@ -270,15 +272,13 @@ function optimize(S::SparseRadialMap, X; start::Int64=1, P::Parallel=serial)
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
-					modifycoeff!(S.C[i], xopt)
+					S.C[i], _ = optimize(S.C[i], X[1:i,:], maxfamilies, λ, δ)
 			end
 		end
 	else
 		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1)
-					xopt = optimize(S.C[i], X[1:i,:], λ, δ)
-					modifycoeff!(S.C[i], xopt)
+					S.C[i], _ = optimize(S.C[i], X[1:i,:], maxfamilies, λ, δ)
 			end
 		end
 	end

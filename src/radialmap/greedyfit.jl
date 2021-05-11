@@ -25,11 +25,12 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
     C = SparseRadialMapComponent(Nx, order)
 
     center_std!(C, Xsort; γ = γ)
-    x_diag = optimize(C, X, λ, δ)
-    modifycoeff!(C, x_diag)
+    C, error = optimize(C, X, nothing, λ, δ)
+    x_diag = extractcoeff(C)
+
 
     # Compute loss on training and validation sets
-    push!(train_error, copy(negative_likelihood(C, X)))
+    push!(train_error, copy(error))
     push!(valid_error, copy(negative_likelihood(C, Xvalid)))
 
     best_valid_error = Inf
@@ -261,10 +262,10 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
     C = SparseRadialMapComponent(Nx, order)
 
     center_std!(C, Xsort; γ = γ)
-    x_diag = optimize(C, X, λ, δ)
-    # @show x_diag
-    modifycoeff!(C, x_diag)
-    push!(train_error, copy(negative_likelihood(C, X)))
+    C, error = optimize(C, X, nothing, λ, δ)
+    x_diag = extractcoeff(C)
+
+    push!(train_error, copy(error))
 
     best_train_error = Inf
     patience = 0

@@ -71,3 +71,34 @@ or the maximum multi-index of the features identified for each variable (columns
     collect(1:Nx), collect(start:Nx), idx
     end
 end
+
+# @recipe function heatmap(M::HermiteMap; start::Int64=1, color = cgrad([:white, :teal, :navyblue, :purple]), degree::Bool=false)
+#     Nx = M.Nx
+#     idx = -1e-4*ones(Int64, Nx-start+1, Nx)
+#
+#     # Count occurence or maximal degree of each index
+#     for i=start:Nx
+#         for j=1:i
+#         if degree == false
+#             idx[i-start+1, j] = sum(view(getidx(M[i]),:,j) .> 0)
+#         else
+#             idx[i-start+1, j] = maximum(view(getidx(M[i]),:,j))
+#         end
+#         end
+#     end
+#
+#     @series begin
+#     seriestype := :heatmap
+#     # size --> (600, 600)
+#     xticks --> collect(1:Nx)
+#     yticks --> collect(start:Nx)
+#     xguide -->  "Index"
+#     yguide -->  "Map index"
+#     yflip --> true
+#     aspect_ratio --> 1
+#     colorbar --> true
+#     clims --> (0, maximum(idx))
+#     seriescolor --> color
+#     collect(1:Nx), collect(start:Nx), idx
+#     end
+# end

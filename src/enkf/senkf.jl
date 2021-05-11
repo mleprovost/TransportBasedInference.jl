@@ -54,64 +54,6 @@ function Base.show(io::IO, enkf::StochEnKF)
 end
 
 
-# """
-#     Define action of StocEnKF on EnsembleStateMeas
-# """
-# Bocquet Data assimilation p.160 Chapter 6 Stochastic EnKF
-# function (enkf::StochEnKF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false) where {Nx, Ny, Ne}
-#
-# 	Xf = deviation(ens.state).S
-# 	rmul!(Xf, 1/sqrt(Ne-1))
-#
-# 	# Need the covariance to perform the localisation
-# 	u = zeros(Ny, Ne)
-# 	if laplace == false
-# 	u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
-# 	else
-# 	u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
-# 	end
-# 	# ū = mean(u,dims=2)[:,1]
-# 	Yf = deviation(ens.meas).S
-# 	rmul!(Yf,1/sqrt(Ne-1))
-#
-# 	"Analysis step with representers, Evensen, Leeuwen et al. 1998"
-# 	b = (Yf*Yf' + enkf.ϵy.Σ) \ (ystar .+ (u - ens.meas.S))
-#
-# 	Bᵀb = (Xf*Yf')*b
-#
-# 	ens.state.S .+= Bᵀb
-#
-# 	return ens
-# end
-#
-# # Bocquet Data assimilation p.160 Chapter 6 Stochastic EnKF
-# function (enkf::StochEnKF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false) where {Nx, Ny, Ne}
-#
-# 	Xf = deviation(ens.state).S
-# 	rmul!(Xf, 1/sqrt(Ne-1))
-#
-# 	# Need the covariance to perform the localisation
-# 	u = zeros(Ny, Ne)
-# 	if laplace == false
-# 	u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
-# 	else
-# 	u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
-# 	end
-# 	# ū = mean(u,dims=2)[:,1]
-# 	Yf = deviation(ens.meas).S
-# 	rmul!(Yf,1/sqrt(Ne-1))
-#
-# 	"Analysis step with representers, Evensen, Leeuwen et al. 1998"
-# 	b = (Yf*Yf' + enkf.ϵy.Σ) \ (ystar .+ (u - ens.meas.S))
-#
-# 	Bᵀb = (Xf*Yf')*b
-#
-# 	ens.state.S .+= Bᵀb
-#
-# 	return ens
-# end
-
-
 function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false)
 
     Ny = size(ystar,1)
@@ -181,6 +123,63 @@ function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, ȳf::Array{Float64,1}; l
 
 	return X
 end
+
+# """
+#     Define action of StocEnKF on EnsembleStateMeas
+# """
+# Bocquet Data assimilation p.160 Chapter 6 Stochastic EnKF
+# function (enkf::StochEnKF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false) where {Nx, Ny, Ne}
+#
+# 	Xf = deviation(ens.state).S
+# 	rmul!(Xf, 1/sqrt(Ne-1))
+#
+# 	# Need the covariance to perform the localisation
+# 	u = zeros(Ny, Ne)
+# 	if laplace == false
+# 	u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
+# 	else
+# 	u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
+# 	end
+# 	# ū = mean(u,dims=2)[:,1]
+# 	Yf = deviation(ens.meas).S
+# 	rmul!(Yf,1/sqrt(Ne-1))
+#
+# 	"Analysis step with representers, Evensen, Leeuwen et al. 1998"
+# 	b = (Yf*Yf' + enkf.ϵy.Σ) \ (ystar .+ (u - ens.meas.S))
+#
+# 	Bᵀb = (Xf*Yf')*b
+#
+# 	ens.state.S .+= Bᵀb
+#
+# 	return ens
+# end
+#
+# # Bocquet Data assimilation p.160 Chapter 6 Stochastic EnKF
+# function (enkf::StochEnKF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar::Array{Float64,1}, t::Float64; laplace::Bool=false) where {Nx, Ny, Ne}
+#
+# 	Xf = deviation(ens.state).S
+# 	rmul!(Xf, 1/sqrt(Ne-1))
+#
+# 	# Need the covariance to perform the localisation
+# 	u = zeros(Ny, Ne)
+# 	if laplace == false
+# 	u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
+# 	else
+# 	u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
+# 	end
+# 	# ū = mean(u,dims=2)[:,1]
+# 	Yf = deviation(ens.meas).S
+# 	rmul!(Yf,1/sqrt(Ne-1))
+#
+# 	"Analysis step with representers, Evensen, Leeuwen et al. 1998"
+# 	b = (Yf*Yf' + enkf.ϵy.Σ) \ (ystar .+ (u - ens.meas.S))
+#
+# 	Bᵀb = (Xf*Yf')*b
+#
+# 	ens.state.S .+= Bᵀb
+#
+# 	return ens
+# end
 
 # # Version with localization
 # function (enkf::StochEnKF)(ens::EnsembleStateMeas{Nx, Ny, Ne}, ystar::Array{Float64,1}, t::Float64, Loc::Localization) where {Nx, Ny, Ne}
