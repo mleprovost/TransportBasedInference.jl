@@ -95,16 +95,16 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 
 	@view(cache[2:Na, :]) .= Xinfl[Ny .+ perm,:]
 	if smf.isadaptive == true
-		# Sgreedy = SparseRadialMap(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
+		pdiag = zeros(Nx+1)
+		pdiag[1] = 1
+		# Sgreedy = SparseRadialMp(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
 		Sgreedy = SparseRadialMap(cache, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
-		optimize(Sgreedy, cache, 2, [1;0;0], "kfolds"; apply_rescaling=true, start = 2, verbose = false)
+		optimize(Sgreedy, cache, 2, order, "kfolds"; apply_rescaling=true, start = 2, verbose = false)
 	else
 		# Update the LinearTransform smf.S.L
-		@show norm(smf.S.L.μ)
 		smf.S.L.μ .= mean(cache; dims = 2)[:,1]
 		smf.S.L.L.diag .= std(cache; dims = 2)[:,1]
-		# updateLinearTransform!(smf.S.L, cache)
-		@show norm(smf.S.L.μ)
+
 		optimize(smf.S, cache, nothing; apply_rescaling=true, start = 2, P = P)
 	end
 
@@ -123,15 +123,17 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 
 	if typeof(P) <: Serial
 		if smf.isadaptive == true
-			@inbounds for i=1:Ne
-				col = view(cache,:,i)
-				inverse(col, view(Sx,:,i), Sgreedy, ystar; apply_rescaling = true)
-			end
+			inverse!(cache, Sx, Sgreedy, [ystar]; apply_rescaling = true)
+			# @inbounds for i=1:Ne
+			# 	col = view(cache,:,i)
+			# 	inverse(col, view(Sx,:,i), Sgreedy, ystar; apply_rescaling = true)
+			# end
 		else
-			@inbounds for i=1:Ne
-				col = view(cache,:,i)
-				inverse(col, view(Sx,:,i), smf.S, ystar; apply_rescaling = true)
-			end
+			inverse!(cache, Sx, smf.S, [ystar]; apply_rescaling = true)
+			# @inbounds for i=1:Ne
+			# 	col = view(cache,:,i)
+			# 	inverse(col, view(Sx,:,i), smf.S, ystar; apply_rescaling = true)
+			# end
 		end
 	elseif typeof(P) <: Thread
 		if smf.isadaptive == true

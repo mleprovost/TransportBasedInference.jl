@@ -113,7 +113,6 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, p
 					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
 					                     maxpatience = maxpatience, verbose = verbose)
 					copy!(S.p[i], S.C[i].p)
-
 				end
 			end
 		end

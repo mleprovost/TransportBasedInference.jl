@@ -124,9 +124,11 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
             rmul!(rhs, -1.0)
             gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
 
-            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates))
+            dJ_dim = map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates)
+            _, max_dim = findmax(dJ_dim)
             new_dim = candidates[max_dim]
             push!(offdims, copy(new_dim))
+            @show offdims
             append!(tmp_off, zeros(poff+1))
             append!(x_offsparse, zeros(poff+1))
 
@@ -356,8 +358,8 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
             rmul!(rhs, -1.0)
             gradient_off!(dJ, cache, ψ_off, x_off, rhs, Ne)
             # @show dJ
-
-            _, max_dim = findmax(map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates))
+            dJ_dim = map(k-> norm(view(dJ, (k-1)*(poff+1)+1:k*(poff+1)))^2/sqnormfeatures[k], candidates)
+            _, max_dim = findmax(dJ_dim)
             new_dim = candidates[max_dim]
             # @show new_dim
             push!(offdims, copy(new_dim))
