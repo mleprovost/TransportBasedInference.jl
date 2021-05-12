@@ -72,9 +72,30 @@ or the maximum multi-index of the features identified for each variable (columns
     end
 end
 
+# @recipe function heatmap(C::SparseRadialMapComponent; color = cgrad([:white, :teal, :navyblue, :purple], categorical = true), degree::Bool=false)
+@recipe function heatmap(C::SparseRadialMapComponent; color = cgrad([:white, :teal, :navyblue, :purple]), degree::Bool=false)
+    Nx = C.Nx
+    maxp = maximum(C.p)
+
+    @series begin
+    seriestype := :heatmap
+    xticks --> collect(1:Nx)
+    yticks --> collect(1:1)
+    xguide -->  "Index"
+    yguide -->  "Map index"
+    yflip --> true
+    aspect_ratio --> 1
+    colorbar --> true
+    clims --> (-1, maxp)
+    levels --> length(-1:1:maxp)
+    # colorbar_title --> "Order"
+    seriescolor --> color
+    collect(1:Nx), collect(1:1), reshape(C.p, Nx, 1)
+    end
+end
+
 @recipe function heatmap(M::RadialMap; start::Int64=1, color = cgrad([:white, :teal, :navyblue, :purple]), degree::Bool=false)
     Nx = M.Nx
-    idx = -1e-4*ones(Int64, Nx-start+1, Nx)
 
     # Store order of the different map components
     order = fill(-1, (Nx-start+1, Nx))
@@ -97,7 +118,6 @@ end
     collect(1:Nx), collect(start:Nx), order
     end
 end
-
 
 @recipe function heatmap(M::SparseRadialMap; start::Int64=1, color = cgrad([:white, :teal, :navyblue, :purple]), degree::Bool=false)
     Nx = M.Nx

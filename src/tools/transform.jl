@@ -58,8 +58,66 @@ function updateLinearTransform!(Lin::LinearTransform, X::Array{Float64,2}; diag:
     end
 end
 
+# For scalar vectors
+function transform!(L::LinearTransform, xout::Array{Float64,1}, xin::Array{Float64,1})
+    @assert size(xout,1) == size(xin,1) "Input and output dimensions don't match"
+    @assert size(xin,1) == L.Nx "Input dimension is incorrect"
+
+    copy!(xout, xin)
+    xout -= L.μ
+
+    ldiv!(L.L, xout)
+end
+
+function transform!(L::LinearTransform, x::Array{Float64,1})
+    @assert size(x,1) == L.Nx "Input dimension is incorrect"
+    x -= L.μ
+    ldiv!(L.L, x)
+    return x
+end
+
+transform(L::LinearTransform, x::Array{Float64,1}) = transform!(L, zero(x), x)
 
 
+function itransform!(L::LinearTransform, xout::Array{Float64,1}, xin::Array{Float64,1})
+    @assert size(xout) == size(xin) "Input and output dimensions don't match"
+    @assert size(xin,1) == L.Nx "Input dimension is incorrect"
+
+    copy!(xout, xin)
+    mul!(xout, L.L, xout)
+    xout += L.μ
+
+    return xout
+end
+
+function itransform!(L::LinearTransform, x::Array{Float64,1}, idx::Union{UnitRange{Int64}, Array{Int64,1}})
+    @assert size(x,1) == L.Nx "Input dimension is incorrect"
+
+    if typeof(L.L)<:Diagonal
+        mul!(x, Diagonal(view(L.L.diag,idx)), x)
+    else
+        error("Not yet implemented")
+    end
+
+    # mul!(X, L.L, X)
+    x += L.μ
+
+    return x
+end
+
+function itransform!(L::LinearTransform, x::Array{Float64,1})
+    @assert size(x,1) == L.Nx "Input dimension is incorrect"
+
+    mul!(x, L.L, x)
+    x += L.μ
+
+    return x
+end
+
+itransform(L::LinearTransform, x::Array{Float64,1}) = itransform!(L, zero(x), x)
+
+
+# For ensemble matrix
 function transform!(L::LinearTransform, Xout::Array{Float64,2}, Xin::Array{Float64,2})
     @assert size(Xout,1) == size(Xin,1) "Input and output dimensions don't match"
     @assert size(Xin,1) == L.Nx "Input dimension is incorrect"

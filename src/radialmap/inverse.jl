@@ -45,10 +45,19 @@ function inverse(x::AbstractVector{Float64}, F, S::RadialMap, ystar)
     x[1:ny] .= ystar
     # Recursive 1D root-finding
     # Start optimization from the a priori component
+
+    if apply_rescaling == true
+            transform!(S.L, x)
+    end
+
     @inbounds for i=ny+1:Nx
         Ui = S.C[i]
         uk_i = component(Ui, i)
         x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
+    end
+
+    if apply_rescaling == true
+            itransform!(S.L, x)
     end
 end
 
@@ -58,12 +67,20 @@ function inverse(x::AbstractVector{Float64}, F, S::SparseRadialMap, ystar)
     ny = size(ystar,1)
     x[1:ny] .= ystar
 
+    if apply_rescaling == true
+            transform!(S.L, x)
+    end
+
     # Recursive 1D root-finding
     # Start optimization from the a priori component
     @inbounds for i=ny+1:Nx
         Ui = S.C[i]
         uk_i = component(Ui, i)
         x[i] = inverse_uk(uk_i, F[i] - off_diagonal(Ui, view(x,1:i-1)), κ)
+    end
+
+    if apply_rescaling == true
+            transform!(S.L, x)
     end
 end
 
@@ -79,6 +96,10 @@ function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVec
 
     @view(X[1:Ny,:]) .= ystar
 
+    if apply_rescaling == true
+            transform!(S.L, X)
+    end
+
     # Recursive 1D root-finding
     # Start optimization from the a priori component
     @inbounds for i=Ny+1:Nx
@@ -87,5 +108,9 @@ function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVec
         for j=1:Ne
             X[i,j] = inverse_uk(uk_i, F[i,j] - off_diagonal(Ui, view(X,1:i-1,j)), κ)
         end
+    end
+
+    if apply_rescaling == true
+            itransform!(S.L, X)
     end
 end
