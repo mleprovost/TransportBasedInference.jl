@@ -254,7 +254,7 @@ function optimize(C::SparseRadialMapComponent, X, maxfamilies::Nothing, λ, δ)
 	end
 
 	modifycoeff!(C, x)
-	error = negative_likelihood(C, X)
+	error = negative_likelihood(C, X, λ, δ)
 	return C, error
 end
 

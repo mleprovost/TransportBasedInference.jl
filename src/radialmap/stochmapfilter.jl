@@ -96,7 +96,7 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 	@view(cache[2:Na, :]) .= Xinfl[Ny .+ perm,:]
 	if smf.isadaptive == true
 		Sgreedy = SparseRadialMap(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
-		optimize(Sgreedy, cache, 2, 0, "kfolds"; start = 2, verbose = true)
+		optimize(Sgreedy, cache, 2, 0, "kfolds"; start = 2, verbose = false)
 	else
 		optimize(smf.S, cache, nothing; start = 2, P = P)
 	end

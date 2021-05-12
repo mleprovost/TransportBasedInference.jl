@@ -59,7 +59,7 @@ end
                     C = SparseRadialMapComponent(Nx, Cgreedy.p)
                     center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
                     C, error = optimize(C, X, nothing, λ, δ)
-                    @test isapprox(ϵgreedy[end], negative_likelihood(C, X), atol = 1e-10)
+                    @test isapprox(ϵgreedy[end], negative_likelihood(C, X, λ, δ), atol = 1e-10)
                     @test norm(Cgreedy.coeff - C.coeff)<1e-10
                 end
             end
@@ -72,7 +72,7 @@ end
                     C = SparseRadialMapComponent(Nx, Cgreedy.p)
                     center_std!(C, sort(deepcopy(X); dims = 2); γ = γ)
                     C, error = optimize(C, X, nothing, λ, δ)
-                    @test isapprox(ϵgreedy[end], negative_likelihood(C, X), atol = 1e-10)
+                    @test isapprox(ϵgreedy[end], negative_likelihood(C, X, λ, δ), atol = 1e-10)
                     @test norm(Cgreedy.coeff - C.coeff)<1e-10
                 end
             end

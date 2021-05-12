@@ -6,7 +6,7 @@ export projectGradient, line_search, projected_newton
 
 # Code inspired from Ricardo Baptista, Youssef Marzouk MIT
 function projectGradient(x::Array{Float64,1}, G::Array{Float64,1})
-    PG = deepcopy(G);
+    PG = copy(G);
     for i=1:size(PG,1)
         @inbounds begin
         if x[i]==0.0 && G[i] >=0
@@ -43,14 +43,14 @@ function linesearch(x::Array{Float64,1}, G::Array{Float64,1},
 
     if (J<Jx_α_lin)
         print("Line search method reached maximum number of iterations")
-        xh = deepcopy(x)
+        xh = copy(x)
         xh[Idx] .= 0.0
         index = Int64[]
 
         for i=1:size(x,1)
             @inbounds begin
             if (xh[i]>0.0) && (p[i]>0.0)
-                push!(index, deepcopy(i))
+                push!(index, copy(i))
             end
             end
         end

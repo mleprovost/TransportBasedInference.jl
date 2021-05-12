@@ -1,7 +1,7 @@
 export optimize
 
 function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, pdiag::Union{Int64, Nothing}, maxfamiliesoff::Union{Nothing, Int64, String},
-                  λ::Float64, δ::Float64, γ::Float64;
+                  ; λ::Float64 = 0.0, δ::Float64 = 1e-8, γ::Float64 = 2.0,
                   maxpatience::Int64 = 10^5, verbose::Bool = false)
     Nx = C.Nx
     # By default the diagonal component is selected
@@ -86,7 +86,7 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
 end
 
 function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, pdiag::Union{Int64, Vector{Int64}},
-	maxfamilies::Union{Int64, Nothing, String}; start::Int64=1, maxpatience::Int64=10^5, verbose::Bool=true, P::Parallel=serial)
+	maxfamilies::Union{Int64, Nothing, String}; start::Int64=1, maxpatience::Int64=10^5, verbose::Bool=false, P::Parallel=serial)
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
 
@@ -101,11 +101,11 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, p
 		@inbounds for i=start:Nx
 			if !allequal(p[i], -1) || !(typeof(maxfamilies) <: Nothing)
 				if typeof(pdiag) <: Vector{Int64}
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies, λ, δ, γ;
+					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
 					                     maxpatience = maxpatience, verbose = verbose)
 					copy!(S.p[i], S.C[i].p)
 				else
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies, λ, δ, γ;
+					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
 					                     maxpatience = maxpatience, verbose = verbose)
 					copy!(S.p[i], S.C[i].p)
 
@@ -116,11 +116,11 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, p
 		@inbounds Threads.@threads for i=start:Nx
 			if !allequal(p[i], -1) || !(typeof(maxfamilies) <: Nothing)
 				if typeof(pdiag) <: Vector{Int64}
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies, λ, δ, γ;
+					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
 					                     maxpatience = maxpatience, verbose = verbose)
 					copy!(S.p[i], S.C[i].p)
 				else
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies, λ, δ, γ;
+					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
 					                     maxpatience = maxpatience, verbose = verbose)
 					copy!(S.p[i], S.C[i].p)
 				end

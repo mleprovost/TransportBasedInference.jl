@@ -1,4 +1,6 @@
-export SparseRadialMapComponent, component, construct, clearcoeff!, evaluate, negative_likelihood, off_diagonal, set_id
+export SparseRadialMapComponent, component, construct, clearcoeff!,
+       extract_offcoeff, extract_diagcoeff, evaluate, negative_likelihood, off_diagonal,
+       set_id
 
 #### Structure for the Nx-th component SparseRadialMapComponent of the lower triangular map U
 
@@ -175,6 +177,15 @@ end
 
 extractcoeff(C::SparseRadialMapComponent) = vcat(C.coeff...)
 
+function extract_offcoeff(C::SparseRadialMapComponent)
+        if C.Nx == 1
+                return Float64[]
+        else
+                return  vcat(C.coeff[1:C.Nx-1]...)
+        end
+end
+
+extract_diagcoeff(C::SparseRadialMapComponent) = C.coeff[end]
 
 size(C::SparseRadialMapComponent) = (C.Nx, C.p)
 
@@ -247,21 +258,66 @@ end
 
 D(C::SparseRadialMapComponent) =  z-> D!(C, z)
 
-function negative_likelihood(C::Union{SparseRadialMapComponent, RadialMapComponent}, X::AbstractMatrix{Float64})
+# function negative_likelihood(C::RadialMapComponent, X::AbstractMatrix{Float64}, λ::Float64, δ::Float64)
+#         @get C (Nx, p)
+#         J = 0.0
+#         NxX, Ne = size(X)
+#
+#         @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
+#         ∂kC = D(C)
+#         @inbounds for i=1:Ne
+#                 col = view(X,:,i)
+#                 # Quadratic term
+#                 J += 0.5*C(col)^2
+#                 # Log barrier term
+#                 J -= log(∂kC(col))
+#         end
+#         J *= 1/Ne
+#         return J
+# end
+
+function negative_likelihood(C::SparseRadialMapComponent, X::AbstractMatrix{Float64}, λ::Float64, δ::Float64)
         @get C (Nx, p)
         J = 0.0
         NxX, Ne = size(X)
-
         @assert NxX == Nx "Wrong dimension of the ensemble matrix `X`"
-        ∂kC = D(C)
-        @inbounds for i=1:Ne
-                col = view(X,:,i)
-                # Quadratic term
-                J += 0.5*C(col)^2
-                # Log barrier term
-                J -= log(∂kC(col))
+
+        ψ_off, ψ_diag, dψ_diag = compute_weights(C, X)
+        n_off = size(ψ_off,2)
+        # ∂kC = D(C)
+        x_diag = extract_diagcoeff(C)
+
+        ## Quadratic term
+        if n_off>0
+                x_off = extract_offcoeff(C)
+
+                J = 0.5*norm(ψ_off*x_off + ψ_diag*x_diag[2:end] .+ x_diag[1])^2
+        else
+                J = 0.5*norm(ψ_diag*x_diag[2:end] .+ x_diag[1])^2
+        end
+
+        ##  Log barrier term
+
+        # Penalty on the log barrier temr
+        δlog = reshape(δ*sum(dψ_diag, dims = 2), Ne)
+        for i=1:Ne
+                J -= log(dot(view(dψ_diag,i,:), x_diag[2:end]) + δlog[i])
         end
         J *= 1/Ne
+
+        # Penalty term
+        # if n_off>0
+        #         J += δ*dot(x_off, sum(ψ_off'*ψ_off, dims = 1))
+        # end
+        #
+        # J += δ*dot(x_diag[2:end], sum(ψ_diag'*ψ_diag, dims = 1))
+        # @inbounds for i=1:Ne
+        #         col = view(X,:,i)
+        #         # Quadratic term
+        #         J += 0.5*(C(col))^2
+        #         # Log barrier term
+        #         J -= log(∂kC(col))
+        # end
         return J
 end
 

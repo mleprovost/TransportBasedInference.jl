@@ -31,7 +31,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
 
     # Compute loss on training and validation sets
     push!(train_error, copy(error))
-    push!(valid_error, copy(negative_likelihood(C, Xvalid)))
+    push!(valid_error, copy(negative_likelihood(C, Xvalid, λ, δ)))
 
     best_valid_error = Inf
     patience = 0
@@ -207,8 +207,8 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
             filter!(x-> x!= new_dim, candidates)
 
             # Compute loss on training and validation sets
-            push!(train_error, copy(negative_likelihood(C, X)))
-            push!(valid_error, copy(negative_likelihood(C, Xvalid)))
+            push!(train_error, copy(negative_likelihood(C, X, λ, δ)))
+            push!(valid_error, copy(negative_likelihood(C, Xvalid, λ, δ)))
 
             if verbose == true
                 println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
@@ -438,7 +438,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
             @assert norm(x_off[x_off .!= 0.0] - x_offsparse[x_offsparse .!= 0.0])<1e-10  "Error in x_off"
 
             modifycoeff!(C, vcat(x_offsparse, x_diag))
-            push!(train_error, copy(negative_likelihood(C, X)))
+            push!(train_error, copy(negative_likelihood(C, X, λ, δ)))
             filter!(x-> x!= new_dim, candidates)
 
             if verbose == true
