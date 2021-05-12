@@ -86,11 +86,16 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
 end
 
 function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, pdiag::Union{Int64, Vector{Int64}},
-	maxfamilies::Union{Int64, Nothing, String}; start::Int64=1, maxpatience::Int64=10^5, verbose::Bool=false, P::Parallel=serial)
+	maxfamilies::Union{Int64, Nothing, String}; apply_rescaling::Bool=true, start::Int64=1, maxpatience::Int64=10^5, verbose::Bool=false, P::Parallel=serial)
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
 
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
+	# We can apply the rescaling to all the components once
+	if apply_rescaling == true
+		transform!(S.L, X)
+	end
 
 	# Compute centers and widths
 	center_std!(S, X)
@@ -127,5 +132,11 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, p
 			end
 		end
 	end
+
+	# We can apply the rescaling to all the components once
+	if apply_rescaling == true
+		itransform!(S.L, X)
+	end
+
 	return S
 end

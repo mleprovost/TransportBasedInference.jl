@@ -39,7 +39,7 @@ function inverse_uk(u::uk, x, κ; z0::Real=0.0)
 end
 
 # y is the observation of size ny
-function inverse(x::AbstractVector{Float64}, F, S::RadialMap, ystar)
+function inverse(x::AbstractVector{Float64}, F, S::RadialMap, ystar; apply_rescaling::Bool=true)
     @get S (Nx, p, κ)
     ny = size(ystar,1)
     x[1:ny] .= ystar
@@ -62,13 +62,13 @@ function inverse(x::AbstractVector{Float64}, F, S::RadialMap, ystar)
 end
 
 # y is the observation of size ny
-function inverse(x::AbstractVector{Float64}, F, S::SparseRadialMap, ystar)
+function inverse(x::AbstractVector{Float64}, F, S::SparseRadialMap, ystar; apply_rescaling::Bool=true)
     @get S (Nx, p, κ)
     ny = size(ystar,1)
     x[1:ny] .= ystar
 
     if apply_rescaling == true
-            transform!(S.L, x)
+        transform!(S.L, x)
     end
 
     # Recursive 1D root-finding
@@ -80,11 +80,11 @@ function inverse(x::AbstractVector{Float64}, F, S::SparseRadialMap, ystar)
     end
 
     if apply_rescaling == true
-            transform!(S.L, x)
+        transform!(S.L, x)
     end
 end
 
-function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVector{Float64}; start::Int64=1)
+function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVector{Float64}; apply_rescaling::Bool=true, start::Int64=1)
     @get S (Nx, p, κ)
     Nx = S.Nx
     NxX, Ne = size(X)
@@ -97,7 +97,7 @@ function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVec
     @view(X[1:Ny,:]) .= ystar
 
     if apply_rescaling == true
-            transform!(S.L, X)
+        transform!(S.L, X)
     end
 
     # Recursive 1D root-finding
@@ -111,6 +111,6 @@ function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVec
     end
 
     if apply_rescaling == true
-            itransform!(S.L, X)
+        itransform!(S.L, X)
     end
 end

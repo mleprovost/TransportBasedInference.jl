@@ -95,10 +95,17 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 
 	@view(cache[2:Na, :]) .= Xinfl[Ny .+ perm,:]
 	if smf.isadaptive == true
-		Sgreedy = SparseRadialMap(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
-		optimize(Sgreedy, cache, 2, [1;0;0], "kfolds"; start = 2, verbose = false)
+		# Sgreedy = SparseRadialMap(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
+		Sgreedy = SparseRadialMap(cache, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
+		optimize(Sgreedy, cache, 2, [1;0;0], "kfolds"; apply_rescaling=true, start = 2, verbose = false)
 	else
-		optimize(smf.S, cache, nothing; start = 2, P = P)
+		# Update the LinearTransform smf.S.L
+		@show norm(smf.S.L.μ)
+		smf.S.L.μ .= mean(cache; dims = 2)[:,1]
+		smf.S.L.L.diag .= std(cache; dims = 2)[:,1]
+		# updateLinearTransform!(smf.S.L, cache)
+		@show norm(smf.S.L.μ)
+		optimize(smf.S, cache, nothing; apply_rescaling=true, start = 2, P = P)
 	end
 
 	#Generate local-likelihood samples with uninflated samples
@@ -109,33 +116,33 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 
 	@view(cache[2:Na,:]) .= X[Ny .+ perm,:]
 	if smf.isadaptive == true
-		Sx = Sgreedy(cache; start = 2)
+		Sx = Sgreedy(cache; apply_rescaling = true, start = 2)
 	else
-		Sx = smf.S(cache; start = 2)
+		Sx = smf.S(cache; apply_rescaling = true, start = 2)
 	end
 
 	if typeof(P) <: Serial
 		if smf.isadaptive == true
 			@inbounds for i=1:Ne
 				col = view(cache,:,i)
-				inverse(col, view(Sx,:,i), Sgreedy, ystar)
+				inverse(col, view(Sx,:,i), Sgreedy, ystar; apply_rescaling = true)
 			end
 		else
 			@inbounds for i=1:Ne
 				col = view(cache,:,i)
-				inverse(col, view(Sx,:,i), smf.S, ystar)
+				inverse(col, view(Sx,:,i), smf.S, ystar; apply_rescaling = true)
 			end
 		end
 	elseif typeof(P) <: Thread
 		if smf.isadaptive == true
 			@inbounds Threads.@threads for i=1:Ne
 				col = view(cache,:,i)
-				inverse(col, view(Sx,:,i), Sgreedy, ystar)
+				inverse(col, view(Sx,:,i), Sgreedy, ystar; apply_rescaling = true)
 			end
 		else
 			@inbounds Threads.@threads for i=1:Ne
 				col = view(cache,:,i)
-				inverse(col, view(Sx,:,i), smf.S, ystar)
+				inverse(col, view(Sx,:,i), smf.S, ystar; apply_rescaling = true)
 			end
 		end
 	end
@@ -157,14 +164,14 @@ function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial, localized::Bo
 		# Perturbation of the measurements
 		smf.ϵy(X, 1, Ny)
 
-		optimize(smf.S, X, nothing; start = Ny+1)
+		optimize(smf.S, X, nothing; apply_rescaling=true, start = Ny+1)
 
 		# Evaluate the transport map
-		F = evaluate(smf.S, X; start = Ny+1)
+		F = evaluate(smf.S, X; apply_rescaling=true, start = Ny+1)
 
 		# Generate the posterior samples by partial inversion of the map
 
-		inverse!(X, F, smf.S, ystar; start = Ny+1)
+		inverse!(X, F, smf.S, ystar; appply_rescaling, start = Ny+1)
 	end
 	return X
 end

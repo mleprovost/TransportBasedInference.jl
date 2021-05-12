@@ -86,7 +86,7 @@ function evaluate!(out, M::RadialMap, X::AbstractMatrix{Float64}; apply_rescalin
 
         @inbounds Threads.@threads for i=1:Ne
                 col = view(X,:,i)
-                evaluate!(view(out,:,i), M, col; start =start)
+                evaluate!(view(out,:,i), M, col; apply_rescaling = false, start =start)
                 # out[:,i] .= M(col, start=start)
         end
 
@@ -231,7 +231,7 @@ function evaluate!(out, M::SparseRadialMap, X::AbstractMatrix{Float64}; apply_re
 
         @inbounds for i=1:Ne
                 col = view(X,:,i)
-                evaluate!(view(out,:,i), M, col; start = start)
+                evaluate!(view(out,:,i), M, col; apply_rescaling = false, start = start)
         end
 
         if apply_rescaling == true

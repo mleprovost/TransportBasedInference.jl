@@ -119,10 +119,16 @@ function optimize(C::RadialMapComponent, W::Weights, λ, δ)
 
 end
 
-function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
+function optimize(S::RadialMap, X; apply_rescaling::Bool=true, start::Int64=1, P::Parallel=serial)
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
+	# We can apply the rescaling to all the components once
+	if apply_rescaling == true
+		transform!(S.L, X)
+	end
+
 	# Compute centers and widths
 	center_std!(S, X)
 
@@ -141,6 +147,11 @@ function optimize(S::RadialMap, X; start::Int64=1, P::Parallel=serial)
 		@inbounds Threads.@threads for i=start:Nx
 				S.C[i] = optimize(S.C[i], W, λ, δ)
 		end
+	end
+
+	# We can apply the rescaling to all the components once
+	if apply_rescaling == true
+		itransform!(S.L, X)
 	end
 end
 
@@ -258,11 +269,16 @@ function optimize(C::SparseRadialMapComponent, X, maxfamilies::Nothing, λ, δ)
 	return C, error
 end
 
-function optimize(S::SparseRadialMap, X, maxfamilies::Nothing; start::Int64=1, P::Parallel=serial)
+function optimize(S::SparseRadialMap, X, maxfamilies::Nothing; apply_rescaling::Bool=true, start::Int64=1, P::Parallel=serial)
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
 
 	@assert NxX == Nx "Wrong dimension of the ensemble matrix X"
+
+	# We can apply the rescaling to all the components once
+	if apply_rescaling == true
+		transform!(S.L, X)
+	end
 
 	# Compute centers and widths
 	center_std!(S, X)
@@ -282,6 +298,12 @@ function optimize(S::SparseRadialMap, X, maxfamilies::Nothing; start::Int64=1, P
 			end
 		end
 	end
+
+	# We can apply the rescaling to all the components once
+	if apply_rescaling == true
+		itransform!(S.L, X)
+	end
+
 end
 
 
