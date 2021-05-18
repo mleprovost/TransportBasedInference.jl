@@ -85,8 +85,8 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
     return C, error
 end
 
-function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, pdiag::Union{Int64, Vector{Int64}},
-	maxfamilies::Union{Int64, Nothing, String}; apply_rescaling::Bool=true, start::Int64=1, maxpatience::Int64=10^5, verbose::Bool=false, P::Parallel=serial)
+function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Union{Int64, Nothing}, pdiag::Union{Int64, Vector{Int64}, Nothing},
+	maxfamilies::Union{Int64, Nothing, String}; apply_rescaling::Bool=true, start::Int64=1,maxpatience::Int64=10^5, verbose::Bool=false, P::Parallel=serial)
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
 
@@ -104,29 +104,37 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Int64, p
 	# Skip the identity components of the map
 	if typeof(P)==Serial
 		@inbounds for i=start:Nx
-			if !allequal(p[i], -1) || !(typeof(maxfamilies) <: Nothing)
-				if typeof(pdiag) <: Vector{Int64}
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
-					                     maxpatience = maxpatience, verbose = verbose)
-					copy!(S.p[i], S.C[i].p)
-				else
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
-					                     maxpatience = maxpatience, verbose = verbose)
-					copy!(S.p[i], S.C[i].p)
+			if typeof(maxfamilies) <: Nothing
+				S.C[i], _ = optimize(S.C[i], X[1:i,:], nothing, nothing, maxfamilies; λ = λ, δ = δ, γ = γ,
+									 maxpatience = maxpatience, verbose = verbose)
+				copy!(S.p[i], S.C[i].p)
+			else
+				if typeof(pdiag) <: Int64 && pdiag != -1
+						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
+						                     maxpatience = maxpatience, verbose = verbose)
+						copy!(S.p[i], S.C[i].p)
+				elseif typeof(pdiag) <: Vector{Int64} && pdiag[i-start+1] != -1
+						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
+											 maxpatience = maxpatience, verbose = verbose)
+						copy!(S.p[i], S.C[i].p)
 				end
 			end
 		end
 	else
-		@inbounds Threads.@threads for i=start:Nx
-			if !allequal(p[i], -1) || !(typeof(maxfamilies) <: Nothing)
-				if typeof(pdiag) <: Vector{Int64}
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
-					                     maxpatience = maxpatience, verbose = verbose)
-					copy!(S.p[i], S.C[i].p)
-				else
-					S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
-					                     maxpatience = maxpatience, verbose = verbose)
-					copy!(S.p[i], S.C[i].p)
+		@inbounds for i=start:final
+			if typeof(maxfamilies) <: Nothing
+				S.C[i], _ = optimize(S.C[i], X[1:i,:], nothing, nothing, maxfamilies; λ = λ, δ = δ, γ = γ,
+									 maxpatience = maxpatience, verbose = verbose)
+				copy!(S.p[i], S.C[i].p)
+			else
+				if typeof(pdiag) <: Int64 && pdiag != -1
+						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
+											 maxpatience = maxpatience, verbose = verbose)
+						copy!(S.p[i], S.C[i].p)
+				elseif typeof(pdiag) <: Vector{Int64} && pdiag[i-start+1] != -1
+						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
+											 maxpatience = maxpatience, verbose = verbose)
+						copy!(S.p[i], S.C[i].p)
 				end
 			end
 		end

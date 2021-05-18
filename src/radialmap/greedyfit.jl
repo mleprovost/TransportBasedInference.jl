@@ -45,7 +45,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
     end
 
     if verbose == true
-        println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+        println("Active dimensions: "*string(C.activedim)*" - Training error: "*
         string(train_error[end])*", Validation error: "*string(valid_error[end]))
     end
 
@@ -128,7 +128,6 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
             _, max_dim = findmax(dJ_dim)
             new_dim = candidates[max_dim]
             push!(offdims, copy(new_dim))
-            @show offdims
             append!(tmp_off, zeros(poff+1))
             append!(x_offsparse, zeros(poff+1))
 
@@ -213,7 +212,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64,  X::AbstractMatrix{Floa
             push!(valid_error, copy(negative_likelihood(C, Xvalid, λ, δ)))
 
             if verbose == true
-                println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+                println("Active dimensions: "*string(C.activedim)*" - Training error: "*
                 string(train_error[end])*", Validation error: "*string(valid_error[end]))
             end
 
@@ -282,7 +281,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
 
     if verbose == true
         # Compute loss on training and validation sets
-        println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+        println("Active dimensions: "*string(C.activedim)*" - Training error: "*
                 string(train_error[end]))
     end
 
@@ -445,7 +444,7 @@ function greedyfit(Nx::Int64, poff::Int64, pdiag::Int64, X::AbstractMatrix{Float
 
             if verbose == true
                 # Compute loss on training and validation sets
-                println(string(size(C.activedim,1))*" active dimensions  - Training error: "*
+                println("Active dimensions: "*string(C.activedim)*" - Training error: "*
                         string(train_error[end]))
             end
 

@@ -8,14 +8,13 @@ using ForwardDiff
 using FastGaussQuadrature
 using SpecialFunctions
 using QuadGK
-using Distributions
 using Optim
 using NLsolve
 using MLDataUtils
 using Quadrature
 using Cubature
 using FiniteDiff
-using Random
+using Distributions
 
 # Test for Radial Maps
 # include("radialmap/function.jl")

@@ -71,9 +71,9 @@ function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, t::Float64; laplace::Bool
 	# Need the covariance to perform the localisation
 	u = zeros(Ny, Ne)
 	if laplace == false
-	u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
+		u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
 	else
-	u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
+		u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
 	end
 	# ū = mean(u,dims=2)[:,1]
 	Yf = copy(meas .- mean(meas; dims=2)[:,1])
@@ -107,19 +107,19 @@ function (enkf::StochEnKF)(X, ystar::Array{Float64,1}, ȳf::Array{Float64,1}; l
 	# Need the covariance to perform the localisation
 	u = zeros(Ny, Ne)
 	if laplace == false
-	u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
+		u .= enkf.ϵy.σ*randn(Ny, Ne) .+ enkf.ϵy.m
 	else
-	u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
+		u .= sqrt(2.0)*enkf.ϵy.σ*rand(Laplace(),(Ny, Ne)) .+ enkf.ϵy.m
 	end
 	ū = mean(u,dims=2)[:,1]
 
 	Yf = copy(meas) .- ȳf
 
 	"Analysis step with representers, Evensen, Leeuwen et al. 1998"
-	b = (Yf*transpose(Yf) + (Ne-1)*enkf.ϵy.Σ)\(ystar .+ (u - meas))
-	Bᵀb = (Xf*Yf')*b
-	# @show norm(Bᵀb)
-	state .+= Bᵀb
+		b = (Yf*transpose(Yf) + (Ne-1)*enkf.ϵy.Σ)\(ystar .+ (u - meas))
+		Bᵀb = (Xf*Yf')*b
+		# @show norm(Bᵀb)
+		state .+= Bᵀb
 
 	return X
 end
