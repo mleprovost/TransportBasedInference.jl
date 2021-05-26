@@ -2,7 +2,7 @@ export optimize
 
 function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, pdiag::Union{Int64, Nothing}, maxfamiliesoff::Union{Nothing, Int64, String},
                   ; λ::Float64 = 0.0, δ::Float64 = 1e-8, γ::Float64 = 2.0,
-                  maxpatience::Int64 = 10^5, verbose::Bool = false)
+                  maxpatience::Int64 = 10^5, verbose::Bool = false, maxfeatures::Int64 = 10^4)
     Nx = C.Nx
     # By default the diagonal component is selected
     if typeof(maxfamiliesoff) <: Nothing
@@ -18,9 +18,9 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
 
         # Run greedy approximation
         if pdiag == 0
-            maxfamily = min(Nx-1, ceil(Int64, (sqrt(size(X,2))-(pdiag+1))/(poff+1)))
+            maxfamily = min(Nx-1, ceil(Int64, (sqrt(size(X,2))-(pdiag+1))/(poff+1)), maxfeatures)
         elseif pdiag > 0
-            maxfamily = min(Nx-1, ceil(Int64, (sqrt(size(X,2))-(pdiag+3))/(poff+1)))
+            maxfamily = min(Nx-1, ceil(Int64, (sqrt(size(X,2))-(pdiag+3))/(poff+1)), maxfeatures)
         else
             error("Wrong value for pdiag")
         end
@@ -74,7 +74,13 @@ function optimize(C::SparseRadialMapComponent, X, poff::Union{Nothing, Int64}, p
         X_valid = X[:,1:nvalid]
 
         # Run greedy approximation
-        maxfamily =  min(Nx-1, ceil(Int64, sqrt(size(X,2))))
+		if pdiag == 0
+			maxfamily = min(Nx-1, ceil(Int64, (sqrt(size(X,2))-(pdiag+1))/(poff+1)), maxfeatures)
+		elseif pdiag > 0
+			maxfamily = min(Nx-1, ceil(Int64, (sqrt(size(X,2))-(pdiag+3))/(poff+1)), maxfeatures)
+		else
+			error("Wrong value for pdiag")
+		end
 
         C, error = greedyfit(Nx, poff, pdiag, X_train, X_valid, maxfamily, λ, δ, γ;
                              maxpatience = maxpatience, verbose  = verbose)
@@ -87,7 +93,7 @@ end
 
 function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Union{Int64, Nothing}, pdiag::Union{Int64, Vector{Int64}, Nothing},
 	              maxfamilies::Union{Int64, Nothing, String}; apply_rescaling::Bool=true, start::Int64=1,maxpatience::Int64=10^5,
-	              verbose::Bool=false, P::Parallel=serial)
+	              verbose::Bool=false, P::Parallel=serial, maxfeatures::Int64 = 10^4)
 
 	NxX, Ne = size(X)
 	@get S (Nx, p, γ, λ, δ, κ)
@@ -112,11 +118,11 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Union{In
 			else
 				if typeof(pdiag) <: Int64 && pdiag != -1
 						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
-						                     maxpatience = maxpatience, verbose = verbose)
+						                     maxpatience = maxpatience, verbose = verbose, maxfeatures = maxfeatures)
 						copy!(S.p[i], S.C[i].p)
 				elseif typeof(pdiag) <: Vector{Int64} && pdiag[i-start+1] != -1
 						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
-											 maxpatience = maxpatience, verbose = verbose)
+											 maxpatience = maxpatience, verbose = verbose, maxfeatures = maxfeatures)
 						copy!(S.p[i], S.C[i].p)
 				end
 			end
@@ -130,11 +136,11 @@ function optimize(S::SparseRadialMap, X::AbstractMatrix{Float64}, poff::Union{In
 			else
 				if typeof(pdiag) <: Int64 && pdiag != -1
 						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag, maxfamilies; λ = λ, δ = δ, γ = γ,
-											 maxpatience = maxpatience, verbose = verbose)
+											 maxpatience = maxpatience, verbose = verbose, maxfeatures = maxfeatures)
 						copy!(S.p[i], S.C[i].p)
 				elseif typeof(pdiag) <: Vector{Int64} && pdiag[i-start+1] != -1
 						S.C[i], _ = optimize(S.C[i], X[1:i,:], poff, pdiag[i-start+1], maxfamilies; λ = λ, δ = δ, γ = γ,
-											 maxpatience = maxpatience, verbose = verbose)
+											 maxpatience = maxpatience, verbose = verbose, maxfeatures = maxfeatures)
 						copy!(S.p[i], S.C[i].p)
 				end
 			end
