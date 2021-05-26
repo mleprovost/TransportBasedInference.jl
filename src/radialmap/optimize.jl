@@ -259,7 +259,6 @@ function optimize(C::SparseRadialMapComponent, X, maxfamilies::Nothing, λ, δ)
 	# Coefficients of the diagonal except the constant
 	x[no+2:nx] .= tmp_diag
 
-
 	if Nx>1 && no != 0
 		x[1:no] .= tmp_off
 	end

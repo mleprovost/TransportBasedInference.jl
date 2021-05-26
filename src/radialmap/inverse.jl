@@ -104,9 +104,11 @@ function inverse!(X::Array{Float64,2}, F, S::SparseRadialMap, ystar::AbstractVec
     # Start optimization from the a priori component
     @inbounds for i=Ny+1:Nx
         Ui = S.C[i]
-        uk_i = component(Ui, i)
-        for j=1:Ne
-            X[i,j] = inverse_uk(uk_i, F[i,j] - off_diagonal(Ui, view(X,1:i-1,j)), κ)
+        if Ui.p[end] != -1
+            uk_i = component(Ui, i)
+            for j=1:Ne
+                X[i,j] = inverse_uk(uk_i, F[i,j] - off_diagonal(Ui, view(X,1:i-1,j)), κ)
+            end        
         end
     end
 

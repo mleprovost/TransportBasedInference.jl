@@ -48,6 +48,7 @@ PyPlot = "d330b81b-6aea-500a-939a-2ce795aea3ee"
 Quadrature = "67601950-bd08-11e9-3c89-fd23fb4432d2"
 Random = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]

@@ -163,8 +163,8 @@ struct AdaptiveSparseRadialSMF<:SeqFilter
 	"Inflation for the measurement noise distribution"
 	ϵy::AdditiveInflation
 
-	"Sparse radial map"
-	S::SparseRadialMap
+	"Array of Sparse radial maps"
+	S::Array{SparseRadialMap,1}
 
 	"Observation dimension"
 	Ny::Int64
@@ -201,21 +201,21 @@ struct AdaptiveSparseRadialSMF<:SeqFilter
 	islocalized::Bool
 end
 
-function AdaptiveSparseRadialSMF(G::Function, h::Function, β::Float64, ϵy::AdditiveInflation,
-						 p::Array{Array{Int64,1},1}, γ, λ, δ, κ,
-						 Ny, Nx, Ne,
-				         Δtdyn::Float64, Δtobs::Float64, Δtrefresh::Float64,
-						 dist::Array{Float64,2}, idx::Array{Int64,2};
-						 isfiltered::Bool = false, islocalized::Bool = true)
-	#Create the map with scalar assimlation of the data
-	if islocalized == true
-		S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	else
-		S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
-	end
-	return AdaptiveSparseRadialSMF(G, h, β, ϵy, S, Ny, Nx, Δtdyn, Δtobs, Δtrefresh, dist, idx,
-	                       zeros(Nx+1, Ne), isfiltered, islocalized)
-end
+# function AdaptiveSparseRadialSMF(G::Function, h::Function, β::Float64, ϵy::AdditiveInflation,
+# 						 p::Array{Array{Int64,1},1}, γ, λ, δ, κ,
+# 						 Ny, Nx, Ne,
+# 				         Δtdyn::Float64, Δtobs::Float64, Δtrefresh::Float64,
+# 						 dist::Array{Float64,2}, idx::Array{Int64,2};
+# 						 isfiltered::Bool = false, islocalized::Bool = true)
+# 	#Create the map with scalar assimlation of the data
+# 	if islocalized == true
+# 		S = SparseRadialMap(Nx+1, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+# 	else
+# 		S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
+# 	end
+# 	return AdaptiveSparseRadialSMF(G, h, β, ϵy, S, Ny, Nx, Δtdyn, Δtobs, Δtrefresh, dist, idx,
+# 	                       zeros(Nx+1, Ne), isfiltered, islocalized)
+# end
 
 # Assimilate a scalar observation
 function (smf::AdaptiveSparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Parallel=serial)
@@ -243,26 +243,28 @@ function (smf::AdaptiveSparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1
 
 	@view(cache[2:Na, :]) .= Xinfl[Ny .+ perm,:]
 
-	if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
+	# if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
 
-		order = fill(-1, Nx+1)
-		nonid_rad = 15
-		order[1] = 2
-		order[2] = 1
-		order[3] = 1
-		fill!(view(order, 4:nonid_rad), 0)
-
-
-		# Sgreedy = SparseRadialMp(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
-		Sgreedy = SparseRadialMap(cache, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
-		optimize(Sgreedy, cache, 2, order, "kfolds"; apply_rescaling=true, start = 2, verbose = false)
-	else
+		# order = fill(-1, Nx+1)
+		# nonid_rad = 15
+		# order[1] = 2
+		# order[2] = 1
+		# order[3] = 1
+		# fill!(view(order, 4:nonid_rad), 0)
+		#
+		#
+		# # Sgreedy = SparseRadialMp(Nx+1, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
+		# Sgreedy = SparseRadialMap(cache, -1; λ = smf.S.λ, δ = smf.S.δ, γ = smf.S.γ)
+		# optimize(Sgreedy, cache, 2, order, "kfolds"; apply_rescaling=true, start = 2, verbose = false)
+	# else
 		# Update the LinearTransform smf.S.L
-		smf.S.L.μ .= mean(cache; dims = 2)[:,1]
-		smf.S.L.L.diag .= std(cache; dims = 2)[:,1]
+		smf.S[idx1].L.μ .= mean(cache; dims = 2)[:,1]
+		smf.S[idx1].L.L.diag .= std(cache; dims = 2)[:,1]
 
-		optimize(Sgreedy, cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
-	end
+		# optimize(Sgreedy, cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
+		optimize(smf.S[idx1], cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
+
+	# end
 
 	#Generate local-likelihood samples with uninflated samples
 	@inbounds for i=1:Ne
@@ -272,11 +274,12 @@ function (smf::AdaptiveSparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1
 
 	@view(cache[2:Na,:]) .= X[Ny .+ perm,:]
 
-	Sx = Sgreedy(cache; apply_rescaling = true, start = 2)
+	# Sx = Sgreedy(cache; apply_rescaling = true, start = 2)
+	Sx = smf.S[idx1](cache; apply_rescaling = true, start = 2)
 
 	if typeof(P) <: Serial
-		inverse!(cache, Sx, Sgreedy, [ystar]; apply_rescaling = true)
-
+		# inverse!(cache, Sx, Sgreedy, [ystar]; apply_rescaling = true)
+		inverse!(cache, Sx, smf.S[idx1], [ystar]; apply_rescaling = true)
 	elseif typeof(P) <: Thread
 		@inbounds Threads.@threads for i=1:Ne
 			col = view(cache,:,i)
