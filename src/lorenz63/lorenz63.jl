@@ -1,4 +1,4 @@
-export lorenz63!, setup_lorenz63, generate_lorenz63, benchmark_lorenz63
+export lorenz63!, setup_lorenz63, generate_lorenz63, benchmark_lorenz63, benchmark_srmf_lorenz63, benchmark_sadaptivermf_lorenz63
 
 """
     lorenz63!(du,u,p,t)
@@ -72,7 +72,7 @@ function spin_lorenz63(model::Model, data::SyntheticData, Ne::Int64, path::Strin
 	_,_,rmse_mean,_ = metric_hist(rmse, data.xt[:,1:J], statehist[2:end])
 	println("Ne "*string(Ne)* " RMSE: "*string(rmse_mean))
 	# Save data
-	save(path*"set_up_Ne"*string(Ne)*".jld", "ens", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
+	save(path*"set_up_Ne"*string(Ne)*".jld", "X", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
 end
 
 
@@ -82,8 +82,8 @@ function setup_lorenz63(path::String, Ne_array::Array{Int64,1})
     Δtdyn = 0.05
     Δtobs = 0.1
 
-    σx = 1e-2#1e-6#1e-2
-    σy = 2.0#1e-6#2.0
+    σx = 1e-6
+    σy = 2.0
 
     ϵx = AdditiveInflation(Nx, zeros(Nx), σx)
     ϵy = AdditiveInflation(Ny, zeros(Ny), σy)
@@ -105,7 +105,7 @@ function setup_lorenz63(path::String, Ne_array::Array{Int64,1})
     h(x, t, idx) = x[idx]
 	F = StateSpace(lorenz63!, h)
 
-    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, MvNormal(zeros(Nx), mMatrix(1.0*I, Nx, Nx)), Tburn, Tstep, Tspinup, F);
+    model = Model(Nx, Ny, Δtdyn, Δtobs, ϵx, ϵy, MvNormal(zeros(Nx), Matrix(1.0*I, Nx, Nx)), Tburn, Tstep, Tspinup, F);
 
     # Set initial condition
     x0 = rand(model.π0)
@@ -127,17 +127,17 @@ function benchmark_lorenz63(model::Model, data::SyntheticData, path::String, Ne_
 @assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
 
 #Store all the metric per number of ensemble members
-Metric_list = []
+metric_list = []
 
 @showprogress for Ne in Ne_array
-    Metric_Ne = Metrics[]
+    metric_Ne = Metrics[]
     for β in β_array
     @show Ne, β
     # Load file
-    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "ens")
+    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "X")
 
     X = zeros(model.Ny + model.Nx, Ne)
-    X[model.Ny+1:model.Ny+model.Nx,:] .= deepcopy(X0)
+    X[model.Ny+1:model.Ny+model.Nx,:] .= copy(X0)
     J = model.Tstep
     t0 = model.Tspinup*model.Δtobs
     F = model.F
@@ -149,50 +149,132 @@ Metric_list = []
     # @time enshist = seqassim(dyn, data, J, ϵx, enkf, ens, t0)
 	@time statehist = seqassim(F, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0);
 
-    Metric = post_process(data, model, J, statehist)
-    push!(Metric_Ne, deepcopy(Metric))
-    println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(Metric.rmse_mean))
+    metric = post_process(data, model, J, statehist)
+    push!(metric_Ne, deepcopy(metric))
+    println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(metric.rmse_mean))
     end
-    push!(Metric_list, deepcopy(Metric_Ne))
+    push!(metric_list, deepcopy(metric_Ne))
 end
 
-return Metric_list
+return metric_list
 end
-#
-#
-# function benchmark_TMap_lorenz63(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1})
-# @assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
-#
-# #Store all the metric per number of ensemble members
-# Metric_hist = []
-#
-# @showprogress for Ne in Ne_array
-#     Metric_Ne = Metrics[]
-#     for β in β_array
-#     @show Ne, β
-#     # Load file
-#     ens0 = load(path*"set_up_Ne"*string(Ne)*".jld", "ens")
-#
-#     ens = EnsembleStateMeas(3,3,Ne)
-#     ens.state.S .= ens0
-#
-#     J = model.Tstep
-#     t0 = model.Tspinup*model.Δtobs
-#     dyn = DynamicalSystem(model.f, model.h)
-#     dist = metric_lorenz(3)
-#     p = 0
-#     # order = [[-1], [1; 1], [-1; 1; 0], [-1; 1; 1; 0]]
-#     order = [[-1], [p; p], [-1; p; 0], [-1; p; p; 0]]
-#     T = SparseTMap(3, 3, Ne, order, 2.0, 0.1, 1e-8, 10.0,  dist, dyn, x->x, β, model.ϵy, model.Δtdyn, model.Δtobs, false);
-#
-#     @time enshist = seqassim(dyn, data, J, model.ϵx, T, ens, t0)
-#
-#     Metric = post_process(data, model, J, enshist)
-#     push!(Metric_Ne, deepcopy(Metric))
-#     println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(Metric.rmse_mean))
-#     end
-#     push!(Metric_hist, deepcopy(Metric_Ne))
-# end
-#
-# return Metric_hist
-# end
+
+
+# Routine to benchmark the stochastic radial map filter
+function benchmark_srmf_lorenz63(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1}, p::Int64)
+@assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
+
+#Store all the metric per number of ensemble members
+metric_hist = []
+
+@showprogress for Ne in Ne_array
+    metric_Ne = Metrics[]
+    for β in β_array
+
+	@show Ne, β
+    # Load file
+    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "X")
+
+    X = zeros(model.Ny + model.Nx, Ne)
+    X[model.Ny+1:model.Ny+model.Nx,:] .= copy(X0)
+
+    J = model.Tstep
+    t0 = model.Tspinup*model.Δtobs
+    F = model.F
+	dist = Float64.(metric_lorenz(model.Nx))
+	idx = vcat(collect(1:model.Ny)',collect(1:model.Ny)')
+
+    order = [[-1], [p; p], [-1; p; 0], [-1; p; p; 0]]
+
+	γ = 2.0
+	λ = 0.0
+	δ = 1e-8
+	κ = 10.0
+
+	smf = SparseRadialSMF(x->x, F.h, β, model.ϵy, order, γ, λ, δ, κ,
+                      model.Ny, model.Nx, Ne,
+                      model.Δtdyn, model.Δtobs,
+                      dist, idx; islocalized = true)
+
+    @time statehist = seqassim(F, data, J, model.ϵx, smf, X, model.Ny, model.Nx, t0);
+
+    metric = post_process(data, model, J, statehist)
+    push!(metric_Ne, deepcopy(metric))
+    println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(metric.rmse_mean))
+    end
+    push!(metric_hist, deepcopy(metric_Ne))
+end
+
+return metric_hist
+end
+
+
+# Routine to benchmark the stochastic adaptive radial map filter
+function benchmark_sadaptivermf_lorenz63(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1}, p::Int64)
+@assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
+
+# Perform a free-run of the model to identify the structure
+
+xfreerun = rand(model.π0)
+tfreerun = 20000
+Tfreerun = ceil(Int64, tfreerun/model.Δtobs)
+data_freerun = generate_lorenz96(model, xfreerun, Tfreerun)
+
+Tdiscard = 2000
+Δdiscard = 40
+
+#Store all the metric per number of ensemble members
+metric_hist = []
+
+
+@showprogress for Ne in Ne_array
+    metric_Ne = Metrics[]
+    for β in β_array
+
+	@show Ne, β
+
+	γ = 2.0
+	λ = 0.0
+	δ = 1e-8
+	κ = 10.0
+
+	J = model.Tstep
+	t0 = model.Tspinup*model.Δtobs
+	F = model.F
+	dist = Float64.(metric_lorenz(model.Nx))
+	idx = vcat(collect(1:model.Ny)',collect(1:model.Ny)')
+
+	Slist = SparseRadialMap[]
+		for i=1:model.Ny
+			idx1, idx2 = idx[:,i]
+			perm = sortperm(view(dist,:,idx2))
+			Xi = vcat(data_freerun.yt[i:i,Tdiscard:Δdiscard:end], data_freerun.xt[perm, Tdiscard:Δdiscard:end])
+			Si = SparseRadialMap(Xi, -1; λ = λ, δ = δ, γ = γ)
+			poff = p
+			order = [p; 0; 0]
+			maxfeatures = ceil(Int64, (sqrt(Ne)-(findmin(order)[2]+1))/(poff+1))
+
+			optimize(Si, Xi, poff, order, "kfolds"; apply_rescaling = true, start = 2, maxfeatures = maxfeatures)
+			push!(Slist, Si)
+		end
+    # Load file
+    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "X")
+
+    X = zeros(model.Ny + model.Nx, Ne)
+    X[model.Ny+1:model.Ny+model.Nx,:] .= copy(X0)
+
+    smf = AdaptiveSparseRadialSMF(x->x, F.h, β, model.ϵy, Slist,
+                        model.Ny, model.Nx,
+                        model.Δtdyn, model.Δtobs, Inf,
+                        dist, idx, zeros(model.Nx+1, Ne), false, true)
+    @time statehist = seqassim(F, data, J, model.ϵx, smf, X, model.Ny, model.Nx, t0);
+
+    metric = post_process(data, model, J, statehist)
+    push!(metric_Ne, deepcopy(metric))
+    println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(metric.rmse_mean))
+    end
+    push!(metric_hist, deepcopy(metric_Ne))
+end
+
+return metric_hist
+end

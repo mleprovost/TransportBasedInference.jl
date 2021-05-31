@@ -5,6 +5,7 @@ using DocStringExtensions
 using Distributions
 using ForwardDiff
 using IterativeSolvers
+using JLD
 using LaTeXStrings
 using LinearAlgebra
 using LineSearches

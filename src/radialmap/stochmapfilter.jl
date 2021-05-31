@@ -9,7 +9,7 @@ struct SparseRadialSMF<:SeqFilter
 	h::Function
 
 	"Multiplicative inflation"
-	β::Float64
+	β::MultiplicativeInflation
 
 	"Inflation for the measurement noise distribution"
 	ϵy::AdditiveInflation
@@ -62,7 +62,7 @@ function SparseRadialSMF(G::Function, h::Function, β::Float64, ϵy::AdditiveInf
 	else
 		S = SparseRadialMap(Ny+Nx, p; γ = γ, λ = λ, δ =  δ, κ = κ)
 	end
-	return SparseRadialSMF(G, h, β, ϵy, S, Ny, Nx, Δtdyn, Δtobs, dist, idx,
+	return SparseRadialSMF(G, h, MultiplicativeInflation(β), ϵy, S, Ny, Nx, Δtdyn, Δtobs, dist, idx,
 	                       zeros(Nx+1, Ne), isfiltered, islocalized)
 end
 
@@ -81,7 +81,7 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 	Xinfl = copy(X)
 
 	# Apply the multiplicative inflation
-	Aβ = MultiplicativeInflation(smf.β)
+	Aβ = smf.β
 	Aβ(Xinfl, Ny+1, Ny+Nx)
 
 	# Generate samples from local likelihood
@@ -258,9 +258,10 @@ function (smf::AdaptiveSparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1
 		# optimize(Sgreedy, cache, 2, order, "kfolds"; apply_rescaling=true, start = 2, verbose = false)
 	# else
 		# Update the LinearTransform smf.S.L
+
 		smf.S[idx1].L.μ .= mean(cache; dims = 2)[:,1]
 		smf.S[idx1].L.L.diag .= std(cache; dims = 2)[:,1]
-
+		
 		# optimize(Sgreedy, cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
 		optimize(smf.S[idx1], cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
 
