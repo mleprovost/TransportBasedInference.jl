@@ -1,4 +1,4 @@
-export StochEnKF#, SeqStochEnKF
+export StochEnKF, SeqStochEnKF
 
 """
 $(TYPEDEF)
@@ -215,10 +215,9 @@ function (enkf::SeqStochEnKF)(X, ystar, t, Loc::Localization)
 		# Generate samples from local likelihood with inflated ensemble
 		@inbounds for i=1:Ne
 			col = view(X, Ny+1:Ny+Nx, i)
-			cache[1,i] = h(t, col)[idx1] + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
+			cache[1,i] = h(col, t)[idx1] + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
 		end
 
-		@show size(mean(cache; dims = 2)[:,1])
 		XYf = copy(cache) .- mean(cache; dims = 2)[:,1]
 		rmul!(XYf, 1/sqrt(Ne-1))
 
@@ -228,10 +227,10 @@ function (enkf::SeqStochEnKF)(X, ystar, t, Loc::Localization)
 		#Construct the observation with the un-inflated measurement
 		@inbounds for i=1:Ne
 			col = view(X, Ny+1:Ny+Nx, i)
-			cache[1,i] = h(t, col)[idx1] + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
+			cache[1,i] = h(col, t)[idx1] + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
 		end
 
-		# Since Yf is a vector (Yf Yf') is reudced to a scalar
+		# Since Yf is a vector (Yf Yf') is reduced to a scalar
 		"Analysis step with representers, Evensen, Leeuwen et al. 1998"
 		K = view(locXY,:,idx1).* (Xf*Yf)
 		# @show K./dot(Yf,Yf)

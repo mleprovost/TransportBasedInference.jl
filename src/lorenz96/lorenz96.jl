@@ -40,7 +40,8 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
     	tspan = (t0 + (i-1)*model.Δtobs, t0 + i*model.Δtobs)
     	prob = remake(prob, tspan = tspan)
 
-    	sol = solve(prob, Tsit5(), dense = false, save_everystep = false)
+    	sol = solve(prob, Tsit5(), dt = model.Δtdyn, adaptive = false,
+		            dense = false, save_everystep = false)
     	x .= deepcopy(sol.u[end])
     	# for j=1:step
     	# 	t = t0 + (i-1)*algo.Δtobs+(j-1)*algo.Δtdyn
@@ -77,7 +78,7 @@ function spin_lorenz96(model::Model, data::SyntheticData, Ne::Int64, path::Strin
 	_,_,rmse_mean,_ = metric_hist(rmse, data.xt[:,1:J], statehist[2:end])
 	println("Ne "*string(Ne)* " RMSE: "*string(rmse_mean))
 	# Save data
-	save(path*"set_up_Ne"*string(Ne)*".jld", "ens", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
+	save(path*"set_up_Ne"*string(Ne)*".jld", "X", statehist[end], "Ne", Ne, "x0", data.x0, "tt", data.tt, "xt", data.xt, "yt", data.yt)
 end
 
 function setup_lorenz96(path::String, Ne_array::Array{Int64,1})
@@ -131,40 +132,53 @@ function setup_lorenz96(path::String, Ne_array::Array{Int64,1})
     return model, data
 end
 
-function benchmark_lorenz96(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1}, β_array::Array{Float64,1})
+function benchmark_lorenz96(model::Model, data::SyntheticData, path::String, Ne_array::Array{Int64,1},
+	                        β_array::Array{Float64,1}, Lrad_array::Array{Float64,1})
 @assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
 
 #Store all the metric per number of ensemble members
-Metric_list = []
+metric_list = []
 
 @showprogress for Ne in Ne_array
-    Metric_Ne = Metrics[]
+    metric_Ne = Metrics[]
     for β in β_array
-    @show Ne, β
-    # Load file
-    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "ens")
+		for Lrad in Lrad_array
+		    @show Ne, β, Lrad
+		    # Load file
+		    X0 = load(path*"set_up_Ne"*string(Ne)*".jld", "X")
 
-    X = zeros(model.Ny + model.Nx, Ne)
-    X[model.Ny+1:model.Ny+model.Nx,:] .= deepcopy(X0)
-    J = model.Tstep
-    t0 = model.Tspinup*model.Δtobs
-    F = model.F
-    enkf = StochEnKF(x->x, model.ϵy, model.Δtdyn, model.Δtobs, false, false)
+		    X = zeros(model.Ny + model.Nx, Ne)
+		    X[model.Ny+1:model.Ny+model.Nx,:] .= copy(X0)
+		    J = model.Tstep
+		    t0 = model.Tspinup*model.Δtobs
+		    F = model.F
 
-    # Use this multi-additive inflation
-    ϵx = MultiAddInflation(model.Nx, β, zeros(model.Nx), model.ϵx.Σ, model.ϵx.σ)
+			Δ = 2
+			yidx = 1:Δ:model.Nx
+			idx = vcat(collect(1:length(yidx))', collect(yidx)')
 
-    # @time enshist = seqassim(dyn, data, J, ϵx, enkf, ens, t0)
-	@time statehist = seqassim(F, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0);
+			enkf = SeqStochEnKF(x->x, F.h, β, model.ϵy, Ny, Nx, model.Δtdyn,
+			                    idx, zeros(Nx+1, Ne), false, true)
 
-    Metric = post_process(data, model, J, statehist)
-    push!(Metric_Ne, deepcopy(Metric))
-    println("Ne "*string(Ne)*"& β "*string(β)*" RMSE: "*string(Metric.rmse_mean))
-    end
-    push!(Metric_list, deepcopy(Metric_Ne))
+		    # Use this multi-additive inflation
+		    ϵx = MultiAddInflation(model.Nx, β, zeros(model.Nx), model.ϵx.Σ, model.ϵx.σ)
+
+			# Create Localization structure
+		    Gxy(i,j) = periodicmetric!(i,yidx[j], model.Nx)
+		    Gyy(i,j) = periodicmetric!(yidx[i],yidx[j], model.Nx)
+		    Loc = Localization(Lrad, Gxy, Gyy)
+
+			@time statehist = seqassim(F, data, J, model.ϵx, enkf, X, model.Ny, model.Nx, t0, Loc);
+
+		    metric = post_process(data, model, J, statehist)
+		    push!(metric_Ne, deepcopy(metric))
+			println("Ne "*string(Ne)*"& β "*string(β)*"& Lrad "*string(Lrad)*" RMSE: "*string(metric.rmse_mean))
+		end
+	end
+	push!(metric_list, deepcopy(metric_Ne))
 end
 
-return Metric_list
+return metric_list
 end
 
 

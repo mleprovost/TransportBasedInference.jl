@@ -29,7 +29,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
-	sim = solve(ensemble_prob, Tsit5(), EnsembleThreads(),trajectories = Ne,
+	sim = solve(ensemble_prob, Tsit5(), dt = algo.Δtdyn, adaptive = false, EnsembleThreads(),trajectories = Ne,
 				dense = false, save_everystep=false);
 
 	@inbounds for i=1:Ne
@@ -73,9 +73,11 @@ Generic API for localized sequential data assimilation for any sequential filter
 """
 function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx,t0::Float64, Loc::Localization)
 
+Ne = size(X, 2)
+
 step = ceil(Int, algo.Δtobs/algo.Δtdyn)
 statehist = Array{Float64,2}[]
-push!(statehist, deepcopy(viewstate(X, Ny, Nx)))
+push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
 
 
 n0 = ceil(Int64, t0/algo.Δtobs) + 1;
@@ -93,7 +95,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 
 	ensemble_prob = EnsembleProblem(prob, output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
-	sim = solve(ensemble_prob, Tsit5(), EnsembleThreads(),trajectories = Ne,
+	sim = solve(ensemble_prob, Tsit5(), dt = algo.Δtdyn, adaptive = false, EnsembleThreads(), trajectories = Ne,
 				dense = false, save_everystep=false);
 
 	@inbounds for i=1:Ne
@@ -108,7 +110,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 	# Compute measurements
 	observe(F.h, X, t0+i*algo.Δtobs, Ny, Nx)
     # Generate posterior samples
-    X = algo(X, ystar, t0+i*algo.Δtobs, Loc)
+    X = algo(X, ystar, t0+i*algo.Δtobs-t0, Loc)
 
 	# Filter state
 	if algo.isfiltered == true

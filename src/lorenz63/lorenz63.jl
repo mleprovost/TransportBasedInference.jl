@@ -33,7 +33,7 @@ function generate_lorenz63(model::Model, x0::Array{Float64,1}, J::Int64)
     	tspan = (t0 + (i-1)*model.Δtobs, t0 + i*model.Δtobs)
     	prob = remake(prob, tspan = tspan)
 
-    	sol = solve(prob, Tsit5(), dense = false, save_everystep = false)
+    	sol = solve(prob, Tsit5(), dt = model.Δtdyn, adaptive = false, dense = false, save_everystep = false)
     	x .= deepcopy(sol.u[end])
     	# for j=1:step
     	# 	t = t0 + (i-1)*algo.Δtobs+(j-1)*algo.Δtdyn
@@ -252,9 +252,9 @@ metric_hist = []
 			Si = SparseRadialMap(Xi, -1; λ = λ, δ = δ, γ = γ)
 			poff = p
 			order = [p; 0; 0]
-			maxfeatures = ceil(Int64, (sqrt(Ne)-(findmin(order)[2]+1))/(poff+1))
+			# maxfeatures = ceil(Int64, (sqrt(Ne)-(findmin(order)[2]+1))/(poff+1))
 
-			optimize(Si, Xi, poff, order, "kfolds"; apply_rescaling = true, start = 2, maxfeatures = maxfeatures)
+			optimize(Si, Xi, poff, order, 2; apply_rescaling = true, start = 2)#, maxfeatures = maxfeatures)
 			push!(Slist, Si)
 		end
     # Load file
