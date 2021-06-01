@@ -58,7 +58,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 		end
 	end
 
-    push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
+    push!(statehist, copy(X[Ny+1:Ny+Nx,:]))
 	end
 
 return statehist
@@ -120,7 +120,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 		end
 	end
 
-    push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
+    push!(statehist, copy(X[Ny+1:Ny+Nx,:]))
 end
 
 return statehist

@@ -218,7 +218,7 @@ function benchmark_sadaptivermf_lorenz63(model::Model, data::SyntheticData, path
 xfreerun = rand(model.π0)
 tfreerun = 20000
 Tfreerun = ceil(Int64, tfreerun/model.Δtobs)
-data_freerun = generate_lorenz96(model, xfreerun, Tfreerun)
+data_freerun = generate_lorenz63(model, xfreerun, Tfreerun)
 
 Tdiscard = 2000
 Δdiscard = 40
