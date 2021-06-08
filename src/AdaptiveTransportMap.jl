@@ -56,7 +56,6 @@ include("DA/postprocess.jl")
 
 # Tools for EnKF
 include("enkf/senkf.jl")
-include("enkf/lowranksenkf.jl")
 include("enkf/etkf.jl")
 
 # Tools for lorenz63
