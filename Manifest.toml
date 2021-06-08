@@ -440,12 +440,6 @@ version = "7.1.1"
 deps = ["Libdl"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
-[[LinearMaps]]
-deps = ["LinearAlgebra", "SparseArrays"]
-git-tree-sha1 = "ebec45cc8cfe3c947b01c2c491e7e1eefba73c4f"
-uuid = "7a12625a-238d-50fd-b39a-03d52299707e"
-version = "3.3.0"
-
 [[LogExpFunctions]]
 deps = ["DocStringExtensions", "LinearAlgebra"]
 git-tree-sha1 = "1ba664552f1ef15325e68dc4c05c3ef8c2d5d885"
