@@ -1,19 +1,19 @@
-## AdaptiveTransportMap.jl
+## TransportBasedInference.jl
 
 _A framework for estimation of adaptive transport maps between two densities from samples_
 
-[![Build Status](https://github.com/mleprovost/AdaptiveTransportMap/workflows/CI/badge.svg)](https://github.com/mleprovost/AdaptiveTransportMap/actions)
+[![Build Status](https://github.com/mleprovost/TransportBasedInference.jl/workflows/CI/badge.svg)](https://github.com/mleprovost/TransportBasedInference.jl/actions)
 
-## About the package
 
-**AdaptiveTransportMap.jl** is registered in the general Julia registry. To install, type
+**TransportBasedInference.jl** is registered in the general Julia registry. To install, type
 e.g.,
 ```julia
-] add AdaptiveTransportMap
+] add TransportBasedInference
 ```
 
 Then, in any version, type
 ```julia
-julia> using AdaptiveTransportMap
+julia> using TransportBasedInference
 ```
-For examples, consult the documentation or see the example Jupyter notebooks in the Examples folder
+
+For examples, consult the documentation or see the example Jupyter notebooks in the examples folder.

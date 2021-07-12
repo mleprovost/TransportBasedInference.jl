@@ -1,18 +1,19 @@
-using Documenter, AdaptiveTransportMap
+using Documenter, TransportBasedInference
 
 makedocs(
-    sitename = "AdaptiveTransportMap.jl",
+    sitename = "TransportBasedInference.jl",
     doctest = true,
     clean = true,
     pages = [
         "Home" => "index.md",
-        # "Manual" => ["manual/1.-Basic-viscous-flow.md",
-        #              "manual/2.-Basic-flow-with-a-stationary-body.md",
-        #              "manual/3.-Applying-pulse-forcing-to-a-flow.md",
-        #              "manual/4.-Multiple-stationary-bodies.md",
-        #              "manual/5.-Viscous-flow-about-a-moving-body.md",
-        #              "manual/6.-Variable-free-stream.md"
-        #              ]
+        "Manual" => ["manual/1.-Estimation-of-the-Banana-distribution.md",
+                     # "manual/2.-Basic-flow-with-a-stationary-body.md",
+                     # "manual/3.-Applying-pulse-forcing-to-a-flow.md",
+                     # "manual/4.-Multiple-stationary-bodies.md",
+                     # "manual/5.-Viscous-flow-about-a-moving-body.md",
+                     # "manual/6.-Variable-free-stream.md"
+                     "manual/functions.md"
+                     ]
         #"Internals" => [ "internals/properties.md"]
     ],
     #format = Documenter.HTML(assets = ["assets/custom.css"])
@@ -32,7 +33,7 @@ makedocs(
 
 #if "DOCUMENTER_KEY" in keys(ENV)
 deploydocs(
-     repo = "github.com/mleprovost/AdaptiveTransportMap.jl.git",
+     repo = "github.com/mleprovost/TransportBasedInference.jl.git",
      target = "build",
      deps = nothing,
      make = nothing

@@ -1,4 +1,4 @@
-module AdaptiveTransportMap
+module TransportBasedInference
 
 using ColorTypes
 using DocStringExtensions
