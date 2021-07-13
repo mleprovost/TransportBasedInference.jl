@@ -1,14 +1,11 @@
-# Functions and types
-
-
-## Functions
+# Functions
 
 ```@autodocs
 Modules = [TransportBasedInference]
 Order   = [:function]
 ```
 
-## Types
+# Types
 
 ```@autodocs
 Modules = [TransportBasedInference]
@@ -16,7 +13,12 @@ Order   = [:type]
 ```
 
 
-## Index
+# Index
+
+```@autodocs
+Modules = [TransportBasedInference]
+Order   = [:type]
+```
 
 ```@index
 Pages = ["functions.md"]

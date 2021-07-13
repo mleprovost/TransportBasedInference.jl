@@ -36,7 +36,7 @@ PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite(m, PhyPolyHermite(m; sca
 """
         degree(P)
 
-Return the degree of P
+Return the degree of the polynomial `P`
 """
 degree(P::PhyHermite) = P.m
 

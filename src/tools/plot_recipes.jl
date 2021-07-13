@@ -59,8 +59,10 @@ or the maximum multi-index of the features identified for each variable (columns
     @series begin
     seriestype := :heatmap
     # size --> (600, 600)
-    # xticks --> collect(1:Nx)
-    # yticks --> collect(start:Nx)
+    xticks --> collect(1:Nx)
+    yticks --> collect(start:Nx)
+    xlim --> (-Inf, Inf)
+    ylim --> (-Inf, Inf)
     xguide -->  "Index"
     yguide -->  "Map index"
     yflip --> true
