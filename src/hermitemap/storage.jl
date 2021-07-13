@@ -4,7 +4,15 @@ export Storage, update_storage
 # Create a structure that will hold evaluation of the basis functions,
 # as well as their derivative and second derivative
 
+"""
+$(TYPEDEF)
 
+An immutable structure to hold the evaluation of basis functions
+
+## Fields
+
+$(TYPEDFIELDS)
+"""
 struct Storage
 
     m::Int64

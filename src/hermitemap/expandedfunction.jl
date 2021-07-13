@@ -31,15 +31,17 @@ export  ExpandedFunction,
 """
 $(TYPEDEF)
 
-# ExpandedFunction decomposes a multi-dimensional function f:Rᴹ → R onto
-# a basis of MultiFunctions ψ_α where c_α are scalar coefficients
-# for each MultiFunction:
-# f(x1, x2, ..., xNx) = ∑_α c_α ψ_α(x1, x2, ..., xNx)
-# Nψ is the number of MultiFunctions used,
-# Nx is the dimension of the input vector x
+`ExpandedFunction` decomposes a multi-dimensional function f:R^{Nx} → R onto
+a basis of `MultiFunction` ψ_α where c_α are scalar coefficients
+for each MultiFunction:
+f(x1, x2, ..., xNx) = ∑_α c_α ψ_α(x1, x2, ..., xNx), where
+`Nψ` is the number of `MultiFunction`s used, and
+`Nx` is the dimension of the input vector `x`.
+
+## Fields
+$(TYPEDFIELDS)
 
 """
-
 struct ExpandedFunction
     m::Int64
     Nψ::Int64

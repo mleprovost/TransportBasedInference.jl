@@ -2,6 +2,17 @@ import LinearAlgebra: ldiv!, dot
 
 export Preconditioner, InvPreconditioner, precond!
 
+
+"""
+$(TYPEDEF)
+
+An immutable structure to hold a preconditioner and its Cholesky factorization.
+
+## Fields
+$(TYPEDFIELDS)
+
+"""
+
 struct Preconditioner
     P::Symmetric{Float64}
 

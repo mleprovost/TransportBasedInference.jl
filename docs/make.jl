@@ -11,17 +11,17 @@ makedocs(
         "Home" => "index.md",
         "Background" => "background.md",
         "Tutorials" => [
-                     "manual/1.-Estimation-of-the-Banana-distribution.md",
-                     # "manual/2.-Basic-flow-with-a-stationary-body.md",
-                     "manual/3.-Structure-discovery-of-the-Lorenz-96.md",
-                     "manual/4.-Linear-ensemble-filtering-Lorenz-63.md",
-                     "manual/5.-Linear-ensemble-filtering-Lorenz-96-with-localization.md",
-                     "manual/6.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-63.md",
-                     "manual/7.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-96.md"
+        #              # "tutorials/1.-Estimation-of-the-Banana-distribution.md",
+        #              # "tutorials/2.-Basic-flow-with-a-stationary-body.md",
+                      "tutorials/3.-Structure-discovery-of-the-Lorenz-96.md"
+        #              # "tutorials/4.-Linear-ensemble-filtering-Lorenz-63.md",
+        #              # "tutorials/5.-Linear-ensemble-filtering-Lorenz-96-with-localization.md",
+        #              # "tutorials/6.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-63.md",
+        #              # "tutorials/7.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-96.md"
                      ],
-        "API Documentation" => ["apidoc.md"],
-        "Community guidelines" => ["contribute.md"],
-        "LICENSE.md"
+        "Manual" => ["manual/apidoc.md",
+                     "manual/contribute.md",
+                     "manual/LICENSE.md"]
     ],
     #format = Documenter.HTML(assets = ["assets/custom.css"])
     format = Documenter.HTML(

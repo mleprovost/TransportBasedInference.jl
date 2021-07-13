@@ -5,11 +5,19 @@ export  LinHermiteMapComponent,
         evaluate!,
         evaluate
 
-# LinHermiteMapComponent is a composition of a linear transformation that rescale
-# the samples to get zero mean and unitary standard deviation component-wise
-# and a nonlinear transport map described by a HermiteMapComponent element
 
 
+"""
+$(TYPEDEF)
+
+`LinHermiteMapComponent` is a type to hold  the composition of a `LinearTransform`: a linear transformation that rescales
+the samples to get zero mean and unitary standard deviation component-wise
+and  an `HermiteMapComponent` element.
+
+## Fields
+
+$(TYPEDFIELDS)
+"""
 struct LinHermiteMapComponent
     # Linear transformation
     L::LinearTransform

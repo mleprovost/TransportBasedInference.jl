@@ -11,20 +11,19 @@ export  ProHermite, degree,
 
 
 """
-    ProHermite <: Hermite
+ProHermite <: Hermite
 
 An immutable structure for probabilistic Hermite functions defined as ψem(x) = Hem(x)*exp(-x^2/4).
 
 ## Fields
 -  `m` : order of the function
 -  `Poly` : probabilistic Hermite polynomial of order m
-- `scaled` : with rescaling to have unitary norm
+-  `scaled` : with rescaling to have unitary norm
 
 ## Constructors
-ProHermite(m, Poly, scaled)
-ProHermite(m; scaled = false)
+- `ProHermite(m, Poly, scaled)`
+- `ProHermite(m; scaled = false)`
 """
-
 struct ProHermite <: Hermite
     m::Int64
     Poly::ProPolyHermite

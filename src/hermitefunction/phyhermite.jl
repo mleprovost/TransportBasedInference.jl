@@ -8,7 +8,7 @@ export  PhyHermite, degree,
         vander!, vander
 
 """
-    PhyHermite <: Hermite
+PhyHermite <: Hermite
 
 An immutable structure for physicist Hermite functions defined as ψm(x) = Hm(x)*exp(-x^2/2).
 
@@ -18,8 +18,8 @@ An immutable structure for physicist Hermite functions defined as ψm(x) = Hm(x)
 - `scaled` : with rescaling to have unitary norm
 
 ## Constructors
-PhyHermite(m, Poly, scaled)
-PhyHermite(m; scaled = false)
+- `PhyHermite(m, Poly, scaled)`
+- `PhyHermite(m; scaled = false)``
 """
 struct PhyHermite <: Hermite
     m::Int64

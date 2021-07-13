@@ -22,7 +22,16 @@ export  IntegratedFunction,
         hess_coeff,
         evalgrad_coeff!
 
+"""
+$(TYPEDEF)
 
+An immutable structure to hold the integrated function
+with `g` a `Rectifier` and `f` an `ExpandedFunction`.
+
+## Fields
+
+$(TYPEDFIELDS)
+"""
 struct IntegratedFunction
     m::Int64
     Nψ::Int64

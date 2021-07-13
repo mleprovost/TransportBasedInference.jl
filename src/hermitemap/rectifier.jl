@@ -9,8 +9,19 @@ export  Rectifier,
         hess_x!, hess_x, vhess_x,
         evaluate!, vevaluate
 
-# Structure for continuous rectifier
-# x->rec(x)
+
+"""
+$(TYPEDEF)
+
+This structure defines a continuous rectifier g,
+i.e. a positive and monotonically increasing function
+(e.g. square function, exponential , softplus, explinearunit).
+
+## Fields
+
+$(TYPEDFIELDS)
+
+"""
 struct Rectifier
     T::String
 end
@@ -134,7 +145,7 @@ end
 
 vgrad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
 
-# Compute g′(x)/g(x) i.e d/dx log(g(x))
+""" Compute g′(x)/g(x) i.e d/dx log(g(x))"""
 function grad_x_logeval(g::Rectifier, x::T) where {T <: Real}
     if g.T=="squared"
         return dsquare(x)/square(x)

@@ -16,13 +16,10 @@ export Basis,
        CstLinProHermite
 
 """
-   $(TYPEDEF)
+$(TYPEDEF)
 
 A structure to hold a basis of functions
-For instance, (1, x, ψ0, ψ1,..., ψn) defines a basis where the index:
-0 corresponds to the constant function
-1 corresponds to the linear function
-n+2 corresponds to the n-th order physicist Hermite function
+
 
 ## Fields
 $(TYPEDFIELDS)
@@ -30,18 +27,25 @@ $(TYPEDFIELDS)
 ## Constructors
 - `Basis(m)`
 
-"""
+## Construct new basis of features
 
+A specific feature basis `MyBasis` must be a subtype of `Basis`, and the following routines must be implemented:
+* `Base.show(io::IO, B::MyBasis)`` (optional, but desired)
+* `@propagate_inbounds Base.getindex(B::MyBasis, i::Int64)`
+* `vander!(dV, B::MyBasis, maxi::Int64, k::Int64, x)`
+"""
 abstract type Basis end
 
 Base.size(B::Basis) = B.m
 
-# A particular feature basis is a subtype of Basis.
-# To define a new basis, you need to provide the following routines:
-# Base.show(io::IO, B::MyBasis) (optional, but desired)
-# @propagate_inbounds Base.getindex(B::MyBasis, i::Int64)
-# vander!(dV, B::MyBasis, maxi::Int64, k::Int64, x)
+"""
+$(TYPEDEF)
 
+The basis composed of the constant function and probabilistic Hermite functions
+
+## Fields
+$(TYPEDFIELDS)
+"""
 struct CstProHermite <: Basis
     m::Int64
 end
@@ -52,7 +56,14 @@ function Base.show(io::IO, B::CstProHermite)
     println(io,"Basis of "*string(B.m)*" functions: Constant, 0th -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
 end
 
+"""
+$(TYPEDEF)
 
+The basis composed of the constant function and physicist Hermite functions
+
+## Fields
+$(TYPEDFIELDS)
+"""
 struct CstPhyHermite <: Basis
     m::Int64
 end
@@ -63,6 +74,14 @@ function Base.show(io::IO, B::CstPhyHermite)
     println(io,"Basis of "*string(B.m)*" functions: Constant, 0th -> "*string(B.m-2)*"th degree Physicist Hermite function")
 end
 
+"""
+$(TYPEDEF)
+
+The basis composed of the constant function, the identity, and probabilistic Hermite functions
+
+## Fields
+$(TYPEDFIELDS)
+"""
 struct CstLinProHermite <: Basis
     m::Int64
 end
@@ -73,6 +92,14 @@ function Base.show(io::IO, B::CstLinProHermite)
     println(io,"Basis of "*string(B.m)*" functions: Constant, Linear, 0th -> "*string(B.m-3)*"th degree Probabilistic Hermite function")
 end
 
+"""
+$(TYPEDEF)
+
+The basis composed of the constant function, the identity, and physicist Hermite functions
+
+## Fields
+$(TYPEDFIELDS)
+"""
 struct CstLinPhyHermite <: Basis
     m::Int64
 end

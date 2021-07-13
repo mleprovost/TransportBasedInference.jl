@@ -8,7 +8,16 @@ export  PhyPolyHermite, Cphy,
         vander, vander!
 
 
-# Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
+"""
+PhyPolyHermite <: Hermite
+
+An immutable structure for physicist Hermite polynomials
+
+## Fields
+-  `m` : order of the polynomial
+-  `P` : physicist Hermite polynomial of order m
+- `scaled` : with rescaling to have unitary norm
+"""
 struct PhyPolyHermite <: Hermite
     m::Int64
     P::ImmutablePolynomial{Float64}

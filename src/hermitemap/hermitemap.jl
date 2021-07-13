@@ -16,6 +16,15 @@ export  HermiteMap,
 
 import Base: @propagate_inbounds
 
+
+"""
+$(TYPEDEF)
+
+
+## Fields
+
+$(TYPEDFIELDS)
+"""
 struct HermiteMap
         m::Int64
         Nx::Int64

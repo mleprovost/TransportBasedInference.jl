@@ -1,6 +1,6 @@
 export bisection, hybridsolver, hybridinverse!
 
-
+"Implement the classical Bisection algorithm on the segment `[xm, xp]` of the real function `f`."
 function bisection(x, fx, xm, fm, xp, f)
 @assert xm < xp "Error in the order of the argument"
     if sign(fx) == sign(f)

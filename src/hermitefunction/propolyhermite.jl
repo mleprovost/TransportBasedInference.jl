@@ -5,7 +5,16 @@ export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
         evaluate!, evaluate,
         vander!, vander
 
-# Create a structure to hold physicist Hermite polynomials as well as their first and second derivative
+"""
+ProPolyHermite <: Hermite
+
+An immutable structure for probabilistic Hermite polynomials
+
+## Fields
+-  `m` : order of the polynomial
+-  `P` : probabilistic Hermite polynomial of order m
+- `scaled` : with rescaling to have unitary norm
+"""
 struct ProPolyHermite <: Hermite
     m::Int64
     P::ImmutablePolynomial{Float64}

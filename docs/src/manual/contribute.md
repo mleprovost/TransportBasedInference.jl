@@ -1,4 +1,7 @@
-# Contribute to TransportBasedInference.jl
+# Community guidelines
+
+
+## Contribute to TransportBasedInference.jl
 
 We welcome contributions to TransportBasedInference.jl. The modularity of the package eases the integration of new parametrizations of transport maps, new ensemble filtering algorithms, new ensemble inflation scheme... To contribute a new feature, please submit a pull request.
 
@@ -12,10 +15,10 @@ Similarly, new ensemble filter only need to satisfy the following requirements:
 * `MyFilterType <: SeqFilter`
 * `(A::MyFilterType)(X::AbstractMatrix{Float64}, ystar, t)` is defined, where `ystar` is the observation to assimilate in the forecast ensemble `X` at time `t`.
 
-# Reporting issues or problems
+## Reporting issues or problems
 
 If you find a bug in the code, please open an issue with a minimal working example.
 
-# Seek support
+## Seek support
 
 To reach support with TransportBasedInference.jl, open a post on **[Julia discourse](https://discourse.julialang.org)**.

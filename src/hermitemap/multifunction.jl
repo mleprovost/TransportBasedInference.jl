@@ -1,12 +1,20 @@
 export MultiFunction, first
 
-# MultiFunction is a type to hold an elementary function F: R^{k} → R
-# that can be decomposed as the product of univariate basis,
-# where each basis is finite and contains constant and/or linear
-# and Hermite functions
-# F(x_1, x_2, ..., x_k) = f_1(x_1) × f_2(x_2) × ... × f_M(x_k)
 
+"""
+$(TYPEDEF)
 
+An immutable structure to hold an elementary function F: Rᵏ → R
+that can be decomposed as the product of univariate basis,
+where each basis is finite and contains constant and/or linear
+and Hermite functions
+F(x_1, x_2, ..., x_k) = f_1(x_1) × f_2(x_2) × ... × f_M(x_k)
+
+## Fields
+
+$(TYPEDFIELDS)
+
+"""
 struct MultiFunction
     m::Int64
     Nx::Int64

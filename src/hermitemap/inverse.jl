@@ -96,7 +96,7 @@ inverse!(X, F, C::HermiteMapComponent, S::Storage) = inverse!(X, F, C.I, S)
 
 
 function inverse!(X::Array{Float64,2}, F, L::LinHermiteMapComponent, S::Storage)
-    # Pay attention that S is computed in the renormalized space for improve performance !!!
+    # Pay attention that S is computed in the renormalized space for improved performance !!!
     transform!(L.L, X)
     inverse!(X, F, L.C, S)
     itransform!(L.L, X)

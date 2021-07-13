@@ -1,16 +1,48 @@
-# AdaptiveTransportMap.jl
+# Welcome to TransportBasedInference.jl
 
-*A framework for Bayesian inference with transport maps*
+*A Julia package for Bayesian inference with transport maps*
 
-The objective of this package is to allow for easy and fast resolution of Bayesian inference problems using transport maps. The package provides tools for:
+The objective of this package is to allow easy and fast resolution of Bayesian inference problems using transport maps. The package provides tools for:
 - joint and conditional density estimation from limited samples of the target distribution using the adaptive transport map algorithm developed by Baptista et al. [^1].
-- sequential inference for state-space models using one of the following algorithms: the stochastic ensemble Kalman filter (Evensen [^2]), the ensemble transform Kalman filter (Bishop et al. [^3]) and a nonlinear generalization of the stochastic ensemble Kalman filter (Spantini et al. [^4]).
+- sequential inference for state-space models using one of the following algorithms: the (localized) stochastic ensemble Kalman filter (Evensen [^2]), the ensemble transform Kalman filter (Bishop et al. [^3]) and a nonlinear generalization of the stochastic ensemble Kalman filter (Spantini et al. [^4]).
 
-This package has been designed to address the following question:
+## Teaser
 
-Given samples $\boldsymbol{x}^i \sim \pi$
-For a random variable $\mathsf{X} \sim \pi$ where $\pi$ a complex distribution of interest, can we identify a transformation $\boldsymbol{S}$ such that the target distribution is pushed forward to a reference density $\eta$ (e.g. the standard Gaussian distribution).
 
+
+
+## Installation
+
+**TransportBasedInference.jl** is registered in the general Julia registry. To install, type
+e.g.,
+```julia
+] add TransportBasedInference
+```
+
+Then, in any version, type
+```julia
+julia> using TransportBasedInference
+```
+
+## Tutorials
+
+For examples, consult the documentation or see the Jupyter notebooks in the examples folder.
+
+## Literature
+
+If you want to get started with transport maps for Bayesian inference, we recommend the review given by Marzouk et al. [^5].
+
+
+## Developing team
+
+Mathieu Le Provost\
+Ricardo Baptista\
+Jeff D. Eldredge\
+Youssef M. Marzouk
+
+## Acknowledgements
+
+Mathieu Le Provost and Jeff D. Eldredge gratefully acknowledge support from the U.S. Air Force Office of Scientific Research award FA9550-18-1-0440. Ricardo Baptista and Youssef M. Marzouk acknowledge support from the Department of Energy, Office of Advanced Scientific Computing Research, AEOLUS (Advances in Experimental design, Optimal control, and Learning for Uncertain complex Systems) center.
 
 
 ## References
@@ -23,4 +55,4 @@ For a random variable $\mathsf{X} \sim \pi$ where $\pi$ a complex distribution o
 
 [^4]: Spantini, A., Baptista, R., & Marzouk, Y. (2019). Coupling techniques for nonlinear ensemble filtering. arXiv preprint arXiv:1907.00389.
 
-[^5]: Le Provost, M., Baptista, R., Marzouk, Y., & Eldredge, J. (2021). A low-rank nonlinear ensemble filter for vortex models of aerodynamic flows. In AIAA Scitech 2021 Forum (p. 1937).
+[^5]: Marzouk, Y., Moselhy, T., Parno, M., & Spantini, A. (2016). Sampling via measure transport: An introduction. Handbook of uncertainty quantification, 1-41.
