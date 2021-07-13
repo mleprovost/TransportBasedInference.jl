@@ -1,6 +1,14 @@
 export Metrics, rmse, spread, mean_hist, metric_hist
 
-#Structure that hold the different metrics for each case
+"""
+$(TYPEDEF)
+
+This structure stores metrics for the benchmakrinf of the different filters.
+## Fields
+
+$(TYPEDFIELDS)
+
+"""
 struct Metrics
 Ne::Int64
 
@@ -47,21 +55,21 @@ end
 
 # Definition from Spantini et al. 2019
 """
-    rmse(X)
+rmse(X)
 
-Compute the root-mean square error of the ensemble matrix `X`    
+Compute the root-mean square error of the ensemble matrix `X`
 """
 rmse(x::Array{Float64,1}, X::Array{Float64,2}) = norm(mean(X; dims = 2)[:,1]-x)/sqrt(size(X,1))
 
 """
-    spread(X)
+spread(X)
 
 Compute the spread of the ensemble matrix `X`
 """
 spread(X::Array{Float64,2}) = sqrt(tr(cov(X'))/size(X,1))
 
 """
-    mean_hist(hist)
+mean_hist(hist)
 
 Stack together the mean of the different ensembles.
 """

@@ -6,9 +6,6 @@ The objective of this package is to allow easy and fast resolution of Bayesian i
 - joint and conditional density estimation from limited samples of the target distribution using the adaptive transport map algorithm developed by Baptista et al. [^1].
 - sequential inference for state-space models using one of the following algorithms: the (localized) stochastic ensemble Kalman filter (Evensen [^2]), the ensemble transform Kalman filter (Bishop et al. [^3]) and a nonlinear generalization of the stochastic ensemble Kalman filter (Spantini et al. [^4]).
 
-## Teaser
-
-
 
 
 ## Installation
@@ -33,7 +30,7 @@ For examples, consult the documentation or see the Jupyter notebooks in the exam
 If you want to get started with transport maps for Bayesian inference, we recommend the review given by Marzouk et al. [^5].
 
 
-## Developing team
+## Credits
 
 Mathieu Le Provost\
 Ricardo Baptista\

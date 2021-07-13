@@ -6,13 +6,18 @@ export   LinearTransform,
          itransform!,
          itransform
 
-"""
-    LinearTransform
+ """
+ $(TYPEDEF)
+
+ This type holds an affine transformation of the form x-> μ + Lx, where μ is an offset and L is a linear operator.
+ We typically use this type to normalize samples to have zero mean and unit covariance of element-wise standard deviation.
 
 
+ ## Fields
 
+ $(TYPEDFIELDS)
 
-"""
+ """
 struct LinearTransform
     Nx::Int64
 
