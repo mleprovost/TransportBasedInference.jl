@@ -573,9 +573,9 @@ end
     @test C.p == [2]
 
 
-    @test  AdaptiveTransportMap.component(C, 1).ξk == zeros(2+2)
-    @test  AdaptiveTransportMap.component(C, 1).σk == ones(2+2)
-    @test  AdaptiveTransportMap.component(C, 1).coeffk == zeros(2+3)
+    @test  TransportBasedInference.component(C, 1).ξk == zeros(2+2)
+    @test  TransportBasedInference.component(C, 1).σk == ones(2+2)
+    @test  TransportBasedInference.component(C, 1).coeffk == zeros(2+3)
 
     C = SparseRadialMapComponent(5, 2)
 
@@ -583,13 +583,13 @@ end
     @test C.p == [2; 2; 2; 2; 2]
 
 
-    @test  AdaptiveTransportMap.component(C, 5).ξk == zeros(2+2)
-    @test  AdaptiveTransportMap.component(C, 5).σk == ones(2+2)
-    @test  AdaptiveTransportMap.component(C, 5).coeffk == zeros(2+3)
+    @test  TransportBasedInference.component(C, 5).ξk == zeros(2+2)
+    @test  TransportBasedInference.component(C, 5).σk == ones(2+2)
+    @test  TransportBasedInference.component(C, 5).coeffk == zeros(2+3)
 
-    @test  AdaptiveTransportMap.component(C, 2).ξi == zeros(2)
-    @test  AdaptiveTransportMap.component(C, 2).σi == ones(2)
-    @test  AdaptiveTransportMap.component(C, 2).coeffi == zeros(2+1)
+    @test  TransportBasedInference.component(C, 2).ξi == zeros(2)
+    @test  TransportBasedInference.component(C, 2).σi == ones(2)
+    @test  TransportBasedInference.component(C, 2).coeffi == zeros(2+1)
 
     C = SparseRadialMapComponent(5, [1; 0; -1; 2; 1])
 
@@ -598,19 +598,19 @@ end
     sola = Int64[2; 1 ; 0; 3; 4]
 
     for i=1:4
-        @test AdaptiveTransportMap.component(C, i).p == C.p[i]
-        @test typeof(AdaptiveTransportMap.component(C, i))<:ui
-        @test  AdaptiveTransportMap.component(C, i).ξi == zeros(solξ[i])
-        @test  AdaptiveTransportMap.component(C, i).σi == ones(solσ[i])
-        @test  AdaptiveTransportMap.component(C, i).coeffi == zeros(sola[i])
+        @test TransportBasedInference.component(C, i).p == C.p[i]
+        @test typeof(TransportBasedInference.component(C, i))<:ui
+        @test  TransportBasedInference.component(C, i).ξi == zeros(solξ[i])
+        @test  TransportBasedInference.component(C, i).σi == ones(solσ[i])
+        @test  TransportBasedInference.component(C, i).coeffi == zeros(sola[i])
     end
 
     for i=5:5
-        @test AdaptiveTransportMap.component(C, i).p == C.p[i]
-        @test typeof(AdaptiveTransportMap.component(C, i))<:uk
-        @test  AdaptiveTransportMap.component(C, i).ξk == zeros(solξ[i])
-        @test  AdaptiveTransportMap.component(C, i).σk == ones(solσ[i])
-        @test  AdaptiveTransportMap.component(C, i).coeffk == zeros(sola[i])
+        @test TransportBasedInference.component(C, i).p == C.p[i]
+        @test typeof(TransportBasedInference.component(C, i))<:uk
+        @test  TransportBasedInference.component(C, i).ξk == zeros(solξ[i])
+        @test  TransportBasedInference.component(C, i).σk == ones(solσ[i])
+        @test  TransportBasedInference.component(C, i).coeffk == zeros(sola[i])
     end
 
 end
@@ -640,7 +640,7 @@ end
     C.coeff[3] .= a3
 
     z = randn(3)
-    @test norm(off_diagonal(C, z) - (C(z) - AdaptiveTransportMap.component(C,3)(z[3])))<1e-10
+    @test norm(off_diagonal(C, z) - (C(z) - TransportBasedInference.component(C,3)(z[3])))<1e-10
 
     # Nx=3 & p = 3
     C = SparseRadialMapComponent(3, 3)
@@ -660,7 +660,7 @@ end
     C.coeff[3] .= a3
 
     z = randn(3)
-    @test norm(off_diagonal(C, z) - (C(z) - AdaptiveTransportMap.component(C,3)(z[3])))<1e-10
+    @test norm(off_diagonal(C, z) - (C(z) - TransportBasedInference.component(C,3)(z[3])))<1e-10
 
 
     # Nx=1  & p=-1
@@ -680,7 +680,7 @@ end
     C.coeff[1] .= a1
 
     z = randn(3)
-    @test norm(off_diagonal(C, z) - (C(z) - AdaptiveTransportMap.component(C,3)(z[3])))<1e-10
+    @test norm(off_diagonal(C, z) - (C(z) - TransportBasedInference.component(C,3)(z[3])))<1e-10
 
 
     # Nx=3  & p=[-1  2 -1]
@@ -694,7 +694,7 @@ end
     C.coeff[2] .= a2
 
     z = randn(3)
-    @test norm(off_diagonal(C, z) - (C(z) - AdaptiveTransportMap.component(C,3)(z[3])))<1e-10
+    @test norm(off_diagonal(C, z) - (C(z) - TransportBasedInference.component(C,3)(z[3])))<1e-10
 end
 
 @testset "extract and modify coefficients of RadialMapComponent" begin

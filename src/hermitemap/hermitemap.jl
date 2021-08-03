@@ -351,7 +351,8 @@ end
 ## Optimization function
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
+                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5,
+                  verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
                   start::Int64=1, P::Parallel = serial)
         Nx = M.Nx
 
@@ -367,7 +368,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         for i=start:Nx
          Xi = view(X,1:i,:)
         M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                             withqr = withqr, verbose = verbose, hessprecond = hessprecond)
+                             withqr = withqr, maxpatience = maxpatience, verbose = verbose,
+                             hessprecond = hessprecond)
         end
 
         elseif typeof(P) <: Thread
@@ -376,7 +378,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Union{Nothing, I
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
          M.C[i], _ = optimize(M.C[i], Xi, maxterms; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)
+                              withqr = withqr, maxpatience = maxpatience, verbose = verbose,
+                              hessprecond = hessprecond)
         end
         end
 

@@ -1,6 +1,6 @@
 
 using Polynomials
-using AdaptiveTransportMap: derivative, vander
+using TransportBasedInference: derivative, vander
 
 @testset "Test physical Hermite polynomials"   begin
 

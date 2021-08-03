@@ -1,4 +1,4 @@
-using AdaptiveTransportMap: evaluate
+using TransportBasedInference: evaluate
 
 @testset "Test inverse function" begin
 

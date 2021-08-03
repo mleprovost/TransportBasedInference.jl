@@ -118,7 +118,7 @@ end
     # woff = zeros(0)
 
     # w, w∂k = compute_weights(TransportMap.component(C.U[1],1), [2.0], w, w∂k)
-    compute_weights(AdaptiveTransportMap.component(M.C[1],1), x, wdiag, w∂k)
+    compute_weights(TransportBasedInference.component(M.C[1],1), x, wdiag, w∂k)
 
     @test size(wdiag,1) == 2
     @test size(w∂k, 1) == 1

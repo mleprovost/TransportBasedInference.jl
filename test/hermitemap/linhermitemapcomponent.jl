@@ -60,13 +60,13 @@ end
     C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, nothing; verbose = false);
+    C_new, error_new = TransportBasedInference.optimize(C, X, nothing; verbose = false);
 
     itransform!(L, X)
 
     L = LinHermiteMapComponent(Xlin, Clin)
 
-    L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, nothing; verbose = false);
+    L_new, error_Lnew = TransportBasedInference.optimize(L, Xlin, nothing; verbose = false);
 
     @test norm(error_new - error_Lnew)<1e-8
     @test norm(getcoeff(C_new) - getcoeff(L_new))<1e-8
@@ -95,13 +95,13 @@ end
     C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, 4; verbose = false);
+    C_new, error_new = TransportBasedInference.optimize(C, X, 4; verbose = false);
 
     itransform!(L, X)
 
     L = LinHermiteMapComponent(Xlin, Clin)
 
-    L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, 4; verbose = false);
+    L_new, error_Lnew = TransportBasedInference.optimize(L, Xlin, 4; verbose = false);
 
     @test norm(error_new - error_Lnew)<1e-8
     @test norm(getcoeff(C_new) - getcoeff(L_new))<1e-8
@@ -130,13 +130,13 @@ end
     C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, "kfold"; verbose = false);
+    C_new, error_new = TransportBasedInference.optimize(C, X, "kfold"; verbose = false);
 
     itransform!(L, X)
 
     L = LinHermiteMapComponent(Xlin, Clin)
 
-    L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, "kfold"; verbose = false);
+    L_new, error_Lnew = TransportBasedInference.optimize(L, Xlin, "kfold"; verbose = false);
 
     @test norm(error_new - error_Lnew)<1e-8
     @test norm(getcoeff(C_new) - getcoeff(L_new))<1e-8
@@ -164,13 +164,13 @@ end
     C = HermiteMapComponent(m, Nx, idx, coeff);
     Clin = deepcopy(C)
 
-    C_new, error_new = AdaptiveTransportMap.optimize(C, X, "split"; verbose = false);
+    C_new, error_new = TransportBasedInference.optimize(C, X, "split"; verbose = false);
 
     itransform!(L, X)
 
     L = LinHermiteMapComponent(Xlin, Clin)
 
-    L_new, error_Lnew = AdaptiveTransportMap.optimize(L, Xlin, "split"; verbose = false);
+    L_new, error_Lnew = TransportBasedInference.optimize(L, Xlin, "split"; verbose = false);
 
     @test norm(error_new[1] - error_Lnew[1])<1e-8
     @test norm(error_new[2] - error_Lnew[2])<1e-8

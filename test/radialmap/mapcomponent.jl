@@ -166,9 +166,9 @@ end
     @test C.p == 2
 
 
-    @test  AdaptiveTransportMap.component(C, 1).ξk == zeros(2+2)
-    @test  AdaptiveTransportMap.component(C, 1).σk == ones(2+2)
-    @test  AdaptiveTransportMap.component(C, 1).coeffk == zeros(2+3)
+    @test  TransportBasedInference.component(C, 1).ξk == zeros(2+2)
+    @test  TransportBasedInference.component(C, 1).σk == ones(2+2)
+    @test  TransportBasedInference.component(C, 1).coeffk == zeros(2+3)
 
     C = RadialMapComponent(5, 2)
 
@@ -176,13 +176,13 @@ end
     @test C.p == 2
 
 
-    @test  AdaptiveTransportMap.component(C, 5).ξk == zeros(2+2)
-    @test  AdaptiveTransportMap.component(C, 5).σk == ones(2+2)
-    @test  AdaptiveTransportMap.component(C, 5).coeffk == zeros(2+3)
+    @test  TransportBasedInference.component(C, 5).ξk == zeros(2+2)
+    @test  TransportBasedInference.component(C, 5).σk == ones(2+2)
+    @test  TransportBasedInference.component(C, 5).coeffk == zeros(2+3)
 
-    @test  AdaptiveTransportMap.component(C, 2).ξi == zeros(2)
-    @test  AdaptiveTransportMap.component(C, 2).σi == ones(2)
-    @test  AdaptiveTransportMap.component(C, 2).coeffi == zeros(2+1)
+    @test  TransportBasedInference.component(C, 2).ξi == zeros(2)
+    @test  TransportBasedInference.component(C, 2).σi == ones(2)
+    @test  TransportBasedInference.component(C, 2).coeffi == zeros(2+1)
 end
 
 
@@ -211,7 +211,7 @@ end
     C.coeff[3] .= a3
 
     z = randn(3)
-    @test norm(off_diagonal(C, z) - (C(z) - AdaptiveTransportMap.component(C,3)(z[3])))<1e-10
+    @test norm(off_diagonal(C, z) - (C(z) - TransportBasedInference.component(C,3)(z[3])))<1e-10
 
     # Nx=3 & p = 3
     C = RadialMapComponent(3, 3)
@@ -231,7 +231,7 @@ end
     C.coeff[3] .= a3
 
     z = randn(3)
-    @test norm(off_diagonal(C, z) - (C(z) - AdaptiveTransportMap.component(C,3)(z[3])))<1e-10
+    @test norm(off_diagonal(C, z) - (C(z) - TransportBasedInference.component(C,3)(z[3])))<1e-10
 end
 
 

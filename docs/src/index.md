@@ -7,7 +7,6 @@ The objective of this package is to allow easy and fast resolution of Bayesian i
 - sequential inference for state-space models using one of the following algorithms: the (localized) stochastic ensemble Kalman filter (Evensen [^2]), the ensemble transform Kalman filter (Bishop et al. [^3]) and a nonlinear generalization of the stochastic ensemble Kalman filter (Spantini et al. [^4]).
 
 
-
 ## Installation
 
 **TransportBasedInference.jl** is registered in the general Julia registry. To install, type
@@ -34,8 +33,9 @@ If you want to get started with transport maps for Bayesian inference, we recomm
 
 Mathieu Le Provost\
 Ricardo Baptista\
-Jeff D. Eldredge\
-Youssef M. Marzouk
+Youssef M. Marzouk\
+Jeff D. Eldredge
+
 
 ## Acknowledgements
 

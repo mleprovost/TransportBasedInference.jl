@@ -1,4 +1,4 @@
-using AdaptiveTransportMap: ncoeff
+using TransportBasedInference: ncoeff
 
 @testset "Test optimization max_terms = nothing without/with QR" begin
     Nx = 2
@@ -20,8 +20,8 @@ using AdaptiveTransportMap: ncoeff
     C = HermiteMapComponent(m, Nx, idx, coeff);
     C0 = deepcopy(C)
 
-    C_noqr, error_noqr = AdaptiveTransportMap.optimize(C, X, nothing; withqr = false, verbose = false);
-    C_qr, error_qr = AdaptiveTransportMap.optimize(C, X, nothing; withqr = true, verbose = false);
+    C_noqr, error_noqr = TransportBasedInference.optimize(C, X, nothing; withqr = false, verbose = false);
+    C_qr, error_qr = TransportBasedInference.optimize(C, X, nothing; withqr = true, verbose = false);
 
 
     S = Storage(C0.I.f, X)
@@ -55,8 +55,8 @@ end
 
     C = HermiteMapComponent(m, Nx);
 
-    C_noqr, error_noqr = AdaptiveTransportMap.optimize(C, X, 4; withqr = false, verbose = false);
-    C_qr, error_qr = AdaptiveTransportMap.optimize(C, X, 4; withqr = true, verbose = false);
+    C_noqr, error_noqr = TransportBasedInference.optimize(C, X, 4; withqr = false, verbose = false);
+    C_qr, error_qr = TransportBasedInference.optimize(C, X, 4; withqr = true, verbose = false);
 
 
     idx0 = getidx(C_noqr)
@@ -138,8 +138,8 @@ end
     @test size(getcoeff(C_opt_noqr),1) == opt_nterms_noqr
     @test size(getcoeff(C_opt_qr),1) == opt_nterms_qr
 
-    C_new_noqr, error_new_noqr = AdaptiveTransportMap.optimize(C, X, "kfold"; withqr = false)
-    C_new_qr, error_new_qr = AdaptiveTransportMap.optimize(C, X, "kfold"; withqr = true)
+    C_new_noqr, error_new_noqr = TransportBasedInference.optimize(C, X, "kfold"; withqr = false)
+    C_new_qr, error_new_qr = TransportBasedInference.optimize(C, X, "kfold"; withqr = true)
 
     @test norm(getcoeff(C_opt_noqr) - getcoeff(C_new_noqr))<1e-5
     @test norm(error_opt_noqr - error_new_noqr)<1e-5
@@ -184,9 +184,9 @@ end
                                           withqr = true, maxpatience = maxpatience,
                                           verbose  = false)
 
-    C_new_noqr, error_new_noqr = AdaptiveTransportMap.optimize(C, X, "split"; withqr = false)
+    C_new_noqr, error_new_noqr = TransportBasedInference.optimize(C, X, "split"; withqr = false)
 
-    C_new_qr, error_new_qr = AdaptiveTransportMap.optimize(C, X, "split"; withqr = true)
+    C_new_qr, error_new_qr = TransportBasedInference.optimize(C, X, "split"; withqr = true)
 
 
     @test norm(getcoeff(C_opt_noqr) - getcoeff(C_new_noqr))<1e-8

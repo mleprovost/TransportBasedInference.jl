@@ -2,6 +2,8 @@
 
 *A Julia package for Bayesian inference with transport maps*
 
+![logo](logo.png)
+
 [![Build Status](https://github.com/mleprovost/TransportBasedInference.jl/workflows/CI/badge.svg)](https://github.com/mleprovost/TransportBasedInference.jl/actions)
 
 

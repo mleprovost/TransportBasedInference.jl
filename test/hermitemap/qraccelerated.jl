@@ -1,4 +1,4 @@
-import AdaptiveTransportMap: ncoeff
+import TransportBasedInference: ncoeff
 
 @testset "Test updateQRscaling" begin
     Nx = 3

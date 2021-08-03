@@ -1,4 +1,4 @@
-using AdaptiveTransportMap: evaluate
+using TransportBasedInference: evaluate
 
 @testset "Test active_dim" begin
 
