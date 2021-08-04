@@ -1,9 +1,45 @@
 
-@testset "Verify vander for CstProHermite: evaluation, first and second derivatives" begin
+@testset "Verify vander for ProHermiteBasis: evaluation, first and second derivatives" begin
     Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = CstProHermite(6)
+    B = CstProHermiteBasis(6)
+    ktab = [0; 1; 2]
+    for k in ktab
+        # Test evaluation
+        dV = vander(B, k, x)
+        dVtrue = zeros(Ne, size(B))
+
+        for i=1:B.m
+            dVtrue[:,i] .= derivative(FamilyScaledProHermite[i], k , x)
+        end
+        @test norm(dV - dVtrue)<1e-6
+    end
+end
+
+@testset "Verify vander for PhyHermiteBasis: evaluation, first and second derivatives" begin
+    Ne = 200
+    x = randn(Ne)
+    #Test all the basis
+    B = CstProHermiteBasis(6)
+    ktab = [0; 1; 2]
+    for k in ktab
+        # Test evaluation
+        dV = vander(B, k, x)
+        dVtrue = zeros(Ne, size(B))
+
+        for i=1:B.m
+            dVtrue[:,i] .= derivative(FamilyScaledPhyHermite[i], k , x)
+        end
+        @test norm(dV - dVtrue)<1e-6
+    end
+end
+
+@testset "Verify vander for CstProHermiteBasis: evaluation, first and second derivatives" begin
+    Ne = 200
+    x = randn(Ne)
+    #Test all the basis
+    B = CstProHermiteBasis(6)
     ktab = [0; 1; 2]
     for k in ktab
         # Test evaluation
@@ -22,11 +58,11 @@
     end
 end
 
-@testset "Verify vander for CstPhyHermite: evaluation, first and second derivatives" begin
+@testset "Verify vander for CstPhyHermiteBasis: evaluation, first and second derivatives" begin
     Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = CstPhyHermite(6)
+    B = CstPhyHermiteBasis(6)
     ktab = [0; 1; 2]
 
     for k in ktab
@@ -46,11 +82,11 @@ end
     end
 end
 
-@testset "Verify vander for CstLinProHermite: evaluation, first and second derivatives" begin
+@testset "Verify vander for CstLinProHermiteBasis: evaluation, first and second derivatives" begin
     Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = CstLinProHermite(6)
+    B = CstLinProHermiteBasis(6)
     ktab = [0; 1; 2]
 
     for k in ktab
@@ -73,11 +109,11 @@ end
     end
 end
 
-@testset "Verify vander for CstLinPhyHermite: evaluation, first and second derivatives" begin
+@testset "Verify vander for CstLinPhyHermiteBasis: evaluation, first and second derivatives" begin
     Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = CstLinPhyHermite(6)
+    B = CstLinPhyHermiteBasis(6)
     ktab = [0; 1; 2]
 
     for k in ktab
@@ -105,15 +141,15 @@ end
 #     Ne = 200
 #     x = randn(Ne)
 #     #Test all the basis
-#     B = Basis(5)#CstProHermite(5; scaled = true)
-#     # Btab = [CstProHermite(5; scaled = false);
-#     #         CstProHermite(5; scaled = true)];
-#             # CstPhyHermite(5; scaled = false);
-#             # CstPhyHermite(5; scaled = true);
-#             # CstLinPhyHermite(5; scaled = false);
-#             # CstLinPhyHermite(5; scaled = true);
-#             # CstLinProHermite(5; scaled = false);
-#             # CstLinProHermite(5; scaled = true)]
+#     B = Basis(5)#CstProHermiteBasis(5; scaled = true)
+#     # Btab = [CstProHermiteBasis(5; scaled = false);
+#     #         CstProHermiteBasis(5; scaled = true)];
+#             # CstPhyHermiteBasis(5; scaled = false);
+#             # CstPhyHermiteBasis(5; scaled = true);
+#             # CstLinPhyHermiteBasis(5; scaled = false);
+#             # CstLinPhyHermiteBasis(5; scaled = true);
+#             # CstLinProHermiteBasis(5; scaled = false);
+#             # CstLinProHermiteBasis(5; scaled = true)]
 #             # Test evaluation, derivative and second derivative
 #     ktab = [0; 1; 2]
 #
@@ -136,7 +172,7 @@ end
 
 # @testset "Test defined families list" begin
 #
-#     B = CstPhyHermite(10; scaled =false)
+#     B = CstPhyHermiteBasis(10; scaled =false)
 #     @test size(B,1)==12
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -146,7 +182,7 @@ end
 #     end
 #
 #
-#     B = CstPhyHermite(10; scaled =true)
+#     B = CstPhyHermiteBasis(10; scaled =true)
 #     @test size(B,1)==12
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -156,7 +192,7 @@ end
 #     end
 #
 #
-#     B = CstProHermite(10; scaled =false)
+#     B = CstProHermiteBasis(10; scaled =false)
 #     @test size(B,1)==12
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -166,7 +202,7 @@ end
 #     end
 #
 #
-#     B = CstProHermite(10; scaled =true)
+#     B = CstProHermiteBasis(10; scaled =true)
 #     @test size(B,1)==12
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -175,7 +211,7 @@ end
 #         @test B[i] == FamilyScaledProHermite[i-1]
 #     end
 #
-#     B = CstLinPhyHermite(10; scaled =false)
+#     B = CstLinPhyHermiteBasis(10; scaled =false)
 #     @test size(B,1)==13
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -186,7 +222,7 @@ end
 #         @test B[i] == FamilyPhyHermite[i-2]
 #     end
 #
-#     B = CstLinPhyHermite(10; scaled = true)
+#     B = CstLinPhyHermiteBasis(10; scaled = true)
 #     @test size(B,1)==13
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -197,7 +233,7 @@ end
 #         @test B[i] == FamilyScaledPhyHermite[i-2]
 #     end
 #
-#     B = CstLinProHermite(10; scaled =false)
+#     B = CstLinProHermiteBasis(10; scaled =false)
 #     @test size(B,1)==13
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -208,7 +244,7 @@ end
 #         @test B[i] == FamilyProHermite[i-2]
 #     end
 #
-#     B = CstLinProHermite(10; scaled = true)
+#     B = CstLinProHermiteBasis(10; scaled = true)
 #     @test size(B,1)==13
 #
 #     @test B[1] ==B.f[1] == FamilyProPolyHermite[1]
@@ -226,7 +262,7 @@ end
 #         Ne = 10
 #         x = 0.5*randn(Ne)
 #
-#         B = CstPhyHermite(5; scaled =false)
+#         B = CstPhyHermiteBasis(5; scaled =false)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -236,7 +272,7 @@ end
 #         end
 #
 #
-#         B = CstPhyHermite(5; scaled = true)
+#         B = CstPhyHermiteBasis(5; scaled = true)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -245,7 +281,7 @@ end
 #             @test abs(Bx[i+2] -  PhyHermite(i; scaled = true)(x[1]))< 1e-8
 #         end
 #
-#         B = CstProHermite(5; scaled =false)
+#         B = CstProHermiteBasis(5; scaled =false)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -255,7 +291,7 @@ end
 #         end
 #
 #
-#         B = CstProHermite(5; scaled = true)
+#         B = CstProHermiteBasis(5; scaled = true)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -264,7 +300,7 @@ end
 #             @test abs(Bx[i+2] -  ProHermite(i; scaled = true)(x[1]))< 1e-8
 #         end
 #
-#         B = CstLinPhyHermite(5; scaled =false)
+#         B = CstLinPhyHermiteBasis(5; scaled =false)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -275,7 +311,7 @@ end
 #             @test abs(Bx[i+3] -  PhyHermite(i)(x[1]))< 1e-8
 #         end
 #
-#         B = CstLinPhyHermite(5; scaled =true)
+#         B = CstLinPhyHermiteBasis(5; scaled =true)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -286,7 +322,7 @@ end
 #             @test abs(Bx[i+3] -  PhyHermite(i; scaled = true)(x[1]))< 1e-8
 #         end
 #
-#         B = CstLinProHermite(5; scaled =false)
+#         B = CstLinProHermiteBasis(5; scaled =false)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])
@@ -297,7 +333,7 @@ end
 #             @test abs(Bx[i+3] -  ProHermite(i)(x[1]))< 1e-8
 #         end
 #
-#         B = CstLinProHermite(5; scaled =true)
+#         B = CstLinProHermiteBasis(5; scaled =true)
 #         m = size(B,1)
 #
 #         Bx = B(x[1])

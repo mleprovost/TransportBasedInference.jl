@@ -33,7 +33,7 @@ end
     X = randn(Nx, Ne) .* randn(Nx, Ne) .+ rand(Nx);
     X0 = deepcopy(X)
 
-    B = CstProHermite(m-2)
+    B = CstProHermiteBasis(m-2)
 
     idx1   = reshape([0; 1; 2], (3,1))
     coeff1 = randn(3)
@@ -86,7 +86,7 @@ end
     X = randn(Nx, Ne) .* randn(Nx, Ne) .+ rand(Nx);
     X0 = deepcopy(X)
 
-    B = CstProHermite(m-2)
+    B = CstProHermiteBasis(m-2)
 
     idx1   = reshape([0; 1; 2], (3,1))
     coeff1 = randn(3)
@@ -188,7 +188,7 @@ end
               0.766647  -1.00445]');
     X0 = deepcopy(X)
 
-    B = MultiBasis(CstProHermite(m), Nx);
+    B = MultiBasis(CstProHermiteBasis(m), Nx);
 
     M = HermiteMap(m, X);
 
@@ -231,7 +231,7 @@ end
               0.766647  -1.00445]');
     X0 = deepcopy(X)
 
-    B = MultiBasis(CstProHermite(m), Nx);
+    B = MultiBasis(CstProHermiteBasis(m), Nx);
 
     M = HermiteMap(m, X; diag = false);
 

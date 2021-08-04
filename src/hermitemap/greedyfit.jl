@@ -219,6 +219,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             break
         end
     end
+    @show "hello"
 
     return C, (train_error, valid_error)
 end
@@ -250,6 +251,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
         println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
     end
 
+    # The map is initialized to the identity
     # Remove or not the constant i.e the multi-index [0 0 0]
     if withconstant == false
         # Compute the reduced margin

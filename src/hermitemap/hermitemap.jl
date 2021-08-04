@@ -49,13 +49,13 @@ function Base.show(io::IO, M::HermiteMap)
         end
 end
 
-function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0, α::Float64 = αreg, b::String="CstProHermite")
+function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0, α::Float64 = αreg, b::String="CstProHermiteBasis")
         L = LinearTransform(X; diag = diag, factor = factor)
 
-        if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
+        if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"; "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
             B = eval(Symbol(b))(m)
         else
-            error("Undefined basis")
+            error("The basis "*b*" is not defined.")
         end
 
         Nx = size(X,1)

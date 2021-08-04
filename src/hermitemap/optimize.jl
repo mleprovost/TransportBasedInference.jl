@@ -126,10 +126,10 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
         X_valid = X[:,1:nvalid]
 
         # Set maximum patience for optimization
-        maxpatience = 20
+        # maxpatience = 20
 
         # Run greedy approximation
-        max_iter =  min(m, ceil(Int64, sqrt(size(X,2))))
+        max_iter =  min(maxpatience, ceil(Int64, sqrt(size(X,2))))
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              withconstant = withconstant, withqr = withqr,

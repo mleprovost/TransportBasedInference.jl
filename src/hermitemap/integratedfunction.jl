@@ -284,7 +284,7 @@ function grad_x!(out, R::IntegratedFunction, X)
             vi .= ((dxψbasisi .* dxkψ) * coeff) .* cacheg
         end
     end
-    quadgk!(integrand!, cache, 0.0, 1.0; rtol = 1e-3)
+    quadgk!(integrand!, cache, 0.0, 1.0)#; rtol = 1e-3)
 
     # Multiply integral by xlast (change of variable in the integration)
     @inbounds for (i, dimi) in enumerate(dimoff)
@@ -371,7 +371,7 @@ function reduced_grad_x!(out, R::IntegratedFunction, X)
             vi .= ((dxψbasisi .* dxkψ) * coeff) .* cacheg
         end
     end
-    quadgk!(integrand!, cache, 0.0, 1.0; rtol = 1e-3)
+    quadgk!(integrand!, cache, 0.0, 1.0)#; rtol = 1e-3)
 
     # Multiply integral by xlast (change of variable in the integration)
     @inbounds for (i, dimi) in enumerate(dimoff)
@@ -673,7 +673,7 @@ function hess_x!(out, R::IntegratedFunction, X)
             end
         end
 
-        quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-3 )
+        quadgk!(integrandij!, cacheij, 0.0, 1.0)#; rtol = 1e-3 )
 
         # Multiply integral by xlast (change of variable in the integration)
         @inbounds for i=1:length(dimoff)
@@ -716,7 +716,7 @@ function hess_x!(out, R::IntegratedFunction, X)
             end
         end
 
-        quadgk!(integrandii!, cache, 0.0, 1.0; rtol = 1e-3)
+        quadgk!(integrandii!, cache, 0.0, 1.0)#; rtol = 1e-3)
 
         # Multiply integral by xlast (change of variable in the integration)
         @inbounds for i=1:length(dimoff)
@@ -865,7 +865,7 @@ function reduced_hess_x!(out, R::IntegratedFunction, X)
             end
         end
 
-        quadgk!(integrandij!, cacheij, 0.0, 1.0; rtol = 1e-3 )
+        quadgk!(integrandij!, cacheij, 0.0, 1.0)#; rtol = 1e-3 )
 
         # Multiply integral by xlast (change of variable in the integration)
         @inbounds for i=1:length(dimoff)
@@ -910,7 +910,7 @@ function reduced_hess_x!(out, R::IntegratedFunction, X)
             end
         end
 
-        quadgk!(integrandii!, cache, 0.0, 1.0; rtol = 1e-3)
+        quadgk!(integrandii!, cache, 0.0, 1.0)#; rtol = 1e-3)
 
         # Multiply integral by xlast (change of variable in the integration)
         @inbounds for i=1:length(dimoff)

@@ -48,13 +48,13 @@ function HermiteMapComponent(I::IntegratedFunction; α::Float64=αreg)
     return HermiteMapComponent(I.m, I.Nψ, I.Nx, I, α)
 end
 
-function HermiteMapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg, b::String="CstProHermite")
+function HermiteMapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg, b::String="CstProHermiteBasis")
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
+    if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"; "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
         B = MultiBasis(eval(Symbol(b))(m), Nx)
     else
-        error("Undefined basis")
+        error("The basis "*b*" is not defined.")
     end
 
     return HermiteMapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
@@ -64,14 +64,14 @@ function HermiteMapComponent(f::ExpandedFunction; α::Float64 = αreg)
     return HermiteMapComponent(f.m, f.Nψ, f.Nx, IntegratedFunction(f), α)
 end
 
-function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String="CstProHermite")
+function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String="CstProHermiteBasis")
     Nψ = 1
 
     # m is the dimension of the basis
-    if b ∈ ["CstProHermite"; "CstPhyHermite"; "CstLinProHermite"; "CstLinPhyHermite"]
+    if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"; "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
         B = MultiBasis(eval(Symbol(b))(m), Nx)
     else
-        error("Undefined basis")
+        error("The basis "*b*" is not defined.")
     end
 
     idx = zeros(Int64, Nψ, Nx)
@@ -336,7 +336,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
         # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
-    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#, order = 3)#; order = 9, rtol = 1e-10)
+    quadgk!(integrand!, S.cache_integral, 0.0, 1.0)#; rtol = 1e-3)#, order = 3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xlast (change of variable in the integration)
     # @avx for j=1:Nψ+1
@@ -442,7 +442,7 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::Hermite
 
     end
 
-    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
+    quadgk!(integrand!, S.cache_integral, 0.0, 1.0)#; rtol = 1e-3)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xlast (change of variable in the integration)
     @inbounds for j=1:1 + Nψ# + Nψ*Nψ

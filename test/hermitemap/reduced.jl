@@ -9,7 +9,7 @@
     for Nx in Nx_tab
 
         X = randn(Nx, Ne) .* randn(Nx, Ne) .+ randn(Nx)
-        B = MultiBasis(CstProHermite(m-2), Nx)
+        B = MultiBasis(CstProHermiteBasis(m-2), Nx)
         idx = zeros(Int64, 1, Nx)
         coeff = randn(size(idx,1))
         f = ExpandedFunction(B, idx, coeff)
@@ -58,7 +58,7 @@ end
 
     for (i, Nx) in enumerate(Nx_tab)
         X = randn(Nx, Ne) .* randn(Nx, Ne) .+ randn(Nx)
-        B = MultiBasis(CstProHermite(m-2), Nx)
+        B = MultiBasis(CstProHermiteBasis(m-2), Nx)
         idx = idx_tab[i]
 
         coeff = randn(size(idx,1))

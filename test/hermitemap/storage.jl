@@ -14,7 +14,7 @@
               1.41332   -0.918205;
               0.766647  -1.00445]';
 
-    Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
 
     for b in Blist
 

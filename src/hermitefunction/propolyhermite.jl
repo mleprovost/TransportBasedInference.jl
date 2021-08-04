@@ -79,10 +79,10 @@ const ProPolyH = prohermite_coeffmatrix(CstMaxDegree)
 function ProPolyHermite(m::Int64;scaled::Bool= false)
     @assert m>=0 "The order of the polynomial should be >=0"
     if scaled ==false
-            return ProPolyHermite(m, ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)), scaled)
+        return ProPolyHermite(m, ImmutablePolynomial(view(ProPolyH,m+1,1:m+1)), scaled)
     else
         C = 1/Cpro(m)
-            return ProPolyHermite(m, ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)), scaled)
+        return ProPolyHermite(m, ImmutablePolynomial(C*view(ProPolyH,m+1,1:m+1)), scaled)
     end
 end
 

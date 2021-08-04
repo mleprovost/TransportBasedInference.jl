@@ -43,7 +43,7 @@ end
               0.412907   1.01672;
               1.41332   -0.918205;
               0.766647  -1.00445]';
-    B = MultiBasis(CstProHermite(3), Nx)
+    B = MultiBasis(CstProHermiteBasis(3), Nx)
 
     idx = [0 0; 0 1; 1 0; 2 1; 1 2]
     truncidx = idx[1:2:end,:]
@@ -100,7 +100,7 @@ end
   #           1.41332   -0.918205;
   #           0.766647  -1.00445]';
 
-  Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+  Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
   for b in Blist
       B = MultiBasis(b, Nx)
 
@@ -148,7 +148,7 @@ end
           0.412907   1.01672;
           1.41332   -0.918205;
           0.766647  -1.00445]');
-  B = MultiBasis(CstProHermite(6), Nx)
+  B = MultiBasis(CstProHermiteBasis(6), Nx)
 
   idx = [0 0; 0 1; 1 0; 0 2; 2 0; 1 1]
 
@@ -180,7 +180,7 @@ end
   Ne = 100
   X = randn(Nx, Ne)
   m = 10
-  Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+  Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
   for b in Blist
       B = MultiBasis(b, Nx)
 
@@ -228,7 +228,7 @@ end
   Ne = 100
   X = randn(Nx, Ne)
   m = 10
-  Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+  Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
   for b in Blist
       B = MultiBasis(b, Nx)
 
@@ -276,7 +276,7 @@ end
     Ne = 100
     X = randn(Nx, Ne)
     m = 10
-    Blist = [CstProHermite(8); CstPhyHermite(8); CstLinProHermite(8); CstLinPhyHermite(8)]
+    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for b in Blist
       B = MultiBasis(b, Nx)
 

@@ -103,7 +103,7 @@ end
 
     coeff = randn(Nψ)
 
-    B = MultiBasis(CstProHermite(6), Nx)
+    B = MultiBasis(CstProHermiteBasis(6), Nx)
     f = ExpandedFunction(B, idx, coeff)
     R = IntegratedFunction(f)
 

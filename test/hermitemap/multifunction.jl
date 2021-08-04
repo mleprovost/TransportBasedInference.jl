@@ -1,7 +1,7 @@
 
 @testset "Test MultiFunction in multiple dimensions" begin
     Nxlist= collect(1:5)
-    Blist = [CstProHermite(10); CstPhyHermite(10); CstLinProHermite(10); CstLinPhyHermite(10)]
+    Blist = [CstProHermiteBasis(10); CstPhyHermiteBasis(10); CstLinProHermiteBasis(10); CstLinPhyHermiteBasis(10)]
     Nψ = 10
     Ne = 50
 
