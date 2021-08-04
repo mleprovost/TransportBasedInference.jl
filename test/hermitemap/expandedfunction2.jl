@@ -8,7 +8,7 @@ using TransportBasedInference: evaluate
 
     X .= randn(Nx, Ne)
 
-    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
+    Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for b in Blist
         B = MultiBasis(b, Nx)
 
@@ -156,7 +156,7 @@ end
 
     X .= randn(Nx, Ne)
 
-    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
+    Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for b in Blist
         B = MultiBasis(b, Nx)
 
@@ -305,7 +305,7 @@ end
 
     X .= randn(Nx, Ne)
 
-    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
+    Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for b in Blist
         B = MultiBasis(b, Nx)
 
@@ -456,7 +456,7 @@ end
 
     X .= randn(Nx, Ne)
 
-    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
+    Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for b in Blist
         B = MultiBasis(b, Nx)
 
@@ -603,7 +603,7 @@ end
 
     X = randn(Nx, Ne)
 
-    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
+    Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for b in Blist
         B = MultiBasis(b, Nx)
 

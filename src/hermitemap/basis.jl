@@ -14,8 +14,8 @@ export Basis,
        PhyHermiteBasis,
        CstProHermiteBasis,
        CstPhyHermiteBasis,
-       CstLinPhyHermiteBasis,
-       CstLinProHermiteBasisBasis
+       CstLinProHermiteBasis,
+       CstLinPhyHermiteBasis
 
 """
 $(TYPEDEF)
@@ -52,7 +52,7 @@ struct ProHermiteBasis <: Basis
     m::Int64
 end
 
-@propagate_inbounds Base.getindex(B::ProHermiteBasis, i::Int64) = FamilyScaledProHermite[i]
+@propagate_inbounds Base.getindex(B::ProHermiteBasis, i::Int64) = FamilyProHermite[i]
 
 function Base.show(io::IO, B::ProHermiteBasis)
     println(io,"Basis of "*string(B.m)*" functions: 0th -> "*string(B.m-1)*"th degree Probabilistic Hermite function")
@@ -70,7 +70,7 @@ struct PhyHermiteBasis <: Basis
     m::Int64
 end
 
-@propagate_inbounds Base.getindex(B::PhyHermiteBasis, i::Int64) = FamilyScaledPhyHermite[i]
+@propagate_inbounds Base.getindex(B::PhyHermiteBasis, i::Int64) = FamilyPhyHermite[i]
 
 function Base.show(io::IO, B::PhyHermiteBasis)
     println(io,"Basis of "*string(B.m)*" functions: 0th -> "*string(B.m-1)*"th degree Physicist Hermite function")
@@ -88,7 +88,7 @@ struct CstProHermiteBasis <: Basis
     m::Int64
 end
 
-@propagate_inbounds Base.getindex(B::CstProHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledProHermite[i-1]
+@propagate_inbounds Base.getindex(B::CstProHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyProHermite[i-1]
 
 function Base.show(io::IO, B::CstProHermiteBasis)
     println(io,"Basis of "*string(B.m)*" functions: Constant, 0th -> "*string(B.m-2)*"th degree Probabilistic Hermite function")
@@ -106,7 +106,7 @@ struct CstPhyHermiteBasis <: Basis
     m::Int64
 end
 
-@propagate_inbounds Base.getindex(B::CstPhyHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyScaledPhyHermite[i-1]
+@propagate_inbounds Base.getindex(B::CstPhyHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : FamilyPhyHermite[i-1]
 
 function Base.show(io::IO, B::CstPhyHermiteBasis)
     println(io,"Basis of "*string(B.m)*" functions: Constant, 0th -> "*string(B.m-2)*"th degree Physicist Hermite function")
@@ -124,7 +124,7 @@ struct CstLinProHermiteBasis <: Basis
     m::Int64
 end
 
-@propagate_inbounds Base.getindex(B::CstLinProHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledProHermite[i-2]
+@propagate_inbounds Base.getindex(B::CstLinProHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyProHermite[i-2]
 
 function Base.show(io::IO, B::CstLinProHermiteBasis)
     println(io,"Basis of "*string(B.m)*" functions: Constant, Linear, 0th -> "*string(B.m-3)*"th degree Probabilistic Hermite function")
@@ -142,7 +142,7 @@ struct CstLinPhyHermiteBasis <: Basis
     m::Int64
 end
 
-@propagate_inbounds Base.getindex(B::CstLinPhyHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyScaledPhyHermite[i-2]
+@propagate_inbounds Base.getindex(B::CstLinPhyHermiteBasis, i::Int64) = i==1 ? FamilyProPolyHermite[1] : i==2 ? FamilyProPolyHermite[2] : FamilyPhyHermite[i-2]
 
 function Base.show(io::IO, B::CstLinPhyHermiteBasis)
     println(io,"Basis of "*string(B.m)*" functions: Constant, Linear 0th -> "*string(B.m-3)*"th degree Physicist Hermite function")
@@ -165,7 +165,8 @@ Compute the Vandermonde matrix for the vector `x`
 function vander!(dV, B::ProHermiteBasis, m::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
-    vander!(dV, FamilyScaledProHermite[m+1], k, x)
+    dVshift = view(dV,:,1:m+1)
+    vander!(dVshift, FamilyProHermite[m+1], k, x)
     return dV
 end
 
@@ -177,7 +178,8 @@ Compute the Vandermonde matrix for the vector `x`
 function vander!(dV, B::PhyHermiteBasis, m::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
-    vander!(dV, FamilyScaledPhyHermite[m+1], k, x)
+    dVshift = view(dV,:,1:m+1)
+    vander!(dVshift, FamilyPhyHermite[m+1], k, x)
     return dV
 end
 
@@ -200,7 +202,7 @@ function vander!(dV, B::CstProHermiteBasis, m::Int64, k::Int64, x)
         return dV
     end
     dVshift = view(dV,:,2:m+1)
-    vander!(dVshift, FamilyScaledProHermite[m], k, x)
+    vander!(dVshift, FamilyProHermite[m], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
@@ -224,7 +226,7 @@ function vander!(dV, B::CstPhyHermiteBasis, m::Int64, k::Int64, x)
         return dV
     end
     dVshift = view(dV,:,2:m+1)
-    vander!(dVshift, FamilyScaledPhyHermite[m], k, x)
+    vander!(dVshift, FamilyPhyHermite[m], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
@@ -264,7 +266,7 @@ function vander!(dV, B::CstLinProHermiteBasis, m::Int64, k::Int64, x)
         return dV
     end
     dVshift = view(dV,:,3:m+1)
-    vander!(dVshift, FamilyScaledProHermite[m-1], k, x)
+    vander!(dVshift, FamilyProHermite[m-1], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end
@@ -304,7 +306,7 @@ function vander!(dV, B::CstLinPhyHermiteBasis, m::Int64, k::Int64, x)
         return dV
     end
     dVshift = view(dV,:,3:m+1)
-    vander!(dVshift, FamilyScaledPhyHermite[m-1], k, x)
+    vander!(dVshift, FamilyPhyHermite[m-1], k, x)
      # .= vander(B.f[maxi+1], k, x)
     return dV
 end

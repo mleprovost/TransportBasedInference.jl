@@ -6,7 +6,7 @@ $(TYPEDSIGNATURES)
 An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the ensemble matrix `X`.
 """
 function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false,
-                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)
+                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true, b::String="CstProHermiteBasis")
 
     @assert maxterms >=1 "maxterms should be >= 1"
     best_valid_error = Inf
@@ -15,11 +15,14 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     train_error = Float64[]
 
     # Initialize map C to identity
-    C = HermiteMapComponent(m, Nx; α = αreg);
+    C = HermiteMapComponent(m, Nx; α = αreg, b = b);
 
     # Compute storage # Add later storage for validation S_valid
+    @show C.I.f
     S = Storage(C.I.f, X)
-
+    if withqr == true
+        F = QRscaling(S)
+    end
     # Compute initial loss on training set
     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
 
@@ -31,6 +34,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     reduced_margin = getreducedmargin(getidx(C))
 
     while ncoeff(C) < maxterms
+
         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
 
         # Update storage with the new feature
@@ -38,7 +42,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
         # Update C
         C = HermiteMapComponent(IntegratedFunction(S.f); α = C.α)
-
+        @show C.I.f
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
@@ -62,6 +66,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
                                  Optim.LBFGS(; m = 10))
             end
+
             setcoeff!(C, Optim.minimizer(res))
 
             # Compute new loss on training and validation sets
@@ -122,7 +127,7 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     # Define updated map
     f_new = ExpandedFunction(C.I.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
     C_new = HermiteMapComponent(f_new; α = αreg)
-
+    @show C_new.I.f
 
     # Set coefficients based on previous optimal solution
     coeff_new, coeff_idx_added, idx_added = update_coeffs(C, C_new)
@@ -131,7 +136,7 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     S = update_storage(S, X, reduced_margin)
     dJ = zero(coeff_new)
     negative_log_likelihood!(nothing, dJ, coeff_new, S, C_new, X)
-
+    @show dJ
     # Find function in the reduced margin most correlated with the residual
     _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
 
@@ -390,7 +395,6 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
             break
         end
     end
-    @show "hello"
 
     return C, (train_error, valid_error)
 end

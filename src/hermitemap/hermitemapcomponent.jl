@@ -51,7 +51,9 @@ end
 function HermiteMapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Array{Float64,1}; α::Float64 = αreg, b::String="CstProHermiteBasis")
     Nψ = size(coeff,1)
     @assert size(coeff,1) == size(idx,1) "Wrong dimension"
-    if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"; "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
+    if b ∈ ["ProHermiteBasis"; "PhyHermiteBasis";
+            "CstProHermiteBasis"; "CstPhyHermiteBasis";
+            "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
         B = MultiBasis(eval(Symbol(b))(m), Nx)
     else
         error("The basis "*b*" is not defined.")
@@ -68,7 +70,9 @@ function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String
     Nψ = 1
 
     # m is the dimension of the basis
-    if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"; "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
+    if b ∈ ["ProHermiteBasis"; "PhyHermiteBasis";
+            "CstProHermiteBasis"; "CstPhyHermiteBasis";
+            "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
         B = MultiBasis(eval(Symbol(b))(m), Nx)
     else
         error("The basis "*b*" is not defined.")
