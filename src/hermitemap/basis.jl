@@ -165,9 +165,7 @@ Compute the Vandermonde matrix for the vector `x`
 function vander!(dV, B::ProHermiteBasis, m::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
-
-    dVshift = view(dV,:,1:m+1)
-    vander!(dVshift, FamilyScaledProHermite[m], k, x)
+    vander!(dV, FamilyScaledProHermite[m+1], k, x)
     return dV
 end
 
@@ -179,9 +177,7 @@ Compute the Vandermonde matrix for the vector `x`
 function vander!(dV, B::PhyHermiteBasis, m::Int64, k::Int64, x)
     N = size(x,1)
     @assert size(dV) == (N, m+1) "Wrong dimension of the Vander matrix"
-
-    dVshift = view(dV,:,1:m+1)
-    vander!(dVshift, FamilyScaledPhyHermite[m+1], k, x)
+    vander!(dV, FamilyScaledPhyHermite[m+1], k, x)
     return dV
 end
 
@@ -320,6 +316,8 @@ vander!(dV, B::Union{CstLinPhyHermiteBasis, CstLinProHermiteBasis}, k::Int64, x)
 vander(B::Union{PhyHermiteBasis, ProHermiteBasis}, m::Int64, k::Int64, x) = vander!(zeros(size(x,1),m+1), B, m, k, x)
 vander(B::Union{CstPhyHermiteBasis, CstProHermiteBasis}, m::Int64, k::Int64, x) = vander!(zeros(size(x,1),m+1), B, m, k, x)
 vander(B::Union{CstLinPhyHermiteBasis, CstLinProHermiteBasis}, m::Int64, k::Int64, x) = vander!(zeros(size(x,1),m+1), B, m, k, x)
+
+# Return the k-th derivative of the Vandermonde matrix of the basis B evaluated at the samples x
 vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 
 # """

@@ -3,7 +3,7 @@
     Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = CstProHermiteBasis(6)
+    B = ProHermiteBasis(6)
     ktab = [0; 1; 2]
     for k in ktab
         # Test evaluation
@@ -21,7 +21,7 @@ end
     Ne = 200
     x = randn(Ne)
     #Test all the basis
-    B = CstProHermiteBasis(6)
+    B = PhyHermiteBasis(6)
     ktab = [0; 1; 2]
     for k in ktab
         # Test evaluation
