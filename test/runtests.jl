@@ -66,8 +66,8 @@ using Random
 # include("hermitemap/multifunction.jl")
 
 # Test tools for integrated function
-include("hermitemap/integratedfunction.jl")
-include("hermitemap/storage.jl")
+# include("hermitemap/integratedfunction.jl")
+# include("hermitemap/storage.jl")
 
 # Test tools for HermiteMap component
 include("hermitemap/hermitemapcomponent.jl")

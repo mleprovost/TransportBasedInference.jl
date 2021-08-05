@@ -32,58 +32,100 @@ end
 	@test norm(getcoeff(M) - zeros(Nψ))<1e-12
 end
 
-@testset "Verify loss function and its gradient" begin
+@testset "Validate loss function and its gradient" begin
 
-    Nx = 2
-    Ne = 8
-    m = 5
 
-    X     =  [0.267333   1.43021;
-              0.364979   0.607224;
-             -1.23693    0.249277;
-             -2.0526     0.915629;
-             -0.182465   0.415874;
-              0.412907   1.01672;
-              1.41332   -0.918205;
-              0.766647  -1.00445]';
-    B = MultiBasis(CstProHermiteBasis(3), Nx)
 
-    idx = [0 0; 0 1; 1 0; 2 1; 1 2]
-    Nψ = 5
-
-    coeff =   [0.6285037650645056;
-     -0.4744029092496623;
-      1.1405280011620331;
-     -0.7217760771894809;
-      0.11855056306742319]
-    f = ExpandedFunction(B, idx, coeff)
-    R = IntegratedFunction(f)
-    H = HermiteMapComponent(R; α = 0.0)
-    S = Storage(H.I.f, X);
-
-   res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
-   coeff_opt = Optim.minimizer(res)
-
-    @test norm(coeff_opt - [3.015753764546621;
-                          -2.929908252283099;
-                          -3.672401233483867;
-                           2.975554571687243;
-                           1.622308437415610])<1e-4
-
-    # Verify with L-2 penalty term
-
-    H = HermiteMapComponent(R; α = 0.1)
-    S = Storage(H.I.f, X);
-
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
-    coeff_opt = Optim.minimizer(res)
-
-    @test norm(coeff_opt - [ -0.11411931034615422;
-                             -0.21942146397348522;
-                             -0.17368042128948974;
-                              0.37348086659548607;
-                              0.02434745831060741])<1e-4
 end
+
+# @testset "Verify loss function and its gradient" begin
+#
+#     Nx = 2
+#     Ne = 8
+#     m = 5
+#
+#     X     =  [0.267333   1.43021;
+#               0.364979   0.607224;
+#              -1.23693    0.249277;
+#              -2.0526     0.915629;
+#              -0.182465   0.415874;
+#               0.412907   1.01672;
+#               1.41332   -0.918205;
+#               0.766647  -1.00445]';
+#     B = MultiBasis(CstProHermiteBasis(3), Nx)
+#
+#     idx = [0 0; 0 1; 1 0; 2 1; 1 2]
+#     Nψ = 5
+#
+#     coeff =   [0.6285037650645056;
+#      -0.4744029092496623;
+#       1.1405280011620331;
+#      -0.7217760771894809;
+#       0.11855056306742319]
+#     f = ExpandedFunction(B, idx, coeff)
+#     R = IntegratedFunction(f)
+#     H = HermiteMapComponent(R; α = 0.0)
+#     S = Storage(H.I.f, X);
+#
+#    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
+#    coeff_opt = Optim.minimizer(res)
+#
+#     @test norm(coeff_opt - [3.015753764546621;
+#                           -2.929908252283099;
+#                           -3.672401233483867;
+#                            2.975554571687243;
+#                            1.622308437415610])<1e-4
+#
+#     # Verify with L-2 penalty term
+#
+#     H = HermiteMapComponent(R; α = 0.1)
+#     S = Storage(H.I.f, X);
+#
+#     res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, H, X)), coeff, Optim.BFGS())
+#     coeff_opt = Optim.minimizer(res)
+#
+#     @test norm(coeff_opt - [ -0.11411931034615422;
+#                              -0.21942146397348522;
+#                              -0.17368042128948974;
+#                               0.37348086659548607;
+#                               0.02434745831060741])<1e-4
+# end
+#
+# @testset "Verify log_pdf function" begin
+#
+#   Nx = 2
+#   X  =  Matrix([0.267333   1.43021;
+#           0.364979   0.607224;
+#          -1.23693    0.249277;
+#          -2.0526     0.915629;
+#          -0.182465   0.415874;
+#           0.412907   1.01672;
+#           1.41332   -0.918205;
+#           0.766647  -1.00445]');
+#   B = MultiBasis(CstProHermiteBasis(6), Nx)
+#
+#   idx = [0 0; 0 1; 1 0; 0 2; 2 0; 1 1]
+#
+#   Nψ = 5
+#
+#   coeff = [ -0.9905841755746164;
+#         0.6771992097558741;
+#        -2.243695806805015;
+#        -0.34591297359447354;
+#        -1.420159186008486;
+#        -0.5361337327704369]
+#   f = ExpandedFunction(B, idx, coeff)
+#   C = HermiteMapComponent(f)
+#
+#   @test norm(log_pdf(C, X) - [  -1.572509004118956
+#                                 -2.870725221050853
+#                                 -1.285696671132943
+#                                 -1.088115266085997
+#                                 -2.396567575345843
+#                                 -2.238446803642176
+#                                 -5.999143198546611
+#                                 -7.082679248037675])<1e-8
+# end
 
 
 @testset "Verify evaluation of HermiteHermiteMapComponent" begin
@@ -120,52 +162,13 @@ end
 end
 
 
-
-@testset "Verify log_pdf function" begin
-
-  Nx = 2
-  X  =  Matrix([0.267333   1.43021;
-          0.364979   0.607224;
-         -1.23693    0.249277;
-         -2.0526     0.915629;
-         -0.182465   0.415874;
-          0.412907   1.01672;
-          1.41332   -0.918205;
-          0.766647  -1.00445]');
-  B = MultiBasis(CstProHermiteBasis(6), Nx)
-
-  idx = [0 0; 0 1; 1 0; 0 2; 2 0; 1 1]
-
-  Nψ = 5
-
-  coeff = [ -0.9905841755746164;
-        0.6771992097558741;
-       -2.243695806805015;
-       -0.34591297359447354;
-       -1.420159186008486;
-       -0.5361337327704369]
-  f = ExpandedFunction(B, idx, coeff)
-  C = HermiteMapComponent(f)
-
-  @test norm(log_pdf(C, X) - [  -1.572509004118956
-                                -2.870725221050853
-                                -1.285696671132943
-                                -1.088115266085997
-                                -2.396567575345843
-                                -2.238446803642176
-                                -5.999143198546611
-                                -7.082679248037675])<1e-8
-end
-
-
-@testset "Verify grad_x_log_pdf and hess_x_log_pdf function" begin
+@testset "Verify log_pdf, grad_x_log_pdf and hess_x_log_pdf function" begin
     atol = 1e-8
     Ne = 50
     m = 10
     Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
     for Nx = 1:3
         for b in Blist
-            @show Nx, b
             X = randn(Nx, Ne)
             B = MultiBasis(b, Nx)
             Nψ = 5
@@ -173,6 +176,7 @@ end
             coeff = randn(Nψ)
             C = HermiteMapComponent(m, Nx, idx, coeff; b = string(typeof(b)))
 
+						logC = log_pdf(C, X)
             dxlogC  = grad_x_log_pdf(C, X)
             d2xlogC = hess_x_log_pdf(C, X)
 
@@ -196,12 +200,11 @@ end
             log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f(z),x)[end]))
 
             @inbounds for i=1:Ne
+								@test norm(log_pdfCt(X[:,i]) - logC[i])<atol
                 @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<atol
+								@test norm(ForwardDiff.hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<atol
             end
 
-            @inbounds for i=1:Ne
-                @test norm(ForwardDiff.hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<atol
-            end
         end
     end
 end

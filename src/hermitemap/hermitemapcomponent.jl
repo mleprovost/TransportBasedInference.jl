@@ -309,6 +309,9 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
     @assert size(S.ψoff, 1) == Ne
     @assert size(S.ψoff, 2) == Nψ
 
+    # Define δ (regularization term) - add small diagonal term
+    δ = 0.0
+
     # Output objective, gradient
     xlast = view(X,NxX,:)
 
@@ -363,7 +366,9 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
         for j=1:Nψ
             f0i += S.ψoffψd0[i,j]*coeff[j]
         end
-        S.cache_integral[i] += f0i
+        # Add also the regularization term
+        S.cache_integral[i] += f0i + δ*xlast[i]
+
     end
 
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
@@ -373,7 +378,8 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
         for j=1:Nψ
             prelogJi += S.ψoffdψxd[i,j]*coeff[j]
         end
-        S.cache_g[i] = prelogJi
+        # Add also the regularization term
+        S.cache_g[i] = prelogJi + δ
     end
 
 
