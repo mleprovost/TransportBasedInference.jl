@@ -77,7 +77,7 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
     elseif typeof(maxterms) <: Int64
         C, error =  greedyfit(m, Nx, X, maxterms; withconstant = withconstant,
                               withqr = withqr, maxpatience = maxpatience,
-                              verbose = verbose, hessprecond = hessprecond, b = string(typeof(C.I.f.B.B)))
+                              verbose = verbose, hessprecond = hessprecond, b = getbasis(C))
 
     elseif maxterms ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
         # Define cross-validation splits of data
@@ -94,7 +94,7 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
 
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
                                      withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                     hessprecond = hessprecond, b = string(typeof(C.I.f.B.B)))
+                                     hessprecond = hessprecond, b = getbasis(C))
 
                 # error[2] contains the history of the validation error
                 valid_error[:,i] .= deepcopy(error[2])
@@ -105,7 +105,7 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
 
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
                                      withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                     hessprecond = hessprecond, b = string(typeof(C.I.f.B.B)))
+                                     hessprecond = hessprecond, b = getbasis(C))
 
                 # error[2] contains the history of the validation error
                 valid_error[:,i] .= deepcopy(error[2])
@@ -118,7 +118,7 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
         _, opt_nterms = findmin(mean_valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose, hessprecond = hessprecond, b = string(typeof(C.I.f.B.B)))
+        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose, hessprecond = hessprecond, b = getbasis(C))
 
     elseif maxterms ∈ ("split", "Split")
         nvalid = ceil(Int64, floor(0.2*size(X,2)))
@@ -134,7 +134,7 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose,
-                             hessprecond = hessprecond, b = string(typeof(C.I.f.B.B)))
+                             hessprecond = hessprecond, b = getbasis(C))
     else
         println("Argument max_terms is not recognized")
         error()
@@ -149,7 +149,7 @@ function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, maxterms::Unio
     transform!(L.L, X)
     C = L.C
     C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
-                            verbose = verbose, hessprecond = hessprecond, b = string(typeof(C.I.f.B.B)))
+                            verbose = verbose, hessprecond = hessprecond, b = getbasis(C))
 
     itransform!(L.L, X)
 

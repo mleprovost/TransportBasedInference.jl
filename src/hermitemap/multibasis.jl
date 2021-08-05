@@ -1,6 +1,6 @@
 import Base: size
 
-export MultiBasis
+export MultiBasis, getbasis
 
 """
 $(TYPEDEF)
@@ -19,3 +19,5 @@ struct MultiBasis
 end
 
 size(B::MultiBasis) = (B.B.m, B.Nx)
+
+getbasis(B::MultiBasis) = string(typeof(B.B))

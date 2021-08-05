@@ -31,10 +31,10 @@ evaluate_offdiagbasis!(ψoff, f::ExpandedFunction, X) =
     evaluate_offdiagbasis!(ψoff, f, X, f.idx)
 
 evaluate_offdiagbasis(f::ExpandedFunction, X, idx::Array{Int64,2}) =
-        evaluate_offdiagbasis!(zeros(size(X,2), size(idx,1)), f, X, idx)
+    evaluate_offdiagbasis!(zeros(size(X,2), size(idx,1)), f, X, idx)
 
 evaluate_offdiagbasis(f::ExpandedFunction, X) =
-        evaluate_offdiagbasis!(zeros(size(X,2), size(f.idx,1)), f, X)
+    evaluate_offdiagbasis!(zeros(size(X,2), size(f.idx,1)), f, X)
 
 ## evaluate_diagbasis
 

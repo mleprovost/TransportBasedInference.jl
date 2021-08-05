@@ -3,6 +3,7 @@ using LoopVectorization: @avx
 export  ExpandedFunction,
         active_dim,
         alleval,
+        getbasis,
         evaluate_basis!,
         evaluate_basis,
         repeated_evaluate_basis,
@@ -58,10 +59,11 @@ struct ExpandedFunction
 
 
             @assert size(idx,2) == Nx "Size of the array of multi-indices idx is wrong"
-        return new(B.B.m, Nψ, Nx, B, idx, active_dim(idx), coeff)
+        return new(B.B.m, Nψ, Nx, B, idx, active_dim(idx, B), coeff)
     end
 end
 
+getbasis(f::ExpandedFunction) = getbasis(f.B)
 
 
 # This code is not optimized for speed
@@ -74,25 +76,28 @@ function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
     return out
 end
 
-function active_dim(idx::Array{Int64,2})
+function active_dim(idx::Array{Int64,2}, B::Basis)
     # Nx should always be an active dimension (we need to ensures
     # that we have a strictly increasing function in the last component)
     dim = Int64[]
     Nx = size(idx,2)
-    @inbounds for i=1:Nx-1
-        if !all(view(idx,:,i) .== 0)
-            push!(dim, i)
+    if iszerofeatureactive(B) == false
+        @inbounds for i=1:Nx-1
+            if !all(view(idx,:,i) .== 0)
+                push!(dim, i)
+            end
         end
+        push!(dim, Nx)
+    else
+        dim = collect(1:size(idx,2))
     end
-    push!(dim, Nx)
+
     return dim
 end
 
+active_dim(idx::Array{Int64,2}, B::MultiBasis) = active_dim(idx, B.B)
 active_dim(f::ExpandedFunction) = f.dim
 
-"""
-
-"""
 # alleval computes the evaluation, gradient and hessian of the function
 # use it for validatio since it is slower than the other array-based variants
 function alleval(f::ExpandedFunction, X)
@@ -115,7 +120,9 @@ function alleval(f::ExpandedFunction, X)
     return ψ, dψ, d2ψ
 end
 
-
+"""
+Evaluate in-place the basis of `ExpandedFunction` `f` for the ensemble matrix `X` along the dimensions `dims` for the set of indices of features `idx`
+"""
 function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2})
     Nψreduced = size(idx,1)
     NxX, Ne = size(X)

@@ -101,7 +101,7 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
         v[Ne+1:Ne+Ne*Nψ] = reshape(S.cache_dψxd .* (S.cache_dcψxdt), (Ne*Nψ))
     end
 
-    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
+    quadgk!(integrand!, S.cache_integral, 0.0, 1.0)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xlast (change of variable in the integration)
     @inbounds for j=1:Nψ+1
@@ -192,7 +192,7 @@ function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent
         # v[Ne+1:Ne+Ne*Nψ] .= reshape(grad_x(C.I.g, S.cache_dψxd) .* S.cache_dcψxdt , (Ne*Nψ))
     end
 
-    quadgk!(integrand!, S.cache_integral, 0.0, 1.0; rtol = 1e-3)#; order = 9, rtol = 1e-10)
+    quadgk!(integrand!, S.cache_integral, 0.0, 1.0)#; order = 9, rtol = 1e-10)
 
     # Multiply integral by xk (change of variable in the integration)
     @inbounds for j=1:Nψ+1

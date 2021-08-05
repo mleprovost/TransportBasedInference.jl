@@ -18,7 +18,6 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     C = HermiteMapComponent(m, Nx; α = αreg, b = b);
 
     # Compute storage # Add later storage for validation S_valid
-    @show C.I.f
     S = Storage(C.I.f, X)
     if withqr == true
         F = QRscaling(S)
@@ -42,7 +41,6 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
         # Update C
         C = HermiteMapComponent(IntegratedFunction(S.f); α = C.α)
-        @show C.I.f
         # Optimize coefficients
         if withqr == false
             coeff0 = getcoeff(C)
@@ -67,17 +65,23 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
                                  Optim.LBFGS(; m = 10))
             end
 
-            setcoeff!(C, Optim.minimizer(res))
-
-            # Compute new loss on training and validation sets
-            push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-
+            if Optim.converged(res) == false
+                # if optimization wasn't successful, return map
+                setcoeff!(C, Optim.minimizer(res))
+                break
+            else
+                setcoeff!(C, Optim.minimizer(res))
+                # Compute new loss on training and validation sets
+                push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+            end
         else
 
             coeff0 = getcoeff(C)
-            # F = QRscaling(S)
-            F = updateQRscaling(F, S)
+            F = QRscaling(S)
+            @show coeff0
+            # F = updateQRscaling(F, S)
             mul!(coeff0, F.U, coeff0)
+            @show coeff0
 
             if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
@@ -102,6 +106,9 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             end
 
             # Reverse to the non-QR space and update in-place the coefficients
+            @show Optim.minimizer(res)
+            @show F.Uinv*Optim.minimizer(res)
+            # @show Optim.trace(res)
             C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
             # The computation is the non-QR space is slightly faster,

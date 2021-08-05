@@ -107,6 +107,7 @@ include("hermitemap/hybridinverse.jl")
 include("hermitemap/qr.jl")
 include("hermitemap/qraccelerated.jl")
 include("hermitemap/precond.jl")
+include("hermitemap/optimize_coefficients.jl")
 include("hermitemap/greedyfit.jl")
 include("hermitemap/optimize.jl")
 

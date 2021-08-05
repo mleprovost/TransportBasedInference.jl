@@ -1,6 +1,7 @@
 export  HermiteMapComponent,
         αreg,
         EmptyHermiteMapComponent,
+        getbasis,
         ncoeff,
         getcoeff,
         setcoeff!,
@@ -104,6 +105,8 @@ end
 clearcoeff!(C::HermiteMapComponent) = fill!(C.I.f.coeff, 0.0)
 
 getidx(C::HermiteMapComponent) = C.I.f.idx
+
+getbasis(C::HermiteMapComponent) = getbasis(C.I)
 
 active_dim(C::HermiteMapComponent) = C.I.f.dim
 
@@ -479,8 +482,8 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::Hermite
         @inbounds for i=1:Ne
             # dJ .= zeros(Nψ)
             for j=1:Nψ
-            dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
-            dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
+                dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
+                dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
             end
             # @show i, dJ
         end

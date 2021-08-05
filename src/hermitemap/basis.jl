@@ -15,7 +15,8 @@ export Basis,
        CstProHermiteBasis,
        CstPhyHermiteBasis,
        CstLinProHermiteBasis,
-       CstLinPhyHermiteBasis
+       CstLinPhyHermiteBasis,
+       iszerofeatureactive
 
 """
 $(TYPEDEF)
@@ -321,6 +322,10 @@ vander(B::Union{CstLinPhyHermiteBasis, CstLinProHermiteBasis}, m::Int64, k::Int6
 
 # Return the k-th derivative of the Vandermonde matrix of the basis B evaluated at the samples x
 vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
+
+
+iszerofeatureactive(B::Union{PhyHermiteBasis, ProHermiteBasis}) = true
+iszerofeatureactive(B::Union{CstPhyHermiteBasis, CstProHermiteBasis, CstLinPhyHermiteBasis, CstLinProHermiteBasis}) = false
 
 # """
 #     vander!(dV, B, maxi, k, x)

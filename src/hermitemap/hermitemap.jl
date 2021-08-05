@@ -77,7 +77,7 @@ end
 # Set all the coefficients of the HermiteMap to zero
 function clearcoeff!(M::HermiteMap; start::Int64 = 1)
         for i=start:M.Nx
-                clearcoeff!(M.C[i])
+        	clearcoeff!(M.C[i])
         end
 end
 
@@ -408,20 +408,20 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, maxterms::Array{Int64,1};
 
         if typeof(P) <: Serial
         # We can skip the evaluation of the map on the observation components
-        for i=start:Nx
-         Xi = view(X,1:i,:)
-        M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
-                             withqr = withqr, verbose = verbose, hessprecond = hessprecond)
-        end
+	        for i=start:Nx
+		        Xi = view(X,1:i,:)
+		        M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
+		                             withqr = withqr, verbose = verbose, hessprecond = hessprecond)
+	        end
 
         elseif typeof(P) <: Thread
-        # We can skip the evaluation of the map on the observation components,
-        # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
-        @inbounds ThreadPools.@qthreads for i=Nx:-1:start
-         Xi = view(X,1:i,:)
-         M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
-                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)
-        end
+	        # We can skip the evaluation of the map on the observation components,
+	        # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
+	        @inbounds ThreadPools.@qthreads for i=Nx:-1:start
+		         Xi = view(X,1:i,:)
+		         M.C[i], _ = optimize(M.C[i], Xi, maxterms[i-start+1]; withconstant = withconstant,
+		                              withqr = withqr, verbose = verbose, hessprecond = hessprecond)
+	        end
         end
 
         # We can apply the rescaling to all the components once

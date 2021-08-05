@@ -2,6 +2,7 @@
 
 export  IntegratedFunction,
         active_dim,
+        getbasis,
         grad_xd,
         grad_coeff_grad_xd,
         hess_coeff_grad_xd,
@@ -43,6 +44,9 @@ end
 function IntegratedFunction(f::ExpandedFunction)
     return IntegratedFunction(f.m, f.Nψ, f.Nx, Rectifier("softplus"), f)
 end
+
+getbasis(R::IntegratedFunction) = getbasis(R.f)
+
 
 active_dim(R::IntegratedFunction) = R.f.dim
 
