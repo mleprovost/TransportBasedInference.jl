@@ -76,7 +76,7 @@ function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
     return out
 end
 
-function active_dim(idx::Array{Int64,2}, B::Basis)
+function active_dim(idx::Array{Int64,2}, B::T) where {T<:Basis}
     # Nx should always be an active dimension (we need to ensures
     # that we have a strictly increasing function in the last component)
     dim = Int64[]
@@ -475,7 +475,7 @@ function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
         @inbounds for i ∈ f.dim[f.dim .< f.Nx]
             # Reduce further the computation, we have a non-zero output only if
             # there is a feature such that idx[:,i]*idx[:,Nx]>0
-            if any([line[i]*line[f.Nx] for line in eachslice(idx; dims = 1)] .> 0)
+            if any([line[i]*line[f.Nx] for line in eachslice(idx; dims = 1)] .> 0) || iszerofeatureactive(f.B.B)
                 fill!(dxdxkψ_basis, 0.0)
                 grad_xk_basis!(dxdxkψ_basis, f, X, 1, [i;Nx], idx)
                 dxidxkψ = view(dxdxkψ,:,i)
@@ -520,7 +520,7 @@ function reduced_grad_x_grad_xd!(dxdxkψ, f::ExpandedFunction, X, idx::Array{Int
         @inbounds for i=1:length(dimoff)
             # Reduce further the computation, we have a non-zero output only if
             # there is a feature such that idx[:,i]*idx[:,Nx]>0
-            if any([line[dim[i]]*line[f.Nx] for line in eachslice(idx; dims = 1)] .> 0)
+            if any([line[dim[i]]*line[f.Nx] for line in eachslice(idx; dims = 1)] .> 0) || iszerofeatureactive(f.B.B)
                 fill!(dxdxkψ_basis, 0.0)
                 grad_xk_basis!(dxdxkψ_basis, f, X, 1, [dim[i]; Nx], idx)
                 dxidxkψ = view(dxdxkψ,:,i)
@@ -563,8 +563,8 @@ function hess_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     @inbounds for i ∈ f.dim
         for j ∈ f.dim[f.dim .>= i]
             # Reduce further the computation, we have a non-zero output only if
-            # there is a feature such that idx[:,i]*idx[:,j]*idx[:,Nx]>0
-            if any([line[i]*line[j]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0)
+            # there is a feature such that idx[:,i]*idx[:,j]*idx[:,Nx]>0 or if the first feature is active
+            if any([line[i]*line[j]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0) || iszerofeatureactive(f.B.B)
                 fill!(d2xdxkψ_basis, 0.0)
                 dxidxjdxkψ = view(d2xdxkψ,:,i,j)
                 #  Case i = j = k
@@ -628,7 +628,7 @@ function reduced_hess_x_grad_xd!(d2xdxkψ, f::ExpandedFunction, X, idx::Array{In
         for j = i:length(dim)
             # Reduce further the computation, we have a non-zero output only if
             # there is a feature such that idx[:,i]*idx[:,j]*idx[:,Nx]>0
-            if any([line[dim[i]]*line[dim[j]]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0)
+            if any([line[dim[i]]*line[dim[j]]*line[f.Nx] for line in eachslice(f.idx; dims = 1)] .> 0) || iszerofeatureactive(f.B.B)
                 fill!(d2xdxkψ_basis, 0.0)
                 dxidxjdxkψ = view(d2xdxkψ,:,i,j)
                 #  Case i = j = k

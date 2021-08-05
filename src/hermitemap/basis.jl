@@ -327,6 +327,7 @@ vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 iszerofeatureactive(B::Union{PhyHermiteBasis, ProHermiteBasis}) = true
 iszerofeatureactive(B::Union{CstPhyHermiteBasis, CstProHermiteBasis, CstLinPhyHermiteBasis, CstLinProHermiteBasis}) = false
 
+
 # """
 #     vander!(dV, B, maxi, k, x)
 #

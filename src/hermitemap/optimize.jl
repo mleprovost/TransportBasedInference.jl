@@ -125,9 +125,6 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
         X_train = X[:,nvalid+1:end]
         X_valid = X[:,1:nvalid]
 
-        # Set maximum patience for optimization
-        # maxpatience = 20
-
         # Run greedy approximation
         max_iter =  min(maxpatience, ceil(Int64, sqrt(size(X,2))))
 

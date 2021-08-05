@@ -1,32 +1,35 @@
 
 @testset "Verify that initial map is identity" begin
-
-  H = HermiteMapComponent(3, 2; α = 1e-6)
-
-  x = randn(2,1)
-  Hx = evaluate(H.I, x)
-  @test abs(Hx[1] - x[2])<1e-10
+	Blist = ["ProHermiteBasis"; "PhyHermiteBasis";
+            "CstProHermiteBasis"; "CstPhyHermiteBasis";
+            "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
+		for b in Blist
+			H = HermiteMapComponent(3, 2; α = 1e-6, b = b)
+			x = randn(2,1)
+			Hx = evaluate(H.I, x)
+			@test abs(Hx[1] - x[2])<1e-10
+		end
 end
 
 @testset "Verify getcoeff, setcoeff!, clearcoeff!" begin
-  m = 5
-  Nx = 10
-  Nψ = 5
-  idx = rand(0:m, Nψ, Nx)
+	m = 5
+	Nx = 10
+	Nψ = 5
+	idx = rand(0:m, Nψ, Nx)
 
-  coeff = randn(Nψ)
+	coeff = randn(Nψ)
 
-  M = HermiteMapComponent(m, Nx, idx, deepcopy(coeff))
-  @test norm(getcoeff(M) - coeff)<1e-12
+	M = HermiteMapComponent(m, Nx, idx, deepcopy(coeff))
+	@test norm(getcoeff(M) - coeff)<1e-12
 
-  coeff2 = randn(Nψ)
-  setcoeff!(M, deepcopy(coeff2))
+	coeff2 = randn(Nψ)
+	setcoeff!(M, deepcopy(coeff2))
 
-  @test norm(getcoeff(M) - coeff2)<1e-12
+	@test norm(getcoeff(M) - coeff2)<1e-12
 
-  clearcoeff!(M)
+	clearcoeff!(M)
 
-  @test norm(getcoeff(M) - zeros(Nψ))<1e-12
+	@test norm(getcoeff(M) - zeros(Nψ))<1e-12
 end
 
 @testset "Verify loss function and its gradient" begin
@@ -46,7 +49,6 @@ end
     B = MultiBasis(CstProHermiteBasis(3), Nx)
 
     idx = [0 0; 0 1; 1 0; 2 1; 1 2]
-    truncidx = idx[1:2:end,:]
     Nψ = 5
 
     coeff =   [0.6285037650645056;
@@ -86,53 +88,35 @@ end
 
 @testset "Verify evaluation of HermiteHermiteMapComponent" begin
 
-  Nx = 2
-  Ne = 500
+	Ne = 500
+	Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
 
-  X = randn(Nx, Ne)
+	for Nx = 1:4
+		for b in Blist
+			X = randn(Nx, Ne)
+			B = MultiBasis(b, Nx)
+			Nψ = 5
+			idx = vcat(zeros(Int64, 1, Nx), rand(0:3,Nψ-1, Nx))
 
-  # X .=  [0.267333   1.43021;
-  #           0.364979   0.607224;
-  #          -1.23693    0.249277;
-  #          -2.0526     0.915629;
-  #          -0.182465   0.415874;
-  #           0.412907   1.01672;
-  #           1.41332   -0.918205;
-  #           0.766647  -1.00445]';
+			coeff = randn(Nψ)
+			f = ExpandedFunction(B, idx, coeff)
+			R = IntegratedFunction(f)
 
-  Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
-  for b in Blist
-      B = MultiBasis(b, Nx)
+			C = HermiteMapComponent(R)
 
+			# Test evaluate
+			ψt = zeros(Ne)
 
-    idx = [0 0; 0 1; 1 0; 1 1; 1 2]
-    truncidx = idx[1:2:end,:]
-    Nψ = 5
+			for i=1:Ne
+				x = view(X,:,i)
+				ψt[i] = R.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
+			end
 
-    coeff = randn(Nψ)
+			ψ = evaluate(C, X)
 
-    # coeff =   [0.6285037650645056;
-    #  -0.4744029092496623;
-    #   1.1405280011620331;
-    #  -0.7217760771894809;
-    #   0.11855056306742319]
-    f = ExpandedFunction(B, idx, coeff)
-    R = IntegratedFunction(f)
-
-    C = HermiteMapComponent(R)
-
-    # Test evaluate
-    ψt = zeros(Ne)
-
-    for i=1:Ne
-        x = view(X,:,i)
-        ψt[i] = R.f(vcat(x[1:end-1], 0.0)) + quadgk(t->R.g(ForwardDiff.gradient(y->R.f(y), vcat(x[1:end-1],t))[end]), 0, x[end])[1]
-    end
-
-    ψ = evaluate(C, X)
-
-    @test norm(ψ - ψt)<1e-10
-  end
+			@test norm(ψ - ψt)<1e-10
+		end
+	end
 end
 
 
@@ -174,149 +158,55 @@ end
 end
 
 
-@testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 1" begin
-
-  Nx = 1
-  Ne = 100
-  X = randn(Nx, Ne)
-  m = 10
-  Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
-  for b in Blist
-      B = MultiBasis(b, Nx)
-
-    idx = reshape([0; 1; 2; 3], (4,1))
-
-    coeff =  randn(size(idx,1))
-
-    C = HermiteMapComponent(m, Nx, idx, coeff)
-
-    dxlogC  = grad_x_log_pdf(C, X)
-    d2xlogC = hess_x_log_pdf(C, X)
-
-    function evaluatef0(x)
-      y = copy(x)
-      y[end] = 0.0
-      return C.I.f(y)
-    end
-
-    integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f(y), vcat(x[1:end-1],t*x[end]))[end])
-
-    function Ct(x)
-        lb = 0.0
-        ub = 1.0
-        prob = QuadratureProblem(integrand,lb,ub,x)
-        out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
-        return out
-    end
-
-    log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f(z),x)[end]))
-
-    @inbounds for i=1:Ne
-      @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
-    end
-
-    @inbounds for i=1:Ne
-      @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
-    end
-  end
-end
-
-
-@testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 2" begin
-
-  Nx = 2
-  Ne = 100
-  X = randn(Nx, Ne)
-  m = 10
-  Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
-  for b in Blist
-      B = MultiBasis(b, Nx)
-
-    idx = [0 0; 0 1; 1 0; 1 1; 1 2; 3 2]
-
-    coeff =  randn(size(idx,1))
-
-    C = HermiteMapComponent(m, Nx, idx, coeff)
-
-    dxlogC = grad_x_log_pdf(C, X)
-    d2xlogC = hess_x_log_pdf(C, X)
-
-    function evaluatef0(x)
-      y = copy(x)
-      y[end] = 0.0
-      return C.I.f(y)
-    end
-
-    integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f(y), vcat(x[1:end-1],t*x[end]))[end])
-
-    function Ct(x)
-        lb = 0.0
-        ub = 1.0
-        prob = QuadratureProblem(integrand,lb,ub,x)
-        out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
-        return out
-    end
-
-    log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f(z),x)[end]))
-
-    @inbounds for i=1:Ne
-      @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
-    end
-
-    @inbounds for i=1:Ne
-      @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
-    end
-  end
-end
-
-
-@testset "Verify grad_x_log_pdf and hess_x_log_pdf function Nx = 4" begin
-
-    Nx = 4
-    Ne = 100
-    X = randn(Nx, Ne)
+@testset "Verify grad_x_log_pdf and hess_x_log_pdf function" begin
+    atol = 1e-8
+    Ne = 50
     m = 10
-    Blist = [CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
-    for b in Blist
-      B = MultiBasis(b, Nx)
+    Blist = [ProHermiteBasis(8); PhyHermiteBasis(8); CstProHermiteBasis(8); CstPhyHermiteBasis(8); CstLinProHermiteBasis(8); CstLinPhyHermiteBasis(8)]
+    for Nx = 1:3
+        for b in Blist
+            @show Nx, b
+            X = randn(Nx, Ne)
+            B = MultiBasis(b, Nx)
+            Nψ = 5
+            idx = vcat(zeros(Int64, 1, Nx), rand(0:2,Nψ-1, Nx))
+            coeff = randn(Nψ)
+            C = HermiteMapComponent(m, Nx, idx, coeff; b = string(typeof(b)))
 
-      idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 2 0 2 1; 0 0 1 2; 1 2 0 2;3 2 2 2]
-
-      coeff =  randn(size(idx,1))
-
-      C = HermiteMapComponent(m, Nx, idx, coeff)
-
-      dxlogC = grad_x_log_pdf(C, X)
-      d2xlogC = hess_x_log_pdf(C, X)
+            dxlogC  = grad_x_log_pdf(C, X)
+            d2xlogC = hess_x_log_pdf(C, X)
 
 
-      function evaluatef0(x)
-      y = copy(x)
-      y[end] = 0.0
-      return C.I.f(y)
-      end
+            function evaluatef0(x)
+                y = copy(x)
+                y[end] = 0.0
+                return C.I.f(y)
+            end
 
-      integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f(y), vcat(x[1:end-1],t*x[end]))[end])
+            integrand(t,x) = C.I.g(ForwardDiff.gradient(y->C.I.f(y), vcat(x[1:end-1],t*x[end]))[end])
 
-      function Ct(x)
-      lb = 0.0
-      ub = 1.0
-      prob = QuadratureProblem(integrand,lb,ub,x)
-      out = evaluatef0(x) + x[end]*solve(prob,CubatureJLh(),reltol=1e-6,abstol=1e-6)[1]
-      return out
-      end
+            function Ct(x)
+                lb = 0.0
+                ub = 1.0
+                prob = QuadratureProblem(integrand,lb,ub,x)
+                out = evaluatef0(x) + x[end]*solve(prob,QuadGKJL())[1]
+                return out
+            end
 
-      log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f(z),x)[end]))
+            log_pdfCt(x) = log_pdf(Ct(x)) + log(C.I.g(ForwardDiff.gradient(z->C.I.f(z),x)[end]))
 
-      @inbounds for i=1:Ne
-      @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<1e-5
-      end
+            @inbounds for i=1:Ne
+                @test norm(ForwardDiff.gradient(log_pdfCt, X[:,i]) - dxlogC[i,:])<atol
+            end
 
-      @inbounds for i=1:Ne
-      @test norm(FiniteDiff.finite_difference_hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<1e-5
-     end
-   end
+            @inbounds for i=1:Ne
+                @test norm(ForwardDiff.hessian(log_pdfCt, X[:,i]) - d2xlogC[i,:,:])<atol
+            end
+        end
+    end
 end
+
+
 # Code for optimization with Hessian
 # X = randn(Nx, Ne) .* randn(Nx, Ne)
 # S = Storage(H.I.f, X; hess = true);

@@ -1,27 +1,51 @@
 using TransportBasedInference: evaluate
 
-@testset "Test active_dim" begin
+@testset "Test active_dim for ProHermiteBasis" begin
+    for B in [ProHermiteBasis(6); PhyHermiteBasis(6)]
+        idx = reshape([0], (1, 1))
+        @test active_dim(idx, B) == [1]
 
-idx = reshape([0], (1, 1))
-@test active_dim(idx) == [1]
+        idx = reshape([0; 1; 2; 3], (4, 1))
+        @test active_dim(idx, B) == [1]
 
-idx = reshape([0; 1; 2; 3], (4, 1))
-@test active_dim(idx) == [1]
-
-idx = [0 0; 0 1; 1 0; 1 1; 1 2]
-@test active_dim(idx) == [1; 2]
-
-
-idx = [0 0 0]
-@test active_dim(idx) == [3]
-
-idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 0 2 2 1; 0 0 1 2; 0 2 0 2;0 2 2 2]
-@test active_dim(idx) == [2;3;4]
+        idx = [0 0; 0 1; 1 0; 1 1; 1 2]
+        @test active_dim(idx, B) == [1; 2]
 
 
-idx = [5 0 0 0; 4 2 0 1; 3 2 3 0; 2 2 2 1; 2 0 1 2; 2 2 0 2;2 2 2 2]
-@test active_dim(idx) == [1; 2;3;4]
+        idx = [0 0 0]
+        @test active_dim(idx, B) == [1; 2; 3]
 
+        idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 0 2 2 1; 0 0 1 2; 0 2 0 2;0 2 2 2]
+        @test active_dim(idx, B) == [1;2;3;4]
+
+
+        idx = [5 0 0 0; 4 2 0 1; 3 2 3 0; 2 2 2 1; 2 0 1 2; 2 2 0 2;2 2 2 2]
+        @test active_dim(idx, B) == [1; 2;3;4]
+    end
+end
+
+@testset "Test active_dim for ProHermiteBasis" begin
+    for B in [CstProHermiteBasis(6); CstPhyHermiteBasis(6); CstLinProHermiteBasis(6); CstLinPhyHermiteBasis(6)]
+        idx = reshape([0], (1, 1))
+        @test active_dim(idx, B) == [1]
+
+        idx = reshape([0; 1; 2; 3], (4, 1))
+        @test active_dim(idx, B) == [1]
+
+        idx = [0 0; 0 1; 1 0; 1 1; 1 2]
+        @test active_dim(idx, B) == [1; 2]
+
+
+        idx = [0 0 0]
+        @test active_dim(idx, B) == [3]
+
+        idx = [0 0 0 0; 0 2 0 1; 0 2 3 0; 0 2 2 1; 0 0 1 2; 0 2 0 2;0 2 2 2]
+        @test active_dim(idx, B) == [2;3;4]
+
+
+        idx = [5 0 0 0; 4 2 0 1; 3 2 3 0; 2 2 2 1; 2 0 1 2; 2 2 0 2;2 2 2 2]
+        @test active_dim(idx, B) == [1; 2;3;4]
+    end
 end
 
 @testset "Test evaluation, gradient and hessian of expanded function Nx = 1 I" begin
@@ -159,8 +183,6 @@ end
 
         f = ExpandedFunction(B, idx, coeff)
 
-
-
         ψt_basis, dψt_basis, d2ψt_basis = alleval(f, X)
 
         ψ_basis = evaluate_basis(f, X)
@@ -262,7 +284,7 @@ end
     end
 end
 
-@testset "Test evaluation, gradient and hessian of expanded function Nx = 2" begin
+@testset "Test evaluation, gradient and hessian of expanded function Nx = 2 I" begin
 
     Nx = 2
     Ne = 500
@@ -382,7 +404,7 @@ end
     end
 end
 
-@testset "Test evaluation, gradient and hessian of expanded function Nx = 2" begin
+@testset "Test evaluation, gradient and hessian of expanded function Nx = 2 II" begin
 
     Nx = 2
     Ne = 500
