@@ -31,7 +31,9 @@ end
 # Hn′(x) = 2n*Hn-1(x)
 # Hn″(x) = 2n*(n-1)*Hn-1(x)
 
-Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
+# Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
+Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m) # sqrt(π) is already accounted for by sampling
+
 Cphy(P::PhyPolyHermite) = Cphy(P.m)
 
 degree(P::PhyPolyHermite) = P.m

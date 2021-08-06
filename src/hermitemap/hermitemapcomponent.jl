@@ -370,6 +370,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
         S.cache_integral[i] += f0i + δ*xlast[i]
 
     end
+    @show δ
 
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
 

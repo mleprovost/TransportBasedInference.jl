@@ -29,7 +29,9 @@ end
 # Hen′(x) = n*Hen-1(x)
 # Hen″(x) = n*(n-1)*Hen-1(x)
 
-Cpro(m::Int64) =sqrt(sqrt(2*π) * gamma(m+1))
+# Cpro(m::Int64) =sqrt(sqrt(2*π) * gamma(m+1))
+Cpro(m::Int64) =sqrt(gamma(m+1)) #sqrt(2π) is already accounted for by sampling
+
 Cpro(P::ProPolyHermite) = Cpro(P.m)
 
 degree(P::ProPolyHermite) = P.m

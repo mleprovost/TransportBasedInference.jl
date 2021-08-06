@@ -133,7 +133,7 @@ vector.
 function qraddrow(R::AbstractMatrix{T}, a::AbstractMatrix{T}) where {T}
 
     n = size(R,1)
-    @inbounds @simd for k in 1:n
+    @inbounds for k in 1:n
         G, r = givens( R[k,k], a[k], 1, 2 )
         B = G * [ reshape(R[k,k:n], 1, n-k+1)
                   reshape(a[:,k:n], 1, n-k+1) ]
