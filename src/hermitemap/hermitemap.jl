@@ -353,7 +353,7 @@ end
 ## Optimization function
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5,
+                  maxterms::Int64 = 100, withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5,
                   verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
                   start::Int64=1, P::Parallel = serial, ATMcriterion::String="gradient")
         Nx = M.Nx
@@ -369,7 +369,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
         # We can skip the evaluation of the map on the observation components
         for i=start:Nx
          Xi = view(X,1:i,:)
-        M.C[i], _ = optimize(M.C[i], Xi, optimkind; withconstant = withconstant,
+        M.C[i], _ = optimize(M.C[i], Xi, optimkind;
+                             maxterms = maxterms, withconstant = withconstant,
                              withqr = withqr, maxpatience = maxpatience, verbose = verbose,
                              hessprecond = hessprecond, ATMcriterion = ATMcriterion)
         end
@@ -379,7 +380,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
         # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
         @inbounds ThreadPools.@qthreads for i=Nx:-1:start
          Xi = view(X,1:i,:)
-         M.C[i], _ = optimize(M.C[i], Xi, optimkind; withconstant = withconstant,
+         M.C[i], _ = optimize(M.C[i], Xi, optimkind;
+                              maxterms = maxterms, withconstant = withconstant,
                               withqr = withqr, maxpatience = maxpatience, verbose = verbose,
                               hessprecond = hessprecond, ATMcriterion = ATMcriterion)
         end
@@ -394,7 +396,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
 end
 
 function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
-                  withconstant::Bool = false, withqr::Bool = false, verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
+                  maxterms::Int64 = 100, withconstant::Bool = false, withqr::Bool = false,
+                  verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
                   start::Int64=1, P::Parallel = serial, ATMcriterion = ATMcriterion)
         Nx = M.Nx
 
@@ -411,8 +414,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
 	        for i=start:Nx
 		        Xi = view(X,1:i,:)
 		        M.C[i], _ = optimize(M.C[i], Xi, optimkind[i-start+1];
-                                             withconstant = withconstant, withqr = withqr, verbose = verbose,
-                                             hessprecond = hessprecond, ATMcriterion = ATMcriterion)
+                                             maxterms = maxterms, withconstant = withconstant, withqr = withqr,
+                                             verbose = verbose, hessprecond = hessprecond, ATMcriterion = ATMcriterion)
 	        end
 
         elseif typeof(P) <: Thread
@@ -421,8 +424,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
 	        @inbounds ThreadPools.@qthreads for i=Nx:-1:start
 		         Xi = view(X,1:i,:)
 		         M.C[i], _ = optimize(M.C[i], Xi, optimkind[i-start+1];
-                                              withconstant = withconstant, withqr = withqr, verbose = verbose,
-                                              hessprecond = hessprecond, ATMcriterion = ATMcriterion)
+                                              maxterms = maxterms, withconstant = withconstant, withqr = withqr,
+                                              verbose = verbose, hessprecond = hessprecond, ATMcriterion = ATMcriterion)
 	        end
         end
 

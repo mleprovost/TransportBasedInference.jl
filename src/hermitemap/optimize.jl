@@ -65,7 +65,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))
             end
-            
+
             if Optim.converged(res)
                 mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
             else
@@ -88,7 +88,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         folds = kfolds(1:size(X,2), k = n_folds)
 
         # Run greedy approximation
-        max_iter = min(m-1, ceil(Int64, sqrt(size(X,2))))
+        max_iter = min(m-1, ceil(Int64, sqrt(size(X,2))), maxterms)
 
         valid_error = zeros(max_iter+1, n_folds)
         if typeof(P) <: Serial
@@ -140,14 +140,22 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         X_valid = X[:,1:nvalid]
 
         # Run greedy approximation
-        max_iter =  min(maxterms, ceil(Int64, sqrt(size(X,2))))
+        max_iter =  min(m-1, maxterms, ceil(Int64, sqrt(size(X,2))))
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              α = C.α, withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose,
                              hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
-        # find optimal number of terms (adding terms originally in S)
-        # remove one to account for initial condition
+
+        # Find optimal numbers of terms
+        mean_valid_error = mean(valid_error, dims  = 2)[:,1]
+
+        _, opt_nterms = findmin(mean_valid_error)
+
+        # Run greedy fit up to opt_nterms on all the data
+        C, error = greedyfit(m, Nx, X, opt_nterms;
+                             α = C.α, withqr = withqr, verbose  = verbose,
+                             hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
     else
         error("Argument max_terms is not recognized")

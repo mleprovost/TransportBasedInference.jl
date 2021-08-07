@@ -69,17 +69,25 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
             if Optim.converged(res) == false
                 # if optimization wasn't successful, return map
                 setcoeff!(C, Optim.minimizer(res))
+                push!(train_error, Inf)
+                println("Optimization wasn't successful")
                 break
             else
                 setcoeff!(C, Optim.minimizer(res))
-                # Compute new loss on training and validation sets
+                # Compute new loss on training set
                 push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
             end
         else
 
             coeff0 = getcoeff(C)
-            F = QRscaling(S)
-            # F = updateQRscaling(F, S)
+            # F = QRscaling(S)
+            F = updateQRscaling(F, S)
+
+            # Check condition number of basis evaluations: cond(ψoff ⊗ ψd) = cond(Q R) = cond(R) as Q is an orthogonal matrix
+            if cond(F.R) > 1e9 || size(F.R,1) < size(F.R,2)
+                println("Condition number reached")
+                break
+            end
             mul!(coeff0, F.U, coeff0)
 
             if hessprecond == true
@@ -107,9 +115,15 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
             # Reverse to the non-QR space and update in-place the coefficients
             C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
-            # The computation is the non-QR space is slightly faster,
-            # even if we prefer the QR form to optimize the coefficients
-            push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+            if Optim.converged(res) == true
+                # The computation is the non-QR space is slightly faster,
+                # even if we prefer the QR form to optimize the coefficients
+                push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+            else
+                println("Optimization wasn't successful")
+                push!(train_error, Inf)
+                break
+            end
         end
 
         if verbose == true
@@ -260,14 +274,28 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
 
             setcoeff!(C, Optim.minimizer(res))
 
-            # Compute new loss on training and validation sets
-            push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-            push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+            if Optim.converged(res) == true
+                # Compute new loss on training and validation sets
+                push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+                push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+            else
+                println("Optimization wasn't successful")
+                # Compute new loss on training and validation sets
+                push!(train_error, Inf)
+                push!(valid_error, Inf)
+                break
+            end
 
         else
             coeff0 = getcoeff(C)
             F = updateQRscaling(F, S)
             # F = QRscaling(S)
+
+            # Check condition number of basis evaluations: cond(ψoff ⊗ ψd) = cond(Q R) = cond(R) as Q is an orthogonal matrix
+            if cond(F.R) > 1e9 || size(F.R,1) < size(F.R,2)
+                println("Condition number reached")
+                break
+            end
 
             mul!(coeff0, F.U, coeff0)
             if hessprecond == true
@@ -292,10 +320,18 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
             # Reverse to the non-QR space and update in-place the coefficients
             mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
-            # The computation is the non-QR space is slightly faster,
-            # even if we prefer the QR form to optimize the coefficients
-            push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-            push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+            if Optim.converged(res) == true
+                # The computation is the non-QR space is slightly faster,
+                # even if we prefer the QR form to optimize the coefficients
+                push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+                push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
+            else
+                println("Optimization wasn't successful")
+                # Compute new loss on training and validation sets
+                push!(train_error, Inf)
+                push!(valid_error, Inf)
+                break
+            end
 
         end
 
@@ -306,7 +342,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
 
         # Update patience
         if valid_error[end] >= best_valid_error
-            patience +=1
+            patience += 1
         else
             best_valid_error = deepcopy(valid_error[end])
             patience = 0
@@ -314,161 +350,10 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
 
         # Check if patience exceeded maximum patience
         if patience >= maxpatience
+            println("Patience has been exceeded")
             break
         end
     end
 
     return C, (train_error, valid_error)
 end
-
-
-
-
-# function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true)# where {m, Nψ, Nx}
-#
-#     @assert maxterms >=1 "maxterms should be >= 1"
-#     best_valid_error = Inf
-#     patience = 0
-#
-#     train_error = Float64[]
-#
-#     # Initialize map C to identity
-#     C = HermiteMapComponent(m, Nx; α = αreg);
-#
-#     # Compute storage # Add later storage for validation S_valid
-#     S = Storage(C.I.f, X)
-#
-#     # Compute initial loss on training set
-#     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-#
-#     if verbose == true
-#         println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
-#     end
-#
-#     # Remove or not the constant i.e the multi-index [0 0 0]
-#     if withconstant == false
-#         # Compute the reduced margin
-#         reduced_margin = getreducedmargin(getidx(C))
-#         f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
-#         C = HermiteMapComponent(f; α = αreg)
-#         S = Storage(C.I.f, X)
-#         coeff0 = getcoeff(C)
-#         dJ = zero(coeff0)
-#
-#         negative_log_likelihood!(nothing, dJ, coeff0, S, C, X)
-#         _, opt_dJ_coeff_idx = findmax(abs.(dJ))
-#
-#         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
-#
-#         f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
-#         C = HermiteMapComponent(f; α = αreg)
-#         S = Storage(C.I.f, X)
-#     end
-#
-#     # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
-#     if withqr == false
-#         coeff0 = getcoeff(C)
-#         precond = zeros(ncoeff(C), ncoeff(C))
-#         precond!(precond, coeff0, S, C, X)
-#         res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-#                              Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
-#
-#         setcoeff!(C, Optim.minimizer(res))
-#
-#         # Compute initial loss on training set
-#         push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-#     else
-#         F = QRscaling(S)
-#         coeff0 = getcoeff(C)
-#         mul!(F.U, coeff0)
-#
-#         mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-#         mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-#
-#         qrprecond = zeros(ncoeff(C), ncoeff(C))
-#         qrprecond!(qrprecond, coeff0, F, S, C, X)
-#
-#         res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-#                              Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
-#
-#         # mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
-#         C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
-#
-#
-#         # Compute initial loss on training set
-#         mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-#         mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-#
-#         # The computation is the non-QR space is slightly faster,
-#         # even if we prefer the QR form to optimize the coefficients
-#         push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-#     end
-#
-#     if verbose == true
-#         println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
-#     end
-#
-#     # Compute the reduced margin
-#     reduced_margin = getreducedmargin(getidx(C))
-#
-#     while ncoeff(C) <= maxterms-1
-#         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
-#
-#         # Update storage with the new feature
-#         S = update_storage(S, X, idx_new[end:end,:])
-#
-#         # Update C
-#         C = HermiteMapComponent(IntegratedFunction(S.f); α = C.α)
-#
-#         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
-#
-#         # Update storage with the new feature
-#         S = update_storage(S, X, idx_new[end:end,:])
-#
-#         # Update C
-#         C = HermiteMapComponent(IntegratedFunction(S.f); α = C.α)
-#
-#         # Optimize coefficients
-#         if withqr == false
-#             coeff0 = getcoeff(C)
-#             precond = zeros(ncoeff(C), ncoeff(C))
-#             precond!(precond, coeff0, S, C, X)
-#             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-#                   Optim.LBFGS(; m = 10, P = Preconditioner(precond)))
-#
-#             setcoeff!(C, Optim.minimizer(res))
-#
-#             # Compute new loss on training and validation sets
-#             push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-#
-#         else
-#             coeff0 = getcoeff(C)
-#             F = updateQRscaling(F, S)
-#             mul!(F.U, coeff0)
-#             qrprecond = zeros(ncoeff(C), ncoeff(C))
-#             qrprecond!(qrprecond, coeff0, F, S, C, X)
-#
-#             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-#                                    Optim.LBFGS(; m = 10, P = Preconditioner(qrprecond)))
-#             # Reverse to the non-QR space and update in-place the coefficients
-#             C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
-#
-#             # Compute initial loss on training set
-#             mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-#             mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
-#
-#             # The computation is the non-QR space is slightly faster,
-#             # even if we prefer the QR form to optimize the coefficients
-#             push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-#
-#         end
-#
-#         if verbose == true
-#             println(string(ncoeff(C))*" terms - Training error: "*string(train_error[end]))
-#         end
-#     end
-#
-#     return C, train_error
-# end
-
-# function update_component!(C::HermiteMapComponent{m, Nψ, Nx}, X::Array{Float64,2}, reduced_margin::Array{Int64,2}, S::Storage{m, Nψ, Nx}) where {m, Nψ, Nx}
