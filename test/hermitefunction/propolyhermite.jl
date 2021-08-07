@@ -21,10 +21,10 @@ P0 = ProPolyHermite(0)
 
 
 P0 = ProPolyHermite(0; scaled = true)
-@test P0(x) == 1/sqrt(sqrt(2*π))
-@test Cpro(0) == sqrt(sqrt(2*π))
-@test derivative(P0,0).coeffs == (1/sqrt(sqrt(2*π)),)
-@test derivative(P0,0).coeffs == (1/sqrt(sqrt(2*π)),)
+@test P0(x) == 1/sqrt(1.0)
+@test Cpro(0) == sqrt(1.0)
+@test derivative(P0,0).coeffs == (1/sqrt(1.0),)
+@test derivative(P0,0).coeffs == (1/sqrt(1.0),)
 @test derivative(P0,1).coeffs == ()
 @test derivative(P0,2).coeffs  == ()
 
@@ -36,8 +36,8 @@ P1 = ProPolyHermite(1)
 @test derivative(P1, 2).coeffs == ()
 
 P1 = ProPolyHermite(1; scaled = true)
-@test abs(P1(x) - x/sqrt(sqrt(2*π)*factorial(1)))<1e-10
-@test derivative(P1, 1).coeffs == (1/sqrt(sqrt(2*π)*factorial(1)),)
+@test abs(P1(x) - x/sqrt(factorial(1)))<1e-10
+@test derivative(P1, 1).coeffs == (1/sqrt(factorial(1)),)
 @test derivative(P1, 2).coeffs == ()
 
 
@@ -60,8 +60,8 @@ for i=1:11
 
 
     # Verify normalizing constant:
-    @test abs(Cpro(i) - sqrt(sqrt(2*π)*factorial(i)))<1e-7
-    @test abs(Cpro(Pm)- sqrt(sqrt(2*π)*factorial(i)))<1e-7
+    @test abs(Cpro(i) - sqrt(factorial(i)))<1e-7
+    @test abs(Cpro(Pm)- sqrt(factorial(i)))<1e-7
 
 
 end

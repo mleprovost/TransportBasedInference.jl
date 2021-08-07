@@ -17,7 +17,7 @@ import TransportBasedInference: ncoeff
              -1.3126095306624133]
     C = HermiteMapComponent(m, Nx, idx, coeff; α = 1e-6);
 
-    Ne = 100
+    Ne = 50
 
 
     # The QR decomposition is not unique!

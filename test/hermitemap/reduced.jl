@@ -3,7 +3,7 @@
 
 @testset "Test reduced_grad_x_grad_xd and reduced_hess_x_grad_xd with no active dimensions" begin
     Nx_tab = [1;2;4;8]
-    Ne = 100
+    Ne = 50
     m = 10
 
     for Nx in Nx_tab
@@ -32,7 +32,7 @@ end
 
 @testset "Test reduced_grad_x_grad_xd and reduced_hess_x_grad_xd with dimensions" begin
     Nx_tab = [1;2;2;2;4;6;8]
-    Ne = 100
+    Ne = 50
     m = 10
     Nψ = 5
 

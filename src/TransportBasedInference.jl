@@ -133,6 +133,6 @@ include("radialmap/sparseoptimize.jl")
 include("radialmap/inverse.jl")
 include("radialmap/stochmapfilter.jl")
 
-# include("tools/plot_recipes.jl")
+include("tools/plot_recipes.jl")
 
 end # module

@@ -41,8 +41,8 @@ struct IntegratedFunction
     f::ExpandedFunction
 end
 
-function IntegratedFunction(f::ExpandedFunction)
-    return IntegratedFunction(f.m, f.Nψ, f.Nx, Rectifier("softplus"), f)
+function IntegratedFunction(f::ExpandedFunction; rectifier::String="softplus")
+    return IntegratedFunction(f.m, f.Nψ, f.Nx, Rectifier(rectifier), f)
 end
 
 getbasis(R::IntegratedFunction) = getbasis(R.f)

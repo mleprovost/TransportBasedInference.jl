@@ -11,7 +11,7 @@
         dVtrue = zeros(Ne, size(B))
 
         for i=1:B.m
-            dVtrue[:,i] .= derivative(FamilyProHermite[i], k , x)
+            dVtrue[:,i] .= derivative(FamilyScaledProHermite[i], k , x)
         end
         @test norm(dV - dVtrue)<1e-6
     end
@@ -29,7 +29,7 @@ end
         dVtrue = zeros(Ne, size(B))
 
         for i=1:B.m
-            dVtrue[:,i] .= derivative(FamilyPhyHermite[i], k , x)
+            dVtrue[:,i] .= derivative(FamilyScaledPhyHermite[i], k , x)
         end
         @test norm(dV - dVtrue)<1e-6
     end
@@ -51,7 +51,7 @@ end
                 Pik = derivative(FamilyProPolyHermite[1], k)
                 dVtrue[:,i] .= Pik.(x)
             else
-                dVtrue[:,i] .= derivative(FamilyProHermite[i-1], k , x)
+                dVtrue[:,i] .= derivative(FamilyScaledProHermite[i-1], k , x)
             end
         end
         @test norm(dV - dVtrue)<1e-6
@@ -75,7 +75,7 @@ end
                 Pik = derivative(FamilyProPolyHermite[1], k)
                 dVtrue[:,i] .= Pik.(x)
             else
-                dVtrue[:,i] .= derivative(FamilyPhyHermite[i-1], k , x)
+                dVtrue[:,i] .= derivative(FamilyScaledPhyHermite[i-1], k , x)
             end
         end
         @test norm(dV - dVtrue)<1e-6
@@ -102,7 +102,7 @@ end
                 Pik = derivative(FamilyProPolyHermite[2], k)
                 dVtrue[:,i] .= Pik.(x)
             else
-                dVtrue[:,i] .= derivative(FamilyProHermite[i-2], k , x)
+                dVtrue[:,i] .= derivative(FamilyScaledProHermite[i-2], k , x)
             end
         end
         @test norm(dV - dVtrue)<1e-6
@@ -129,7 +129,7 @@ end
                 Pik = derivative(FamilyProPolyHermite[2], k)
                 dVtrue[:,i] .= Pik.(x)
             else
-                dVtrue[:,i] .= derivative(FamilyPhyHermite[i-2], k , x)
+                dVtrue[:,i] .= derivative(FamilyScaledPhyHermite[i-2], k , x)
             end
         end
         @test norm(dV - dVtrue)<1e-6

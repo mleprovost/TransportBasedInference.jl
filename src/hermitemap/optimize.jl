@@ -1,7 +1,8 @@
 export optimize
 
 
-function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, String};
+function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, String};
+                  maxterms::Int64 = 100,
                   withconstant::Bool = false, withqr::Bool = false,
                   maxpatience::Int64 = 10^5, verbose::Bool = false,
                   hessprecond = true, P::Parallel = serial)
@@ -9,7 +10,7 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
     m = C.m
     Nx = C.Nx
 
-    if typeof(maxterms) <: Nothing
+    if typeof(optimkind) <: Nothing
         S = Storage(C.I.f, X)
 
         # Optimize coefficients
@@ -64,22 +65,21 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))
             end
+            if Optim.converged(res)
+                mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
+            else
 
-            mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
 
             error = res.minimum
-
-            # Compute initial loss on training set
-            # mul!(S.ψoffψd0, S.ψoffψd0, F.Uinv)
-            # mul!(S.ψoffdψxd, S.ψoffdψxd, F.Uinv)
         end
 
-    elseif typeof(maxterms) <: Int64
-        C, error =  greedyfit(m, Nx, X, maxterms; withconstant = withconstant,
+    elseif typeof(optimkind) <: Int64
+        C, error =  greedyfit(m, Nx, X, optimkind;
+                              α = C.α, withconstant = withconstant,
                               withqr = withqr, maxpatience = maxpatience,
                               verbose = verbose, hessprecond = hessprecond, b = getbasis(C))
 
-    elseif maxterms ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
+    elseif optimkind ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
         # Define cross-validation splits of data
         n_folds = 5
         folds = kfolds(1:size(X,2), k = n_folds)
@@ -92,8 +92,11 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
             @inbounds for i=1:n_folds
                 idx_train, idx_valid = folds[i]
 
+                if verbose == true
+                    println("Fold "*string(i)*" / "*string(n_folds)*":")
+                end
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
-                                     withconstant = withconstant, withqr = withqr, verbose  = verbose,
+                                     α = C.α, withconstant = withconstant, withqr = withqr, verbose  = verbose,
                                      hessprecond = hessprecond, b = getbasis(C))
 
                 # error[2] contains the history of the validation error
@@ -103,8 +106,12 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
             @inbounds  Threads.@threads for i=1:n_folds
                 idx_train, idx_valid = folds[i]
 
+                if verbose == true
+                    println("Fold "*string(i)*":")
+                end
+
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
-                                     withconstant = withconstant, withqr = withqr, verbose  = verbose,
+                                     α = C.α, withconstant = withconstant, withqr = withqr, verbose  = verbose,
                                      hessprecond = hessprecond, b = getbasis(C))
 
                 # error[2] contains the history of the validation error
@@ -118,20 +125,25 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
         _, opt_nterms = findmin(mean_valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms; withqr = withqr, verbose  = verbose, hessprecond = hessprecond, b = getbasis(C))
+        C, error = greedyfit(m, Nx, X, opt_nterms; α = C.α, withqr = withqr, verbose  = verbose, hessprecond = hessprecond, b = getbasis(C))
 
-    elseif maxterms ∈ ("split", "Split")
-        nvalid = ceil(Int64, floor(0.2*size(X,2)))
+    elseif optimkind ∈ ("split", "Split")
+        # 20% of the data is used for the cross-validation
+        valid_train_split = 0.2
+        nvalid = ceil(Int64, floor(valid_train_split*size(X,2)))
         X_train = X[:,nvalid+1:end]
         X_valid = X[:,1:nvalid]
 
         # Run greedy approximation
-        max_iter =  min(maxpatience, ceil(Int64, sqrt(size(X,2))))
+        max_iter =  min(maxterms, ceil(Int64, sqrt(size(X,2))))
 
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
-                             withconstant = withconstant, withqr = withqr,
+                             α = C.α, withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose,
                              hessprecond = hessprecond, b = getbasis(C))
+        # find optimal number of terms (adding terms originally in S)
+        # remove one to account for initial condition
+
     else
         println("Argument max_terms is not recognized")
         error()
@@ -140,12 +152,12 @@ function optimize(C::HermiteMapComponent, X, maxterms::Union{Nothing, Int64, Str
 end
 
 
-function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, maxterms::Union{Nothing, Int64, String};
+function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, optimkind::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false, hessprecond::Bool = true)
 
     transform!(L.L, X)
     C = L.C
-    C_opt, error = optimize(C, X, maxterms; withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
+    C_opt, error = optimize(C, X, optimkind; α = C.α, withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
                             verbose = verbose, hessprecond = hessprecond, b = getbasis(C))
 
     itransform!(L.L, X)

@@ -21,10 +21,10 @@ P0 = PhyPolyHermite(0)
 
 
 P0 = PhyPolyHermite(0; scaled = true)
-@test P0(x) == 1/sqrt(sqrt(π))
-@test Cphy(0) == sqrt(sqrt(π))
-@test derivative(P0,0).coeffs == (1/sqrt(sqrt(π)),)
-@test derivative(P0,0).coeffs == (1/sqrt(sqrt(π)),)
+@test P0(x) == 1/sqrt(1.0)
+@test Cphy(0) == sqrt(1.0)
+@test derivative(P0,0).coeffs == (1/sqrt(1.0),)
+@test derivative(P0,0).coeffs == (1/sqrt(1.0),)
 @test derivative(P0,1).coeffs == ()
 @test derivative(P0,2).coeffs  == ()
 
@@ -36,8 +36,8 @@ P1 = PhyPolyHermite(1)
 @test derivative(P1, 2).coeffs == ()
 
 P1 = PhyPolyHermite(1; scaled = true)
-@test abs(P1(x) - 2*x/sqrt(sqrt(π)*2*factorial(1)))<1e-10
-@test derivative(P1, 1).coeffs == (2/sqrt(sqrt(π)*2*factorial(1)),)
+@test abs(P1(x) - 2*x/sqrt(2*factorial(1)))<1e-10
+@test derivative(P1, 1).coeffs == (2/sqrt(2*factorial(1)),)
 @test derivative(P1, 2).coeffs == ()
 
 
@@ -62,8 +62,8 @@ for i=1:11
 
 
     # Verify normalizing constant:
-    @test abs(Cphy(i) - sqrt(sqrt(π)*2^i*factorial(i)))<1e-7
-    @test abs(Cphy(Pm)- sqrt(sqrt(π)*2^i*factorial(i)))<1e-7
+    @test abs(Cphy(i) - sqrt(2^i*factorial(i)))<1e-7
+    @test abs(Cphy(Pm)- sqrt(2^i*factorial(i)))<1e-7
 
     if i<4
         # Verify integrals
@@ -93,7 +93,7 @@ for i=1:6
     Pm = PhyPolyHermite(i; scaled = true)
     Pmp1 = PhyPolyHermite(i+1; scaled = true)
 
-    @test abs(dot(weights, Pm.P.(nodes).*Pm.P.(nodes))-1.0)<1e-8
+    @test abs(dot(weights, Pm.P.(nodes).*Pm.P.(nodes))-sqrt(π))<1e-8
     @test abs(dot(weights, Pm.P.(nodes).*Pmp1.P.(nodes)))<1e-8
     @test abs(dot(weights, Pm.P.(nodes).*Pmm1.P.(nodes)))<1e-8
     @test abs(dot(weights, Pmp1.P.(nodes).*Pmm1.P.(nodes)))<1e-8

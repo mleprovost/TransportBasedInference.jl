@@ -5,7 +5,7 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the ensemble matrix `X`.
 """
-function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool = false, withqr::Bool = false,
+function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg, withconstant::Bool = false, withqr::Bool = false,
                    maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true, b::String="CstProHermiteBasis")
 
     @assert maxterms >=1 "maxterms should be >= 1"
@@ -15,7 +15,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
     train_error = Float64[]
 
     # Initialize map C to identity
-    C = HermiteMapComponent(m, Nx; α = αreg, b = b);
+    C = HermiteMapComponent(m, Nx; α = α, b = b);
 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
@@ -78,10 +78,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
 
             coeff0 = getcoeff(C)
             F = QRscaling(S)
-            @show coeff0
             # F = updateQRscaling(F, S)
             mul!(coeff0, F.U, coeff0)
-            @show coeff0
 
             if hessprecond == true
                 qrprecond = zeros(ncoeff(C), ncoeff(C))
@@ -106,9 +104,6 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; withconstant::Bool =
             end
 
             # Reverse to the non-QR space and update in-place the coefficients
-            @show Optim.minimizer(res)
-            @show F.Uinv*Optim.minimizer(res)
-            # @show Optim.trace(res)
             C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
 
             # The computation is the non-QR space is slightly faster,
@@ -134,7 +129,6 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     # Define updated map
     f_new = ExpandedFunction(C.I.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
     C_new = HermiteMapComponent(f_new; α = αreg)
-    @show C_new.I.f
 
     # Set coefficients based on previous optimal solution
     coeff_new, coeff_idx_added, idx_added = update_coeffs(C, C_new)
@@ -143,7 +137,6 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     S = update_storage(S, X, reduced_margin)
     dJ = zero(coeff_new)
     negative_log_likelihood!(nothing, dJ, coeff_new, S, C_new, X)
-    @show dJ
     # Find function in the reduced margin most correlated with the residual
     _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
 
@@ -189,8 +182,8 @@ $(TYPEDSIGNATURES)
 
 An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
 """
-function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant::Bool = false,
-                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true)
+function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 = αreg, withconstant::Bool = false,
+                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true, b::String="CstProHermiteBasis")
 
     best_valid_error = Inf
     patience = 0
@@ -199,108 +192,19 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; withconstant
     valid_error = Float64[]
 
     # Initialize map C to identity
-    C = HermiteMapComponent(m, Nx; α = αreg);
+    C = HermiteMapComponent(m, Nx; α = α, b = b);
 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
     Svalid = Storage(C.I.f, Xvalid)
 
+    if withqr == true
+        F = QRscaling(S)
+    end
+
     # Compute initial loss on training set
     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
     push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
-
-    if verbose == true
-        println(string(ncoeff(C))*" terms - Training error: "*
-        string(train_error[end])*", Validation error: "*string(valid_error[end]))
-    end
-
-    # # Remove or not the constant i.e the multi-index [0 0 0], and
-    # # optimize for the first non-zero index
-    # if withconstant == false
-    #     # Compute the reduced margin
-    #     reduced_margin = getreducedmargin(getidx(C))
-    #     f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
-    #     C = HermiteMapComponent(f; α = αreg)
-    #     S = Storage(C.I.f, X)
-    #     coeff0 = getcoeff(C)
-    #     dJ = zero(coeff0)
-    #
-    #     negative_log_likelihood!(nothing, dJ, coeff0, S, C, X)
-    #     _, opt_dJ_coeff_idx = findmax(abs.(dJ))
-    #
-    #     opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
-    #
-    #     f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
-    #     C = HermiteMapComponent(f; α = αreg)
-    #     S = Storage(C.I.f, X)
-    #     Svalid = Storage(C.I.f, Xvalid)
-    # end
-
-    # Optimize C with the first idx: = zeros(Int64,1,C.Nx) or a non-zero one if withconstant == false
-    # precond = InvPreconditioner(reshape([1.0], 1, 1))
-    # if withqr == false
-    #     coeff0 = getcoeff(C)
-    #     if hessprecond  == true
-    #         precond = zeros(ncoeff(C), ncoeff(C))
-    #         precond!(precond, coeff0, S, C, X)
-    #         precond_chol = cholesky(Symmetric(precond); check = false)
-    #
-    #         if issuccess(precond_chol) == true
-    #             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-    #                                  Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(precond), precond_chol)))
-    #         elseif cond(Diagonal(precond))<10^6 #try the diagonal preconditioner
-    #             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-    #                                  Optim.LBFGS(; m = 10, P = Diagonal(precond)))
-    #         else
-    #             res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-    #                                      Optim.LBFGS(; m = 10))
-    #         end
-    #         # obj = Optim.only_fg!(negative_log_likelihood(S, C, X))
-    #         # bfgsstate = Optim.initial_state(Optim.BFGS(P = precond), options, obj, coeff0)
-    #         # res = Optim.optimize(obj, coeff0, Optim.BFGS(P = precond), bfgssstate)
-    #         # precond = InvPreconditioner(bfgsstate.invH)
-    #     else
-    #         res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-    #                                  Optim.LBFGS(; m = 10))
-    #     end
-    #     setcoeff!(C, Optim.minimizer(res))
-    #
-    #     # Compute initial loss on training set
-    #     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-    #     push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
-    # else
-    #     F = QRscaling(S)
-    #     coeff0 = getcoeff(C)
-    #     mul!(coeff0, F.U, coeff0)
-    #
-    #     if hessprecond == true
-    #         qrprecond = zeros(ncoeff(C), ncoeff(C))
-    #         qrprecond!(qrprecond, coeff0, F, S, C, X)
-    #         qrprecond_chol = cholesky(Symmetric(qrprecond); check = false)
-    #
-    #         if issuccess(qrprecond_chol) == true
-    #             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-    #                                  Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
-    #         elseif cond(Diagonal(qrprecond)) < 10^6
-    #             res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-    #                                  Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
-    #         else # don't use any preconditioner
-    #              res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff0,
-    #                                   Optim.LBFGS(; m = 10))
-    #         end
-    #     else
-    #         res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
-    #                              Optim.LBFGS(; m = 10))
-    #     end
-    #
-    #     C.I.f.coeff .= F.Uinv*Optim.minimizer(res)
-    #
-    #     # The computation is the non-QR space is slightly faster,
-    #     # even if we prefer the QR form to optimize the coefficients
-    #     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
-    #     push!(valid_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), Svalid, C, Xvalid))
-    # end
-
 
     if verbose == true
         println(string(ncoeff(C))*" terms - Training error: "*

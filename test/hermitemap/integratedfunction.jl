@@ -1,7 +1,7 @@
 @testset "Test integrated function Nx = 1" begin
 
 Nx = 1
-Ne = 100
+Ne = 50
 
 atol = 1e-6
 
@@ -238,7 +238,7 @@ end
 @testset "Test integrated function Nx = 2" begin
 
 Nx = 2
-Ne = 100
+Ne = 50
 
 atol = 1e-6
 
@@ -476,7 +476,7 @@ end
 @testset "Test integrated function Nx = 3" begin
 
     Nx = 3
-    Ne = 100
+    Ne = 50
 
     X = randn(Nx, Ne)
 
@@ -676,7 +676,7 @@ end
 @testset "Test integrated function Nx = 4" begin
 
     Nx = 4
-    Ne = 100
+    Ne = 50
 
     X = randn(Nx, Ne)
 

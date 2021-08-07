@@ -28,7 +28,7 @@ end
 @testset "Test evaluation of HermiteMap" begin
 
     Nx = 3
-    Ne = 100
+    Ne = 50
     m = 10
     X = randn(Nx, Ne) .* randn(Nx, Ne) .+ rand(Nx);
     X0 = deepcopy(X)
@@ -81,7 +81,7 @@ end
 @testset "Validate evalution of HermiteMap with multi-threading" begin
 
     Nx = 3
-    Ne = 100
+    Ne = 50
     m = 10
     X = randn(Nx, Ne) .* randn(Nx, Ne) .+ rand(Nx);
     X0 = deepcopy(X)
