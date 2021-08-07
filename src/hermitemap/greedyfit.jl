@@ -6,7 +6,8 @@ $(TYPEDSIGNATURES)
 An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the ensemble matrix `X`.
 """
 function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg, withconstant::Bool = false, withqr::Bool = false,
-                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true, b::String="CstProHermiteBasis")
+                   maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true,
+                   b::String="CstProHermiteBasis", ATMcriterion::String="gradient")
 
     @assert maxterms >=1 "maxterms should be >= 1"
     best_valid_error = Inf
@@ -34,7 +35,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
 
     while ncoeff(C) < maxterms
 
-        idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
+        idx_new, reduced_margin = update_component!(C, X, reduced_margin, S; ATMcriterion = ATMcriterion)
 
         # Update storage with the new feature
         S = update_storage(S, X, idx_new[end:end,:])
@@ -119,7 +120,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
     return C, train_error
 end
 
-function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage)
+function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage; ATMcriterion::String="gradient")
     m = C.m
     Nψ = C.Nψ
     idx_old = getidx(C)
@@ -138,7 +139,16 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     dJ = zero(coeff_new)
     negative_log_likelihood!(nothing, dJ, coeff_new, S, C_new, X)
     # Find function in the reduced margin most correlated with the residual
-    _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
+
+    if ATMcriterion == "gradient"
+        _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]))
+    elseif ATMcriterion == "normalized gradient"
+        # The definition of ψnorm has a rescaling by 1/√Ne,
+        # but it doesn't matter as all the entries are multiplied by the same constant
+        _, opt_dJ_coeff_idx = findmax(abs.(dJ[coeff_idx_added]).^2 ./S.ψnorm[coeff_idx_added].^2)
+    else
+        error(ATMcriterion*" is not implemented.")
+    end
 
     opt_idx = idx_added[opt_dJ_coeff_idx,:]
 
@@ -183,7 +193,8 @@ $(TYPEDSIGNATURES)
 An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
 """
 function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 = αreg, withconstant::Bool = false,
-                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true, b::String="CstProHermiteBasis")
+                   withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true,
+                   b::String="CstProHermiteBasis", ATMcriterion::String="gradient")
 
     best_valid_error = Inf
     patience = 0
@@ -215,7 +226,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
     reduced_margin = getreducedmargin(getidx(C))
 
     while ncoeff(C) < maxterms
-        idx_new, reduced_margin = update_component!(C, X, reduced_margin, S)
+        idx_new, reduced_margin = update_component!(C, X, reduced_margin, S; ATMcriterion = ATMcriterion)
 
         # Update storage with the new feature
         S = update_storage(S, X, idx_new[end:end,:])

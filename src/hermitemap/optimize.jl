@@ -5,7 +5,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
                   maxterms::Int64 = 100,
                   withconstant::Bool = false, withqr::Bool = false,
                   maxpatience::Int64 = 10^5, verbose::Bool = false,
-                  hessprecond = true, P::Parallel = serial)
+                  hessprecond = true, P::Parallel = serial, ATMcriterion::String = "gradient")
 
     m = C.m
     Nx = C.Nx
@@ -65,9 +65,12 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
                 res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                      Optim.LBFGS(; m = 10))
             end
+            
             if Optim.converged(res)
                 mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
             else
+                error("Optimization hasn't converged")
+            end
 
 
             error = res.minimum
@@ -77,7 +80,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         C, error =  greedyfit(m, Nx, X, optimkind;
                               α = C.α, withconstant = withconstant,
                               withqr = withqr, maxpatience = maxpatience,
-                              verbose = verbose, hessprecond = hessprecond, b = getbasis(C))
+                              verbose = verbose, hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
     elseif optimkind ∈ ("kfold", "kfolds", "Kfold", "Kfolds")
         # Define cross-validation splits of data
@@ -97,7 +100,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
                 end
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
                                      α = C.α, withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                     hessprecond = hessprecond, b = getbasis(C))
+                                     hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
                 # error[2] contains the history of the validation error
                 valid_error[:,i] .= deepcopy(error[2])
@@ -112,7 +115,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
 
                 C, error = greedyfit(m, Nx, X[:,idx_train], X[:,idx_valid], max_iter;
                                      α = C.α, withconstant = withconstant, withqr = withqr, verbose  = verbose,
-                                     hessprecond = hessprecond, b = getbasis(C))
+                                     hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
                 # error[2] contains the history of the validation error
                 valid_error[:,i] .= deepcopy(error[2])
@@ -125,7 +128,9 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         _, opt_nterms = findmin(mean_valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms; α = C.α, withqr = withqr, verbose  = verbose, hessprecond = hessprecond, b = getbasis(C))
+        C, error = greedyfit(m, Nx, X, opt_nterms;
+                             α = C.α, withqr = withqr, verbose  = verbose,
+                             hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
     elseif optimkind ∈ ("split", "Split")
         # 20% of the data is used for the cross-validation
@@ -140,25 +145,25 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              α = C.α, withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose,
-                             hessprecond = hessprecond, b = getbasis(C))
+                             hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
         # find optimal number of terms (adding terms originally in S)
         # remove one to account for initial condition
 
     else
-        println("Argument max_terms is not recognized")
-        error()
+        error("Argument max_terms is not recognized")
     end
     return C, error
 end
 
 
 function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, optimkind::Union{Nothing, Int64, String};
-                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false, hessprecond::Bool = true)
+                  withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false,
+                  hessprecond::Bool = true, ATMcriterion = ATMcriterion)
 
     transform!(L.L, X)
     C = L.C
     C_opt, error = optimize(C, X, optimkind; α = C.α, withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
-                            verbose = verbose, hessprecond = hessprecond, b = getbasis(C))
+                            verbose = verbose, hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
     itransform!(L.L, X)
 

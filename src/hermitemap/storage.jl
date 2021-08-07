@@ -25,7 +25,7 @@ struct Storage
     # Off-diagonal basis evaluation
     ψoff::Array{Float64,2}
 
-    # Off-diagonal basis evaluation ⊗ Diagonal basis evaluation at x = 0
+    # Off-diagonal basis evaluation ⊗ Diagonal basis evaluation
     ψoffψd::Array{Float64,2}
 
     # Off-diagonal basis evaluation ⊗ Diagonal basis evaluation at x = 0
