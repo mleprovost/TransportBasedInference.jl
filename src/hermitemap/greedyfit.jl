@@ -69,7 +69,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
             if Optim.converged(res) == false
                 # if optimization wasn't successful, return map
                 setcoeff!(C, Optim.minimizer(res))
-                push!(train_error, Inf)
+                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 println("Optimization wasn't successful")
                 break
             else
@@ -121,7 +121,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
                 push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
             else
                 println("Optimization wasn't successful")
-                push!(train_error, Inf)
+                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 break
             end
         end
@@ -281,8 +281,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
             else
                 println("Optimization wasn't successful")
                 # Compute new loss on training and validation sets
-                push!(train_error, Inf)
-                push!(valid_error, Inf)
+                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                push!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 break
             end
 
@@ -328,8 +328,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
             else
                 println("Optimization wasn't successful")
                 # Compute new loss on training and validation sets
-                push!(train_error, Inf)
-                push!(valid_error, Inf)
+                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                push!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 break
             end
 

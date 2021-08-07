@@ -365,6 +365,8 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
          transform!(M.L, X)
         end
 
+        @show std(X; dims = 2)
+
         if typeof(P) <: Serial
         # We can skip the evaluation of the map on the observation components
         for i=start:Nx
@@ -387,9 +389,11 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
         end
         end
 
+        @show std(X; dims = 2)
+
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
-         itransform!(M.L, X)
+                itransform!(M.L, X)
         end
 
         return M
@@ -428,7 +432,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
                                               verbose = verbose, hessprecond = hessprecond, ATMcriterion = ATMcriterion)
 	        end
         end
-
+        @show M.L.σ
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
            itransform!(M.L, X)

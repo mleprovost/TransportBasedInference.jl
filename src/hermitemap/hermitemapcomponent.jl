@@ -310,7 +310,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
     @assert size(S.ψoff, 2) == Nψ
 
     # Define δ (regularization term) - add small diagonal term
-    δ = 0.0
+    δ = 1e-9
 
     # Output objective, gradient
     xlast = view(X,NxX,:)

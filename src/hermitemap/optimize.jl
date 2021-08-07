@@ -148,9 +148,8 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
                              hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
 
         # Find optimal numbers of terms
-        mean_valid_error = mean(valid_error, dims  = 2)[:,1]
-
-        _, opt_nterms = findmin(mean_valid_error)
+        train_error, valid_error = error
+        _, opt_nterms = findmin(valid_error)
 
         # Run greedy fit up to opt_nterms on all the data
         C, error = greedyfit(m, Nx, X, opt_nterms;

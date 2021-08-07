@@ -34,16 +34,16 @@ LinearTransform(Nx::Int64) = LinearTransform(Nx, zeros(Nx), Diagonal(ones(Nx)), 
 
 function LinearTransform(X::AbstractMatrix{Float64}; diag::Bool=true, factor::Float64=1.0)
     Nx, Ne = size(X)
-    μ = mean(X; dims = 2)[:,1]
+    μ = copy(mean(X; dims = 2)[:,1])
 
     if diag == true || Nx == 1
-        σ = std(X; dims = 2)[:,1]
+        σ = copy(std(X; dims = 2)[:,1])
         L = (1.0/factor)*Diagonal(σ)
         diag = true
 
     else #create a dense transformation from the Cholesky factor
         @assert Nx>1 "Only works for Nx>1, otherwise use first method"
-        L = cholesky(cov(X')).L
+        L = copy((1.0/factor)*cholesky(cov(X')).L)
     end
 
     return LinearTransform(Nx, μ, L, diag)
@@ -51,15 +51,15 @@ end
 
 function updateLinearTransform!(Lin::LinearTransform, X::AbstractMatrix{Float64}; diag::Bool=true)
     Nx, Ne = size(X)
-    Lin.μ .= mean(X; dims = 2)[:,1]
+    Lin.μ .= copy(mean(X; dims = 2)[:,1])
 
     if diag == true || Nx == 1
-        σ = std(X; dims = 2)[:,1]
+        σ = copy(std(X; dims = 2)[:,1])
         Lin.L .= Diagonal(σ)
 
     else #create a dense transformation from the Cholesky factor
         @assert Nx>1 "Only works for Nx>1, otherwise use diagonal scaling"
-        Lin.L = cholesky(cov(X')).L
+        Lin.L = copy(cholesky(cov(X')).L)
     end
 end
 
