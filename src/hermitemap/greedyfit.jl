@@ -66,16 +66,16 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
                                  Optim.LBFGS(; m = 10))
             end
 
-            if Optim.converged(res) == false
-                # if optimization wasn't successful, return map
-                setcoeff!(C, Optim.minimizer(res))
-                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
-                println("Optimization wasn't successful")
-                break
-            else
+            if Optim.converged(res) == true
                 setcoeff!(C, Optim.minimizer(res))
                 # Compute new loss on training set
                 push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
+            else
+                # if optimization wasn't successful, return map
+                setcoeff!(C, Optim.minimizer(res))
+                append!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                println("Optimization wasn't successful")
+                break
             end
         else
 
@@ -85,7 +85,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
 
             # Check condition number of basis evaluations: cond(ψoff ⊗ ψd) = cond(Q R) = cond(R) as Q is an orthogonal matrix
             if cond(F.R) > 1e9 || size(F.R,1) < size(F.R,2)
-                println("Condition number reached")
+                println("Warning: Condition number reached")
                 break
             end
             mul!(coeff0, F.U, coeff0)
@@ -121,7 +121,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
                 push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
             else
                 println("Optimization wasn't successful")
-                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                append!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 break
             end
         end
@@ -281,8 +281,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
             else
                 println("Optimization wasn't successful")
                 # Compute new loss on training and validation sets
-                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
-                push!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                append!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                append!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 break
             end
 
@@ -293,7 +293,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
 
             # Check condition number of basis evaluations: cond(ψoff ⊗ ψd) = cond(Q R) = cond(R) as Q is an orthogonal matrix
             if cond(F.R) > 1e9 || size(F.R,1) < size(F.R,2)
-                println("Condition number reached")
+                println("Warning: Condition number reached")
                 break
             end
 
@@ -328,8 +328,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
             else
                 println("Optimization wasn't successful")
                 # Compute new loss on training and validation sets
-                push!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
-                push!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                append!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
+                append!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1)))
                 break
             end
 

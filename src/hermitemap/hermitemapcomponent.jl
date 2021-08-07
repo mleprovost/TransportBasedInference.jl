@@ -1,4 +1,4 @@
-export  HermiteMapComponent,
+zexport  HermiteMapComponent,
         αreg,
         EmptyHermiteMapComponent,
         getbasis,

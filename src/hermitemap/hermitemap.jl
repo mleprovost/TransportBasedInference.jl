@@ -77,7 +77,7 @@ end
 # Set all the coefficients of the HermiteMap to zero
 function clearcoeff!(M::HermiteMap; start::Int64 = 1)
         for i=start:M.Nx
-        	clearcoeff!(M.C[i])
+                clearcoeff!(M.C[i])
         end
 end
 
@@ -365,31 +365,27 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
          transform!(M.L, X)
         end
 
-        @show std(X; dims = 2)
-
         if typeof(P) <: Serial
-        # We can skip the evaluation of the map on the observation components
-        for i=start:Nx
-         Xi = view(X,1:i,:)
-        M.C[i], _ = optimize(M.C[i], Xi, optimkind;
-                             maxterms = maxterms, withconstant = withconstant,
-                             withqr = withqr, maxpatience = maxpatience, verbose = verbose,
-                             hessprecond = hessprecond, ATMcriterion = ATMcriterion)
-        end
+                # We can skip the evaluation of the map on the observation components
+                for i=start:Nx
+                         Xi = view(X,1:i,:)
+                        M.C[i], _ = optimize(M.C[i], Xi, optimkind;
+                                             maxterms = maxterms, withconstant = withconstant,
+                                             withqr = withqr, maxpatience = maxpatience, verbose = verbose,
+                                             hessprecond = hessprecond, ATMcriterion = ATMcriterion)
+                end
 
         elseif typeof(P) <: Thread
-        # We can skip the evaluation of the map on the observation components,
-        # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
-        @inbounds ThreadPools.@qthreads for i=Nx:-1:start
-         Xi = view(X,1:i,:)
-         M.C[i], _ = optimize(M.C[i], Xi, optimkind;
-                              maxterms = maxterms, withconstant = withconstant,
-                              withqr = withqr, maxpatience = maxpatience, verbose = verbose,
-                              hessprecond = hessprecond, ATMcriterion = ATMcriterion)
+                # We can skip the evaluation of the map on the observation components,
+                # ThreadPools.@qthreads perform better than Threads.@threads for non-uniform tasks
+                @inbounds ThreadPools.@qthreads for i=Nx:-1:start
+                         Xi = view(X,1:i,:)
+                         M.C[i], _ = optimize(M.C[i], Xi, optimkind;
+                                              maxterms = maxterms, withconstant = withconstant,
+                                              withqr = withqr, maxpatience = maxpatience, verbose = verbose,
+                                              hessprecond = hessprecond, ATMcriterion = ATMcriterion)
+                end
         end
-        end
-
-        @show std(X; dims = 2)
 
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
@@ -432,7 +428,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
                                               verbose = verbose, hessprecond = hessprecond, ATMcriterion = ATMcriterion)
 	        end
         end
-        @show M.L.σ
+
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
            itransform!(M.L, X)
@@ -453,7 +449,6 @@ function inverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; apply_res
         @assert Ne == NeY
         @assert 1 <= Ny < Nx
         @assert size(F) == (Nx, Ne)
-
 
         @view(X[1:Ny,:]) .= Ystar
 

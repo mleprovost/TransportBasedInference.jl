@@ -10,6 +10,10 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
     m = C.m
     Nx = C.Nx
 
+    if verbose == true
+        println("Optimizing component "*string(Nx)*":")
+    end
+
     if typeof(optimkind) <: Nothing
         S = Storage(C.I.f, X)
 
@@ -142,7 +146,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         # Run greedy approximation
         max_iter =  min(m-1, maxterms, ceil(Int64, sqrt(size(X,2))))
 
-        C, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
+        Cvalid, error = greedyfit(m, Nx, X_train, X_valid, max_iter;
                              α = C.α, withconstant = withconstant, withqr = withqr,
                              maxpatience = maxpatience, verbose  = verbose,
                              hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
@@ -151,11 +155,18 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         train_error, valid_error = error
         _, opt_nterms = findmin(valid_error)
 
-        # Run greedy fit up to opt_nterms on all the data
-        C, error = greedyfit(m, Nx, X, opt_nterms;
-                             α = C.α, withqr = withqr, verbose  = verbose,
-                             hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
+        # Since we add the features ina greedy fashion, we can simply pick the number of features that minimize the loss functino,
+        # and optimize the coefficients with the entire data set
 
+        # Run greedy fit up to opt_nterms on all the data
+        C = HermiteMapComponent(Cvalid.m, Cvalid.Nx, getidx(Cvalid)[1:opt_nterms, :],
+                                zeros(opt_nterms); α = Cvalid.α, b = getbasis(Cvalid))
+
+
+        C, error = optimize(C, X, nothing;
+                 maxterms = maxterms, withconstant = withconstant, withqr = withqr,
+                 maxpatience = maxpatience, verbose = verbose, hessprecond = hessprecond,
+                 P = P, ATMcriterion = ATMcriterion)
     else
         error("Argument max_terms is not recognized")
     end
