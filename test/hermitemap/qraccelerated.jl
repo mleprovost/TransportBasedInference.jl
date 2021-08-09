@@ -1,5 +1,3 @@
-import TransportBasedInference: ncoeff
-
 @testset "Test updateQRscaling" begin
     Nx = 3
     Ne = 8
@@ -15,7 +13,7 @@ import TransportBasedInference: ncoeff
               1.13653076177397;
               0.6725837371023421;
              -1.3126095306624133]
-    C = HermiteMapComponent(m, Nx, idx, coeff; α = 1e-6);
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 1e-6, b = "CstProHermiteBasis");
 
     Ne = 50
 
@@ -77,7 +75,7 @@ end
     transform!(L, X);
 
     # For α = 0.0
-    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.0)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.0, b = "CstProHermiteBasis")
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -106,7 +104,7 @@ end
 
 
     # For α = 1.0
-    C = HermiteMapComponent(m, Nx, idx, coeff; α = 1.0)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 1.0, b = "CstProHermiteBasis")
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -128,7 +126,6 @@ end
     # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
     J̃ = qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff0, F, S̃, C, X)
-
     @test abs(J - J̃)<1e-5
     # Chain's rule applies!
     @test norm(F.Uinv'*dJ - dJ̃)<1e-5
@@ -164,7 +161,7 @@ end
     transform!(L, X);
 
     # For α = 0.0
-    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.0)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.0, b = "CstProHermiteBasis")
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -174,7 +171,7 @@ end
     precond!(precond, coeff, S, C, X)
 
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff, Optim.LBFGS(; m = 20))
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff, Optim.LBFGS(; m = 10))
 
     # In QR space
     c̃oeff0 = F.U*coeff0
@@ -182,7 +179,7 @@ end
     # mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
     # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
-    r̃es = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0, Optim.LBFGS(; m = 20))
+    r̃es = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0, Optim.LBFGS(; m = 10))
 
     # With QR and Hessian approximation
 
@@ -203,7 +200,7 @@ end
     @test norm(coeff - coeff0)<1e-5
 
     # For α = 1e-1
-    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.1)
+    C = HermiteMapComponent(m, Nx, idx, coeff; α = 0.1, b = "CstProHermiteBasis")
 
     S = Storage(C.I.f, X)
     S̃ = deepcopy(S)
@@ -213,7 +210,7 @@ end
     precond!(precond, coeff, S, C, X)
 
 
-    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff, Optim.LBFGS(; m = 20))
+    res = Optim.optimize(Optim.only_fg!(negative_log_likelihood(S, C, X)), coeff, Optim.LBFGS(; m = 10))
 
     # With QR
     c̃oeff0 = F.U*coeff0
@@ -221,7 +218,7 @@ end
     # mul!(S̃.ψoffψd0, S̃.ψoffψd0, F.Uinv)
     # mul!(S̃.ψoffdψxd, S̃.ψoffdψxd, F.Uinv)
 
-    r̃es = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0, Optim.LBFGS(; m = 20))
+    r̃es = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S̃, C, X)), c̃oeff0, Optim.LBFGS(; m = 10))
 
     @test norm(res.minimizer - F.Uinv*r̃es.minimizer)<1e-5
 

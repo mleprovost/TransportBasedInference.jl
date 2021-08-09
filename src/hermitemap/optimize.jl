@@ -176,7 +176,7 @@ end
 
 function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, optimkind::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false,
-                  hessprecond::Bool = true, ATMcriterion = ATMcriterion)
+                  hessprecond::Bool = true, ATMcriterion::String="gradient")
 
     transform!(L.L, X)
     C = L.C
