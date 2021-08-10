@@ -103,7 +103,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
                 if issuccess(qrprecond_chol) == true
                     res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                          Optim.LBFGS(; m = 10, P = Preconditioner(Symmetric(qrprecond), qrprecond_chol)))
-                elseif cond(Diagonal(qrprecond_chol)) < 10^6
+                elseif cond(Diagonal(qrprecond)) < 10^6
                     res = Optim.optimize(Optim.only_fg!(qrnegative_log_likelihood(F, S, C, X)), coeff0,
                                          Optim.LBFGS(; m = 10, P = Diagonal(qrprecond)))
                 else
