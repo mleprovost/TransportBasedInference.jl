@@ -40,7 +40,6 @@ function LinearTransform(X::AbstractMatrix{Float64}; diag::Bool=true, factor::Fl
         σ = std(X; dims = 2)[:,1]
         L = deepcopy((1.0/factor)*Diagonal(σ))
         diag = true
-
     else #create a dense transformation from the Cholesky factor
         @assert Nx>1 "Only works for Nx>1, otherwise use first method"
         L = deepcopy((1.0/factor)*cholesky(cov(X')).L)

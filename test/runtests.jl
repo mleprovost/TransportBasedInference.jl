@@ -54,20 +54,20 @@ using Random
 # include("hermitemap/storage.jl")
 
 # Test tools for HermiteMap component
-include("hermitemap/hermitemapcomponent.jl")
-include("hermitemap/linhermitemapcomponent.jl")
-
-# Test greedy procedure
-include("hermitemap/greedyfit.jl")
-
-# Test optimization of HermiteMap component
-include("hermitemap/qr.jl")
-include("hermitemap/qraccelerated.jl")
-include("hermitemap/optimize.jl")
-
-include("hermitemap/inverse.jl")
-# include("hermitemap/hybridinverse.jl")
-include("hermitemap/hermitemap.jl")
+# include("hermitemap/hermitemapcomponent.jl")
+# include("hermitemap/linhermitemapcomponent.jl")
+#
+# # Test greedy procedure
+# include("hermitemap/greedyfit.jl")
+#
+# # Test optimization of HermiteMap component
+# include("hermitemap/qr.jl")
+# include("hermitemap/qraccelerated.jl")
+# include("hermitemap/optimize.jl")
+#
+# include("hermitemap/inverse.jl")
+# # include("hermitemap/hybridinverse.jl")
+# include("hermitemap/hermitemap.jl")
 
 
 # Test for Radial Maps

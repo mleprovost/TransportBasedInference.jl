@@ -180,8 +180,8 @@ function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, optimkind::Uni
 
     transform!(L.L, X)
     C = L.C
-    C_opt, error = optimize(C, X, optimkind; α = C.α, withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
-                            verbose = verbose, hessprecond = hessprecond, b = getbasis(C), ATMcriterion = ATMcriterion)
+    C_opt, error = optimize(C, X, optimkind; withconstant = withconstant, withqr = withqr, maxpatience = maxpatience,
+                            verbose = verbose, hessprecond = hessprecond, ATMcriterion = ATMcriterion)
 
     itransform!(L.L, X)
 

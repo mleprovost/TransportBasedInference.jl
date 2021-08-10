@@ -34,6 +34,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
     reduced_margin = getreducedmargin(getidx(C))
 
     while ncoeff(C) < maxterms
+        coeff_old = getcoeff(C)
+        idx_old = getidx(C)
 
         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S; ATMcriterion = ATMcriterion)
 
@@ -86,6 +88,8 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
             # Check condition number of basis evaluations: cond(ψoff ⊗ ψd) = cond(Q R) = cond(R) as Q is an orthogonal matrix
             if cond(F.R) > 1e9 || size(F.R,1) < size(F.R,2)
                 println("Warning: Condition number reached")
+                # Revert to the previous map component
+                C = HermiteMapComponent(ExpandedFunction(C.I.f.B, idx_old, coeff_old); α = C.α)
                 break
             end
             mul!(coeff0, F.U, coeff0)
@@ -240,6 +244,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
     reduced_margin = getreducedmargin(getidx(C))
 
     while ncoeff(C) < maxterms
+        coeff_old = getcoeff(C)
+        idx_old = getidx(C)
         idx_new, reduced_margin = update_component!(C, X, reduced_margin, S; ATMcriterion = ATMcriterion)
 
         # Update storage with the new feature
@@ -294,6 +300,8 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
             # Check condition number of basis evaluations: cond(ψoff ⊗ ψd) = cond(Q R) = cond(R) as Q is an orthogonal matrix
             if cond(F.R) > 1e9 || size(F.R,1) < size(F.R,2)
                 println("Warning: Condition number reached")
+                # Revert to the previous map component
+                C = HermiteMapComponent(ExpandedFunction(C.I.f.B, idx_old, coeff_old); α = C.α)
                 break
             end
 

@@ -36,6 +36,7 @@ A specific feature basis `MyBasis` must be a subtype of `Basis`, and the followi
 * `Base.show(io::IO, B::MyBasis)`` (optional, but desired)
 * `@propagate_inbounds Base.getindex(B::MyBasis, i::Int64)`
 * `vander!(dV, B::MyBasis, maxi::Int64, k::Int64, x)`
+* `iszerofeatureactive(B::MyBasis)`
 """
 abstract type Basis end
 
@@ -323,7 +324,12 @@ vander(B::Union{CstLinPhyHermiteBasis, CstLinProHermiteBasis}, m::Int64, k::Int6
 # Return the k-th derivative of the Vandermonde matrix of the basis B evaluated at the samples x
 vander(B::Basis, k::Int64, x) = vander!(zeros(size(x,1),B.m), B, k, x)
 
+"""
+iszerofeatureactive(B::MyBasis) = Bool
 
+Determine if the zeroth order feature of the basis `B` is a constant (return `true`).
+For instance, the first dimension is active in a feature of index [0 1] if `B = ProHermiteBasis`, but not active if `B = CstProHermiteBasis`.
+"""
 iszerofeatureactive(B::Union{PhyHermiteBasis, ProHermiteBasis}) = true
 iszerofeatureactive(B::Union{CstPhyHermiteBasis, CstProHermiteBasis, CstLinPhyHermiteBasis, CstLinProHermiteBasis}) = false
 
