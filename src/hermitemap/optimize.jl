@@ -94,7 +94,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
         # Run greedy approximation
         max_iter = min(m-1, ceil(Int64, sqrt(size(X,2))), maxterms)
 
-        valid_error = zeros(max_iter+1, n_folds)
+        valid_error = zeros(max_iter, n_folds)
         if typeof(P) <: Serial
             @inbounds for i=1:n_folds
                 idx_train, idx_valid = folds[i]
