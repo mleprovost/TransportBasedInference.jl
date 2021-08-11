@@ -165,7 +165,7 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
 
         C, error = optimize(C, X, nothing;
                  maxterms = maxterms, withconstant = withconstant, withqr = withqr,
-                 maxpatience = maxpatience, verbose = verbose, hessprecond = hessprecond,
+                 maxpatience = maxpatience, verbose = false, hessprecond = hessprecond,
                  P = P, ATMcriterion = ATMcriterion)
     else
         error("Argument max_terms is not recognized")

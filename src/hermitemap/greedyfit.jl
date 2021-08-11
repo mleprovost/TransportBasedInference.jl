@@ -20,9 +20,31 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
+
+    # Remove or not the constant i.e the multi-index [0 0 0]
+    if withconstant == false && iszerofeatureactive(C.I.f.B.B) == false
+        # Compute the reduced margin
+        reduced_margin = getreducedmargin(getidx(C))
+        f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        C = HermiteMapComponent(f; α = αreg)
+        S = Storage(C.I.f, X)
+        coeff0 = getcoeff(C)
+        dJ = zero(coeff0)
+
+        negative_log_likelihood!(nothing, dJ, coeff0, S, C, X)
+        _, opt_dJ_coeff_idx = findmax(abs.(dJ))
+
+        opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
+
+        f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
+        C = HermiteMapComponent(f; α = α)
+        S = Storage(C.I.f, X)
+    end
+
     if withqr == true
         F = QRscaling(S)
     end
+
     # Compute initial loss on training set
     push!(train_error, negative_log_likelihood!(0.0, nothing, getcoeff(C), S, C, X))
 
@@ -227,6 +249,28 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
     # Compute storage # Add later storage for validation S_valid
     S = Storage(C.I.f, X)
     Svalid = Storage(C.I.f, Xvalid)
+
+    # Remove or not the constant i.e the multi-index [0 0 0]
+    if withconstant == false && iszerofeatureactive(C.I.f.B.B) == false
+
+        # Compute the reduced margin
+        reduced_margin = getreducedmargin(getidx(C))
+        f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        C = HermiteMapComponent(f; α = α)
+        S = Storage(C.I.f, X)
+        coeff0 = getcoeff(C)
+        dJ = zero(coeff0)
+
+        negative_log_likelihood!(nothing, dJ, coeff0, S, C, X)
+        _, opt_dJ_coeff_idx = findmax(abs.(dJ))
+
+        opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
+
+        f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
+        C = HermiteMapComponent(f; α = αreg)
+        S = Storage(C.I.f, X)
+        Svalid = Storage(C.I.f, Xvalid)
+    end
 
     if withqr == true
         F = QRscaling(S)

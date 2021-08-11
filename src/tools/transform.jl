@@ -32,7 +32,9 @@ end
 # Identity transformation
 LinearTransform(Nx::Int64) = LinearTransform(Nx, zeros(Nx), Diagonal(ones(Nx)), true)
 
+
 function LinearTransform(X::AbstractMatrix{Float64}; diag::Bool=true, factor::Float64=1.0)
+    # The entry `factor` allows to set the entry-wise standard deviation to a value different from 1 
     Nx, Ne = size(X)
     μ = deepcopy(mean(X; dims = 2)[:,1])
 

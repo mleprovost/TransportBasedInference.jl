@@ -50,7 +50,7 @@ function Base.show(io::IO, M::HermiteMap)
 end
 
 function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Float64=1.0, α::Float64 = αreg, b::String="CstProHermiteBasis")
-        L = LinearTransform(X; diag = diag, factor = factor)
+        L = deepcopy(LinearTransform(X; diag = diag, factor = factor))
 
         if b ∈ ["ProHermiteBasis"; "PhyHermiteBasis";
                 "CstProHermiteBasis"; "CstPhyHermiteBasis";
@@ -406,7 +406,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
 
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
-         transform!(M.L, X)
+                transform!(M.L, X)
         end
 
         if typeof(P) <: Serial
@@ -431,7 +431,7 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
 
         # We can apply the rescaling to all the components once
         if apply_rescaling == true
-           itransform!(M.L, X)
+        	itransform!(M.L, X)
         end
 
         return M
