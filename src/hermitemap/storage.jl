@@ -90,7 +90,11 @@ function Storage(f::ExpandedFunction, X)#, hess::Bool = false)
 end
 
 # function update_storage(S::Storage{m, Nψ, k}, X::Array{Float64,2}, addedidx::Array{Int64,2}) where {m, Nψ, k}
+"""
+$(TYPEDSIGNATURES)
 
+Updates the `Storage` `S` with the new set of features `addedidx`.
+ """
 function update_storage(S::Storage, X, addedidx::Array{Int64,2})
     NxX, Ne = size(X)
     Nψ = S.Nψ

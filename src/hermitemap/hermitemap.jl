@@ -39,7 +39,18 @@ function HermiteMap(L::LinearTransform, C::Array{HermiteMapComponent,1})
         return HermiteMap(m, Nx, L, C)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Access the i-th `HermiteMapComponent` of `M`.
+"""
 @propagate_inbounds Base.getindex(M::HermiteMap, i::Int) = getindex(M.C,i)
+
+"""
+$(TYPEDSIGNATURES)
+
+Set the i-th `HermiteMapComponent` of `M`.
+"""
 @propagate_inbounds Base.setindex!(M::HermiteMap, C::HermiteMapComponent, i::Int) = setindex!(M.C,C,i)
 
 function Base.show(io::IO, M::HermiteMap)
@@ -74,13 +85,23 @@ function HermiteMap(m::Int64, X::Array{Float64,2}; diag::Bool=true, factor::Floa
         return HermiteMap(m, Nx, L, C)
 end
 
-# Set all the coefficients of the HermiteMap to zero
+"""
+$(TYPEDSIGNATURES)
+
+Set all the coefficients of the HermiteMap to zero
+"""
 function clearcoeff!(M::HermiteMap; start::Int64 = 1)
         for i=start:M.Nx
                 clearcoeff!(M.C[i])
         end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the HermiteMap `M` for the ensemble matrix `X`.
+"""
 function evaluate!(out, M::HermiteMap, X; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
         Nx = M.Nx
@@ -115,10 +136,19 @@ function evaluate!(out, M::HermiteMap, X; apply_rescaling::Bool=true, start::Int
         return out
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the HermiteMap `M` for the ensemble matrix `X`.
+"""
 evaluate(M::HermiteMap, X; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial) =
          evaluate!(zero(X), M, X; apply_rescaling = apply_rescaling, start = start, P = P)
 
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates the logarithm of the pullback of the reference density (standard normal) by the map `M` along the `component` directions  for the ensemble matrix `X`.
+"""
 function log_pdf(M::HermiteMap, X, component::Union{Int64, Array{Int64,1}, UnitRange{Int64}};
                  apply_rescaling::Bool = true)
 
@@ -157,10 +187,20 @@ function log_pdf(M::HermiteMap, X, component::Union{Int64, Array{Int64,1}, UnitR
         return logπ
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+"""
 log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = log_pdf(M, X, 1:M.Nx; apply_rescaling = apply_rescaling)
 
 ## Compute grad_x_log_pdf
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the gradient of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+"""
 function grad_x_log_pdf!(result, cache_grad, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
         Nx = M.Nx
         NxX, Ne = size(X)
@@ -190,12 +230,21 @@ function grad_x_log_pdf!(result, cache_grad, cache, M::HermiteMap, X; apply_resc
         return result
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the gradient of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+"""
 grad_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = grad_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2), size(X,1)), zeros(size(X,2)),
                                                                  M, X; apply_rescaling = apply_rescaling)
 
 ## Compute hess_x_log_pdf
 
-# function hess_x_log_pdf!(result, cache_hess, cache_grad, cache, M::HermiteMap, X; apply_rescaling::Bool = true)
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the hessian of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+"""
 function hess_x_log_pdf!(result, M::HermiteMap, X; apply_rescaling::Bool = true)
 
         Nx = M.Nx
@@ -230,12 +279,23 @@ function hess_x_log_pdf!(result, M::HermiteMap, X; apply_rescaling::Bool = true)
         return result
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the hessian of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+"""
 hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)), M, X; apply_rescaling = apply_rescaling)
 
 
 # This forms output an array of dimension (Ne, Nx, Nx) but the intermediate computation have been done
 # by only looking at the active dimensions
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the hessian of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+This routine exploits the sparsity pattern of the map `M`.
+"""
 function reduced_hess_x_log_pdf!(M::HermiteMap, X; apply_rescaling::Bool = true)
 
         Nx = M.Nx
@@ -285,7 +345,12 @@ function reduced_hess_x_log_pdf!(M::HermiteMap, X; apply_rescaling::Bool = true)
         return result
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the hessian of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+This routine exploits the sparsity pattern of the map `M`.
+"""
 function reduced_hess_x_log_pdf!(result, d2cache, dcache, cache,M::HermiteMap, X; apply_rescaling::Bool = true)
 
         Nx = M.Nx
@@ -330,6 +395,12 @@ function reduced_hess_x_log_pdf!(result, d2cache, dcache, cache,M::HermiteMap, X
 end
 
 # In this version the samples are treated one at a time for scalability
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the hessian of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+This routine exploits the sparsity pattern of the map `M`.
+"""
 function reduced_hess_x_log_pdf(M::HermiteMap, X; apply_rescaling::Bool = true)
 
         Nmax = maximum(i -> length(active_dim(M.C[i])), 1:M.Nx)
@@ -352,6 +423,31 @@ end
 
 ## Optimization function
 
+"""
+$(TYPEDSIGNATURES)
+
+Optimizes the `HermiteMap` `M` based on the ensemble matrix `X`. Several kind of optimization are implemented
+depending on the desired robustness of the map
+
+Several options for `optimkind` are available:
+* `kfold` uses a k-fold cross validation procedure (the more robust choice)
+* `split` splits the set of samples into a training and a testing
+*  An `Int64` to determine the maximum number of features for each map component.
+* `nothing` to simply optimize the existing coefficients in the basis expansion.
+
+The following optionial settings can be tuned:
+* `maxterms::Int64 = 1000`: a maximum number of terms for each map component
+* `withconstant::Bool = false`: the option to remove the constant feature in the greedy optimization routine, if the zero feature is the constant function for the basis of interest.
+* `withqr::Bool = false`: improve the conditioning of the optimization problem with a QR factorization of the feature basis (recommended option)
+* `maxpatience::Int64 = 10^5`: for `optimkind = split`, the maximum number of extra terms that can be added without decreasing the validation error before the greedy optimmization get stopped.
+* `verbose::Bool = false`: prints details of the optimization procedure, current component optimize, training and validation errors, number of features added.
+* `apply_rescaling::Bool=true`: standardize the ensemble matrix `X` according to the `LinearTransform` `M.L`.
+* `hessprecond::Bool=true`: use a preconditioner based on the Gauss-Newton of the Hessian of the loss function to accelerate the convergence.
+* `start::Int64=1`: the first component of the map to optimize
+* `P::Parallel = serial`: option to use multi-threading to optimize in parallel the different map components
+* `ATMcriterion::String="gradient"`: sensitivty criterion used to select the feature to add to the expansion. The default uses the derivative of the cost function with respect to the coefficient
+   of the features in the reduced margin of the current set of features.
+"""
 function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, Int64, String};
                   maxterms::Int64 = 100, withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64 = 10^5,
                   verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
@@ -395,6 +491,26 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Union{Nothing, 
         return M
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Optimizes the `HermiteMap` `M` based on the ensemble matrix `X`.
+In this routine, a greedy feature selection is performed for each map component with the entire ensemble matrix until optimkind[i] terms
+are in the i-th map component.
+
+The following optionial settings can be tuned:
+* `maxterms::Int64 = 1000`: a maximum number of terms for each map component
+* `withconstant::Bool = false`: the option to remove the constant feature in the greedy optimization routine, if the zero feature is the constant function for the basis of interest.
+* `withqr::Bool = false`: improve the conditioning of the optimization problem with a QR factorization of the feature basis (recommended option)
+* `maxpatience::Int64 = 10^5`: for `optimkind = split`, the maximum number of extra terms that can be added without decreasing the validation error before the greedy optimmization get stopped.
+* `verbose::Bool = false`: prints details of the optimization procedure, current component optimize, training and validation errors, number of features added.
+* `apply_rescaling::Bool=true`: standardize the ensemble matrix `X` according to the `LinearTransform` `M.L`.
+* `hessprecond::Bool=true`: use a preconditioner based on the Gauss-Newton of the Hessian of the loss function to accelerate the convergence.
+* `start::Int64=1`: the first component of the map to optimize
+* `P::Parallel = serial`: option to use multi-threading to optimize in parallel the different map components
+* `ATMcriterion::String="gradient"`: sensitivty criterion used to select the feature to add to the expansion. The default uses the derivative of the cost function with respect to the coefficient
+   of the features in the reduced margin of the current set of features.
+"""
 function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
                   maxterms::Int64 = 100, withconstant::Bool = false, withqr::Bool = false,
                   verbose::Bool = false, apply_rescaling::Bool=true, hessprecond::Bool=true,
@@ -438,7 +554,11 @@ function optimize(M::HermiteMap, X::Array{Float64,2}, optimkind::Array{Int64,1};
 end
 
 
+"""
+$(TYPEDSIGNATURES)
 
+Partially-inverts the ensemble matrix `X` such that M_i([Ystar[1:Ny,j]; X[Ny+1:i,j]]) = F[Ny+i,j] for i = start:Nx
+"""
 function inverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
         Nx = M.Nx
@@ -493,6 +613,12 @@ function inverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; apply_res
         # end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Partially-inverts the ensemble matrix `X` such that M_i([ystar; X[Ny+1:i,j]]) = F[Ny+i,j] for i = start:Nx
+"""
 function inverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
         Nx = M.Nx
@@ -525,7 +651,11 @@ function inverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_res
         end
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Inverts the ensemble matrix `X` such that `M(X) = F`
+"""
 function inverse!(X, F, M::HermiteMap; apply_rescaling::Bool=true, P::Parallel = serial)
 
         Nx = M.Nx
@@ -551,6 +681,12 @@ function inverse!(X, F, M::HermiteMap; apply_rescaling::Bool=true, P::Parallel =
         end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Partially-inverts the ensemble matrix `X` such that M_i([Ystar[1:Ny,j]; X[Ny+1:i,j]]) = F[Ny+i,j] for i = start:Nx
+"""
 function hybridinverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
         Nx = M.Nx
@@ -584,6 +720,12 @@ function hybridinverse!(X, F, M::HermiteMap, Ystar::AbstractMatrix{Float64}; app
         end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Partially-inverts the ensemble matrix `X` such that M_i([ystar; X[Ny+1:i,j]]) = F[Ny+i,j] for i = start:Nx
+"""
 function hybridinverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; apply_rescaling::Bool=true, start::Int64=1, P::Parallel = serial)
 
         Nx = M.Nx
@@ -617,6 +759,11 @@ function hybridinverse!(X, F, M::HermiteMap, ystar::AbstractVector{Float64}; app
 end
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Inverts the ensemble matrix `X` such that `M(X) = F`
+"""
 function hybridinverse!(X, F, M::HermiteMap; apply_rescaling::Bool=true, P::Parallel = serial)
 
         Nx = M.Nx

@@ -36,8 +36,18 @@ end
 
 ProHermite(m::Int64; scaled::Bool = false) = ProHermite(m, ProPolyHermite(m; scaled = scaled), scaled)
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the degree of the physicist Hermite function `P`.
+"""
 degree(P::ProHermite) = P.m
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the physicist Hermite function `P`.
+"""
 (P::ProHermite)(x) = P.Poly.P(x)*exp(-x^2/4)
 
 const FamilyProHermite = ntuple(i->ProHermite(i-1),CstMaxDegree+1)
@@ -45,6 +55,11 @@ const FamilyScaledProHermite = ntuple(i->ProHermite(i-1; scaled = true),CstMaxDe
 
 # Store Pe′_n - Pe_n * X/2 with Pe_n the n-th Probabilistic Hermite Polynomial
 
+"""
+$(TYPEDSIGNATURES)
+
+Store Pe'ₙ - Peₙ * X/2 with Peₙ the n-th Probabilistic Hermite Polynomial
+"""
 function DProPolyHermite(m::Int64; scaled::Bool)
     k = 1
     factor = exp(loggamma(m+1) - loggamma(m+1-k))
@@ -63,8 +78,12 @@ const FamilyDProPolyHermite = ntuple(i->AbstractProHermite(DProPolyHermite(i-1; 
 const FamilyDScaledProPolyHermite = ntuple(i->AbstractProHermite(DProPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
-# Store Pe″n -  Pe′n * X  + Pn * (X^2/2 - 1/2) with Pe_n the n-th Probabilistic Hermite Polynomial
+# Store Pe″n -  Pe′n * X  + Pen * (X^2/2 - 1/2) with Pe_n the n-th Probabilistic Hermite Polynomial
+"""
+$(TYPEDSIGNATURES)
 
+Store Pe″ₙ  - Pe′ₙ * X  + Peₙ * (X^2/2 - 1/2) with Peₙ the n-th Probabilistic Hermite Polynomial
+"""
 function D2ProPolyHermite(m::Int64; scaled::Bool)
     k = 2
     factor = exp(loggamma(m+1) - loggamma(m+1-k))
@@ -85,6 +104,11 @@ const FamilyD2ProPolyHermite = ntuple(i->AbstractProHermite(D2ProPolyHermite(i-1
 const FamilyD2ScaledProPolyHermite = ntuple(i->AbstractProHermite(D2ProPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the k-th derivative of the probabilistic Hermite function `F`.
+"""
 function derivative!(dF, F::ProHermite, k::Int64, x)
     m = F.m
     @assert k>-2 "anti-derivative is not implemented for k<-1"
@@ -127,9 +151,18 @@ function derivative!(dF, F::ProHermite, k::Int64, x)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the k-th derivative of the probabilistic Hermite function `F`.
+"""
 derivative(F::ProHermite, k::Int64, x::Array{Float64,1}) = derivative!(zero(x), F, k, x)
 
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the probabilistic Hermite function `P`.
+"""
 function evaluate!(dV, P::ProHermite, x)
     m = P.m
     N = size(x,1)
@@ -182,11 +215,21 @@ function evaluate!(dV, P::ProHermite, x)
     return dV
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the probabilistic Hermite function `P`.
+"""
 evaluate(P::ProHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
 
 # Use ψe^{(k)}_n(x) = 1/√(2^n)*ψ^{k}_n(x/√2)
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the Vandermonde matrix of the k-th derivative of the probabilistic Hermite function `P`.
+"""
 function vander!(dV, P::ProHermite, k::Int64, x)
     m = P.m
     if k==0
@@ -212,4 +255,10 @@ function vander!(dV, P::ProHermite, k::Int64, x)
     end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Computes the Vandermonde matrix of the k-th derivative of the probabilistic Hermite function `P`.
+"""
 vander(P::ProHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

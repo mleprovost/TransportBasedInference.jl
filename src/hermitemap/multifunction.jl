@@ -40,6 +40,10 @@ function MultiFunction(B::Basis, Nx::Int64; scaled::Bool = true)
     return MultiFunction(B.B.m, Nx, MultiBasis(k, B), ones(Int64, Nx))
 end
 
+"""
+$(TYPEDSIGNATURES)
+Evaluates the `MultiFunction` `F` at `x`
+"""
 function (F::MultiFunction)(x::Array{T,1}) where {T <: Real}
     out = 1.0
     @inbounds for i=1:F.Nx

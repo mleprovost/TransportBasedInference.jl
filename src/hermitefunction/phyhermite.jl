@@ -34,12 +34,17 @@ end
 PhyHermite(m::Int64; scaled::Bool = false) = PhyHermite(m, PhyPolyHermite(m; scaled = scaled), scaled)
 
 """
-        degree(P)
+$(TYPEDSIGNATURES)
 
-Return the degree of the polynomial `P`
+Return the degree of the physicist Hermite function `P`.
 """
 degree(P::PhyHermite) = P.m
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the physicist Hermite function `P`.
+"""
 (P::PhyHermite)(x) = P.Poly.P(x)*exp(-x^2/2)
 
 const FamilyPhyHermite = ntuple(i->PhyHermite(i-1),CstMaxDegree+1)
@@ -48,7 +53,9 @@ const FamilyScaledPhyHermite = ntuple(i->PhyHermite(i-1; scaled = true),CstMaxDe
 
 # Store P′n - Pn * X with Pn the n-th Physicist Hermite Polynomial
 """
+$(TYPEDSIGNATURES)
 
+Store P'ₙ - Pₙ * X with Pₙ the n-th Physicist Hermite Polynomial
 """
 function DPhyPolyHermite(m::Int64; scaled::Bool)
     k = 1
@@ -69,7 +76,11 @@ const FamilyDScaledPhyPolyHermite = ntuple(i->AbstractPhyHermite(DPhyPolyHermite
 
 
 # Store P″n - 2 P′n * X  + Pn * (X^2 - 1) with Pn the n-th Physicist Hermite Polynomial
+"""
+$(TYPEDSIGNATURES)
 
+Store P″ₙ  - 2 P′ₙ * X  + Pₙ * (X^2 - 1) with Pₙ the n-th Physicist Hermite Polynomial
+"""
 function D2PhyPolyHermite(m::Int64; scaled::Bool)
     k = 1
     factor = 2^k*exp(loggamma(m+1) - loggamma(m+1-k))
@@ -90,7 +101,11 @@ const FamilyD2PhyPolyHermite = ntuple(i->AbstractPhyHermite(D2PhyPolyHermite(i-1
 const FamilyD2ScaledPhyPolyHermite = ntuple(i->AbstractPhyHermite(D2PhyPolyHermite(i-1; scaled = true), true), CstMaxDegree+1)
 
 
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place the k-th derivative of the physicist Hermite function `F`.
+"""
 function derivative!(dF, F::PhyHermite, k::Int64, x)
     m = F.m
     @assert k>-2 "anti-derivative is not implemented for k<-1"
@@ -163,9 +178,19 @@ function derivative!(dF, F::PhyHermite, k::Int64, x)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the k-th derivative of the physicist Hermite function `F`.
+"""
 derivative(F::PhyHermite, k::Int64, x::Array{Float64,1}) = derivative!(zero(x), F, k, x)
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the physicist Hermite function `P`.
+"""
 function evaluate!(dV, P::PhyHermite, x)
     m = P.m
     N = size(x,1)
@@ -218,9 +243,19 @@ function evaluate!(dV, P::PhyHermite, x)
     return dV
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the physicist Hermite function `P`.
+"""
 evaluate(P::PhyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the Vandermonde matrix of the k-th derivative of the physicist Hermite function `P`.
+"""
 function vander!(dV, P::PhyHermite, k::Int64, x)
     m = P.m
 
@@ -306,4 +341,9 @@ function vander!(dV, P::PhyHermite, k::Int64, x)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the Vandermonde matrix of the k-th derivative of the physicist Hermite function `P`.
+"""
 vander(P::PhyHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

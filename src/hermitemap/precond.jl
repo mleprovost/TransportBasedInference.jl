@@ -12,7 +12,6 @@ An immutable structure to hold a preconditioner and its Cholesky factorization.
 $(TYPEDFIELDS)
 
 """
-
 struct Preconditioner
     P::Symmetric{Float64}
 
@@ -46,6 +45,11 @@ end
 ldiv!(x, P::InvPreconditioner, b) = copyto!(x, P.InvP * b)
 dot(A::Array, P::InvPreconditioner, B::Vector) = ldiv!(A, P.F, B)
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place a Hessian preconditioner based on the Gauss-Newton approximation (outer-product of gradient of the cost function).
+"""
 function precond!(P, coeff, S::Storage, C::HermiteMapComponent, X)
     Nψ = C.Nψ
     NxX, Ne = size(X)
@@ -139,10 +143,19 @@ function precond!(P, coeff, S::Storage, C::HermiteMapComponent, X)
     return P
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place a Hessian preconditioner based on the Gauss-Newton approximation (outer-product of gradient of the cost function).
+"""
 precond!(S::Storage, C::HermiteMapComponent, X) = (P, coeff) -> precond!(P, coeff, S, C, X)
 
 
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place a Hessian preconditioner based on the diagonal entries of the Gauss-Newton approximation (outer-product of gradient of the cost function).
+"""
 function diagprecond!(P, coeff, S::Storage, C::HermiteMapComponent, X::Array{Float64,2})
     Nψ = C.Nψ
     Nx = C.Nx
@@ -221,4 +234,9 @@ function diagprecond!(P, coeff, S::Storage, C::HermiteMapComponent, X::Array{Flo
     return P
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place a Hessian preconditioner based on the diagonal entries of the Gauss-Newton approximation (outer-product of gradient of the cost function).
+"""
 diagprecond!(S::Storage, C::HermiteMapComponent, X::Array{Float64,2}) = (P, coeff) -> diagprecond!(P, coeff, S, C, X)

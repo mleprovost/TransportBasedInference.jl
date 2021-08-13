@@ -32,10 +32,25 @@ end
 # Hn″(x) = 2n*(n-1)*Hn-1(x)
 
 # Cphy(m::Int64) =sqrt(gamma(m+1) * 2^m * sqrt(π))
+"""
+$(TYPEDSIGNATURES)
+
+Normalization constant of the m-th order physicist Hermite polynomial
+"""
 Cphy(m::Int64) = sqrt(gamma(m+1) * 2^m) # sqrt(π) is already accounted for by sampling
 
+"""
+$(TYPEDSIGNATURES)
+
+Normalization constant of the m-th order physicist Hermite polynomial
+"""
 Cphy(P::PhyPolyHermite) = Cphy(P.m)
 
+"""
+$(TYPEDSIGNATURES)
+
+Return the degree of the physicist Hermite function `P`.
+"""
 degree(P::PhyPolyHermite) = P.m
 
 # Adapted https://people.sc.fsu.edu/~jburkardt/m_src/hermite_polynomial/h_polynomial_coefficients.m
@@ -48,6 +63,12 @@ degree(P::PhyPolyHermite) = P.m
 
 # Recurrence relation:
 # Hn+1 = 2*x*Hn - 2*n*Hn-1
+
+"""
+$(TYPEDSIGNATURES)
+
+Computes the coefficients of the physicist Hermite polynomials up to order m.
+"""
 function phyhermite_coeffmatrix(m::Int64)
 
     if m < 0
@@ -90,6 +111,12 @@ function PhyPolyHermite(m::Int64;scaled::Bool= false)
     end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the physicist Hermite polynomial `P`.
+"""
 (P::PhyPolyHermite)(x) = P.P(x)
 
 const FamilyPhyPolyHermite = ntuple(i->PhyPolyHermite(i-1), CstMaxDegree+1)
@@ -98,6 +125,11 @@ const FamilyScaledPhyPolyHermite = ntuple(i->PhyPolyHermite(i-1; scaled = true),
 
 # Compute the k-th derivative of a physicist Hermite polynomial according to
 # H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
+"""
+$(TYPEDSIGNATURES)
+
+Computes the k-th derivative of the physicist Hermite polynomial `P`.
+"""
 function derivative(P::PhyPolyHermite, k::Int64)
     m = P.m
     @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
@@ -114,6 +146,12 @@ function derivative(P::PhyPolyHermite, k::Int64)
     end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the physicist Hermite polynomial `P`.
+"""
 function evaluate!(dV, P::PhyPolyHermite, x)
     m = P.m
     N = size(x,1)
@@ -161,17 +199,23 @@ function evaluate!(dV, P::PhyPolyHermite, x)
     return dV
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the physicist Hermite function `P`.
+"""
 evaluate(P::PhyPolyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
 
-# For next week, the question is should we use the Family of polynomials  evaluate at the samples and just multiply by the constant
-# seems to be faster !! than recomputing the derivative
-
 # H_{n}^(k)(x) = 2^{k} n!/(n-k)! H_{n-k}(x)
 
 # vander!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, k=0, x) where {m} = evaluate!(dV::Array{Float64,2}, P::PhyPolyHermite{m}, x)
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place the Vandermonde matrix of the k-th derivative of the physicist Hermite polynomial `P`.
+"""
 function vander!(dV, P::PhyPolyHermite, k::Int64, x)
     m = P.m
 
@@ -273,5 +317,9 @@ function vander!(dV, P::PhyPolyHermite, k::Int64, x)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Computes the Vandermonde matrix of the k-th derivative of the physicist Hermite polynomial `P`.
+"""
 vander(P::PhyPolyHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)

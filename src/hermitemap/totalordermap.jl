@@ -1,11 +1,16 @@
 export totalordermapcomponent, totalordermap
 
+"""
+$(TYPEDSIGNATURES)
 
-function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = false, b::String = "CstProHermite")
+Creates an `HermitemapComponent` of order `order` and dimension `Nx` for the basis `b`.
+The features of the created maps are all the tensorial products of the basis elements up to the order `order`.
+"""
+function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = false, b::String = "CstProHermiteBasis")
     @assert order >= 0 "Order should be positive"
-    if b ∈ ["CstProHermite"; "CstPhyHermite"]
+    if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"]
         B = MultiBasis(eval(Symbol(b))(order+2), Nx)
-    elseif b ∈ ["CstLinProHermite"; "CstLinPhyHermite"]
+    elseif b ∈ ["CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
         B = MultiBasis(eval(Symbol(b))(order+3), Nx)
     else
         error("Undefined basis")
@@ -23,6 +28,12 @@ function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = fa
     return HermiteMapComponent(IntegratedFunction(f))
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Creates an `Hermitemap` of order `order` for the basis `b`. The size of the map is extracted from the ensemble matrix `X`.
+The features of the created maps are all the tensorial products of the basis elements up to the order `order`.
+"""
 function totalordermap(X::Array{Float64,2}, order::Int64; diag::Bool=true, factor::Float64 = 1.0, withconstant::Bool = false, b::String = "CstProHermite")
 
     L = LinearTransform(X; diag = diag, factor = factor)
@@ -33,9 +44,9 @@ function totalordermap(X::Array{Float64,2}, order::Int64; diag::Bool=true, facto
         push!(C, totalordermapcomponent(i, order; withconstant = withconstant, b = b))
     end
 
-    if b ∈ ["CstProHermite"; "CstPhyHermite"]
+    if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"]
         m = order+2
-    elseif b ∈ ["CstLinProHermite"; "CstLinPhyHermite"]
+    elseif b ∈ ["CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
         m = order+3
     else
         error("Undefined basis")

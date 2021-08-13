@@ -11,9 +11,9 @@ makedocs(
         "Home" => "index.md",
         "Background" => "background.md",
         "Tutorials" => [
-                      "tutorials/1.-Estimation-of-the-Banana-distribution.md",
-                      # "tutorials/2.-Conditional-density-estimation-of-the-Banana-distribution.md",
-                      "tutorials/3.-Structure-discovery-of-the-Lorenz-96.md"
+                       # "tutorials/1.-Estimation-of-the-Banana-distribution.md",
+                       # "tutorials/2.-Conditional-density-estimation-of-the-Banana-distribution.md",
+                       # "tutorials/3.-Structure-discovery-of-the-Lorenz-96.md"
         #              # "tutorials/4.-Linear-ensemble-filtering-Lorenz-63.md",
         #              # "tutorials/5.-Linear-ensemble-filtering-Lorenz-96-with-localization.md",
         #              # "tutorials/6.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-63.md",

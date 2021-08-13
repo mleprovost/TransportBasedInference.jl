@@ -1,6 +1,30 @@
 export optimize
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Optimizes the `HermiteMapComponent` `C` based on the ensemble matrix `X`. Several kind of optimization are implemented
+depending on the desired robustness of the map
+
+Several options for `optimkind` are available:
+* `kfold` uses a k-fold cross validation procedure (the more robust choice)
+* `split` splits the set of samples into a training and a testing
+*  An `Int64` to determine the maximum number of features
+* `nothing` to simply optimize the existing coefficients in the basis expansion.
+
+The following optionial settings can be tuned:
+* `maxterms::Int64 = 1000`: a maximum number of terms for each map component
+* `withconstant::Bool = false`: the option to remove the constant feature in the greedy optimization routine, if the zero feature is the constant function for the basis of interest.
+* `withqr::Bool = false`: improve the conditioning of the optimization problem with a QR factorization of the feature basis (recommended option)
+* `maxpatience::Int64 = 10^5`: for `optimkind = split`, the maximum number of extra terms that can be added without decreasing the validation error before the greedy optimmization get stopped.
+* `verbose::Bool = false`: prints details of the optimization procedure, current component optimize, training and validation errors, number of features added.
+* `hessprecond::Bool=true`: use a preconditioner based on the Gauss-Newton of the Hessian of the loss function to accelerate the convergence.
+* `start::Int64=1`: the first component of the map to optimize
+* `P::Parallel = serial`: option to use multi-threading to optimize in parallel the different map components
+* `ATMcriterion::String="gradient"`: sensitivty criterion used to select the feature to add to the expansion. The default uses the derivative of the cost function with respect to the coefficient
+   of the features in the reduced margin of the current set of features.
+"""
 function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, String};
                   maxterms::Int64 = 100,
                   withconstant::Bool = false, withqr::Bool = false,
@@ -173,7 +197,30 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
     return C, error
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Optimizes the `LinHermiteMapComponent` `L` based on the ensemble matrix `X`. Several kind of optimization are implemented
+depending on the desired robustness of the map
+
+Several options for `optimkind` are available:
+* `kfold` uses a k-fold cross validation procedure (the more robust choice)
+* `split` splits the set of samples into a training and a testing
+*  An `Int64` to determine the maximum number of features
+* `nothing` to simply optimize the existing coefficients in the basis expansion.
+
+The following optionial settings can be tuned:
+* `maxterms::Int64 = 1000`: a maximum number of terms for each map component
+* `withconstant::Bool = false`: the option to remove the constant feature in the greedy optimization routine, if the zero feature is the constant function for the basis of interest.
+* `withqr::Bool = false`: improve the conditioning of the optimization problem with a QR factorization of the feature basis (recommended option)
+* `maxpatience::Int64 = 10^5`: for `optimkind = split`, the maximum number of extra terms that can be added without decreasing the validation error before the greedy optimmization get stopped.
+* `verbose::Bool = false`: prints details of the optimization procedure, current component optimize, training and validation errors, number of features added.
+* `hessprecond::Bool=true`: use a preconditioner based on the Gauss-Newton of the Hessian of the loss function to accelerate the convergence.
+* `start::Int64=1`: the first component of the map to optimize
+* `P::Parallel = serial`: option to use multi-threading to optimize in parallel the different map components
+* `ATMcriterion::String="gradient"`: sensitivty criterion used to select the feature to add to the expansion. The default uses the derivative of the cost function with respect to the coefficient
+   of the features in the reduced margin of the current set of features.
+"""
 function optimize(L::LinHermiteMapComponent, X::Array{Float64,2}, optimkind::Union{Nothing, Int64, String};
                   withconstant::Bool = false, withqr::Bool = false, maxpatience::Int64=20, verbose::Bool = false,
                   hessprecond::Bool = true, ATMcriterion::String="gradient")

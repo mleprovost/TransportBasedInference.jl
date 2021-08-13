@@ -75,10 +75,10 @@ uuid = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
 version = "0.10.13"
 
 [[ColorSchemes]]
-deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random", "StaticArrays"]
-git-tree-sha1 = "ed268efe58512df8c7e224d2e170afd76dd6a417"
+deps = ["ColorTypes", "Colors", "FixedPointNumbers", "Random"]
+git-tree-sha1 = "9995eb3977fbf67b86d0a0a0508e83017ded03f2"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.13.0"
+version = "3.14.0"
 
 [[ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]

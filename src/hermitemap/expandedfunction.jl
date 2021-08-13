@@ -63,10 +63,19 @@ struct ExpandedFunction
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the kind of basis of the `ExpandedFunction` `f`.
+"""
 getbasis(f::ExpandedFunction) = getbasis(f.B)
 
 
-# This code is not optimized for speed
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the `ExpandedFunction` `f` at `x`.
+"""
 function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
     out = 0.0
     @inbounds for i=1:f.Nψ
@@ -76,6 +85,11 @@ function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
     return out
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the active dimensions of the  set of multi-indices `idx` for the `Basis` `B`.
+"""
 function active_dim(idx::Array{Int64,2}, B::T) where {T<:Basis}
     # Nx should always be an active dimension (we need to ensures
     # that we have a strictly increasing function in the last component)
@@ -95,11 +109,29 @@ function active_dim(idx::Array{Int64,2}, B::T) where {T<:Basis}
     return dim
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the active dimensions of the  set of multi-indices `idx` for the  `MultiBasis` `B`.
+"""
 active_dim(idx::Array{Int64,2}, B::MultiBasis) = active_dim(idx, B.B)
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the active dimensions of the `ExpandedFunction` `f`.
+"""
 active_dim(f::ExpandedFunction) = f.dim
 
 # alleval computes the evaluation, gradient and hessian of the function
 # use it for validatio since it is slower than the other array-based variants
+"""
+$(TYPEDSIGNATURES)
+
+Returns the evaluation, gradient and hessian of the `ExpandedFunction` `f` for the ensemble matrix `X`.
+Note that this routine is not designed for speed, but for validation only,
+as all the derivatives are computedto machine precision with `ForwardDiff.jl`
+"""
 function alleval(f::ExpandedFunction, X)
         Nx, Ne = size(X)
         Nψ = f.Nψ
@@ -121,7 +153,9 @@ function alleval(f::ExpandedFunction, X)
 end
 
 """
-Evaluate in-place the basis of `ExpandedFunction` `f` for the ensemble matrix `X` along the dimensions `dims` for the set of indices of features `idx`
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the basis of `ExpandedFunction` `f` for the ensemble matrix `X` along the dimensions `dims` for the set of multi-indices of features `idx`
 """
 function evaluate_basis!(ψ, f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2})
     Nψreduced = size(idx,1)
@@ -172,6 +206,11 @@ evaluate_basis!(ψ, f::ExpandedFunction, X) =
 
 
 # Versions with allocations
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the basis of `ExpandedFunction` `f` for the ensemble matrix `X` along the dimensions `dims` for the set of multi-indices of features `idx`
+"""
 evaluate_basis(f::ExpandedFunction, X, dims::Union{Array{Int64,1},UnitRange{Int64}}, idx::Array{Int64,2}) =
               evaluate_basis!(zeros(size(X,2),size(idx,1)), f, X, dims, idx)
 
@@ -186,6 +225,11 @@ evaluate_basis(f::ExpandedFunction, X) =
             evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, f.dim, f.idx)
             # evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, 1:f.Nx, f.idx)
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the basis of `ExpandedFunction` `f` for the last component
+"""
 function repeated_evaluate_basis(f::ExpandedFunction, x, idx::Array{Int64,2})
     # Compute the last component
     midxj = idx[:,f.Nx]
@@ -197,7 +241,13 @@ end
 repeated_evaluate_basis(f::ExpandedFunction, x) = repeated_evaluate_basis(f, x, f.idx)
 
 # function grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2})
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the k-th (k>0) derivative of the basis features of `f` with respect to the `grad_dim` components of the states.
+The i-th column of the output contains ∂^k...∂^k ∏_{j ∈ dims} ψ^i_{j}(x_1:n) ∂x_{grad_dim[1]}^k ... ∂x_{grad_dim[end]}^k
+for the different columns of the ensemble matrix `X`, where ψ^i is the i-th feature.
+"""
 function grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2})
     m = f.m
     Nx = f.Nx
@@ -254,6 +304,13 @@ grad_xk_basis!(dkψ, f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Ar
 
 
 # Versions with allocations
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the k-th (k>0) derivative of the basis features of `f` with respect to the `grad_dim` components of the states.
+The i-th column of the output contains ∂^k...∂^k ∏_{j ∈ dims} ψ^i_{j}(x_{1:n}) ∂x_{grad_dim[1]}^k ... ∂x_{grad_dim[end]}^k
+for the different columns of the ensemble matrix `X`, where ψ^i is the i-th feature.
+"""
 grad_xk_basis(f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2}) =
              grad_xk_basis!(zeros(size(X,2), size(idx,1)), f, X, k, grad_dim, dims, f.idx)
 
@@ -268,7 +325,13 @@ grad_xk_basis(f::ExpandedFunction, X, k::Int64, grad_dim::Union{Int64, Array{Int
 
 
 
+ """
+ $(TYPEDSIGNATURES)
 
+ Evaluates in-place the gradient of the basis features of `f` with respect to the different state components
+ The i-th column of the output contains ∂ψ^{i}(x_1:n)∂x for the different columns of the ensemble matrix `X`,
+ where ψ^{i} is the i-th feature.
+ """
 function grad_x_basis!(dψ::Array{Float64,3}, f::ExpandedFunction, X, idx::Array{Int64,2})
     m = f.m
     Nx = f.Nx
@@ -291,11 +354,25 @@ grad_x_basis!(dψ::Array{Float64,3}, f::ExpandedFunction, X::Array{Float64,2}) =
 
 
 # Version with allocations
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the gradient of the basis features of `f` with respect to the different state components
+The i-th column of the output contains ∂ψ^{i}(x_1:n)∂x for the different columns of the ensemble matrix `X`,
+where ψ^{i} is the i-th feature.
+"""
 grad_x_basis(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2}) = grad_x_basis!(zeros(size(X,2), size(idx,1), f.Nx), f, X, idx)
 
 grad_x_basis(f::ExpandedFunction, X::Array{Float64,2}) = grad_x_basis!(zeros(size(X,2), size(f.idx,1), f.Nx), f, X, f.idx)
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the hessian of the basis features of `f` with respect to the different state components
+The i-th column of the output contains ∂^2ψ^{i}(x_1:n)∂x^2 for the different columns of the ensemble matrix `X`,
+where ψ^{i} is the i-th feature.
+"""
 function hess_x_basis!(d2ψ::Array{Float64,4}, f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
     m = f.m
     Nx = f.Nx
@@ -330,19 +407,41 @@ hess_x_basis!(d2ψ::Array{Float64,4}, f::ExpandedFunction, X::Array{Float64,2}) 
 
 
 # Version with allocations
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the hessian of the basis features of `f` with respect to the different state components
+The i-th column of the output contains ∂^2ψ^{i}(x_1:n)∂x^2 for the different columns of the ensemble matrix `X`,
+where ψ^{i} is the i-th feature.
+"""
 hess_x_basis(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2}) = hess_x_basis!(zeros(size(X,2), size(idx,1), f.Nx, f.Nx), f, X, idx)
 
 hess_x_basis(f::ExpandedFunction, X::Array{Float64,2})  = hess_x_basis!(zeros(size(X,2), size(f.idx,1), f.Nx, f.Nx), f, X, f.idx)
 
 
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the function `f` for the ensemble matrix `X`.
+"""
 function evaluate!(ψ, f::ExpandedFunction, X::Array{Float64,2})
     ψ .= evaluate_basis(f, X)*f.coeff
     return ψ
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the function `f` for the ensemble matrix `X`.
+"""
 evaluate(f::ExpandedFunction, X::Array{Float64,2}) = evaluate!(zeros(size(X,2)), f, X)
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the gradient of `f` with respect to the different state components
+The i-th column of the output contains ∂f/∂x_i for the different columns of the ensemble matrix `X`.
+"""
 function grad_x(f::ExpandedFunction, X::Array{Float64,2})
     NxX, Ne = size(X)
     @assert NxX == f.Nx "Wrong dimension of the input"
@@ -352,6 +451,12 @@ function grad_x(f::ExpandedFunction, X::Array{Float64,2})
     return dψ
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the hessian of `f` with respect to the different state components
+The (i,j,k) entry of the output contains ∂^2f(X[:,i])/∂x_j∂x_k.
+"""
 function hess_x(f::ExpandedFunction, X::Array{Float64,2})
     Nx = f.Nx
     NxX, Ne = size(X)
@@ -363,20 +468,35 @@ function hess_x(f::ExpandedFunction, X::Array{Float64,2})
     return d2ψ
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the gradient of `f` with respect to the last state component.
+"""
 function grad_xd(f::ExpandedFunction, X::Array{Float64,2})
     dψxd = grad_xk_basis(f, X, 1, f.Nx)
     return dψxd*f.coeff
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the hessian of `f` with respect to the last state component.
+"""
 function hess_xd(f::ExpandedFunction, X::Array{Float64,2})
     d2ψxd = grad_xk_basis(f, X, 2, f.Nx)
     return d2ψxd*f.coeff
 end
 
 
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place the gradient with respect to the last state component of the basis of the last univariate function of each feature with multi-indices `idx` at `x`.
+"""
 function repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x, idx::Array{Int64,2})
-    # Compute the k=th order deriviative of an expanded function along the direction grad_dim
+    # Compute the k-th order deriviative of an expanded function along the last state component
     Ne = size(x,1)
     Nx = f.Nx
 
@@ -388,7 +508,6 @@ function repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x, idx::Array{
 
     midxj = idx[:, Nx]
     maxj = maximum(midxj)
-    #   Compute the kth derivative along grad_dim
     # dkψj = zeros(Ne, maxj+1)
     vander!(cache, f.B.B, maxj, k, x)
     Nψreduced = size(idx, 1)
@@ -404,12 +523,21 @@ end
 repeated_grad_xk_basis!(out, cache, f::ExpandedFunction, x) = repeated_grad_xk_basis!(out, cache, f, x, f.idx)
 
 # repeated_grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, x::Array{Float64,1}) where {m, Nψ, Nx} =
+"""
+$(TYPEDSIGNATURES)
+
+Computes the gradient with respect to the last state component of the basis of the last univariate function of each feature with multi-indices `idx` at `x`.
+"""
 repeated_grad_xk_basis(f::ExpandedFunction, x, idx::Array{Int64,2}) =
     repeated_grad_xk_basis!(zeros(size(x,1),size(idx,1)), zeros(size(x,1), maximum(idx[:,f.Nx])+1), f, x, idx)
-
 repeated_grad_xk_basis(f::ExpandedFunction, x) = repeated_grad_xk_basis(f, x, f.idx)
 
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the hessian with respect to the last state component of the basis of the last univariate function of each feature with multi-indices `idx` at `x`.
+"""
 function repeated_hess_xk_basis!(out, cache, f::ExpandedFunction, x, idx::Array{Int64,2})
     # Compute the Hessian of the basis functions with respect to the last component
     Ne = size(x,1)
@@ -441,6 +569,11 @@ repeated_hess_xk_basis!(out, cache, f::ExpandedFunction, x) = repeated_hess_xk_b
 repeated_hess_xk_basis(f::ExpandedFunction, x, idx::Array{Int64,2}) =
     repeated_hess_xk_basis!(zeros(size(x,1),size(idx,1)), zeros(size(x,1), maximum(idx[:,f.Nx])+1), f, x, idx)
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the hessian (with respect to the last state component) of the basis of the last univariate function of each feature with multi-indices `idx` at `x`.
+"""
 repeated_hess_xk_basis(f::ExpandedFunction, x) = repeated_hess_xk_basis(f, x, f.idx)
 
 
@@ -457,6 +590,7 @@ repeated_hess_xk_basis(f::ExpandedFunction, x) = repeated_hess_xk_basis(f, x, f.
 
 
 # function grad_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+
 function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
     m = f.m
@@ -494,10 +628,20 @@ function grad_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     return dxdxkψ
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes ∂_i (∂_k f(x_{1:k}))
+"""
 grad_x_grad_xd(f::ExpandedFunction, X) = grad_x_grad_xd(f, X, f.idx)
 
 
 # This version outputs an object of dimension (Ne, f.dim)
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place ∂_i (∂_k f(x_{1:k})). In this routine, gradients are only computed with respect to the active dimensions of `f`.
+"""
 function reduced_grad_x_grad_xd!(dxdxkψ, f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
     m = f.m
@@ -540,11 +684,23 @@ end
 
 reduced_grad_x_grad_xd!(dxdxkψ, f::ExpandedFunction, X) = reduced_grad_x_grad_xd!(dxdxkψ, f, X, f.idx)
 
+# This version outputs an object of dimension (Ne, f.dim)
+"""
+$(TYPEDSIGNATURES)
+
+Computes ∂_i (∂_k f(x_{1:k})). In this routine, gradients are only computed with respect to the active dimensions of `f`.
+"""
 reduced_grad_x_grad_xd(f::ExpandedFunction, X) = reduced_grad_x_grad_xd!(zeros(size(X,2), length(f.dim)), f, X, f.idx)
 
 # Compute ∂_i ∂_j (∂_k f(x_{1:k}))
 
 # function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+# This version outputs an object of dimension (Ne, f.dim)
+"""
+$(TYPEDSIGNATURES)
+
+Computes ∂_i ∂_j (∂_k f(x_{1:k}))
+"""
 function hess_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
     m = f.m
@@ -603,11 +759,20 @@ function hess_x_grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
 end
 
 # hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}) = hess_x_grad_xd(f, X, f.idx)
+"""
+$(TYPEDSIGNATURES)
 
+Computes ∂_i ∂_j (∂_k f(x_{1:k}))
+"""
 hess_x_grad_xd(f::ExpandedFunction, X) = hess_x_grad_xd(f, X, f.idx)
 
 
 # function hess_x_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2})
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place ∂_i ∂_j (∂_k f(x_{1:k})). In this routine, gradients are only computed with respect to the active dimensions of `f`.
+"""
 function reduced_hess_x_grad_xd!(d2xdxkψ, f::ExpandedFunction, X, idx::Array{Int64,2})
     NxX, Ne = size(X)
     m = f.m
@@ -663,9 +828,19 @@ function reduced_hess_x_grad_xd!(d2xdxkψ, f::ExpandedFunction, X, idx::Array{In
     return d2xdxkψ
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes ∂_i ∂_j (∂_k f(x_{1:k})). In this routine, gradients are only computed with respect to the active dimensions of `f`.
+"""
 reduced_hess_x_grad_xd(f::ExpandedFunction, X) = reduced_hess_x_grad_xd!(zeros(size(X, 2), length(f.dim), length(f.dim)), f, X, f.idx)
 
 # Derivative with respect to the some coefficients
+"""
+$(TYPEDSIGNATURES)
+
+Computes the gradient f(x_{1:k})) with respect to the components `coeff_idx` of `getcoeff(f)`.
+"""
 function grad_coeff(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64, 1})
     Nψ = f.Nψ
     # Verify that all the index
@@ -675,12 +850,22 @@ end
 
 
 # Derivative with respect to the coefficients
+"""
+$(TYPEDSIGNATURES)
+
+Computes the gradient f(x_{1:k})) with respect to the entire vector of coefficient `getcoeff(f)`.
+"""
 function grad_coeff(f::ExpandedFunction, X::Array{Float64,2})
     return evaluate_basis(f, X)
 end
 
 
 # Hessian with respect to the some coefficients
+"""
+$(TYPEDSIGNATURES)
+
+Computes the hessian f(x_{1:k})) with respect to the components `coeff_idx` of `getcoeff(f)`.
+"""
 function hess_coeff(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64, 1})
     # Verify that all the index
     Nψ = f.Nψ
@@ -692,6 +877,11 @@ end
 
 
 # Hessian with respect to the coefficients
+"""
+$(TYPEDSIGNATURES)
+
+Computes the hessian f(x_{1:k})) with respect to the entire vector of coefficient `getcoeff(f)`.
+"""
 function hess_coeff(f::ExpandedFunction, X::Array{Float64,2})
     Nψ = f.Nψ
     return zeros(size(X,2), Nψ, Nψ)
@@ -699,24 +889,42 @@ end
 
 
 # Gradient with respect to the coefficients of the gradient with respect to xd
+"""
+$(TYPEDSIGNATURES)
 
+Computes ∂_c ∂_xₖ f.
+"""
 function grad_coeff_grad_xd(f::ExpandedFunction, X::Array{Float64,2})
     return grad_xk_basis(f, X, 1, f.Nx)
 end
 # function grad_xk_basis(f::ExpandedFunction{m, Nψ, Nx}, grad_dim::Union{Int64, Array{Int64,1}}, k::Int64, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx, Ne}
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes ∂_c ∂_xₖ f for the components `coeff_idx` of the coefficient vector of `f`.
+"""
 function grad_coeff_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64,1})
     return grad_xk_basis(f, X, 1, f.Nx, f.idx[coeff_idx,:])
 end
 
 # Hessian with respect to the coefficients of the gradient with respect to xd
+"""
+$(TYPEDSIGNATURES)
 
+Computes ∂^2_c ∂_xₖ f.
+"""
 function hess_coeff_grad_xd(f::ExpandedFunction, X::Array{Float64,2})
     Ne = size(X,2)
     Nψ = f.Nψ
     return zeros(Ne, Nψ, Nψ)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes ∂_c ∂_xₖ f for the components `coeff_idx` of the coefficient vector of `f`.
+"""
 function hess_coeff_grad_xd(f::ExpandedFunction, X::Array{Float64,2}, coeff_idx::Array{Int64,1})
     # Verify that all the index
     Ne = size(X,2)

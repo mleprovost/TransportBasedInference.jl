@@ -21,22 +21,18 @@ export Basis,
 """
 $(TYPEDEF)
 
-A structure to hold a basis of functions
-
-
-## Fields
-$(TYPEDFIELDS)
+An abstract type to define basis of functions
 
 ## Constructors
 - `Basis(m)`
 
-## Construct new basis of features
+## Construct new basis of functions
 
 A specific feature basis `MyBasis` must be a subtype of `Basis`, and the following routines must be implemented:
 * `Base.show(io::IO, B::MyBasis)`` (optional, but desired)
 * `@propagate_inbounds Base.getindex(B::MyBasis, i::Int64)`
 * `vander!(dV, B::MyBasis, maxi::Int64, k::Int64, x)`
-* `iszerofeatureactive(B::MyBasis)`
+* `iszerofeatureactive(B::MyBasis) = Bool`
 """
 abstract type Basis end
 

@@ -18,12 +18,14 @@ export  evaluate_offdiagbasis!,
         grad_coeff_grad_xd
 
 
-# struct ExpandedFunction
-#     f::ExpandedFunction
-# end
-
 ## evaluate_offdiagbasis
 # X::Array{Float64,2}
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the basis of `ExpandedFunction` `f` for the ensemble matrix `X` along the off-diagonal state dimensions for the set of multi-indices of features `idx`
+"""
 evaluate_offdiagbasis!(ψoff, f::ExpandedFunction, X, idx::Array{Int64,2}) =
     evaluate_basis!(ψoff, f, X, 1:f.Nx-1, idx)
 
@@ -39,7 +41,11 @@ evaluate_offdiagbasis(f::ExpandedFunction, X) =
 ## evaluate_diagbasis
 
 # evaluate_diagbasis!(ψoff, f::ExpandedFunction{m, Nψ, Nx}, X::Array{Float64,2}, idx::Array{Int64,2}) where {m, Nψ, Nx} =
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the basis of `ExpandedFunction` `f` for the ensemble matrix `X` along the last state dimension for the set of multi-indices of features `idx`
+"""
 evaluate_diagbasis!(ψoff, f::ExpandedFunction, X, idx::Array{Int64,2}) =
     evaluate_basis!(ψoff, f, X, [f.Nx], idx)
 
@@ -59,6 +65,11 @@ evaluate_diagbasis(f::ExpandedFunction, X) =
  # Evaluate derivatives of basis of x_{d}
 
 # grad_xd_diagbasis!(dψxd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64,2}) =
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place gradient of the basis of the last component, with respect to the last component for the set of multi-indices of features `idx`
+"""
 grad_xd_diagbasis!(dψxd::Array{Float64,2}, f::ExpandedFunction, X, idx::Array{Int64,2}) =
                   grad_xk_basis!(dψxd, f, X, 1, f.Nx, f.Nx, idx)
 
@@ -75,6 +86,11 @@ grad_xd_diagbasis(f::ExpandedFunction, X) =
 ## hess_xd_diagbasis
 
 # Evaluate second derivatives of basis of x_{d}
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the hessian of the basis of the last component, with respect to the last component for the set of multi-indices of features `idx`
+"""
 hess_xd_diagbasis!(d2ψxd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64,2}, idx::Array{Int64,2}) =
                   grad_xk_basis!(d2ψxd, f, X, 2, f.Nx, f.Nx, idx)
 
@@ -89,7 +105,11 @@ hess_xd_diagbasis(f::ExpandedFunction, X::Array{Float64,2}) =
 
 
 ## evaluate!
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the features of multi-indices `idx` for the ensemble matrix `X`.
+"""
 function evaluate!(ψ::Array{Float64,1}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
     @assert size(ψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
     evaluate_offdiagbasis!(ψoff, f, X, idx)
@@ -101,6 +121,11 @@ end
 evaluate!(ψ::Array{Float64,1}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64, 2}) =
          evaluate!(ψ, ψoff, ψd, f, X, f.idx)
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the features of multi-indices `idx` for the ensemble matrix `X`.
+"""
 function evaluate(f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
     Ne = size(X,2)
     evaluate!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), f, X, idx)
@@ -112,7 +137,11 @@ end
 # end
 
 ## grad_xd!
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place the gradient with respect to the last component of the features with multi-indices `idx` for the ensemble matrix `X`.
+"""
 function grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}, f::ExpandedFunction, X, idx::Array{Int64,2})
     @assert size(dψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
     evaluate_offdiagbasis!(ψoff, f, X, idx)
@@ -125,11 +154,21 @@ grad_xd!(dψ::Array{Float64,1}, ψoff::Array{Float64,2}, dψxd::Array{Float64,2}
         grad_xd!(dψ, ψoff, dψxd, f, X, f.idx)
 
 # function grad_xd(f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
+"""
+$(TYPEDSIGNATURES)
+
+Computes the gradient with respect to the last component of the features with multi-indices `idx` for the ensemble matrix `X`.
+"""
 function grad_xd(f::ExpandedFunction, X, idx::Array{Int64,2})
     Ne = size(X,2)
     grad_xd!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), f, X, idx)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the gradient with respect to the last component of `ExpandedFunction` `f` for the ensemble matrix `X`.
+"""
 function grad_xd(f::ExpandedFunction, X)
     Ne = size(X,2)
     grad_xd!(zeros(Ne), zeros(Ne, size(f.idx,1)), zeros(Ne, size(f.idx,1)), f, X, f.idx)
@@ -140,7 +179,11 @@ end
 #     ψ = evaluate_offdiagbasis(f, X)
 #     d2ψxd = hess_xd_diagbasis(f, X)
 #     return ψ .* d2ψxd * f.coeff
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place the hessian with respect to the last component of the features with multi-indices `idx` for the ensemble matrix `X`.
+"""
 function hess_xd!(d2ψ::Array{Float64,1}, ψoff::Array{Float64,2}, d2ψxd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
     @assert size(d2ψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
     evaluate_offdiagbasis!(ψoff, f, X, idx)
@@ -152,6 +195,11 @@ end
 hess_xd!(d2ψ::Array{Float64,1}, ψoff::Array{Float64,2}, d2ψxd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64, 2}) =
         hess_xd!(d2ψ, ψoff, d2ψxd, f, X, f.idx)
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the hessian with respect to the last component of the features with multi-indices `idx` for the ensemble matrix `X`.
+"""
 function hess_xd(f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
     Ne = size(X,2)
     hess_xd!(zeros(Ne), zeros(Ne, size(idx,1)), zeros(Ne, size(idx,1)), f, X, idx)
@@ -164,6 +212,11 @@ end
 
 ## grad_coeff!
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the gradient with respect to the coefficients of the features with multi-indices `idx` for the ensemble matrix `X`.
+"""
 function grad_coeff!(dcψ::Array{Float64,2}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
     @assert size(dcψ,1) == size(X,2) "Wrong dimension of the output vector ψ"
     # evaluate_basis!(dcψ, f, X, 1:Nx, idx)
@@ -176,6 +229,11 @@ end
 grad_coeff!(dcψ::Array{Float64,2}, ψoff::Array{Float64,2}, ψd::Array{Float64,2}, f::ExpandedFunction, X::Array{Float64, 2}) =
          grad_coeff!(dcψ, ψoff, ψd, f, X, f.idx)
 
+ """
+ $(TYPEDSIGNATURES)
+
+ Computes the gradient with respect to the coefficients of the features with multi-indices `idx` for the ensemble matrix `X`.
+ """
 function grad_coeff(f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
          grad_coeff!(zeros(size(X,2), size(idx,1)), zeros(size(X,2), size(idx,1)), zeros(size(X,2), size(idx,1)), f, X, idx)
 end
@@ -185,7 +243,11 @@ end
 # end
 
 ## grad_coeff_grad_xd!
+"""
+$(TYPEDSIGNATURES)
 
+Computes in-place ∂_c ∂_x{k} (∑_{α ∈ idx} c_{α} ψ_{α}(x_{1:k})).
+"""
 function grad_coeff_grad_xd!(dcdψxd::Array{Float64,2}, ψoff::Array{Float64,2}, dψd::Array{Float64,2},f::ExpandedFunction, X::Array{Float64, 2}, idx::Array{Int64,2})
     @assert size(dcdψxd,1) == size(X,2) "Wrong dimension of the output vector ψ"
     # evaluate_basis!(dcψ, f, X, 1:Nx, idx)

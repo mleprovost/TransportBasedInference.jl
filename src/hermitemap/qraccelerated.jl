@@ -9,7 +9,15 @@ export QRscaling, updateQRscaling,
                   # qrprecond
 
 
+"""
+$(TYPEDEF)
 
+An immutable structure to hold a preconditioner and its Cholesky factorization.
+
+## Fields
+$(TYPEDFIELDS)
+
+"""
 struct QRscaling
     R::UpperTriangular{Float64,Array{Float64,2}}
     Rinv::UpperTriangular{Float64,Array{Float64,2}}
@@ -42,6 +50,11 @@ function QRscaling(S::Storage)
     return QRscaling(R, Rinv, D, Dinv, U, Uinv, L2Uinv)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Updates the `QRscaling` variable `F` with the appended column of the `Storage` variable `S`.
+"""
 function updateQRscaling(F::QRscaling, S::Storage)
     Nψ = S.Nψ
     # Update F with the last column of QR scaling
@@ -65,6 +78,12 @@ function updateQRscaling(F::QRscaling, S::Storage)
     return F
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the negative log likelihood and its gradient for `c̃oeff`
+(rescaled coefficients) for the `HermiteMapComponent` `C` and for the ensemble matrix `X`.
+"""
 function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent, X)
     # In this version, c̃oeff is expressed in the rescaled space
     NxX, Ne = size(X)
@@ -145,11 +164,22 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the negative log likelihood and its gradient for `c̃oeff`
+(in the rescaled coefficient space) for the `HermiteMapComponent` `C` and for the ensemble matrix `X`.
+"""
 qrnegative_log_likelihood(F::QRscaling, S::Storage, C::HermiteMapComponent, X) = (J̃, dJ̃, c̃oeff) -> qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F, S, C, X)
 
 # F.Uinv'*precond(c)*F.Uinv
 
-# qrprecond! expects c̃oeff to be expressed in the QR scpace
+# qrprecond! expects c̃oeff to be expressed in the QR space
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place  Hessian preconditioner based on the Gauss-Newton approximation (outer-product of gradient of the cost function) in the rescaled space.
+"""
 function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent, X)
     Nψ = C.Nψ
     NxX, Ne = size(X)
@@ -250,6 +280,11 @@ function qrprecond!(P, c̃oeff, F::QRscaling, S::Storage, C::HermiteMapComponent
     P .+= 2*C.α*F.L2Uinv
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place  Hessian preconditioner based on the Gauss-Newton approximation (outer-product of gradient of the cost function) in the rescaled space.
+"""
 qrprecond!(S::Storage, C::HermiteMapComponent, X) = (P, c̃oeff) -> qrprecond!(P, c̃oeff, S, C, X)
 #
 

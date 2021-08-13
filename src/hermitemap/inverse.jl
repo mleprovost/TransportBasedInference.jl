@@ -54,6 +54,11 @@ functionalg1D!(cache, cache_vander, ψoff, output, R::IntegratedFunction) =
 
 # The state is modified in-place
 # function inverse!(X::Array{Float64,2}, F, R::IntegratedFunction, S::Storage)
+"""
+$(TYPEDSIGNATURES)
+
+Inverts in-place the ensemble matrix `X` such that `C(X) = F`.
+"""
 function inverse!(X, F, R::IntegratedFunction, S::Storage)
     Nψ = R.Nψ
     Nx = R.Nx
@@ -91,7 +96,11 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Inverts in-place the ensemble matrix `X` such that `C(X) = F`.
+"""
 inverse!(X, F, C::HermiteMapComponent, S::Storage) = inverse!(X, F, C.I, S)
 
 

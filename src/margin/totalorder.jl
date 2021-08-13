@@ -1,11 +1,16 @@
 
 export totalorder
 
+# totalorder: Compute indices of total degree
+# polynomial expansion. Output is an (ncoeff x d) matrix
+# where 0 corresponds to the constant function
+"""
+$(TYPEDSIGNATURES)
 
+Compute indices of total degree polynomial expansion. 
+"""
 function totalorder(order_list::Array{Int64,1})
-    # totalorder: Compute indices of total degree
-    # polynomial expansion. Output is an (ncoeff x d) matrix
-    # where 0 corresponds to the constant function
+
 
     if isempty(order_list)
         return zeros(Int64,0,0)

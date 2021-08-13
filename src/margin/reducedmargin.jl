@@ -1,5 +1,12 @@
 export getreducedmargin, updatereducedmargin
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes the reduced margin of a set of multi-indices.
+See Baptista, R., Zahm, O., & Marzouk, Y. (2020).
+An adaptive transport framework for joint and conditional density estimation. arXiv preprint arXiv:2009.10303.
+"""
 function getreducedmargin(midx::Array{Int64,2})
 
     if isempty(midx)
@@ -67,7 +74,14 @@ function getreducedmargin(midx::Array{Int64,2})
     return margin[keep,:]
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Updates the reduced margin.
+
+See Baptista, R., Zahm, O., & Marzouk, Y. (2020).
+An adaptive transport framework for joint and conditional density estimation. arXiv preprint arXiv:2009.10303.
+"""
 function updatereducedmargin(lowerset::Array{Int64,2}, reduced_margin::Array{Int64,2}, idx::Int64)
     d = size(lowerset, 2)
     nr = size(reduced_margin, 1)

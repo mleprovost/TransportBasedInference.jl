@@ -161,6 +161,13 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
     return C, train_error
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Compute the sensitivity of the loss function with respect to the multi-indices in the reduced-margin,
+determines the feature to add to the exsiting set based on the `ATMcriterion`,
+and finally returns the new set of multi-indices and the updated redcued margin.
+"""
 function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int64,2}, S::Storage; ATMcriterion::String="gradient")
     m = C.m
     Nψ = C.Nψ
@@ -201,6 +208,11 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     return idx_new, reduced_margin
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the value and index of the new coefficients, as well as their associated multi-indices.
+"""
 function update_coeffs(Cold::HermiteMapComponent, Cnew::HermiteMapComponent)
 
     Nψ = Cold.Nψ

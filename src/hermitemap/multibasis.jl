@@ -18,6 +18,16 @@ struct MultiBasis
     Nx::Int64
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the size of the `MultiBasis` `B`.
+"""
 size(B::MultiBasis) = (B.B.m, B.Nx)
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the kind of the underlying basis of the `MultiBasis` `B`.
+"""
 getbasis(B::MultiBasis) = string(typeof(B.B))

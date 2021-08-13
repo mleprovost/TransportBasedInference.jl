@@ -29,11 +29,28 @@ end
 # Hen′(x) = n*Hen-1(x)
 # Hen″(x) = n*(n-1)*Hen-1(x)
 
+"""
+$(TYPEDSIGNATURES)
+
+Normalization constant of the m-th order probabilistic Hermite polynomial
+"""
 # Cpro(m::Int64) =sqrt(sqrt(2*π) * gamma(m+1))
 Cpro(m::Int64) =sqrt(gamma(m+1)) #sqrt(2π) is already accounted for by sampling
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Normalization constant of the m-th order probabilistic Hermite polynomial
+"""
 Cpro(P::ProPolyHermite) = Cpro(P.m)
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Return the degree of the probabilistic Hermite polynomial `P`.
+"""
 degree(P::ProPolyHermite) = P.m
 
 # Adapted https://people.sc.fsu.edu/~jburkardt/m_src/hermite_polynomial/h_polynomial_coefficients.m
@@ -46,6 +63,12 @@ degree(P::ProPolyHermite) = P.m
 
 # Recurrence relation:
 # Hen+1 = x*Hen - n*Hen-1
+
+"""
+$(TYPEDSIGNATURES)
+
+Computes the coefficients of the probabilistic Hermite polynomials up to order m.
+"""
 function prohermite_coeffmatrix(m::Int64)
 
     if m < 0
@@ -88,14 +111,22 @@ function ProPolyHermite(m::Int64;scaled::Bool= false)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the probabilistic Hermite polynomial `P`.
+"""
 (P::ProPolyHermite)(x) = P.P(x)
 
 const FamilyProPolyHermite = ntuple(i->ProPolyHermite(i-1), CstMaxDegree+1)
 const FamilyScaledProPolyHermite = ntuple(i->ProPolyHermite(i-1; scaled = true), CstMaxDegree+1)
 
 
-# Compute the k-th derivative of a physicist Hermite polynomial according to
-# H_{n}^(k)(x) = n!/(n-k)! H_{n-k}(x)
+"""
+$(TYPEDSIGNATURES)
+
+Computes the k-th derivative of the probabilistic Hermite polynomial `P`.
+"""
 function derivative(P::ProPolyHermite, k::Int64)
     m = P.m
     @assert k>=0 "This function doesn't compute anti-derivatives of Hermite polynomials"
@@ -112,6 +143,12 @@ function derivative(P::ProPolyHermite, k::Int64)
     end
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the probabilistic Hermite polynomial `P`.
+"""
 function evaluate!(dV, P::ProPolyHermite, x)
     m = P.m
     N = size(x,1)
@@ -159,15 +196,23 @@ function evaluate!(dV, P::ProPolyHermite, x)
     return dV
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the probabilistic Hermite polynomial `P`.
+"""
 evaluate(P::ProPolyHermite, x::Array{Float64,1}) = evaluate!(zeros(size(x,1), P.m+1), P, x)
 
 
 
-# For next week, the question is should we use the Family of polynomials  evaluate at the samples and just multiply by the constant
-# seems to be faster !! than recomputing the derivative
-
 # He_{n}^(k)(x) =  n!/(n-k)! H_{n-k}(x)
 
+"""
+$(TYPEDSIGNATURES)
+
+Computes in-place the Vandermonde matrix of the k-th derivative of the probabilistic Hermite polynomial `P`.
+"""
 function vander!(dV, P::ProPolyHermite, k::Int64, x)
     m = P.m
 
@@ -269,5 +314,9 @@ function vander!(dV, P::ProPolyHermite, k::Int64, x)
     end
 end
 
+"""
+$(TYPEDSIGNATURES)
 
+Computes the Vandermonde matrix of the k-th derivative of the probabilistic Hermite polynomial `P`.
+"""
 vander(P::ProPolyHermite, k::Int64, x::Array{Float64,1}) = vander!(zeros(size(x,1), P.m+1), P, k, x)
