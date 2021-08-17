@@ -3,7 +3,18 @@ export greedyfit, update_component, update_coeffs
 """
 $(TYPEDSIGNATURES)
 
-An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the ensemble matrix `X`.
+Performs a greedy feature selection of an `HermiteMapComponent` up to `maxterms` features, based on the ensemble matrix `X`.
+
+The following optionial settings can be tuned:
+* `α::Float64 = αreg`: a Tikkonov regularization parameter of the cost function
+* `withconstant::Bool = false`: the option to remove the constant feature in the greedy optimization routine, if the zero feature is the constant function for the basis of interest.
+* `withqr::Bool = false`: improve the conditioning of the optimization problem with a QR factorization of the feature basis (recommended option)
+* `maxpatience::Int64 = 10^5`: for `optimkind = split`, the maximum number of extra terms that can be added without decreasing the validation error before the greedy optimmization get stopped.
+* `verbose::Bool = false`: prints details of the optimization procedure, current component optimize, training and validation errors, number of features added.
+* `hessprecond::Bool=true`: use a preconditioner based on the Gauss-Newton of the Hessian of the loss function to accelerate the convergence.
+* `b::String="CstProHermiteBasis"`: several bases for the feature expansion are available, see src/hermitemap/basis.jl for more details
+* `ATMcriterion::String="gradient"`: sensitivty criterion used to select the feature to add to the expansion. The default uses the derivative of the cost function with respect to the coefficient
+   of the features in the reduced margin of the current set of features.
 """
 function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg, withconstant::Bool = false, withqr::Bool = false,
                    maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true,
@@ -243,7 +254,18 @@ end
 """
 $(TYPEDSIGNATURES)
 
-An adaptive routine to estimate a sparse approximation of an `HermiteMapComponent` based on  the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
+Performs a greedy feature selection of an `HermiteMapComponent` up to `maxterms` features, based on the pair of ensemble matrices `X` (training set) and `Xvalid` (validation set).
+
+The following optionial settings can be tuned:
+* `α::Float64 = αreg`: a Tikkonov regularization parameter of the cost function
+* `withconstant::Bool = false`: the option to remove the constant feature in the greedy optimization routine, if the zero feature is the constant function for the basis of interest.
+* `withqr::Bool = false`: improve the conditioning of the optimization problem with a QR factorization of the feature basis (recommended option)
+* `maxpatience::Int64 = 10^5`: for `optimkind = split`, the maximum number of extra terms that can be added without decreasing the validation error before the greedy optimmization get stopped.
+* `verbose::Bool = false`: prints details of the optimization procedure, current component optimize, training and validation errors, number of features added.
+* `hessprecond::Bool=true`: use a preconditioner based on the Gauss-Newton of the Hessian of the loss function to accelerate the convergence.
+* `b::String="CstProHermiteBasis"`: several bases for the feature expansion are available, see src/hermitemap/basis.jl for more details
+* `ATMcriterion::String="gradient"`: sensitivty criterion used to select the feature to add to the expansion. The default uses the derivative of the cost function with respect to the coefficient
+   of the features in the reduced margin of the current set of features.
 """
 function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 = αreg, withconstant::Bool = false,
                    withqr::Bool = false, maxpatience::Int64 = 10^5, verbose::Bool = true, hessprecond::Bool=true,

@@ -94,36 +94,95 @@ function Base.show(io::IO, C::HermiteMapComponent)
     # end
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the number of features of the `HermiteMapComponent` `C` to `coeff`.
+"""
 ncoeff(C::HermiteMapComponent) = C.Nψ
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the coefficients of the `HermiteMapComponent` `C` to `coeff`.
+"""
 getcoeff(C::HermiteMapComponent)= C.I.f.coeff
 
+"""
+$(TYPEDSIGNATURES)
+
+Set the coefficients of the `HermiteMapComponent` `C` to `coeff`.
+"""
 function setcoeff!(C::HermiteMapComponent, coeff::Array{Float64,1})
         @assert size(coeff,1) == C.Nψ "Wrong dimension of coeff"
         C.I.f.coeff .= coeff
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Set all the coefficients of the `HermiteMapComponent` `C` to zero.
+"""
 clearcoeff!(C::HermiteMapComponent) = fill!(C.I.f.coeff, 0.0)
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the multi-indices of the features of the `HermiteMapComponent` `C`.
+"""
 getidx(C::HermiteMapComponent) = C.I.f.idx
 
+"""
+$(TYPEDSIGNATURES)
+
+Returns the kind of basis of the `HermiteMapComponent` `C`.
+"""
 getbasis(C::HermiteMapComponent) = getbasis(C.I)
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the active dimensions of the `HermiteMapComponent` `C`.
+"""
 active_dim(C::HermiteMapComponent) = C.I.f.dim
 
 ## Evaluate
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the `HermiteMapComponent` `C` for the ensemble matrix `X`.
+"""
 function evaluate!(out, C::HermiteMapComponent, X)
     @assert C.Nx==size(X,1) "Wrong dimension of the sample"
     @assert size(out,1) == size(X,2) "Dimensions of the output and the samples don't match"
     return evaluate!(out, C.I, X)
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the `HermiteMapComponent` `C` for the ensemble matrix `X`.
+"""
 evaluate(C::HermiteMapComponent, X::Array{Float64,2}) =
     evaluate!(zeros(size(X,2)), C, X)
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the `HermiteMapComponent` `C` at `x`.
+"""
 (C::HermiteMapComponent)(x::Array{Float64,1}) = evaluate(C, reshape(x, (size(x,1), 1)))
 
 ## Compute log_pdf
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the logarithm of the pullback of the reference density (standard normal) by the `HermiteMapComponent` `C`for the ensemble matrix `X`.
+"""
 function log_pdf!(result, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     @assert C.Nx == NxX "Wrong dimension of the sample"
@@ -140,10 +199,21 @@ function log_pdf!(result, cache, C::HermiteMapComponent, X)
     return result
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the logarithm of the pullback of the reference density (standard normal) by the `HermiteMapComponent` `C`for the ensemble matrix `X`.
+"""
 log_pdf(C::HermiteMapComponent, X) = log_pdf!(zeros(size(X,2)), zeros(size(X,2)), C, X)
 
 ## Compute grad_x_log_pdf
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the gradient of the logarithm of the pullback of the reference density (standard normal) by the `HermiteMapComponent` `C` for the ensemble matrix `X`.
+"""
 function grad_x_log_pdf!(result, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     @assert C.Nx == NxX "Wrong dimension of the sample"
@@ -162,10 +232,20 @@ function grad_x_log_pdf!(result, cache, C::HermiteMapComponent, X)
     return result
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the gradient of the logarithm of the pullback of the reference density (standard normal) by the `HermiteMapComponent` `C` for the ensemble matrix `X`.
+"""
 grad_x_log_pdf(C::HermiteMapComponent, X) = grad_x_log_pdf!(zeros(size(X,2), size(X,1)), zeros(size(X,2)), C, X)
 
 ## Compute hess_x_log_pdf
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates in-place the hessian of the logarithm of the pullback of the reference density (standard normal) by the `HermiteMapComponent` `C` for the ensemble matrix `X`.
+"""
 function hess_x_log_pdf!(result, dcache, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     Nx = C.Nx
@@ -215,6 +295,11 @@ function hess_x_log_pdf!(result, dcache, cache, C::HermiteMapComponent, X)
     return result
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Evaluates the hessian of the logarithm of the pullback of the reference density (standard normal) by the `HermiteMapComponent` `C` for the ensemble matrix `X`.
+"""
 hess_x_log_pdf(C::HermiteMapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), size(X,1), size(X,1)),
                                                      zeros(size(X,2), size(X,1)),
                                                      zeros(size(X,2)), C, X)
@@ -223,7 +308,12 @@ hess_x_log_pdf(C::HermiteMapComponent, X) = hess_x_log_pdf!(zeros(size(X,2), siz
 
 # This version outputs a result of size(Ne, active_dim(C), active_dim(C))
 
+"""
+$(TYPEDSIGNATURES)
 
+Evaluates in-place the hessian of the logarithm of the pullback of the reference density (standard normal) by the map `M` for the ensemble matrix `X`.
+This routine exploits the sparsity pattern of the map `M`.
+"""
 function reduced_hess_x_log_pdf!(result, dcache, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     Nx = C.Nx

@@ -64,6 +64,11 @@ function hybridsolver(f, g, out, a, b; ϵx = 1e-7, ϵf = 1e-7, niter = 100)
     return out
 end
 
+"""
+$(TYPEDSIGNATURES)
+
+Invert the ensemble matrix `X` such that R(X) = F
+"""
 function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵx = 1e-8, ϵf = 1e-8, P::Parallel = serial)
     Nψ = R.Nψ
     Nx = R.Nx
@@ -184,8 +189,20 @@ function hybridinverse!(X, F, R::IntegratedFunction, S::Storage; niter= 1000, ϵ
     @assert convergence == true "Inversion did not converge"
 end
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Invert the ensemble matrix `X` such that C(X) = F
+"""
 hybridinverse!(X, F, C::HermiteMapComponent, S::Storage; P::Parallel = serial) = hybridinverse!(X, F, C.I, S; P = P)
 
+
+"""
+$(TYPEDSIGNATURES)
+
+Invert the ensemble matrix `X` such that L.C(L.L*X) = F
+"""
 function hybridinverse!(X::Array{Float64,2}, F, L::LinHermiteMapComponent, S::Storage; P::Parallel = serial)
     # Pay attention that S is computed in the renormalized space for improve performance !!!
     transform!(L.L, X)
