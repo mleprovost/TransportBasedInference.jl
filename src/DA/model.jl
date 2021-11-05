@@ -65,6 +65,7 @@ A structure to store the synthetic data in a twin-experiment
 """
 struct SyntheticData
 	tt::Array{Float64,1}
+	Δt::Float64
 	x0::Array{Float64,1}
 	xt::Array{Float64,2}
 	yt::Array{Float64,2}

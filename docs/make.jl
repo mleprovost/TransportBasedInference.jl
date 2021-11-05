@@ -5,7 +5,7 @@ makedocs(
     doctest = true,
     clean = true,
     pages = [
-        "Home" => "index.md",
+        # "Home" => "index.md",
         # "Background" => "background.md",
         # "Tutorials" => [
         #                # "tutorials/1.-Estimation-of-the-Banana-distribution.md",
@@ -16,9 +16,9 @@ makedocs(
         # #              # "tutorials/6.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-63.md",
         # #              # "tutorials/7.-Radial-basis-nonlinear-ensemble-filtering-Lorenz-96.md"
         #              ],
-        "Manual" => [#"manual/apidoc.md",
-                     "manual/contribute.md",
-                     "manual/LICENSE.md"]
+        # "Manual" => [#"manual/apidoc.md",
+        #              "manual/contribute.md",
+        #              "manual/LICENSE.md"]
     ],
     #format = Documenter.HTML(assets = ["assets/custom.css"])
     format = Documenter.HTML(
@@ -36,11 +36,11 @@ makedocs(
 
 
 #if "DOCUMENTER_KEY" in keys(ENV)
-deploydocs(
-     repo = "github.com/mleprovost/TransportBasedInference.jl.git",
-     target = "build",
-     deps = nothing,
-     make = nothing
-     #versions = "v^"
-)
+# deploydocs(
+#      repo = "github.com/mleprovost/TransportBasedInference.jl.git",
+#      target = "build",
+#      deps = nothing,
+#      make = nothing
+#      #versions = "v^"
+# )
 #end
