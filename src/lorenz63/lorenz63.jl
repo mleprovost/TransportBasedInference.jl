@@ -48,7 +48,7 @@ function generate_lorenz63(model::Model, x0::Array{Float64,1}, J::Int64)
         # model.ϵy(yt[:,i])
 		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*randn(model.Ny)
     end
-    	return SyntheticData(tt, x0, xt, yt)
+    	return SyntheticData(tt, model.Δtdyn, x0, xt, yt)
 end
 
 function spin_lorenz63(model::Model, data::SyntheticData, Ne::Int64, path::String)

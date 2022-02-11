@@ -59,6 +59,7 @@ A structure to store the synthetic data in a twin-experiment
 
 ## Fields
 - `tt` : time history
+- `Δt` : time step
 - `x0` : the initial condition
 - `xt` : history of the state
 - `yt` : history of the observations

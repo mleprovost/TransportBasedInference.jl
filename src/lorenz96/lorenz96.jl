@@ -55,7 +55,7 @@ function generate_lorenz96(model::Model, x0::Array{Float64,1}, J::Int64)
 		yt[:,i] = deepcopy(model.F.h(x, tt[i]))
 		yt[:,i] .+= model.ϵy.m + model.ϵy.σ*randn(model.Ny)
     end
-    	return SyntheticData(tt, x0, xt, yt)
+    	return SyntheticData(tt, model.Δtdyn, x0, xt, yt)
 end
 
 function spin_lorenz96(model::Model, data::SyntheticData, Ne::Int64, path::String)
