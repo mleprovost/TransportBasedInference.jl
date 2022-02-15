@@ -9,7 +9,7 @@
 *.svg
 .ipynb_checkpoints
 Manifest.toml
-
+paper.md
 # temporary matlab files
 *.m~
 
