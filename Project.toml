@@ -1,7 +1,7 @@
 name = "TransportBasedInference"
 uuid = "bdf749b0-1400-4207-80d3-e689c0e3f03d"
 authors = ["mleprovost <mathow@g.ucla.edu>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [deps]
 ColorSchemes = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
