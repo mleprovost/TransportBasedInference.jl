@@ -1,6 +1,10 @@
-using Documenter, TransportBasedInference
+using Documenter
+using TransportBasedInference
+
+ENV["GKSwstype"] = "nul"
 
 makedocs(
+    modules = [TransportBasedInference],
     sitename = "TransportBasedInference.jl",
     doctest = true,
     clean = true,
@@ -20,7 +24,6 @@ makedocs(
         #              "manual/contribute.md",
         #              "manual/LICENSE.md"]
     ],
-    #format = Documenter.HTML(assets = ["assets/custom.css"])
     format = Documenter.HTML(
         prettyurls = get(ENV, "CI", nothing) == "true",
         mathengine = MathJax(Dict(
@@ -29,18 +32,10 @@ makedocs(
                 :Macros => Dict()
             )
         ))
-    ),
-    #assets = ["assets/custom.css"],
-    #strict = true
+    )
 )
 
-
-#if "DOCUMENTER_KEY" in keys(ENV)
-# deploydocs(
-#      repo = "github.com/mleprovost/TransportBasedInference.jl.git",
-#      target = "build",
-#      deps = nothing,
-#      make = nothing
-#      #versions = "v^"
-# )
-#end
+deploydocs(
+     repo = "github.com/mleprovost/TransportBasedInference.jl.git",
+     target = "build"
+)

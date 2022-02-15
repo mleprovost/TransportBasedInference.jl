@@ -19,7 +19,7 @@ tspan = (t0, t0 + algo.Δtobs)
 # Define the dynamical system
 prob = ODEProblem(F.f, zeros(Nx), tspan)
 
-# Run particle filter
+# Run filtering algorithm
 @showprogress for i=1:length(Acycle)
     # Forecast
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
@@ -85,8 +85,8 @@ Acycle = n0:n0+J-1
 tspan = (t0, t0 + algo.Δtobs)
 prob = ODEProblem(F.f, zeros(Nx), tspan)
 
-# Run particle filter
-@inbounds for i=1:length(Acycle)
+# Run filtering algorithm
+@showprogress for i=1:length(Acycle)
     # Forecast
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
 	prob = remake(prob; tspan=tspan)

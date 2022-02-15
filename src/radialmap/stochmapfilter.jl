@@ -116,9 +116,10 @@ function (smf::SparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1}; P::Pa
 		end
 	end
 
-
 	@view(X[Ny .+ perm,:]) .= cache[2:Na,:]
 end
+
+
 
 # Assimilate the entire observation vector
 function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial, localized::Bool = true)
@@ -261,7 +262,7 @@ function (smf::AdaptiveSparseRadialSMF)(X, ystar::Float64, t, idx::Array{Int64,1
 
 		smf.S[idx1].L.μ .= mean(cache; dims = 2)[:,1]
 		smf.S[idx1].L.L.diag .= std(cache; dims = 2)[:,1]
-		
+
 		# optimize(Sgreedy, cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
 		optimize(smf.S[idx1], cache, nothing, nothing, nothing; apply_rescaling=true, start = 2, verbose = false)
 

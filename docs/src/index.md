@@ -2,7 +2,7 @@
 
 *A Julia package for Bayesian inference with transport maps*
 
-The objective of this package is to allow easy and fast resolution of Bayesian inference problems using transport maps. The package provides tools for:
+The objective of this package is to allow fast and easy resolution of Bayesian inference problems using transport maps. The package provides tools for:
 - joint and conditional density estimation from limited samples of the target distribution using the adaptive transport map algorithm developed by Baptista et al. [^1].
 - sequential inference for state-space models using one of the following algorithms: the (localized) stochastic ensemble Kalman filter (Evensen [^2]), the ensemble transform Kalman filter (Bishop et al. [^3]) and a nonlinear generalization of the stochastic ensemble Kalman filter (Spantini et al. [^4]).
 
