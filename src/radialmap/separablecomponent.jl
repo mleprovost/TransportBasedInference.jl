@@ -1,5 +1,5 @@
 export SeparableFcn, AddedSeparableFcn, ui,
- uk, σscale, D!, D, H!, H
+ uk, σscale, D!, H!
 
 abstract type SeparableFcn end
 

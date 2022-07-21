@@ -39,7 +39,7 @@ include("tools/transform.jl")
 # Tools for Banana distribution
 include("tools/banana.jl")
 # Tools for mixture of Gaussian distributions
-# include("tools/mixture.jl")
+include("tools/mixture.jl")
 include("tools/view.jl")
 
 # Tools for state-space model
