@@ -53,4 +53,4 @@ end
 # An overview of methods, issues, and perspectives
 g1(r) = 1 - (5/3)*r^2 +(5/8)*r^3 +(1/2)*r^4 -0.25*r^5
 g2(r) = 4 - 5r +(5/3)*r^2 + (5/8)*r^3 -(1/2)*r^4 +(1/12)*r^5 -(2/3)*r^(-1)
-gaspari(r) = r>2.0 ? 0.0 : r<1.0 ? g1(r) : g2(r)
+gaspari(r) = abs(r)>2.0 ? 0.0 : abs(r)<1.0 ? g1(abs(r)) : g2(abs(r))
