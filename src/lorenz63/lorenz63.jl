@@ -52,7 +52,7 @@ function generate_lorenz63(model::Model, x0::Array{Float64,1}, J::Int64)
 end
 
 function spin_lorenz63(model::Model, data::SyntheticData, Ne::Int64, path::String)
-	@assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
+	# @assert path[1]=='/' && path[end]=='/' "This function expects a / at the extremities of path"
 
 	# Set initial condition
 	X = zeros(model.Ny + model.Nx, Ne)
