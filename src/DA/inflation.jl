@@ -293,7 +293,7 @@ Apply the multiplicat inflation `A` to the lines `start` to `final` of an ensemb
 i.e. xⁱ -> x̄ + β*(xⁱ - x̄)  + ϵⁱ with ϵⁱ ∼ `A.α` and β a scalar, usually ∼ 1.0.
 """
 function (A::MultiAddInflation)(X, start::Int64, final::Int64)
-    @assert A.Nx = final - start +1 "Dimension does not match"
+    @assert A.Nx == final - start +1 "Dimension does not match"
     Ne = size(X,2)
     X̂ = copy(mean(view(X, start:final,:), dims = 2)[:,1])
     @inbounds for i=1:Ne
