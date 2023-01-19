@@ -37,7 +37,7 @@ struct Model
     ϵx::InflationType
 
 	"Observation noise"
-    ϵy::AdditiveInflation
+    ϵy::InflationType
 
     "Multivariate distribution for the initial condition"
     π0::ContinuousMultivariateDistribution

@@ -295,10 +295,11 @@ i.e. xⁱ -> x̄ + β*(xⁱ - x̄)  + ϵⁱ with ϵⁱ ∼ `A.α` and β a scala
 function (A::MultiAddInflation)(X, start::Int64, final::Int64)
     # @assert A.Nx == final - start + 1 "Dimension does not match"
     Ne = size(X,2)
-    X̂ = copy(mean(view(X, start:final,:), dims = 2)[:,1])
+    # X̂ = copy(mean(view(X, start:final,:), dims = 2)[:,1])
+    μX = mean(X[start:final,:], dims= 2)[:,1]
     @inbounds for i=1:Ne
         col = view(X, start:final, i)
-        col .= (1.0-A.β)*X̂ + A.β*col + A.m + A.σ*randn(A.Nx)
+        col .= A.β*(col - μX) +  μX + A.m + A.σ*randn(A.Nx)
     end
 end
 
