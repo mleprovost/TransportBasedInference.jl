@@ -29,7 +29,7 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
-	sim = solve(ensemble_prob, Tsit5(), dt = algo.Δtdyn, adaptive = false, EnsembleThreads(),trajectories = Ne,
+	sim = solve(ensemble_prob, Tsit5(), adaptive = true, EnsembleThreads(),trajectories = Ne,
 				dense = false, save_everystep=false);
 
 	@inbounds for i=1:Ne
