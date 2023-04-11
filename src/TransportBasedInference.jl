@@ -23,6 +23,7 @@ using RecipesBase
 using Roots
 using SpecialFunctions
 using Statistics
+using StochasticDiffEq
 using TensorOperations
 using ThreadPools
 

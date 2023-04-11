@@ -5,7 +5,7 @@ export seqassim
 
 Generic API for sequential data assimilation for any sequential filter of parent type `SeqFilter`.
 """
-function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64)
+function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64; isSDE::Bool = false)
 
 Ne = size(X, 2)
 
@@ -16,8 +16,13 @@ push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
 n0 = ceil(Int64, t0/algo.Δtobs) + 1
 Acycle = n0:n0+J-1
 tspan = (t0, t0 + algo.Δtobs)
+
 # Define the dynamical system
-prob = ODEProblem(F.f, zeros(Nx), tspan)
+if isSDE == true
+	prob = SDEProblem(F.f, F.g, zeros(Nx), tspan)
+else
+	prob = ODEProblem(F.f, zeros(Nx), tspan)
+end
 
 # Run filtering algorithm
 @showprogress for i=1:length(Acycle)
@@ -25,7 +30,11 @@ prob = ODEProblem(F.f, zeros(Nx), tspan)
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
 	prob = remake(prob; tspan=tspan)
 
-	prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	if isSDE == true
+		prob_func(prob,i,repeat) = SDEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	else
+		prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	end
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
