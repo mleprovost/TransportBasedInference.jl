@@ -38,8 +38,14 @@ end
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
 	prob_func=prob_func)
-	sim = solve(ensemble_prob, Tsit5(), adaptive = true, EnsembleThreads(),trajectories = Ne,
-				dense = false, save_everystep=false);
+
+	if isSDE == true
+		sim = solve(ensemble_prob, StochasticDiffEq.SKenCarp(), dt = model.Δtobs, EnsembleThreads(),trajectories = Ne,
+		dense = false, save_everystep=false);
+	else
+		sim = solve(ensemble_prob, Tsit5(), adaptive = true, EnsembleThreads(),trajectories = Ne,
+					dense = false, save_everystep=false);
+	end
 
 	@inbounds for i=1:Ne
 	    X[Ny+1:Ny+Nx, i] .= deepcopy(sim[i])
