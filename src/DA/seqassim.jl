@@ -31,10 +31,10 @@ end
 	prob = remake(prob; tspan=tspan)
 
 	if isSDE == true
-		@show "SDE"
+		# @show "SDE"
 		prob_func(prob,i,repeat) = SDEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
 	else
-		@show "ODE"
+		# @show "ODE"
 		prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
 	end
 
@@ -42,7 +42,7 @@ end
 									prob_func=prob_func)
 
 	if isSDE == true
-		sim = solve(ensemble_prob, StochasticDiffEq.SKenCarp(), dt = model.Δtobs, EnsembleThreads(),trajectories = Ne,
+		sim = solve(ensemble_prob, StochasticDiffEq.SKenCarp(), dt = algo.Δtobs, EnsembleThreads(),trajectories = Ne,
 		dense = false, save_everystep=false);
 	else
 		sim = solve(ensemble_prob, Tsit5(), adaptive = true, EnsembleThreads(),trajectories = Ne,
