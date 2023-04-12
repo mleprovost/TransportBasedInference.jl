@@ -28,18 +28,37 @@ end
 @showprogress for i=1:length(Acycle)
     # Forecast
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
-	prob = remake(prob; tspan=tspan)
+	# prob = remake(prob; tspan=tspan)
 
 	if isSDE == true
-		# @show "SDE"
-		prob_func(prob,i,repeat) = SDEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+		function  prob_func_SDE(prob,i,repeat)
+			remake(prob, u0 = X[Ny+1:Ny+Nx,i], tspan = tspan)
+		end
+
+		ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	                                prob_func=prob_func_SDE)
+		#prob.tspan)
+		# prob_func(prob,i,repeat) = SDEProblem(prob.f, prob.g, X[Ny+1:Ny+Nx,i],prob.tspan)
 	else
-		# @show "ODE"
-		prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+		function  prob_func_ODE(prob,i,repeat)
+			remake(prob, u0 = X[Ny+1:Ny+Nx,i], tspan = tspan)
+		end
+		# prob_func_ODE(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+
+		ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	                                prob_func=prob_func_ODE)
 	end
 
-	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
-									prob_func=prob_func)
+	# if isSDE == true
+	# 	# @show "SDE"
+	# 	prob_func(prob,i,repeat) = SDEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	# else
+	# 	# @show "ODE"
+	# 	prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	# end
+
+	# ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	# 								prob_func=prob_func)
 
 	if isSDE == true
 		sim = solve(ensemble_prob, StochasticDiffEq.SKenCarp(), dt = algo.Δtobs, EnsembleThreads(),trajectories = Ne,
