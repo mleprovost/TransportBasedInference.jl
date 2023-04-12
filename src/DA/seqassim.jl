@@ -31,13 +31,15 @@ end
 	prob = remake(prob; tspan=tspan)
 
 	if isSDE == true
+		@show "SDE"
 		prob_func(prob,i,repeat) = SDEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
 	else
+		@show "ODE"
 		prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
 	end
 
 	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
-	prob_func=prob_func)
+									prob_func=prob_func)
 
 	if isSDE == true
 		sim = solve(ensemble_prob, StochasticDiffEq.SKenCarp(), dt = model.Δtobs, EnsembleThreads(),trajectories = Ne,
