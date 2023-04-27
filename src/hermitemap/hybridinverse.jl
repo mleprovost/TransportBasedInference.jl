@@ -18,7 +18,7 @@ end
 # Combine Bisection and Newton method, this method has guaranteed convergence.
 # Convergence order should be between linear and quadratic
 # http://www.m-hikari.com/ams/ams-2017/ams-53-56-2017/p/hahmAMS53-56-2017.pdf
-function hybridsolver(f, g, out, a, b; ϵx = 1e-7, ϵf = 1e-7, niter = 100)
+function hybridsolver(f, g, out, a, b; ϵx = 1e-7, ϵf = 1e-7, niter = 500)
     dxold = abs(b-a)
     dx = dxold
     fout = f(out)
