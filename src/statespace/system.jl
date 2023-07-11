@@ -18,8 +18,16 @@ struct StateSpace
     "Propagatation f"
     f::Function
 
+    "Forcing for SDE model"
+    g::Function
+
     "Observation h"
     h::Function
+end
+
+
+function StateSpace(f::Function, h::Function)
+    return StateSpace(f, x->x, h)
 end
 
 # To remove

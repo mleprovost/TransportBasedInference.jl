@@ -5,7 +5,7 @@ export seqassim
 
 Generic API for sequential data assimilation for any sequential filter of parent type `SeqFilter`.
 """
-function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64)
+function seqassim(F::StateSpace, data::SyntheticData, J::Int64, ϵx::InflationType, algo::SeqFilter, X, Ny, Nx, t0::Float64; isSDE::Bool = false)
 
 Ne = size(X, 2)
 
@@ -16,21 +16,57 @@ push!(statehist, deepcopy(X[Ny+1:Ny+Nx,:]))
 n0 = ceil(Int64, t0/algo.Δtobs) + 1
 Acycle = n0:n0+J-1
 tspan = (t0, t0 + algo.Δtobs)
+
 # Define the dynamical system
-prob = ODEProblem(F.f, zeros(Nx), tspan)
+if isSDE == true
+	prob = SDEProblem(F.f, F.g, zeros(Nx), tspan)
+else
+	prob = ODEProblem(F.f, zeros(Nx), tspan)
+end
 
 # Run filtering algorithm
 @showprogress for i=1:length(Acycle)
     # Forecast
 	tspan = (t0+(i-1)*algo.Δtobs, t0+i*algo.Δtobs)
-	prob = remake(prob; tspan=tspan)
+	# prob = remake(prob; tspan=tspan)
 
-	prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	if isSDE == true
+		function  prob_func_SDE(prob,i,repeat)
+			remake(prob, u0 = X[Ny+1:Ny+Nx,i], tspan = tspan)
+		end
 
-	ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
-	prob_func=prob_func)
-	sim = solve(ensemble_prob, Tsit5(), dt = algo.Δtdyn, adaptive = false, EnsembleThreads(),trajectories = Ne,
-				dense = false, save_everystep=false);
+		ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	                                prob_func=prob_func_SDE)
+		#prob.tspan)
+		# prob_func(prob,i,repeat) = SDEProblem(prob.f, prob.g, X[Ny+1:Ny+Nx,i],prob.tspan)
+	else
+		function  prob_func_ODE(prob,i,repeat)
+			remake(prob, u0 = X[Ny+1:Ny+Nx,i], tspan = tspan)
+		end
+		# prob_func_ODE(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+
+		ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	                                prob_func=prob_func_ODE)
+	end
+
+	# if isSDE == true
+	# 	# @show "SDE"
+	# 	prob_func(prob,i,repeat) = SDEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	# else
+	# 	# @show "ODE"
+	# 	prob_func(prob,i,repeat) = ODEProblem(prob.f, X[Ny+1:Ny+Nx,i],prob.tspan)
+	# end
+
+	# ensemble_prob = EnsembleProblem(prob,output_func = (sol,i) -> (sol[end], false),
+	# 								prob_func=prob_func)
+
+	if isSDE == true
+		sim = solve(ensemble_prob, StochasticDiffEq.SKenCarp(), dt = algo.Δtobs, EnsembleThreads(),trajectories = Ne,
+		dense = false, save_everystep=false);
+	else
+		sim = solve(ensemble_prob, Tsit5(), adaptive = true, EnsembleThreads(),trajectories = Ne,
+					dense = false, save_everystep=false);
+	end
 
 	@inbounds for i=1:Ne
 	    X[Ny+1:Ny+Nx, i] .= deepcopy(sim[i])
