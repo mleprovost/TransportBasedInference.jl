@@ -74,6 +74,54 @@ getbasis(f::ExpandedFunction) = getbasis(f.B)
 """
 $(TYPEDSIGNATURES)
 
+Returns the number of features of the `ExpandedFunction` `f` to `coeff`.
+"""
+ncoeff(f::ExpandedFunction) = f.Nψ
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the coefficients of the `ExpandedFunction` `f` to `coeff`.
+"""
+getcoeff(f::ExpandedFunction)= f.coeff
+
+"""
+$(TYPEDSIGNATURES)
+
+Set the coefficients of the `ExpandedFunction` `f` to `coeff`.
+"""
+
+function setcoeff!(f::ExpandedFunction, coeff::Array{Float64,1})
+        @assert size(coeff,1) == f.Nψ "Wrong dimension of coeff"
+        f.coeff .= coeff
+end
+
+"""
+$(TYPEDSIGNATURES)
+
+Set all the coefficients of the `ExpandedFunction` `f` to zero.
+"""
+clearcoeff!(f::ExpandedFunction) = fill!(f.coeff, 0.0)
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the multi-indices of the features of the `ExpandedFunction` `f`.
+"""
+getidx(f::ExpandedFunction) = f.idx
+
+
+"""
+$(TYPEDSIGNATURES)
+
+Returns the active dimensions of the `ExpandedFunction` `f`.
+"""
+active_dim(f::ExpandedFunction) = f.dim
+
+
+"""
+$(TYPEDSIGNATURES)
+
 Evaluates the `ExpandedFunction` `f` at `x`.
 """
 function (f::ExpandedFunction)(x::Array{T,1}) where {T<:Real}
