@@ -249,6 +249,7 @@ Evaluates in-place the hessian of the logarithm of the pullback of the reference
 function hess_x_log_pdf!(result, dcache, cache, C::HermiteMapComponent, X)
     NxX, Ne = size(X)
     Nx = C.Nx
+    @show NxX, Nxß
     @assert Nx == NxX "Wrong dimension of the sample"
     @assert size(result) == (Ne, NxX, NxX) "Wrong dimension of the result"
 

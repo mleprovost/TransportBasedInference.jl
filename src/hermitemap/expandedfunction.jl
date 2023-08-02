@@ -157,20 +157,6 @@ function active_dim(idx::Array{Int64,2}, B::T) where {T<:Basis}
     return dim
 end
 
-"""
-$(TYPEDSIGNATURES)
-
-Returns the active dimensions of the  set of multi-indices `idx` for the  `MultiBasis` `B`.
-"""
-active_dim(idx::Array{Int64,2}, B::MultiBasis) = active_dim(idx, B.B)
-
-"""
-$(TYPEDSIGNATURES)
-
-Returns the active dimensions of the `ExpandedFunction` `f`.
-"""
-active_dim(f::ExpandedFunction) = f.dim
-
 # alleval computes the evaluation, gradient and hessian of the function
 # use it for validatio since it is slower than the other array-based variants
 """
