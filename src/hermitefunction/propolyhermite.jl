@@ -35,8 +35,7 @@ $(TYPEDSIGNATURES)
 Normalization constant of the m-th order probabilistic Hermite polynomial
 """
 # Cpro(m::Int64) =sqrt(sqrt(2*π) * gamma(m+1))
-Cpro(m::Int64) =sqrt(gamma(m+1)) #sqrt(2π) is already accounted for by sampling
-
+Cpro(m::Int64) = m < 0 ? 0.0 : sqrt(gamma(m+1)) #sqrt(2π) is already accounted for by sampling
 
 """
 $(TYPEDSIGNATURES)

@@ -37,7 +37,7 @@ $(TYPEDSIGNATURES)
 
 Normalization constant of the m-th order physicist Hermite polynomial
 """
-Cphy(m::Int64) = sqrt(gamma(m+1) * 2^m) # sqrt(π) is already accounted for by sampling
+Cphy(m::Int64) = m < 0 ? 0.0 : sqrt(gamma(m+1) * 2^m) # sqrt(π) is already accounted for by sampling
 
 """
 $(TYPEDSIGNATURES)
