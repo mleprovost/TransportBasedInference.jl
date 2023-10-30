@@ -4,6 +4,7 @@ export Localization, Locgaspari, periodicmetric!, periodicmetric, cartesianmetri
 
 struct Localization
     L::Float64
+    Gxx::Function
     Gxy::Function
     Gyy::Function
 end
