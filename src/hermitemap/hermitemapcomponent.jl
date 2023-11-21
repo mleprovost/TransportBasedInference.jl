@@ -55,12 +55,12 @@ function HermiteMapComponent(m::Int64, Nx::Int64, idx::Array{Int64,2}, coeff::Ar
     if b ∈ ["ProHermiteBasis"; "PhyHermiteBasis";
             "CstProHermiteBasis"; "CstPhyHermiteBasis";
             "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
-        B = MultiBasis(eval(Symbol(b))(m), Nx)
+        MB = MultiBasis(eval(Symbol(b))(m), Nx)
     else
         error("The basis "*b*" is not defined.")
     end
 
-    return HermiteMapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(B, idx, coeff)), α)
+    return HermiteMapComponent(m, Nψ, Nx, IntegratedFunction(ExpandedFunction(MB, idx, coeff)), α)
 end
 
 function HermiteMapComponent(f::ExpandedFunction; α::Float64 = αreg)
@@ -74,7 +74,7 @@ function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String
     if b ∈ ["ProHermiteBasis"; "PhyHermiteBasis";
             "CstProHermiteBasis"; "CstPhyHermiteBasis";
             "CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
-        B = MultiBasis(eval(Symbol(b))(m), Nx)
+        MB = MultiBasis(eval(Symbol(b))(m), Nx)
     else
         error("The basis "*b*" is not defined.")
     end
@@ -82,14 +82,14 @@ function HermiteMapComponent(m::Int64, Nx::Int64; α::Float64 = αreg, b::String
     idx = zeros(Int64, Nψ, Nx)
     coeff = zeros(Nψ)
 
-    f = ExpandedFunction(B, idx, coeff)
+    f = ExpandedFunction(MB, idx, coeff)
     I = IntegratedFunction(f)
     return HermiteMapComponent(I; α = α)
 end
 
 function Base.show(io::IO, C::HermiteMapComponent)
     println(io,"Hermite map component of dimension "*string(C.Nx)*" with Nψ = "*string(C.Nψ)*" active features")
-    # for i=1:B.m
+    # for i=1:MB.m
     #     println(io, B[i])
     # end
 end

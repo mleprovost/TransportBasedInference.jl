@@ -21,13 +21,13 @@ end
 """
 $(TYPEDSIGNATURES)
 
-Returns the size of the `MultiBasis` `B`.
+Returns the size of the `MultiBasis` `MB`.
 """
-size(B::MultiBasis) = (B.B.m, B.Nx)
+size(MB::MultiBasis) = (MB.B.m, MB.Nx)
 
 """
 $(TYPEDSIGNATURES)
 
-Returns the kind of the underlying basis of the `MultiBasis` `B`.
+Returns the kind of the underlying basis of the `MultiBasis` `MB`.
 """
-getbasis(B::MultiBasis) = string(typeof(B.B))
+getbasis(MB::MultiBasis) = string(typeof(MB.B))

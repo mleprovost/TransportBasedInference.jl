@@ -9,9 +9,9 @@ The features of the created maps are all the tensorial products of the basis ele
 function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = false, b::String = "CstProHermiteBasis")
     @assert order >= 0 "Order should be positive"
     if b ∈ ["CstProHermiteBasis"; "CstPhyHermiteBasis"]
-        B = MultiBasis(eval(Symbol(b))(order+2), Nx)
+        MB = MultiBasis(eval(Symbol(b))(order+2), Nx)
     elseif b ∈ ["CstLinProHermiteBasis"; "CstLinPhyHermiteBasis"]
-        B = MultiBasis(eval(Symbol(b))(order+3), Nx)
+        MB = MultiBasis(eval(Symbol(b))(order+3), Nx)
     else
         error("Undefined basis")
     end
@@ -24,7 +24,7 @@ function totalordermapcomponent(Nx::Int64, order::Int64; withconstant::Bool = fa
 
     Nψ = size(idx, 1)
 
-    f = ExpandedFunction(B, idx, zeros(Nψ))
+    f = ExpandedFunction(MB, idx, zeros(Nψ))
     return HermiteMapComponent(IntegratedFunction(f))
 end
 
