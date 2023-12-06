@@ -46,6 +46,7 @@ Evaluates the `MultiFunction` `F` at `x`
 """
 function (F::MultiFunction)(x::Array{T,1}) where {T <: Real}
     out = 1.0
+    @assert size(x,1) == F.Nx "Wrong dimension for x"
     @inbounds for i=1:F.Nx
         out *= F.MB.B[F.α[i]+1](x[i])
     end
