@@ -5,6 +5,7 @@ export  ProPolyHermite, Cpro, degree, ProPolyH, prohermite_coeffmatrix,
         evaluate!, evaluate,
         vander!, vander
 
+
 """
 ProPolyHermite <: Hermite
 

@@ -37,7 +37,7 @@ function MultiFunction(MB::MultiBasis)
 end
 
 function MultiFunction(MB::Basis, Nx::Int64; scaled::Bool = true)
-    return MultiFunction(MB.B.m, Nx, MultiBasis(k, MB), ones(Int64, Nx))
+    return MultiFunction(MB.B.m, Nx, MultiBasis(MB, Nx), ones(Int64, Nx))
 end
 
 """
