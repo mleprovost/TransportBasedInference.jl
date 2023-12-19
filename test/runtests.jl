@@ -11,7 +11,7 @@ using QuadGK
 using Optim
 using NLsolve
 using MLDataUtils
-using Quadrature
+#using Quadrature
 using FiniteDiff
 using Distributions
 using Random
