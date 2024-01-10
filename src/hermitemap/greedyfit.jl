@@ -33,10 +33,10 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
     S = Storage(C.I.f, X)
 
     # Remove or not the constant i.e the multi-index [0 0 0]
-    if withconstant == false && iszerofeatureactive(C.I.f.B.B) == false
+    if withconstant == false && iszerofeatureactive(C.I.f.MB.B) == false
         # Compute the reduced margin
         reduced_margin = getreducedmargin(getidx(C))
-        f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        f = ExpandedFunction(C.I.f.MB, reduced_margin, zeros(size(reduced_margin,1)))
         C = HermiteMapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         coeff0 = getcoeff(C)
@@ -47,7 +47,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
 
         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 
-        f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
+        f = ExpandedFunction(C.I.f.MB, opt_idx, zeros(size(opt_idx,1)))
         C = HermiteMapComponent(f; α = α)
         S = Storage(C.I.f, X)
     end
@@ -123,7 +123,7 @@ function greedyfit(m::Int64, Nx::Int64, X, maxterms::Int64; α::Float64 = αreg,
                 println("Warning: Condition number reached")
                 append!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1) + 1))
                 # Revert to the previous map component
-                C = HermiteMapComponent(ExpandedFunction(C.I.f.B, idx_old, coeff_old); α = C.α)
+                C = HermiteMapComponent(ExpandedFunction(C.I.f.MB, idx_old, coeff_old); α = C.α)
                 break
             end
             mul!(coeff0, F.U, coeff0)
@@ -187,7 +187,7 @@ function update_component!(C::HermiteMapComponent, X, reduced_margin::Array{Int6
     idx_new = vcat(idx_old, reduced_margin)
 
     # Define updated map
-    f_new = ExpandedFunction(C.I.f.B, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
+    f_new = ExpandedFunction(C.I.f.MB, idx_new, vcat(getcoeff(C), zeros(size(reduced_margin,1))))
     C_new = HermiteMapComponent(f_new; α = αreg)
 
     # Set coefficients based on previous optimal solution
@@ -285,11 +285,11 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
     Svalid = Storage(C.I.f, Xvalid)
 
     # Remove or not the constant i.e the multi-index [0 0 0]
-    if withconstant == false && iszerofeatureactive(C.I.f.B.B) == false
+    if withconstant == false && iszerofeatureactive(C.I.f.MB.B) == false
 
         # Compute the reduced margin
         reduced_margin = getreducedmargin(getidx(C))
-        f = ExpandedFunction(C.I.f.B, reduced_margin, zeros(size(reduced_margin,1)))
+        f = ExpandedFunction(C.I.f.MB, reduced_margin, zeros(size(reduced_margin,1)))
         C = HermiteMapComponent(f; α = α)
         S = Storage(C.I.f, X)
         coeff0 = getcoeff(C)
@@ -300,7 +300,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
 
         opt_idx = reduced_margin[opt_dJ_coeff_idx:opt_dJ_coeff_idx,:]
 
-        f = ExpandedFunction(C.I.f.B, opt_idx, zeros(size(opt_idx,1)))
+        f = ExpandedFunction(C.I.f.MB, opt_idx, zeros(size(opt_idx,1)))
         C = HermiteMapComponent(f; α = αreg)
         S = Storage(C.I.f, X)
         Svalid = Storage(C.I.f, Xvalid)
@@ -382,7 +382,7 @@ function greedyfit(m::Int64, Nx::Int64, X, Xvalid, maxterms::Int64; α::Float64 
                 append!(train_error, Inf*ones(maxterms - size(getcoeff(C), 1) + 1))
                 append!(valid_error, Inf*ones(maxterms - size(getcoeff(C), 1) + 1))
                 # Revert to the previous map component
-                C = HermiteMapComponent(ExpandedFunction(C.I.f.B, idx_old, coeff_old); α = C.α)
+                C = HermiteMapComponent(ExpandedFunction(C.I.f.MB, idx_old, coeff_old); α = C.α)
                 break
             end
 
