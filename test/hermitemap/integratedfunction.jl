@@ -94,7 +94,7 @@ for b in Blist
     ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
         for i=1:Ne
             dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
@@ -108,10 +108,10 @@ for b in Blist
     d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
         for l=1:Nψ
-        fl = MultiFunction(R.f.B, f.idx[l,:])
+        fl = MultiFunction(R.f.MB, f.idx[l,:])
         ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -144,7 +144,7 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
         for i=1:Ne
             xi .= X[:,i]
@@ -161,12 +161,12 @@ for b in Blist
     d2cintψt = zeros(Ne, Nψ, Nψ)
     xi = zeros(Nx)
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for l=1:Nψ
 
-            fl = MultiFunction(R.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.MB, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -191,7 +191,7 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for i=1:Ne
@@ -212,12 +212,12 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for l=1:Nψ
 
-            fl = MultiFunction(R.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.MB, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -331,7 +331,7 @@ for b in Blist
     ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
         for i=1:Ne
             dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
@@ -345,10 +345,10 @@ for b in Blist
     d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
         for l=1:Nψ
-        fl = MultiFunction(R.f.B, f.idx[l,:])
+        fl = MultiFunction(R.f.MB, f.idx[l,:])
         ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -381,7 +381,7 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
         for i=1:Ne
             xi .= X[:,i]
@@ -398,12 +398,12 @@ for b in Blist
     d2cintψt = zeros(Ne, Nψ, Nψ)
     xi = zeros(Nx)
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for l=1:Nψ
 
-            fl = MultiFunction(R.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.MB, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -428,7 +428,7 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for i=1:Ne
@@ -449,12 +449,12 @@ for b in Blist
     xi = zeros(Nx)
 
     for j=1:Nψ
-        fj = MultiFunction(R.f.B, f.idx[j,:])
+        fj = MultiFunction(R.f.MB, f.idx[j,:])
         ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
         for l=1:Nψ
 
-            fl = MultiFunction(R.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.MB, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
             for i=1:Ne
@@ -534,7 +534,7 @@ end
         ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for i=1:Ne
                 dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
@@ -548,10 +548,10 @@ end
         d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for l=1:Nψ
-            fl = MultiFunction(R.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.MB, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -583,7 +583,7 @@ end
         dcintψt = zeros(Ne, Nψ)
         xi = zeros(Nx)
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
@@ -600,12 +600,12 @@ end
         d2cintψt = zeros(Ne, Nψ, Nψ)
         xi = zeros(Nx)
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.MB, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -630,7 +630,7 @@ end
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
@@ -650,12 +650,12 @@ end
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.MB, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -757,7 +757,7 @@ end
         ∂kf(y) = ForwardDiff.gradient(R.f, y)[end]
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for i=1:Ne
                 dψ_xd_dct[i,j] = ∂kfj(X[:,i])*grad_x(R.g, ∂kf(X[:,i]))
@@ -771,10 +771,10 @@ end
         d2ψ_xd_dct = zeros(Ne, Nψ, Nψ)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for l=1:Nψ
-            fl = MultiFunction(R.f.B, f.idx[l,:])
+            fl = MultiFunction(R.f.MB, f.idx[l,:])
             ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne
@@ -804,7 +804,7 @@ end
         dcintψt = zeros(Ne, Nψ)
         xi = zeros(Nx)
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
@@ -820,10 +820,10 @@ end
         d2cintψt = zeros(Ne, Nψ, Nψ)
         xi = zeros(Nx)
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for l=1:Nψ
-                fl = MultiFunction(R.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.MB, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
                 for i=1:Ne
                     xi .= X[:,i]
@@ -846,7 +846,7 @@ end
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
             for i=1:Ne
                 xi .= X[:,i]
@@ -866,12 +866,12 @@ end
         xi = zeros(Nx)
 
         for j=1:Nψ
-            fj = MultiFunction(R.f.B, f.idx[j,:])
+            fj = MultiFunction(R.f.MB, f.idx[j,:])
             ∂kfj(y) = ForwardDiff.gradient(fj, y)[end]
 
             for l=1:Nψ
 
-                fl = MultiFunction(R.f.B, f.idx[l,:])
+                fl = MultiFunction(R.f.MB, f.idx[l,:])
                 ∂kfl(y) = ForwardDiff.gradient(fl, y)[end]
 
                 for i=1:Ne

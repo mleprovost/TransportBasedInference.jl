@@ -29,7 +29,7 @@ using TransportBasedInference: evaluate
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:Nx-1])
+            fj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:Nx-1])
             for i=1:Ne
                 ψofft[i,j] += fj(X[:,i][1:end-1])
             end
@@ -49,7 +49,7 @@ using TransportBasedInference: evaluate
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,1), f.idx[j,Nx:Nx])
+            fj = MultiFunction(MultiBasis(f.MB.B,1), f.idx[j,Nx:Nx])
             for i=1:Ne
                 ψdiagt[i,j] += fj([X[:,i][end]])
             end
@@ -65,7 +65,7 @@ using TransportBasedInference: evaluate
         Gψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Gψ_xd_diagt[i,j] += ForwardDiff.derivative(fj, X[:,i][end])
             end
@@ -82,7 +82,7 @@ using TransportBasedInference: evaluate
         Hψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Hψ_xd_diagt[i,j] += ForwardDiff.derivative(x->ForwardDiff.derivative(fj, x), X[:,i][end])
             end
@@ -137,8 +137,8 @@ using TransportBasedInference: evaluate
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
-            fdiagj = f.B.B[f.idx[j,end]+1]
+            foffj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:end-1])
+            fdiagj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
             end
@@ -177,7 +177,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:Nx-1])
+            fj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:Nx-1])
             for i=1:Ne
                 ψofft[i,j] += fj(X[:,i][1:end-1])
             end
@@ -197,7 +197,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,1), f.idx[j,Nx:Nx])
+            fj = MultiFunction(MultiBasis(f.MB.B,1), f.idx[j,Nx:Nx])
             for i=1:Ne
                 ψdiagt[i,j] += fj([X[:,i][end]])
             end
@@ -213,7 +213,7 @@ end
         Gψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Gψ_xd_diagt[i,j] += ForwardDiff.derivative(fj, X[:,i][end])
             end
@@ -230,7 +230,7 @@ end
         Hψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Hψ_xd_diagt[i,j] += ForwardDiff.derivative(x->ForwardDiff.derivative(fj, x), X[:,i][end])
             end
@@ -285,8 +285,8 @@ end
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
-            fdiagj = f.B.B[f.idx[j,end]+1]
+            foffj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:end-1])
+            fdiagj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
             end
@@ -327,7 +327,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:Nx-1])
+            fj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:Nx-1])
             for i=1:Ne
                 ψofft[i,j] += fj(X[:,i][1:end-1])
             end
@@ -347,7 +347,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,1), f.idx[j,Nx:Nx])
+            fj = MultiFunction(MultiBasis(f.MB.B,1), f.idx[j,Nx:Nx])
             for i=1:Ne
                 ψdiagt[i,j] += fj([X[:,i][end]])
             end
@@ -363,7 +363,7 @@ end
         Gψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Gψ_xd_diagt[i,j] += ForwardDiff.derivative(fj, X[:,i][end])
             end
@@ -380,7 +380,7 @@ end
         Hψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Hψ_xd_diagt[i,j] += ForwardDiff.derivative(x->ForwardDiff.derivative(fj, x), X[:,i][end])
             end
@@ -435,8 +435,8 @@ end
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
-            fdiagj = f.B.B[f.idx[j,end]+1]
+            foffj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:end-1])
+            fdiagj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
             end
@@ -477,7 +477,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:Nx-1])
+            fj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:Nx-1])
             for i=1:Ne
                 ψofft[i,j] += fj(X[:,i][1:end-1])
             end
@@ -497,7 +497,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,1), f.idx[j,Nx:Nx])
+            fj = MultiFunction(MultiBasis(f.MB.B,1), f.idx[j,Nx:Nx])
             for i=1:Ne
                 ψdiagt[i,j] += fj([X[:,i][end]])
             end
@@ -513,7 +513,7 @@ end
         Gψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Gψ_xd_diagt[i,j] += ForwardDiff.derivative(fj, X[:,i][end])
             end
@@ -530,7 +530,7 @@ end
         Hψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Hψ_xd_diagt[i,j] += ForwardDiff.derivative(x->ForwardDiff.derivative(fj, x), X[:,i][end])
             end
@@ -585,8 +585,8 @@ end
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
-            fdiagj = f.B.B[f.idx[j,end]+1]
+            foffj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:end-1])
+            fdiagj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
             end
@@ -624,7 +624,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:Nx-1])
+            fj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:Nx-1])
             for i=1:Ne
                 ψofft[i,j] += fj(X[:,i][1:end-1])
             end
@@ -644,7 +644,7 @@ end
 
 
         for j=1:Nψ
-            fj = MultiFunction(MultiBasis(f.B.B,1), f.idx[j,Nx:Nx])
+            fj = MultiFunction(MultiBasis(f.MB.B,1), f.idx[j,Nx:Nx])
             for i=1:Ne
                 ψdiagt[i,j] += fj([X[:,i][end]])
             end
@@ -660,7 +660,7 @@ end
         Gψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Gψ_xd_diagt[i,j] += ForwardDiff.derivative(fj, X[:,i][end])
             end
@@ -677,7 +677,7 @@ end
         Hψ_xd_diagt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            fj = f.B.B[f.idx[j,end]+1]
+            fj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 Hψ_xd_diagt[i,j] += ForwardDiff.derivative(x->ForwardDiff.derivative(fj, x), X[:,i][end])
             end
@@ -732,8 +732,8 @@ end
         dψ_coeff_xdt = zeros(Ne, Nψ)
 
         for j=1:Nψ
-            foffj = MultiFunction(MultiBasis(f.B.B,Nx-1), f.idx[j,1:end-1])
-            fdiagj = f.B.B[f.idx[j,end]+1]
+            foffj = MultiFunction(MultiBasis(f.MB.B,Nx-1), f.idx[j,1:end-1])
+            fdiagj = f.MB.B[f.idx[j,end]+1]
             for i=1:Ne
                 dψ_coeff_xdt[i,j] = foffj(X[:,i][1:end-1])*ForwardDiff.derivative(fdiagj, X[:,i][end])
             end
