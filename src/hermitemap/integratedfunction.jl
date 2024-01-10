@@ -148,7 +148,7 @@ end
 #     midxj = idx[:,Nx]
 #     maxj = maximum(midxj)
 #     #   Compute the kth derivative along grad_dim
-#     dkψj = vander(f.B.B, maxj, k, x)
+#     dkψj = vander(f.MB.B, maxj, k, x)
 #     return dkψj[:, midxj .+ 1]
 # end
 

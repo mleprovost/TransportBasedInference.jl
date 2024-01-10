@@ -59,7 +59,7 @@
       S = update_storage(S, X, addedidx)
 
       addednψ = size(addedidx,1)
-      fnew = ExpandedFunction(f.B, vcat(f.idx, addedidx), vcat(f.coeff, zeros(addednψ)))
+      fnew = ExpandedFunction(f.MB, vcat(f.idx, addedidx), vcat(f.coeff, zeros(addednψ)))
 
       @test norm(S.ψoff     -  evaluate_offdiagbasis(fnew, X)) < 1e-8
       @test norm(S.ψoffψd   -  evaluate_offdiagbasis(fnew, X) .*

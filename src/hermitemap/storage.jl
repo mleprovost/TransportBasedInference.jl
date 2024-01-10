@@ -103,7 +103,7 @@ function update_storage(S::Storage, X, addedidx::Array{Int64,2})
     addedNψ = size(addedidx,1)
     newNψ = addedNψ + Nψ
 
-    fnew = ExpandedFunction(S.f.B, vcat(S.f.idx, addedidx), vcat(S.f.coeff, zeros(addedNψ)))
+    fnew = ExpandedFunction(S.f.MB, vcat(S.f.idx, addedidx), vcat(S.f.coeff, zeros(addedNψ)))
 
     oldmaxj = maximum(S.f.idx[:,end])
     newmaxj = maximum(fnew.idx[:,end])
