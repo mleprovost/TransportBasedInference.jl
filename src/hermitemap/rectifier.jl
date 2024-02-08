@@ -1,6 +1,7 @@
 export  Rectifier,
         square, dsquare, d2square,
         softplus, dsoftplus, d2softplus, invsoftplus,
+        sigmoid, dsigmoid, d2sigmoid, invsigmoid,
         explinearunit, dexplinearunit, d2explinearunit, invexplinearunit,
         inverse!, inverse, vinverse,
         grad_x!, grad_x, vgrad_x,
@@ -36,6 +37,25 @@ dsoftplus(x) = 1/(1 + exp(-log(2.0)*x))
 d2softplus(x) = log(2.0)/(2.0*(1.0 + cosh(log(2.0)*x)))
 invsoftplus(x) = min(log(exp(log(2.0)*x) - 1.0)/log(2.0), x)
 
+# Logistic tools
+# Sigmoid implementation from NNlib.jl to avoid underflow errors
+function sigmoid(x)
+    t = exp(-abs(x))
+    ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
+end
+function dsigmoid(x)
+    σ = sigmoid(x)
+    return σ*(1-σ)
+end
+
+function d2sigmoid(x)
+    σ = sigmoid(x)
+    # from dσ*(1-σ) - σ*dσ
+    return σ*(1-σ)*(1-2*σ) 
+end
+invsigmoid(x) = ifelse(x > 0, log(x) - log(1-x), "Not defined for x ≤ 0 ")
+
+
 
 
 explinearunit(x) = x < 0.0 ? exp(x) : x + 1.0
@@ -54,6 +74,8 @@ function (g::Rectifier)(x)
         return square(x)
     elseif g.T=="exponential"
         return exp(x)
+    elseif g.T=="sigmoid"
+        return sigmoid(x)
     elseif g.T=="softplus"
         return softplus(x)
     elseif g.T=="explinearunit"
@@ -68,6 +90,9 @@ function evaluate!(result, g::Rectifier, x)
         return result
     elseif g.T=="exponential"
         vmap!(exp, result, x)
+        return result
+    elseif g.T=="sigmoid"
+        vmap!(sigmoid, result, x)
         return result
     elseif g.T=="softplus"
         vmap!(softplus, result, x)
@@ -86,6 +111,8 @@ function inverse(g::Rectifier, x)
         error("squared rectifier is not invertible")
     elseif g.T=="exponential"
         return log(x)
+    elseif g.T=="sigmoid"
+        return invsigmoid(x)
     elseif g.T=="softplus"
         return invsoftplus(x)
     elseif g.T=="explinearunit"
@@ -100,6 +127,9 @@ function inverse!(result, g::Rectifier, x)
         error("squared rectifier is not invertible")
     elseif g.T=="exponential"
         vmap!(log, result, x)
+        return result
+    elseif g.T=="sigmoid"
+        vmap!(invsigmoid, result, x)
         return result
     elseif g.T=="softplus"
         vmap!(invsoftplus, result, x)
@@ -118,6 +148,8 @@ function grad_x(g::Rectifier, x)
         return dsquare(x)
     elseif g.T=="exponential"
         return exp(x)
+    elseif g.T=="sigmoid"
+        return dsigmoid(x)
     elseif g.T=="softplus"
         return dsoftplus(x)
     elseif g.T=="explinearunit"
@@ -133,6 +165,9 @@ function grad_x!(result, g::Rectifier, x)
         return result
     elseif g.T=="exponential"
         vmap!(exp, result, x)
+        return result
+    elseif g.T=="sigmoid"
+        vmap!(dsigmoid, result, x)
         return result
     elseif g.T=="softplus"
         vmap!(dsoftplus, result, x)
@@ -151,6 +186,8 @@ function grad_x_logeval(g::Rectifier, x::T) where {T <: Real}
         return dsquare(x)/square(x)
     elseif g.T=="exponential"
         return 1.0
+    elseif g.T=="sigmoid"
+        return dsigmoid(x)/sigmoid(x)    
     elseif g.T=="softplus"
         return dsoftplus(x)/softplus(x)
     elseif g.T=="explinearunit"
@@ -165,6 +202,9 @@ function grad_x_logeval!(result, g::Rectifier, x)
         return result
     elseif g.T=="exponential"
         vmap!(1.0, result, x)
+        return result
+    elseif g.T=="sigmoid"
+        vmap!(xi->dsigmoid(xi)/sigmoid(xi), result, x)
         return result
     elseif g.T=="softplus"
         vmap!(xi->dsoftplus(xi)/softplus(xi), result, x)
@@ -184,6 +224,8 @@ function hess_x_logeval(g::Rectifier, x::T) where {T <: Real}
         return (d2square(x)*square(x) - dsquare(x)^2)/square(x)^2
     elseif g.T=="exponential"
         return 0.0
+    elseif g.T=="sigmoid"
+        return (d2sigmoid(x)*sigmoid(x) - dsigmoid(x)^2)/sigmoid(x)^2
     elseif g.T=="softplus"
         return (d2softplus(x)*softplus(x) - dsoftplus(x)^2)/softplus(x)^2
     elseif g.T=="explinearunit"
@@ -198,6 +240,9 @@ function hess_x_logeval!(result, g::Rectifier, x)
         return result
     elseif g.T=="exponential"
         vmap!(0.0, result, x)
+        return result
+    elseif g.T=="sigmoid"
+        vmap!(xi->(d2sigmoid(xi)*sigmoid(xi) - dsigmoid(xi)^2)/sigmoid(xi)^2, result, x)
         return result
     elseif g.T=="softplus"
         vmap!(xi->(d2softplus(xi)*softplus(xi) - dsoftplus(xi)^2)/softplus(xi)^2, result, x)
@@ -215,6 +260,8 @@ function hess_x(g::Rectifier, x::T) where {T <: Real}
         return d2square(x)
     elseif g.T=="exponential"
         return exp(x)
+    elseif g.T=="sigmoid"
+        return d2sigmoid(x)
     elseif g.T=="softplus"
         return d2softplus(x)
     elseif g.T=="explinearunit"
@@ -229,6 +276,9 @@ function hess_x!(result, g::Rectifier, x)
         return result
     elseif g.T=="exponential"
         vmap!(exp, result, x)
+        return result
+    elseif g.T=="sigmoid"
+        vmap!(d2softplus, result, x)
         return result
     elseif g.T=="softplus"
         vmap!(d2softplus, result, x)

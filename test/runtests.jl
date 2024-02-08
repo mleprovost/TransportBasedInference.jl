@@ -42,7 +42,7 @@ using Random
 # include("hermitefunction/prohermite.jl")
 
 # Test tools for Basis, MultiBasis, ExpandedFunction
-# include("hermitemap/rectifier.jl")
+include("hermitemap/rectifier.jl")
 # include("hermitemap/basis.jl")
 # include("hermitemap/expandedfunction.jl")
 # include("hermitemap/reduced.jl")
