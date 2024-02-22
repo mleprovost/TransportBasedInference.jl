@@ -6,6 +6,7 @@ export  ExpandedFunction,
         getbasis,
         evaluate_basis!,
         evaluate_basis,
+        repeated_evaluate_basis!,
         repeated_evaluate_basis,
         grad_xk_basis!,
         grad_xk_basis,
@@ -266,20 +267,62 @@ evaluate_basis(f::ExpandedFunction, X) =
             evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, f.dim, f.idx)
             # evaluate_basis!(zeros(size(X,2),size(f.idx,1)), f, X, 1:f.Nx, f.idx)
 
+# """
+# $(TYPEDSIGNATURES)
+
+# Evaluates the basis of `ExpandedFunction` `f` for the last component
+# """
+# function repeated_evaluate_basis(f::ExpandedFunction, x, idx::Array{Int64,2})
+#     # Compute the last component
+#     midxj = idx[:,f.Nx]
+#     maxj = maximum(midxj)
+#     ψj = vander(f.MB.B, maxj, 0, x)
+#     return ψj[:, midxj .+ 1]
+# end
+
+# repeated_evaluate_basis(f::ExpandedFunction, x) = repeated_evaluate_basis(f, x, f.idx)
+
 """
 $(TYPEDSIGNATURES)
 
-Evaluates the basis of `ExpandedFunction` `f` for the last component
+Computes in-place the gradient with respect to the last state component of the basis of the last univariate function of each feature with multi-indices `idx` at `x`.
 """
-function repeated_evaluate_basis(f::ExpandedFunction, x, idx::Array{Int64,2})
-    # Compute the last component
-    midxj = idx[:,f.Nx]
+function repeated_evaluate_basis!(out, cache, f::ExpandedFunction, x, idx::Array{Int64,2})
+    # Compute the derivative of an expanded function along the last state component.
+    Ne = size(x, 1)
+    Nx = f.Nx
+
+    # @assert size(out,1) = (N, size(idx, 1)) "Wrong dimension of the output vector"
+    # ∂ᵏf/∂x_{grad_dim} = ψ
+    k = 0
+    grad_dim = Nx
+    dims = Nx
+
+    midxj = idx[:, Nx]
     maxj = maximum(midxj)
-    ψj = vander(f.MB.B, maxj, 0, x)
-    return ψj[:, midxj .+ 1]
+    # dkψj = zeros(Ne, maxj+1)
+    vander!(cache, f.MB.B, maxj, k, x)
+    Nψreduced = size(idx, 1)
+    @avx for l = 1:Nψreduced
+        for k=1:Ne
+            out[k, l] = cache[k, midxj[l] + 1]
+        end
+    end
+
+    return out#dkψj[:, midxj .+ 1]
 end
 
+repeated_evaluate_basis!(out, cache, f::ExpandedFunction, x) = repeated_evaluate_basis!(out, cache, f, x, f.idx)
+
+"""
+$(TYPEDSIGNATURES)
+
+Computes the gradient with respect to the last state component of the basis of the last univariate function of each feature with multi-indices `idx` at `x`.
+"""
+repeated_evaluate_basis(f::ExpandedFunction, x, idx::Array{Int64,2}) =
+    repeated_evaluate_basis!(zeros(size(x,1),size(idx,1)), zeros(size(x,1), maximum(idx[:,f.Nx])+1), f, x, idx)
 repeated_evaluate_basis(f::ExpandedFunction, x) = repeated_evaluate_basis(f, x, f.idx)
+
 
 # function grad_xk_basis!(dkψ, f::ExpandedFunction, X::Array{Float64,2}, k::Int64, grad_dim::Union{Int64, Array{Int64,1}}, dims::Union{Int64, UnitRange{Int64}, Array{Int64,1}}, idx::Array{Int64,2})
 """
