@@ -38,17 +38,16 @@ d2softplus(x) = log(2.0)/(2.0*(1.0 + cosh(log(2.0)*x)))
 invsoftplus(x) = min(log(exp(log(2.0)*x) - 1.0)/log(2.0), x)
 
 # Logistic tools
-# Sigmoid implementation from NNlib.jl to avoid underflow errors.
-
+# Sigmoid implementation from NNlib.jl to avoid underflow errors
 function sigmoid(x)
     t = exp(-abs(x))
     ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
 end
-
 function dsigmoid(x)
     σ = sigmoid(x)
     return σ*(1-σ)
 end
+
 function d2sigmoid(x)
     σ = sigmoid(x)
     # from dσ*(1-σ) - σ*dσ
@@ -56,25 +55,8 @@ function d2sigmoid(x)
 end
 invsigmoid(x) = ifelse(x > 0, log(x) - log(1-x), "Not defined for x ≤ 0 ")
 
-function sigmoid_(x, K_min, K_max)
-    return K_min + (K_max-K_min) * sigmoid(x)
-end
 
-function dsigmoid_(x, K_min, K_max)
-    σ = sigmoid(x)
-    return (K_max-K_min)*σ*(1-σ)
-end
 
-function d2sigmoid_(x, K_min, K_max)
-    σ = sigmoid(x)
-    return (K_max-K_min) * σ*(1-σ)*(1-2*σ) 
-end
-
-invsigmoid_(x, K_min, K_max) = ifelse(x > 0, log(x) - log(1-x), "Not defined for x ≤ 0 ")
-    if x > K_min && x < K_max
-        return log(x-K_min) - log(K_max-x)
-    else
-        return "Not defined for x outside [K_min, K_max]"
 
 explinearunit(x) = x < 0.0 ? exp(x) : x + 1.0
 dexplinearunit(x) = x < 0.0 ? exp(x) : 1.0
@@ -94,8 +76,6 @@ function (g::Rectifier)(x)
         return exp(x)
     elseif g.T=="sigmoid"
         return sigmoid(x)
-    elseif g.T=="sigmoid_"
-        return sigmoid_(x, -1.0, 1.0)
     elseif g.T=="softplus"
         return softplus(x)
     elseif g.T=="explinearunit"
@@ -114,9 +94,6 @@ function evaluate!(result, g::Rectifier, x)
     elseif g.T=="sigmoid"
         vmap!(sigmoid, result, x)
         return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->sigmoid_(y, -1.0, 1.0), result, x)
-        return result
     elseif g.T=="softplus"
         vmap!(softplus, result, x)
         return result
@@ -126,7 +103,7 @@ function evaluate!(result, g::Rectifier, x)
     end
 end
 
-evaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
+vevaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
 
 function inverse(g::Rectifier, x)
     @assert x>=0 "Input to rectifier is negative"
@@ -136,8 +113,6 @@ function inverse(g::Rectifier, x)
         return log(x)
     elseif g.T=="sigmoid"
         return invsigmoid(x)
-    elseif g.T=="sigmoid_"
-        return invsigmoid_(x, -1.0, 1.0)
     elseif g.T=="softplus"
         return invsoftplus(x)
     elseif g.T=="explinearunit"
@@ -156,8 +131,6 @@ function inverse!(result, g::Rectifier, x)
     elseif g.T=="sigmoid"
         vmap!(invsigmoid, result, x)
         return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->invsigmoid(y, -1.0, 1.0), result, x)
     elseif g.T=="softplus"
         vmap!(invsoftplus, result, x)
         return result
@@ -177,8 +150,6 @@ function grad_x(g::Rectifier, x)
         return exp(x)
     elseif g.T=="sigmoid"
         return dsigmoid(x)
-    elseif g.T=="sigmoid_"
-        return dsigmoid_(x, -1.0, 1.0)
     elseif g.T=="softplus"
         return dsoftplus(x)
     elseif g.T=="explinearunit"
@@ -188,7 +159,7 @@ end
 
 
 function grad_x!(result, g::Rectifier, x)
-    @assert size(result,1) == size(x, 1) "Dimension of result and x don't match"
+    @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
     if g.T=="squared"
         vmap!(dsquare, result, x)
         return result
@@ -197,9 +168,6 @@ function grad_x!(result, g::Rectifier, x)
         return result
     elseif g.T=="sigmoid"
         vmap!(dsigmoid, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->dsigmoid_(y, -1.0, 1.0), result, x)
         return result
     elseif g.T=="softplus"
         vmap!(dsoftplus, result, x)
@@ -219,9 +187,7 @@ function grad_x_logeval(g::Rectifier, x::T) where {T <: Real}
     elseif g.T=="exponential"
         return 1.0
     elseif g.T=="sigmoid"
-        return dsigmoid(x)/sigmoid(x)
-    elseif g.T=="sigmoid_"
-        return d2sigmoid_(x, -1.0, 1.0) / sigmoid_(x, -1.0, 1.0)    
+        return dsigmoid(x)/sigmoid(x)    
     elseif g.T=="softplus"
         return dsoftplus(x)/softplus(x)
     elseif g.T=="explinearunit"
@@ -239,9 +205,6 @@ function grad_x_logeval!(result, g::Rectifier, x)
         return result
     elseif g.T=="sigmoid"
         vmap!(xi->dsigmoid(xi)/sigmoid(xi), result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(xi->dsigmoid_(xi, -1,0, 1.0)/sigmoid_(xi, -1.0, 1.0), result, x)
         return result
     elseif g.T=="softplus"
         vmap!(xi->dsoftplus(xi)/softplus(xi), result, x)
@@ -263,8 +226,6 @@ function hess_x_logeval(g::Rectifier, x::T) where {T <: Real}
         return 0.0
     elseif g.T=="sigmoid"
         return (d2sigmoid(x)*sigmoid(x) - dsigmoid(x)^2)/sigmoid(x)^2
-    elseif g.T=="sigmoid_"
-        return (d2sigmoid_(x, -1.0, 1.0)*sigmoid_(x, -1.0, 1.0) - dsigmoid_(x, -1.0, 1.0)^2) / (sigmoid_x, -1.0, 1.0)^2
     elseif g.T=="softplus"
         return (d2softplus(x)*softplus(x) - dsoftplus(x)^2)/softplus(x)^2
     elseif g.T=="explinearunit"
@@ -282,9 +243,6 @@ function hess_x_logeval!(result, g::Rectifier, x)
         return result
     elseif g.T=="sigmoid"
         vmap!(xi->(d2sigmoid(xi)*sigmoid(xi) - dsigmoid(xi)^2)/sigmoid(xi)^2, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(xi->(d2sigmoid_(xi, -1.0, 1.0)*sigmoid_(xi, -1.0, 1.0) - dsigmoid_(xi, -1.0, 1.0)^2)/sigmoid_(xi, -1.0, 1.0)^2, result, x)
         return result
     elseif g.T=="softplus"
         vmap!(xi->(d2softplus(xi)*softplus(xi) - dsoftplus(xi)^2)/softplus(xi)^2, result, x)
@@ -304,8 +262,6 @@ function hess_x(g::Rectifier, x::T) where {T <: Real}
         return exp(x)
     elseif g.T=="sigmoid"
         return d2sigmoid(x)
-    elseif g.T=="sigmoid_"
-        return d2sigmoid_(x, -1.0, 1.0)
     elseif g.T=="softplus"
         return d2softplus(x)
     elseif g.T=="explinearunit"
@@ -323,9 +279,6 @@ function hess_x!(result, g::Rectifier, x)
         return result
     elseif g.T=="sigmoid"
         vmap!(d2softplus, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->d2sigmoid_(y, -1.0, 1.0), result, x)
         return result
     elseif g.T=="softplus"
         vmap!(d2softplus, result, x)
