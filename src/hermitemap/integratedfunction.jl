@@ -41,7 +41,7 @@ struct IntegratedFunction
     f::ExpandedFunction
 end
 
-function IntegratedFunction(f::ExpandedFunction; rectifier::String="softplus")
+function IntegratedFunction(f::ExpandedFunction; rectifier::Symbol=:softplus)
     return IntegratedFunction(f.m, f.Nψ, f.Nx, Rectifier(rectifier), f)
 end
 

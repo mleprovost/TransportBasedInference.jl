@@ -1,16 +1,16 @@
 export  Rectifier,
-        square, dsquare, d2square,
-        softplus, dsoftplus, d2softplus, invsoftplus,
-        sigmoid, dsigmoid, d2sigmoid, invsigmoid,
-        sigmoid_, dsigmoid_, d2sigmoid_, invsigmoid_,
-        explinearunit, dexplinearunit, d2explinearunit, invexplinearunit,
+        square, dsquare, d2square, SquareRectifier,
+        ExpRectifier,
+        softplus, dsoftplus, d2softplus, invsoftplus, SoftplusRectifier,
+        sigmoid, dsigmoid, d2sigmoid, invsigmoid, SigmoidRectifier,
+        flexsigmoid, dflexsigmoid, d2flexsigmoid, invflexsigmoid, FlexSigmoidRectifier,
+        explinearunit, dexplinearunit, d2explinearunit, invexplinearunit, ELURectifier,
         inverse!, inverse, vinverse,
         grad_x!, grad_x, vgrad_x,
         grad_x_logeval, grad_x_logeval!, vgrad_x_logeval,
         hess_x_logeval, hess_x_logeval!, vhess_x_logeval,
         hess_x!, hess_x, vhess_x,
         evaluate!, vevaluate
-
 
 """
 $(TYPEDEF)
@@ -25,41 +25,42 @@ $(TYPEDFIELDS)
 
 """
 struct Rectifier
-    T::String
-    Kmin::Union{Nothing, Float64}
-    Kmax::Union{Nothing, Float64}
-    function Rectifier(T::String; Kmin = nothing, Kmax = nothing)
-        if T == "sigmoid_"
-            @assert Kmin > 0 "Kmin should be > 0 and cannot be nothing"
-            @assert Kmax > 0 "Kmax should be > 0 and cannot be nothing"
-            @assert Kmax > Kmin
-        end
-        return new(T, Kmin, Kmax)
-    end
+    T::Symbol
+    g::Function
+    dg::Function
+    d2g::Function
+    invg::Function
 end
 
+function Rectifier(T::Symbol)
+    return Rectifier(T, eval(T), eval(Symbol(:d, T)), eval(Symbol(:d2, T)), eval(Symbol(:inv, T)))
+end
 
+# Default rectifier is the softplus
+Rectifier() = Rectifier(:softplus)
 
-const KMIN = 1e-3
-const KMAX = 100
+# Square rectifier
 square(x) = x^2
 dsquare(x) = 2.0*x
 d2square(x) = 2.0
+invsquare(x) = √(x)
+const SquareRectifier = Rectifier(:square, square, dsquare, d2square, invsquare)
 
-# Softplus tools
+# Exponential Rectifier
+const ExpRectifier = Rectifier(:exp, exp, exp, exp, log)
+
+# Softplus rectifier
 softplus(x) = (log(1.0 + exp(-abs(log(2.0)*x))) + max(log(2.0)*x, 0.0))/log(2.0)
 dsoftplus(x) = 1/(1 + exp(-log(2.0)*x))
 d2softplus(x) = log(2.0)/(2.0*(1.0 + cosh(log(2.0)*x)))
 invsoftplus(x) = min(log(exp(log(2.0)*x) - 1.0)/log(2.0), x)
+const SoftplusRectifier = Rectifier(:softplus, softplus, dsoftplus, d2softplus, invsoftplus)
 
-# Logistic tools
-# Sigmoid implementation from NNlib.jl to avoid underflow errors.
-
+# Sigmoid rectifier, implementation based on NNlib.jl to avoid underflow errors.
 function sigmoid(x)
     t = exp(-abs(x))
     ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
 end
-
 function dsigmoid(x)
     σ = sigmoid(x)
     return σ*(1-σ)
@@ -70,203 +71,89 @@ function d2sigmoid(x)
     return σ*(1-σ)*(1-2*σ) 
 end
 invsigmoid(x) = ifelse(x > 0, log(x) - log(1-x), "Not defined for x ≤ 0 ")
+const SigmoidRectifier = Rectifier(:sigmoid, sigmoid, dsigmoid, d2sigmoid, invsigmoid)
 
-function sigmoid_(x, K_min, K_max)
-    return K_min + (K_max-K_min) * sigmoid(x)
+# Parametric family of sigmoid with derivative bounded between Kmin > 0 and Kmax
+function flexsigmoid(x, Kmin, Kmax)
+    return Kmin + (Kmax-Kmin) * sigmoid(x)
 end
 
-function dsigmoid_(x, K_min, K_max)
+function dflexsigmoid(x, Kmin, Kmax)
     σ = sigmoid(x)
-    return (K_max-K_min)*σ*(1-σ)
+    return (Kmax-Kmin)*σ*(1-σ)
 end
 
-function d2sigmoid_(x, K_min, K_max)
+function d2flexsigmoid(x, Kmin, Kmax)
     σ = sigmoid(x)
-    return (K_max-K_min) * σ*(1-σ)*(1-2*σ) 
+    return (Kmax-Kmin) * σ*(1-σ)*(1-2*σ) 
 end
 
-function invsigmoid_(x, K_min, K_max)
-    if x > K_min && x < K_max
-        return log(x-K_min) - log(K_max-x)
+function invflexsigmoid(x, Kmin, Kmax)
+    if x > Kmin && x < Kmax
+        return log(x-Kmin) - log(Kmax-x)
     else
-        return "Not defined for x outside [K_min, K_max]"
+        return "Not defined for x outside [Kmin, Kmax]"
     end
 end
 
+function FlexSigmoidRectifier(Kmin = 1e-3, Kmax = 1e2) 
+    @assert Kmin > 0 && Kmax > 0 && Kmax - Kmin > 0
+    T = :flexsigmoid
+    return Rectifier(T, x-> eval(T)(x, Kmin, Kmax), x->eval(Symbol(:d, T))(x, Kmin, Kmax), x->eval(Symbol(:d2, T))(x, Kmin, Kmax), x->eval(Symbol(:inv, T))(x, Kmin, Kmax))
+end
+
+# Exponential Linear Unit
 explinearunit(x) = x < 0.0 ? exp(x) : x + 1.0
 dexplinearunit(x) = x < 0.0 ? exp(x) : 1.0
 d2explinearunit(x) = x < 0.0 ? exp(x) : 0.0
 invexplinearunit(x) = x < 1.0 ? log(x) : x - 1.0
+const ELURectifier = Rectifier(:explinearunit, explinearunit, dexplinearunit, d2explinearunit, invexplinearunit)
 
-# Type of the rectifier should be in the following list:
-# "squared", "exponential", "softplus", "explinearunit"
-
-
-Rectifier() = Rectifier("softplus")
-
-function (g::Rectifier)(x)
-    if g.T=="squared"
-        return square(x)
-    elseif g.T=="exponential"
-        return exp(x)
-    elseif g.T=="sigmoid"
-        return sigmoid(x)
-    elseif g.T=="sigmoid_"
-        return sigmoid_(x, g.Kmin, g.Kmax)
-    elseif g.T=="softplus"
-        return softplus(x)
-    elseif g.T=="explinearunit"
-        return explinearunit(x)
-    end
-end
+# Define convenient routines to work with rectifiers
+(g::Rectifier)(x) = g.g(x)
 
 function evaluate!(result, g::Rectifier, x)
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
-    if g.T=="squared"
-        vmap!(square, result, x)
-        return result
-    elseif g.T=="exponential"
-        vmap!(exp, result, x)
-        return result
-    elseif g.T=="sigmoid"
-        vmap!(sigmoid, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(y -> sigmoid_(y, g.Kmin, g.Kmax), result, x)
-        return result
-    elseif g.T=="softplus"
-        vmap!(softplus, result, x)
-        return result
-    elseif g.T=="explinearunit"
-        vmap!(explinearunit, result, x)
-        return result
-    end
+    vmap!(g.g, result, x)
 end
 
 evaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
 
+
 function inverse(g::Rectifier, x)
     @assert x>=0 "Input to rectifier is negative"
-    if g.T=="squared"
-        error("squared rectifier is not invertible")
-    elseif g.T=="exponential"
-        return log(x)
-    elseif g.T=="sigmoid"
-        return invsigmoid(x)
-    elseif g.T=="sigmoid_"
-        return invsigmoid_(x, g.Kmin, g.Kmax)
-    elseif g.T=="softplus"
-        return invsoftplus(x)
-    elseif g.T=="explinearunit"
-        return invexplinearunit(x)
-    end
+    return  g.invg(x)
 end
 
 function inverse!(result, g::Rectifier, x)
     @assert all(x .> 0) "Input to rectifier is negative"
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
-    if g.T=="squared"
-        error("squared rectifier is not invertible")
-    elseif g.T=="exponential"
-        vmap!(log, result, x)
-        return result
-    elseif g.T=="sigmoid"
-        vmap!(invsigmoid, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->invsigmoid(y, g.Kmin, g.Kmax), result, x)
-    elseif g.T=="softplus"
-        vmap!(invsoftplus, result, x)
-        return result
-    elseif g.T=="explinearunit"
-        vmap!(invexplinearunit, result, x)
-        return result
-    end
+    vmap!(g.ginv, result, x)
+    return result
 end
 
 vinverse(g::Rectifier, x)  = inverse!(zero(x), g, x)
 
-
-function grad_x(g::Rectifier, x)
-    if g.T=="squared"
-        return dsquare(x)
-    elseif g.T=="exponential"
-        return exp(x)
-    elseif g.T=="sigmoid"
-        return dsigmoid(x)
-    elseif g.T=="sigmoid_"
-        return dsigmoid_(x, g.Kmin, g.Kmax)
-    elseif g.T=="softplus"
-        return dsoftplus(x)
-    elseif g.T=="explinearunit"
-        return dexplinearunit(x)
-    end
-end
+grad_x(g::Rectifier, x) = g.dg(x)
 
 
 function grad_x!(result, g::Rectifier, x)
     @assert size(result,1) == size(x, 1) "Dimension of result and x don't match"
-    if g.T=="squared"
-        vmap!(dsquare, result, x)
-        return result
-    elseif g.T=="exponential"
-        vmap!(exp, result, x)
-        return result
-    elseif g.T=="sigmoid"
-        vmap!(dsigmoid, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->dsigmoid_(y, g.Kmin, g.Kmax), result, x)
-        return result
-    elseif g.T=="softplus"
-        vmap!(dsoftplus, result, x)
-        return result
-    elseif g.T=="explinearunit"
-        vmap!(dexplinearunit, result, x)
-        return result
-    end
+    vmap!(g.dg, result, x)
+    return result
 end
 
 vgrad_x(g::Rectifier, x) = grad_x!(zero(x), g, x)
 
 """ Compute g′(x)/g(x) i.e d/dx log(g(x))"""
 function grad_x_logeval(g::Rectifier, x::T) where {T <: Real}
-    if g.T=="squared"
-        return dsquare(x)/square(x)
-    elseif g.T=="exponential"
-        return 1.0
-    elseif g.T=="sigmoid"
-        return dsigmoid(x)/sigmoid(x)
-    elseif g.T=="sigmoid_"
-        return dsigmoid_(x, g.Kmin, g.Kmax) / sigmoid_(x, g.Kmin, g.Kmax)    
-    elseif g.T=="softplus"
-        return dsoftplus(x)/softplus(x)
-    elseif g.T=="explinearunit"
-        return dexplinearunit(x)/explinearunit(x)
-    end
+    return g.dg(x)/g.g(x)
 end
 
 function grad_x_logeval!(result, g::Rectifier, x)
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
-    if g.T=="squared"
-        vmap!(xi->dsquare(xi)/square(xi), result, x)
-        return result
-    elseif g.T=="exponential"
-        vmap!(1.0, result, x)
-        return result
-    elseif g.T=="sigmoid"
-        vmap!(xi->dsigmoid(xi)/sigmoid(xi), result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(xi->dsigmoid_(xi, g.Kmin, g.Kmax)/sigmoid_(xi, g.Kmin, g.Kmax), result, x)
-        return result
-    elseif g.T=="softplus"
-        vmap!(xi->dsoftplus(xi)/softplus(xi), result, x)
-        return result
-    elseif g.T=="explinearunit"
-        vmap!(xi->dexplinearunit(xi)/explinearunit(xi), result, x)
-        return result
-    end
+    vmap!(xi->g.dg(xi)/g.g(xi), result, x)
+    return result
 end
 
 vgrad_x_logeval(g::Rectifier, x) = grad_x_logeval!(zero(x), g, x)
@@ -274,83 +161,26 @@ vgrad_x_logeval(g::Rectifier, x) = grad_x_logeval!(zero(x), g, x)
 
 # Compute (g″(x)g(x)-g′(x)^2)/g(x) i.e d^2/dx^2 log(g(x))
 function hess_x_logeval(g::Rectifier, x::T) where {T <: Real}
-    if g.T=="squared"
-        return (d2square(x)*square(x) - dsquare(x)^2)/square(x)^2
-    elseif g.T=="exponential"
-        return 0.0
-    elseif g.T=="sigmoid"
-        return (d2sigmoid(x)*sigmoid(x) - dsigmoid(x)^2)/sigmoid(x)^2
-    elseif g.T=="sigmoid_"
-        return (d2sigmoid_(x, g.Kmin, g.Kmax)*sigmoid_(x, g.Kmin, g.Kmax) - dsigmoid_(x, g.Kmin, g.Kmax)^2) / sigmoid_(x, g.Kmin, g.Kmax)^2
-    elseif g.T=="softplus"
-        return (d2softplus(x)*softplus(x) - dsoftplus(x)^2)/softplus(x)^2
-    elseif g.T=="explinearunit"
-        return (d2explinearunit(x)*explinearunit(x) - dexplinearunit(x)^2)/explinearunit(x)^2
-    end
+    gx = g(x)
+    dgx = g.dg(x)
+    d2gx = g.d2g(x)
+    return (d2gx*gx - dgx^2)/gx^2
 end
 
 function hess_x_logeval!(result, g::Rectifier, x)
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
-    if g.T=="squared"
-        vmap!(xi->(d2square(xi)*square(xi) - dsquare(xi)^2)/square(xi)^2, result, x)
-        return result
-    elseif g.T=="exponential"
-        vmap!(0.0, result, x)
-        return result
-    elseif g.T=="sigmoid"
-        vmap!(xi->(d2sigmoid(xi)*sigmoid(xi) - dsigmoid(xi)^2)/sigmoid(xi)^2, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(xi->(d2sigmoid_(xi, g.Kmin, g.Kmax)*sigmoid_(xi, g.Kmin, g.Kmax) - dsigmoid_(xi, g.Kmin, g.Kmax)^2)/sigmoid_(xi, g.Kmin, g.Kmax)^2, result, x)
-        return result
-    elseif g.T=="softplus"
-        vmap!(xi->(d2softplus(xi)*softplus(xi) - dsoftplus(xi)^2)/softplus(xi)^2, result, x)
-        return result
-    elseif g.T=="explinearunit"
-        vmap!(xi->(d2explinearunit(xi)*explinearunit(xi) - dexplinearunit(xi)^2)/explinearunit(xi)^2, result, x)
-        return result
-    end
+    vmap!(xi->(g.d2g(xi)*g(xi) - g.dg(xi)^2)/g(xi)^2, result, x)
+    return result
 end
 
 vhess_x_logeval(g::Rectifier, x) = hess_x_logeval!(zero(x), g, x)
 
-function hess_x(g::Rectifier, x::T) where {T <: Real}
-    if g.T=="squared"
-        return d2square(x)
-    elseif g.T=="exponential"
-        return exp(x)
-    elseif g.T=="sigmoid"
-        return d2sigmoid(x)
-    elseif g.T=="sigmoid_"
-        return d2sigmoid_(x, g.Kmin, g.Kmax)
-    elseif g.T=="softplus"
-        return d2softplus(x)
-    elseif g.T=="explinearunit"
-        return d2explinearunit(x)
-    end
-end
+hess_x(g::Rectifier, x::T) where {T <: Real} = g.d2g(x)
 
 function hess_x!(result, g::Rectifier, x)
     @assert size(result,1) == size(x,1) "Dimension of result and x don't match"
-    if g.T=="squared"
-        vmap!(d2square, result, x)
-        return result
-    elseif g.T=="exponential"
-        vmap!(exp, result, x)
-        return result
-    elseif g.T=="sigmoid"
-        vmap!(d2softplus, result, x)
-        return result
-    elseif g.T=="sigmoid_"
-        vmap!(y->d2sigmoid_(y, g.Kmin, g.Kmax), result, x)
-        return result
-    elseif g.T=="softplus"
-        vmap!(d2softplus, result, x)
-        return result
-    elseif g.T=="explinearunit"
-        vmap!(d2explinearunit, result, x)
-        return result
-    end
+    vmap!(g.d2g, result, x)
+    return result
 end
 
 vhess_x(g::Rectifier, x) = hess_x!(zero(x), g, x)
