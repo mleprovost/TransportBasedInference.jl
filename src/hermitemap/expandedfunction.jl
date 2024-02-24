@@ -295,7 +295,6 @@ function repeated_evaluate_basis!(out, cache, f::ExpandedFunction, x, idx::Array
     # @assert size(out,1) = (N, size(idx, 1)) "Wrong dimension of the output vector"
     # ∂ᵏf/∂x_{grad_dim} = ψ
     k = 0
-    grad_dim = Nx
     dims = Nx
 
     midxj = idx[:, Nx]

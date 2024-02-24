@@ -416,7 +416,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
         @avx @. S.cache_dcψxdt *= S.ψoff
         mul!(S.cache_dψxd, S.cache_dcψxdt, coeff)
 
-        # This doesn't work here, if we sue this line we need to add ψoff[i,j] in the last multiplication
+        # This doesn't work here, if we usee this line we need to add ψoff[i,j] in the last multiplication
         # @avx @. S.cache_dψxd = (S.cache_dcψxdt * S.ψoff) *ˡ coeff
 
         # Integration for J

@@ -73,22 +73,24 @@ end
 invsigmoid(x) = ifelse(x > 0, log(x) - log(1-x), "Not defined for x ≤ 0 ")
 const SigmoidRectifier = Rectifier(:sigmoid, sigmoid, dsigmoid, d2sigmoid, invsigmoid)
 
+const KMIN = 1e-3
+const KMAX = 10^2
 # Parametric family of sigmoid with derivative bounded between Kmin > 0 and Kmax
-function flexsigmoid(x, Kmin, Kmax)
+function flexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
     return Kmin + (Kmax-Kmin) * sigmoid(x)
 end
 
-function dflexsigmoid(x, Kmin, Kmax)
+function dflexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
     σ = sigmoid(x)
     return (Kmax-Kmin)*σ*(1-σ)
 end
 
-function d2flexsigmoid(x, Kmin, Kmax)
+function d2flexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
     σ = sigmoid(x)
     return (Kmax-Kmin) * σ*(1-σ)*(1-2*σ) 
 end
 
-function invflexsigmoid(x, Kmin, Kmax)
+function invflexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
     if x > Kmin && x < Kmax
         return log(x-Kmin) - log(Kmax-x)
     else
@@ -96,7 +98,7 @@ function invflexsigmoid(x, Kmin, Kmax)
     end
 end
 
-function FlexSigmoidRectifier(Kmin = 1e-3, Kmax = 1e2) 
+function FlexSigmoidRectifier(;Kmin = 1e-3, Kmax = 1e2) 
     @assert Kmin > 0 && Kmax > 0 && Kmax - Kmin > 0
     T = :flexsigmoid
     return Rectifier(T, x-> eval(T)(x, Kmin, Kmax), x->eval(Symbol(:d, T))(x, Kmin, Kmax), x->eval(Symbol(:d2, T))(x, Kmin, Kmax), x->eval(Symbol(:inv, T))(x, Kmin, Kmax))
