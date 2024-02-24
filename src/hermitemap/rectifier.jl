@@ -117,7 +117,7 @@ function evaluate!(result, g::Rectifier, x)
     vmap!(g.g, result, x)
 end
 
-evaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
+vevaluate(g::Rectifier, x) = evaluate!(zero(x), g, x)
 
 
 function inverse(g::Rectifier, x)
