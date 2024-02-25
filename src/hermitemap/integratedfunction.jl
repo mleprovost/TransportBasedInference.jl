@@ -91,7 +91,6 @@ Computes g(∂ₖ f(x_{1:k})) for the ensemble matrix `X`.
 function grad_xd(R::IntegratedFunction, X)
     dψ = grad_xd(R.f, X)
     evaluate!(dψ, R.g, dψ)
-    # @show size(dψ)
     # gdψ = R.g.(dψ)
     return dψ
 end

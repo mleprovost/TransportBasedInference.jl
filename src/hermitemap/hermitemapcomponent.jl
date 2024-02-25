@@ -461,7 +461,6 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
         S.cache_integral[i] += f0i + δ*xlast[i]
 
     end
-    # @show δ
 
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
 
@@ -583,7 +582,6 @@ function hess_negative_log_likelihood!(J, dJ, d2J, coeff, S::Storage, C::Hermite
                 dJ[j] += gradlog_pdf(S.cache_integral[i])*(reshape_cacheintegral[i,j] + S.ψoff[i,j]*S.ψd0[i,j])
                 dJ[j] += grad_x(C.I.g, S.cache_g[i])*S.ψoff[i,j]*S.dψxd[i,j]/C.I.g(S.cache_g[i])
             end
-            # @show i, dJ
         end
         rmul!(dJ, -1/Ne)
         # Add derivative of the L2 penalty term ∂_c α ||c||^2 = 2 *α c

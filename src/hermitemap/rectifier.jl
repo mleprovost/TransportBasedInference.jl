@@ -98,10 +98,13 @@ function invflexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
     end
 end
 
-function FlexSigmoidRectifier(;Kmin = 1e-3, Kmax = 1e2) 
+function FlexSigmoidRectifier(; Kmin = KMIN, Kmax = KMAX) 
     @assert Kmin > 0 && Kmax > 0 && Kmax - Kmin > 0
     T = :flexsigmoid
-    return Rectifier(T, x-> eval(T)(x, Kmin, Kmax), x->eval(Symbol(:d, T))(x, Kmin, Kmax), x->eval(Symbol(:d2, T))(x, Kmin, Kmax), x->eval(Symbol(:inv, T))(x, Kmin, Kmax))
+    return Rectifier(T, x-> eval(T)(x; Kmin = Kmin, Kmax = Kmax), 
+                        x-> eval(Symbol(:d, T))(x; Kmin = Kmin, Kmax = Kmax),
+                        x-> eval(Symbol(:d2, T))(x; Kmin = Kmin, Kmax = Kmax),
+                        x-> eval(Symbol(:inv, T))(x; Kmin = Kmin, Kmax = Kmax))
 end
 
 # Exponential Linear Unit

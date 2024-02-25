@@ -87,7 +87,6 @@ function inverse!(X, F, R::IntegratedFunction, S::Storage)
     result = nlsolve(df_inverse, X[end,:]; method = :newton, linesearch = LineSearches.MoreThuente());
 
     # Check convergence
-    # @show converged(result)
     if converged(result) == true
     # @assert converged(result) "Optimization hasn't converged"
         X[end,:] .= result.zero
