@@ -2,8 +2,6 @@ export  Rectifier,
         square, dsquare, d2square, SquareRectifier,
         ExpRectifier,
         softplus, dsoftplus, d2softplus, invsoftplus, SoftplusRectifier,
-        sigmoid, dsigmoid, d2sigmoid, invsigmoid, SigmoidRectifier,
-        flexsigmoid, dflexsigmoid, d2flexsigmoid, invflexsigmoid, FlexSigmoidRectifier,
         explinearunit, dexplinearunit, d2explinearunit, invexplinearunit, ELURectifier,
         inverse!, inverse, vinverse,
         grad_x!, grad_x, vgrad_x,
@@ -55,57 +53,6 @@ dsoftplus(x) = 1/(1 + exp(-log(2.0)*x))
 d2softplus(x) = log(2.0)/(2.0*(1.0 + cosh(log(2.0)*x)))
 invsoftplus(x) = min(log(exp(log(2.0)*x) - 1.0)/log(2.0), x)
 const SoftplusRectifier = Rectifier(:softplus, softplus, dsoftplus, d2softplus, invsoftplus)
-
-# Sigmoid rectifier, implementation based on NNlib.jl to avoid underflow errors.
-function sigmoid(x)
-    t = exp(-abs(x))
-    ifelse(x ≥ 0, inv(1 + t), t / (1 + t))
-end
-function dsigmoid(x)
-    σ = sigmoid(x)
-    return σ*(1-σ)
-end
-function d2sigmoid(x)
-    σ = sigmoid(x)
-    # from dσ*(1-σ) - σ*dσ
-    return σ*(1-σ)*(1-2*σ) 
-end
-invsigmoid(x) = ifelse(x > 0, log(x) - log(1-x), "Not defined for x ≤ 0 ")
-const SigmoidRectifier = Rectifier(:sigmoid, sigmoid, dsigmoid, d2sigmoid, invsigmoid)
-
-const KMIN = 1e-3
-const KMAX = 10^2
-# Parametric family of sigmoid with derivative bounded between Kmin > 0 and Kmax
-function flexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
-    return Kmin + (Kmax-Kmin) * sigmoid(x)
-end
-
-function dflexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
-    σ = sigmoid(x)
-    return (Kmax-Kmin)*σ*(1-σ)
-end
-
-function d2flexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
-    σ = sigmoid(x)
-    return (Kmax-Kmin) * σ*(1-σ)*(1-2*σ) 
-end
-
-function invflexsigmoid(x; Kmin = KMIN, Kmax = KMAX)
-    if x > Kmin && x < Kmax
-        return log(x-Kmin) - log(Kmax-x)
-    else
-        return "Not defined for x outside [Kmin, Kmax]"
-    end
-end
-
-function FlexSigmoidRectifier(; Kmin = KMIN, Kmax = KMAX) 
-    @assert Kmin > 0 && Kmax > 0 && Kmax - Kmin > 0
-    T = :flexsigmoid
-    return Rectifier(T, x-> eval(T)(x; Kmin = Kmin, Kmax = Kmax), 
-                        x-> eval(Symbol(:d, T))(x; Kmin = Kmin, Kmax = Kmax),
-                        x-> eval(Symbol(:d2, T))(x; Kmin = Kmin, Kmax = Kmax),
-                        x-> eval(Symbol(:inv, T))(x; Kmin = Kmin, Kmax = Kmax))
-end
 
 # Exponential Linear Unit
 explinearunit(x) = x < 0.0 ? exp(x) : x + 1.0
