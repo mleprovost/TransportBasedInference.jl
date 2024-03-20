@@ -152,6 +152,12 @@ struct SeqStochEnKF<:SeqFilter
     "Time step observation"
     Δtobs::Float64
 
+	"Localization"
+	Loc::Union{Nothing, Localization}
+
+	"Distance matrix"
+	dist::Array{Float64,2}
+
 	"Index of measurement"
 	idx::Array{Int64,2}
 	# idx contains the dictionnary of the mapping
@@ -170,10 +176,18 @@ struct SeqStochEnKF<:SeqFilter
 end
 
 function SeqStochEnKF(G::Function, h::Function, β::Float64, ϵy::AdditiveInflation,
-	 Ny, Nx, Ne, Δtdyn, Δtobs, idx::Array{Int64,2}; isfiltered = false, islocalized = true)
+					  Ny, Nx, Ne, Δtdyn, Δtobs, Loc::Union{Nothing, Localization}, 
+					  dist::Array{Float64,2}, idx::Array{Int64,2};
+					  isfiltered = false)
     @assert norm(mod(Δtobs, Δtdyn))<1e-12 "Δtobs should be an integer multiple of Δtdyn"
 
-    return SeqStochEnKF(G, h, MultiplicativeInflation(β), ϵy, Ny, Nx, Δtdyn, Δtobs, idx, zeros(Nx+1, Ne), isfiltered, islocalized)
+	if typeof(Loc) <: Nothing
+		islocalized = false
+	else
+		islocalized = true
+	end
+    return SeqStochEnKF(G, h, MultiplicativeInflation(β), ϵy, Ny, Nx, Δtdyn, Δtobs, 
+	       Loc, dist, idx, zeros(Nx+1, Ne), isfiltered, islocalized)
 end
 
 
@@ -187,114 +201,77 @@ end
 # """
 # Baptista, Spantini, Marzouk 2019
 
-
-# Version without localization
+# Assimilate the entire observation vector
 function (enkf::SeqStochEnKF)(X, ystar, t)
-	h = enkf.h
-
-	Nx = enkf.Nx
 	Ny = enkf.Ny
-	Na = Nx+1
-	NxX, Ne = size(X)
+	@assert enkf.Ny==size(ystar,1) "Wrong dimension of the observation"
 
-	cache = enkf.cache
-	fill!(cache, 0.0)
-
-	# Sequential assimilation of the observations
 	@inbounds for i=1:Ny
-		idx1, idx2 = enkf.idx[:,i]
-		ylocal = ystar[idx1]
-
-		# Inflate state
-		cache[2:end,:] .= X[Ny+1:Ny+Nx,:]
-		Aβ = enkf.β
-		Aβ(cache)
-
-		# Generate samples from local likelihood with inflated ensemble
-		@inbounds for i=1:Ne
-			col = view(X, Ny+1:Ny+Nx, i)
-			cache[1,i] = h(col, idx2, t) + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
-		end
-
-		XYf = copy(cache) .- mean(cache; dims = 2)[:,1]
-		rmul!(XYf, 1/sqrt(Ne-1))
-
-		Yf = view(XYf,1,:)
-		Xf = view(XYf,2:Nx+1, :)
-
-		#Construct the observation with the un-inflated measurement
-		@inbounds for i=1:Ne
-			col = view(X, Ny+1:Ny+Nx, i)
-			cache[1,i] = h(col, idx2, t) + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
-		end
-
-		# Since Yf is a vector (Yf Yf') is reduced to a scalar
-		"Analysis step with representers, Evensen, Leeuwen et al. 1998"
-		K = Xf*Yf
-		# @show K./dot(Yf,Yf)
-		# K ./= dot(Yf, Yf)
-		# Bᵀb = K*(ylocal .- view(enkf.ensa.S,1,:))
-		#In-place analysis step with gemm!
-		BLAS.gemm!('N', 'T', 1/dot(Yf,Yf), K, ylocal .- view(cache,1,:), 1.0, view(X, Ny+1:Ny+Nx, :))
+		enkf(X, ystar[i], t, enkf.idx[:,i])
 	end
 	return X
 end
 
-
-# Version with localization
-function (enkf::SeqStochEnKF)(X, ystar, t, Loc::Localization)
-	h = enkf.h
-
+# Version for a scalar observation
+function (enkf::SeqStochEnKF)(X, ystar::Float64, t, idx::Array{Int64, 1})
+	idx1, idx2 = idx
 	Nx = enkf.Nx
 	Ny = enkf.Ny
 	Na = Nx+1
 	NxX, Ne = size(X)
-
 	cache = enkf.cache
 	fill!(cache, 0.0)
+	# We add a +1 such that the scalar observation will remain the first entry
+	# perm = sortperm(view(enkf.dist,:,idx2))
+	# @show idx1, perm
+	Xinfl = copy(X)
 
-	# Localize covariance
-	locXY = Locgaspari((Nx, Ny), Loc.L, Loc.Gxy)
+	# Apply the multiplicative inflation
+	Aβ = enkf.β
+	Aβ(Xinfl, Ny+1, Ny+Nx)
 
-	# Sequential assimilation of the observations
-	@inbounds for i=1:Ny
-		idx1, idx2 = enkf.idx[:,i]
-		ylocal = ystar[idx1]
+	# Generate samples from local likelihood
+	@inbounds for i=1:Ne
+		col = Xinfl[Ny+1:Ny+Nx, i]
+		cache[1,i] = enkf.h(col, t)[idx1] + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
+	end
 
-		# Inflate state
-		cache[2:end,:] .= X[Ny+1:Ny+Nx,:]
-		Aβ = enkf.β
-		Aβ(cache)
+	cache[2:Na, :] .= copy(Xinfl[Ny+1:Ny+Nx,:])
 
-		# Generate samples from local likelihood with inflated ensemble
-		@inbounds for i=1:Ne
-			col = view(X, Ny+1:Ny+Nx, i)
-			cache[1,i] = h(col, idx2, t) + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
-		end
+	XYf = copy(cache) .- mean(cache; dims = 2)[:,1]
+	rmul!(XYf, 1/sqrt(Ne-1))
 
-		XYf = copy(cache) .- mean(cache; dims = 2)[:,1]
-		rmul!(XYf, 1/sqrt(Ne-1))
+	Yf = copy(XYf[1,:])
+	Xf = copy(XYf[2:Nx+1, :])
 
-		Yf = view(XYf,1,:)
-		Xf = view(XYf,2:Nx+1, :)
+	#Generate local-likelihood samples with uninflated samples
+	@inbounds for i=1:Ne
+		col = X[Ny+1:Ny+Nx, i]
+		cache[1,i] = enkf.h(col, t)[idx1] + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
+	end
 
-		#Construct the observation with the un-inflated measurement
-		@inbounds for i=1:Ne
-			col = view(X, Ny+1:Ny+Nx, i)
-			cache[1,i] = h(col, idx2, t) + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
-		end
+	@view(cache[2:Na,:]) .= X[Ny+1:Ny+Nx,:]
 
-		# Since Yf is a vector (Yf Yf') is reduced to a scalar
-		"Analysis step with representers, Evensen, Leeuwen et al. 1998"
-		K = view(locXY,:,idx1).* (Xf*Yf)
+	# Since Yf is a vector (Yf Yf') is reduced to a scalar
+	"Analysis step with representers, Evensen, Leeuwen et al. 1998"
+	if enkf.islocalized == true
+		K = view(locXY,:,idx1).* (Xf*Yf)/(dot(Yf, Yf))
+	else
+		K = (Xf*Yf)/(dot(Yf, Yf))
+	end
+
+	for i=1:Ne
+		xi = X[Ny+1:Ny+Nx,i]
+		X[Ny+1:Ny+Nx,i] .= xi - K*(cache[1,i] - ystar)
 		# @show K./dot(Yf,Yf)
 		# K ./= dot(Yf, Yf)
 		# Bᵀb = K*(ylocal .- view(enkf.ensa.S,1,:))
 		#In-place analysis step with gemm!
-		BLAS.gemm!('N', 'T', 1/dot(Yf,Yf), K, ylocal .- view(cache,1,:), 1.0, view(X, Ny+1:Ny+Nx, :))
+		# BLAS.gemm!('N', 'T', -1/dot(Yf,Yf), K, view(cache,1,:) .- ylocal, 1.0, view(X, Ny+1:Ny+Nx, :))
 	end
 	return X
 end
+
 
 # """
 #     Define action of StocEnKF on EnsembleStateMeas
