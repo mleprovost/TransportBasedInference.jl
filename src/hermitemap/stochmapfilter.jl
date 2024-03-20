@@ -46,32 +46,32 @@ function (smf::HermiteSMF)(X, ystar::Array{Float64,1}, t::Float64)
 	# Perturbation of the measurements
 	smf.ϵy(X, 1, Ny)
 
+	μYX = mean(X; dims = 2)[:,1]
+	σYX = std(X; dims = 2)[:,1]
+
+	X̃ = Diagonal(σYX) \ (X .- μYX)
 	# if abs(round(Int64,  t / smf.Δtfresh) - t / smf.Δtfresh)<1e-6
-	M = HermiteMap(30, X; diag = true, b = "CstLinProHermite")
-		# Perform a kfold optimization of the map
-	optimize(M, X, "kfolds"; withconstant = false, withqr = true,
-		     verbose = false, start = Ny+1, P = serial, hessprecond = true)
-	# else
-	# 	L = LinearTransform(X; diag = true)
-	# 	M = HermiteMap(40, Ny+Nx, L, smf.M.C)
-	# 	# M = HermiteMap(40, X; diag = true)
-	# 	# Only optimize the existing coefficients of the basis
-	# 	optimize(M, X, nothing; withconstant = false, withqr = true,
-	# 		   verbose = false, start = Ny+1, P = serial, hessprecond = true)
-	# end
+	# M = HermiteMap(30, X̃; diag = true, b = "CstLinProHermiteBasis")
+	# Perform a kfold optimization of the map
+	# optimize(M, X̃, "split"; maxterms = 20, withconstant = false, withqr = true,
+	# verbose = false, start = Ny+1, P = serial, hessprecond = true)
+
+	M = totalordermap(X̃, 2; b = "CstLinProHermiteBasis")
+	optimize(M, X̃, nothing; withconstant = false, withqr = true,
+			 verbose = false, start = Ny+1, P = serial, hessprecond = false)
 
 	# Evaluate the transport map
-	F = evaluate(M, X; apply_rescaling = true, start = Ny+1, P = serial)
+	F = evaluate(M, X̃; apply_rescaling = false, start = Ny+1, P = serial)
 
-	# # Rescale ystar
-	# ystar .-= view(M.L.μ,1:Ny)
-	# ystar ./= M.L.L.diag[1:Ny]
+	# Rescale ystar
+	ỹstar = Diagonal(σYX[1:Ny])\(copy(ystar) - μYX[1:Ny])
 
 	# Generate the posterior samples by partial inversion of the map
-	hybridinverse!(X, F, M, ystar; start = Ny+1, P = serial)
+	hybridinverse!(X̃, F, M, ỹstar; start = Ny+1, P = serial)
 	# @show getcoeff(M[Nypx])
 	# @show "after inversion"
 	# @show norm(X)
+	X[Ny+1:Ny+Nx,:] .= μYX[Ny+1:Ny+Nx] .+ Diagonal(σYX[Ny+1:Ny+Nx])*X̃[Ny+1:Ny+Nx,:]
 	return X
 end
 
@@ -124,7 +124,7 @@ function (smf::FixedHermiteSMF)(X, ystar::Array{Float64,1}, t::Float64)
 	M = HermiteMap(smf.M.m, smf.M.Nx, L, smf.M.C)
 	clearcoeff!(M)
 
-	M = totalordermap(X, 2; b = "CstLinProHermite")
+	M = totalordermap(X, 2; b = "CstLinProHermiteBasis")
 
 	optimize(M, X, nothing; withconstant = false, withqr = true,
 			 verbose = false, start = Ny+1, P = serial, hessprecond = true)

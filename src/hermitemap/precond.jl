@@ -202,6 +202,7 @@ function diagprecond!(P, coeff, S::Storage, C::HermiteMapComponent, X::Array{Flo
         S.cache_integral[i] += f0i
     end
 
+
     # Store g(∂_{xk}f(x_{1:k})) in S.cache_g
     @avx for i=1:Ne
         prelogJi = zero(Float64)
@@ -214,7 +215,6 @@ function diagprecond!(P, coeff, S::Storage, C::HermiteMapComponent, X::Array{Flo
 
     reshape_cacheintegral = reshape(S.cache_integral[Ne+1:Ne+Ne*Nψ], (Ne, Nψ))
     # reshape2_cacheintegral = reshape(S.cache_integral[Ne + Ne*Nψ + 1: Ne + Ne*Nψ + Ne*Nψ*Nψ], (Ne, Nψ, Nψ))
-    # @show reshape2_cacheintegral
     fill!(P, 0.0)
     @inbounds for l=1:Ne
         # Exploit symmetry of the Hessian
@@ -231,7 +231,7 @@ function diagprecond!(P, coeff, S::Storage, C::HermiteMapComponent, X::Array{Flo
     @inbounds for i=1:Nψ
         P[i] += 2*C.α
     end
-    return P
+    return Diagonal(P)
 end
 
 """

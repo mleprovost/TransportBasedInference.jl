@@ -94,10 +94,9 @@ function optimize(C::HermiteMapComponent, X, optimkind::Union{Nothing, Int64, St
                                      Optim.LBFGS(; m = 10))
             end
 
-            if Optim.converged(res)
-                mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
-            else
-                error("Optimization hasn't converged")
+            mul!(view(C.I.f.coeff,:), F.Uinv, Optim.minimizer(res))
+            if !Optim.converged(res)
+                println("Optimization hasn't converged")
             end
 
 

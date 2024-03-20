@@ -373,7 +373,7 @@ end
 #             # end
 #         end
 #         # Convergence criterion
-#         # @show min(norm(xa - xk, Inf), norm(xb - xk, Inf)), norm(dx, Inf), norm(fout, Inf)
+#         # min(norm(xa - xk, Inf), norm(xb - xk, Inf)), norm(dx, Inf), norm(fout, Inf)
 #         if min(norm(xa - xk, Inf), norm(xb - xk, Inf))< ϵx || norm(dx, Inf) < ϵx || norm(fout, Inf) < ϵf
 #             convergence = true
 #             break

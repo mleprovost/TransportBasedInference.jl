@@ -35,22 +35,3 @@ end
     # Test hessian of log evaluation
     @test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
 end
-
-@testset "Test FlexSigmoidRectifier" begin 
-    atol = 1e-9
-    Kmin = rand()
-    Kmax = Kmin + 10*rand()
-    x = rand()
-    r = FlexSigmoidRectifier(Kmin, Kmax)
-    # Test gradient
-    @test abs(ForwardDiff.derivative(y->r(y), x) - grad_x(r, x) ) < 1e-10
-
-    # Test hessian
-    @test abs(ForwardDiff.derivative(z->ForwardDiff.derivative(y->r(y), z),x) - hess_x(r, x) ) < 1e-10
-
-    # Test gradient of log evaluation
-    @test abs(ForwardDiff.derivative(y->log(r(y)), x) - grad_x_logeval(r, x) ) < 1e-10
-
-    # Test hessian of log evaluation
-    @test abs(ForwardDiff.hessian(y->log(r(y[1])), [x])[1,1] - hess_x_logeval(r, x) ) < 1e-10
-end

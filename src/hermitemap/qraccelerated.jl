@@ -154,7 +154,7 @@ function qrnegative_log_likelihood!(J̃, dJ̃, c̃oeff, F::QRscaling, S::Storage
 
     if J̃ != nothing
         J̃ = 0.0
-        @avx for i=1:Ne
+        for i=1:Ne
             J̃ += log_pdf(S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J̃ *=(-1/Ne)

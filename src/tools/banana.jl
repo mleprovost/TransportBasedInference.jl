@@ -6,7 +6,7 @@ export sample_banana, log_pdf_banana
 Generate `N` samples [x₁; x₂] of the Banana distribution defined as:
     x₁ ∼ N(μ, σ²),
     ϵ  ∼ N(0, 1),
-    x₂ ∼ bananicity × (x₁ - σ²) + ϵ.
+    x₂ ∼ bananicity × (x₁^2 - σ²) + ϵ.
 """
 function sample_banana(N; μ = 0.0, σ = 2.0, bananicity = 0.2)
     X = zeros(2,N)

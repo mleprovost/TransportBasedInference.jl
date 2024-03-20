@@ -491,7 +491,7 @@ function negative_log_likelihood!(J, dJ, coeff, S::Storage, C::HermiteMapCompone
 
     if J != nothing
         J = 0.0
-        @avx for i=1:Ne
+        for i=1:Ne
             J += log_pdf(S.cache_integral[i]) + log(C.I.g(S.cache_g[i]))
         end
         J *=(-1/Ne)

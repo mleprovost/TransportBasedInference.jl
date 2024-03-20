@@ -188,6 +188,59 @@ end
 # Baptista, Spantini, Marzouk 2019
 
 
+# Version without localization
+function (enkf::SeqStochEnKF)(X, ystar, t)
+	h = enkf.h
+
+	Nx = enkf.Nx
+	Ny = enkf.Ny
+	Na = Nx+1
+	NxX, Ne = size(X)
+
+	cache = enkf.cache
+	fill!(cache, 0.0)
+
+	# Sequential assimilation of the observations
+	@inbounds for i=1:Ny
+		idx1, idx2 = enkf.idx[:,i]
+		ylocal = ystar[idx1]
+
+		# Inflate state
+		cache[2:end,:] .= X[Ny+1:Ny+Nx,:]
+		Aβ = enkf.β
+		Aβ(cache)
+
+		# Generate samples from local likelihood with inflated ensemble
+		@inbounds for i=1:Ne
+			col = view(X, Ny+1:Ny+Nx, i)
+			cache[1,i] = h(col, idx2, t) + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
+		end
+
+		XYf = copy(cache) .- mean(cache; dims = 2)[:,1]
+		rmul!(XYf, 1/sqrt(Ne-1))
+
+		Yf = view(XYf,1,:)
+		Xf = view(XYf,2:Nx+1, :)
+
+		#Construct the observation with the un-inflated measurement
+		@inbounds for i=1:Ne
+			col = view(X, Ny+1:Ny+Nx, i)
+			cache[1,i] = h(col, idx2, t) + enkf.ϵy.m[idx1] + dot(enkf.ϵy.σ[idx1,:], randn(Ny))
+		end
+
+		# Since Yf is a vector (Yf Yf') is reduced to a scalar
+		"Analysis step with representers, Evensen, Leeuwen et al. 1998"
+		K = Xf*Yf
+		# @show K./dot(Yf,Yf)
+		# K ./= dot(Yf, Yf)
+		# Bᵀb = K*(ylocal .- view(enkf.ensa.S,1,:))
+		#In-place analysis step with gemm!
+		BLAS.gemm!('N', 'T', 1/dot(Yf,Yf), K, ylocal .- view(cache,1,:), 1.0, view(X, Ny+1:Ny+Nx, :))
+	end
+	return X
+end
+
+
 # Version with localization
 function (enkf::SeqStochEnKF)(X, ystar, t, Loc::Localization)
 	h = enkf.h

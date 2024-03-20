@@ -134,14 +134,14 @@ function (smf::SparseRadialSMF)(X, ystar, t; P::Parallel = serial, localized::Bo
 		# Perturbation of the measurements
 		smf.ϵy(X, 1, Ny)
 
-		optimize(smf.S, X, nothing; apply_rescaling=true, start = Ny+1)
+		optimize(smf.S, X, nothing; apply_rescaling = true, start = Ny+1)
 
 		# Evaluate the transport map
-		F = evaluate(smf.S, X; apply_rescaling=true, start = Ny+1)
+		F = evaluate(smf.S, X; apply_rescaling = true, start = Ny+1)
 
 		# Generate the posterior samples by partial inversion of the map
 
-		inverse!(X, F, smf.S, ystar; appply_rescaling, start = Ny+1)
+		inverse!(X, F, smf.S, ystar; apply_rescaling = true, start = Ny+1)
 	end
 	return X
 end
@@ -165,7 +165,7 @@ struct AdaptiveSparseRadialSMF<:SeqFilter
 	ϵy::AdditiveInflation
 
 	"Array of Sparse radial maps"
-	S::Array{SparseRadialMap,1}
+	S::Union{Array{SparseRadialMap,1}, SparseRadialMap}
 
 	"Observation dimension"
 	Ny::Int64
@@ -306,14 +306,20 @@ function (smf::AdaptiveSparseRadialSMF)(X, ystar, t; P::Parallel = serial, local
 		# Perturbation of the measurements
 		smf.ϵy(X, 1, Ny)
 
-		optimize(smf.S, X, nothing; apply_rescaling=true, start = Ny+1)
+		updateLinearTransform!(smf.S.L, X)
 
+		# @show smf.S
+
+		optimize(smf.S, X, 2, 1, "split"; apply_rescaling = true, start = Ny+1)
+
+		# @show smf.S
+		
 		# Evaluate the transport map
-		F = evaluate(smf.S, X; apply_rescaling=true, start = Ny+1)
+		F = evaluate(smf.S, X; apply_rescaling = true, start = Ny+1)
 
 		# Generate the posterior samples by partial inversion of the map
 
-		inverse!(X, F, smf.S, ystar; appply_rescaling, start = Ny+1)
+		inverse!(X, F, smf.S, ystar; apply_rescaling = true, start = Ny+1)
 	end
 	return X
 end
